@@ -7,11 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Volcano">
-<meta name="description" content="Volcano Hybrid Controller, Web Bluetooth PWA für Storz & Bickel Vaporizer">
+<meta name="apple-mobile-web-app-title" content="Sessions">
+<meta name="description" content="Sessions — Storz & Bickel Bluetooth Controller für Volcano, Crafty, Mighty und Venty">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Volcano Controller</title>
+<title>Sessions — S&B Vape Controller</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@ body{
   font-size:15px;
   line-height:1.5;
   padding-top:var(--safe-top);
-  padding-bottom:calc(96px + var(--safe-bot-padding));
+  padding-bottom:calc(110px + var(--safe-bot-padding));
   min-height:100dvh;
   background-image:
     radial-gradient(1400px 700px at 50% -300px, rgba(255,87,34,.10), transparent 60%),
@@ -1029,6 +1029,167 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
   color:var(--muted);font-family:var(--font-mono);
   margin-left:6px;font-weight:500;
 }
+
+/* ═══ More themes (v4.5) ═══════════════════════════════════════ */
+html[data-theme="lava"]{
+  --bg:#1a0608; --bg-1:#240a0c; --bg-2:#2e0e10; --bg-3:#3a1216;
+  --line:#451a1d; --line-soft:#3a1216;
+  --text:#fef0e6; --muted:#c89a8a; --dim:#7a554e;
+  --hot:#ff4520; --hot-soft:#ff8055; --hot-deep:#a82010;
+  --heat:#ff7a18; --ember:#ffaa3a;
+  --cool:#ff9670; --ok:#5be090; --warn:#ffd060; --err:#ff5a4a;
+}
+html[data-theme="forest"]{
+  --bg:#0a1410; --bg-1:#0e1c17; --bg-2:#13251d; --bg-3:#1c3027;
+  --line:#23382e; --line-soft:#1c3027;
+  --text:#eaf5ed; --muted:#88b4a0; --dim:#4d6d5e;
+  --hot:#e07248; --hot-soft:#f0996b; --hot-deep:#a04a2a;
+  --heat:#d5a035; --ember:#e8c25c;
+  --cool:#5ac8b4; --ok:#56d895; --warn:#e8c25c; --err:#ee6960;
+}
+html[data-theme="cosmos"]{
+  --bg:#080a1c; --bg-1:#0d1028; --bg-2:#141838; --bg-3:#1d2350;
+  --line:#2a3168; --line-soft:#1d2350;
+  --text:#eef0ff; --muted:#a0a8d0; --dim:#5c649a;
+  --hot:#e85a90; --hot-soft:#ff85b0; --hot-deep:#a83465;
+  --heat:#d0a035; --ember:#e8c25c;
+  --cool:#7a9bff; --ok:#5fd8b0; --warn:#e8c25c; --err:#ff6680;
+}
+html[data-theme="paper"]{
+  --bg:#f9f6ee; --bg-1:#f1ecde; --bg-2:#e8e1cc; --bg-3:#dcd2b6;
+  --line:#c9bd9c; --line-soft:#d4c8ad;
+  --text:#1a1410; --muted:#665a44; --dim:#998d75;
+  --hot:#a83410; --hot-soft:#c54a25; --hot-deep:#7a2308;
+  --heat:#a87015; --ember:#c08c20;
+  --cool:#1565b0; --ok:#0a8050; --warn:#a87015; --err:#b82820;
+  --shadow:0 6px 22px rgba(60,40,20,.10);
+}
+html[data-theme="paper"] body::before{ opacity:.18 }
+html[data-theme="lava"] .hero,
+html[data-theme="forest"] .hero,
+html[data-theme="cosmos"] .hero{
+  background:radial-gradient(140% 90% at 50% 0%, color-mix(in srgb, var(--hot) 30%, transparent), transparent 65%), linear-gradient(180deg, var(--bg-1), var(--bg));
+}
+
+/* ═══ Direct-Draw quick button (v4.5) ══════════════════════════ */
+.quick-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-bottom:12px;
+}
+.quick-action{
+  padding:14px 12px;
+  background:var(--bg-2);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;
+  transition:all .18s;
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:80px;
+}
+.quick-action:hover:not(:disabled){
+  background:var(--bg-3);border-color:#3d3225;
+}
+.quick-action:disabled{
+  opacity:.4;cursor:not-allowed;
+}
+.quick-action .ico{font-size:28px;line-height:1}
+.quick-action .lbl{font-size:13px;font-weight:600}
+.quick-action .meta{font-size:10px;color:var(--muted);font-family:var(--font-mono);letter-spacing:.05em}
+.quick-action.primary{
+  background:linear-gradient(180deg, rgba(255,87,34,.18), rgba(255,87,34,.06));
+  border-color:var(--hot);color:var(--hot);
+}
+.quick-action.primary:hover:not(:disabled){
+  background:linear-gradient(180deg, rgba(255,87,34,.28), rgba(255,87,34,.10));
+}
+.quick-action.cool{
+  background:rgba(125,211,252,.10);
+  border-color:rgba(125,211,252,.35);color:var(--cool);
+}
+
+/* ═══ Device badge (v4.5) ══════════════════════════════════════ */
+.dev-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--line);
+  font-size:12px;color:var(--muted);font-family:var(--font-mono);
+  cursor:pointer;transition:border-color .18s;
+}
+.dev-badge:hover{border-color:#3d3225}
+.dev-badge .ico{font-size:14px;line-height:1}
+.dev-badge .arrow{color:var(--dim);font-size:10px;margin-left:2px}
+
+/* ═══ Theme picker grid (v4.5) ═════════════════════════════════ */
+.theme-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin:8px 0 12px;
+}
+.theme-card{
+  padding:10px 8px;border-radius:var(--r-sm);
+  background:var(--bg-2);border:1px solid var(--line);
+  cursor:pointer;text-align:center;
+  transition:all .18s;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.theme-card:hover{border-color:#3d3225}
+.theme-card.active{border-color:var(--hot);background:rgba(255,87,34,.06)}
+.theme-card .swatch{
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.04);
+}
+.theme-card .lbl{font-size:11px;font-weight:600}
+.theme-card .desc{font-size:9px;color:var(--muted);line-height:1.3;letter-spacing:.02em}
+
+/* ═══ Stats viz (v4.5) ═════════════════════════════════════════ */
+.stats-viz{
+  margin-top:10px;
+  padding:12px;background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r);
+}
+.stats-viz svg{width:100%;height:auto;display:block}
+.stats-viz .bar-row{
+  display:grid;grid-template-columns:50px 1fr 40px;
+  gap:8px;align-items:center;margin-bottom:6px;
+  font-family:var(--font-mono);font-size:11px;
+}
+.stats-viz .bar-row .lbl{color:var(--muted)}
+.stats-viz .bar-row .bar{
+  height:14px;background:var(--bg);border-radius:3px;overflow:hidden;
+}
+.stats-viz .bar-row .bar > div{
+  height:100%;background:linear-gradient(90deg, var(--heat), var(--hot));
+  border-radius:3px;
+}
+.stats-viz .bar-row .val{text-align:right;color:var(--text);font-weight:600}
+
+/* ═══ Battery indicator (v4.5) ═════════════════════════════════ */
+.batt-ind{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px;border-radius:6px;
+  background:var(--bg-2);border:1px solid var(--line);
+  font-size:11px;font-family:var(--font-mono);font-weight:600;
+  color:var(--text);
+}
+.batt-ind.low{color:var(--err);border-color:rgba(248,113,113,.3)}
+.batt-ind.mid{color:var(--heat)}
+.batt-ind.high{color:var(--ok);border-color:rgba(52,211,153,.3)}
+
+/* ═══ Pre-Heat Timer (v4.5) ════════════════════════════════════ */
+.preheat-running{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  background:rgba(245,158,11,.08);
+  border:1px solid rgba(245,158,11,.3);
+  border-radius:var(--r);
+  margin-top:10px;
+}
+.preheat-running .ico{font-size:18px}
+.preheat-running .info{flex:1}
+.preheat-running .info b{display:block;font-size:13px;color:var(--heat)}
+.preheat-running .info small{font-size:11px;color:var(--muted);font-family:var(--font-mono)}
 </style>
 </head>
 <body>
@@ -1043,7 +1204,7 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
 <header class="topbar" role="banner">
   <div class="brand">
     <span class="brand-dot" id="dot" aria-hidden="true"></span>
-    <span>Volcano</span>
+    <span>Sessions</span>
   </div>
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
@@ -1070,7 +1231,7 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
   <div class="hero" id="hero" role="region" aria-label="Aktuelle Geräte-Werte">
     <div class="hero-grid">
       <div>
-        <div class="t-meta">Aktuelle Temperatur</div>
+        <div class="t-meta">Aktuelle Temperatur · <button class="dev-badge" id="devBadge" aria-label="Gerät wechseln"><span class="ico" id="devBadgeIco">🌋</span><span id="devBadgeName">Volcano</span><span class="arrow">›</span></button> <span id="battBadge"></span></div>
         <div class="t-current">
           <span class="val mono" id="tCurrent" aria-live="polite" aria-atomic="true">––</span>
           <span class="unit" aria-hidden="true">°C</span>
@@ -1085,6 +1246,14 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
     <div class="last-action" id="lastAction" role="status" aria-live="polite">
       <span class="label">Bereit</span>
       <span class="msg" id="lastActionMsg">Tippe „Verbinden" um zu starten</span>
+    </div>
+    <div class="preheat-running" id="preheatRunning" hidden role="status" aria-live="polite">
+      <span class="ico">⏱</span>
+      <div class="info">
+        <b>Pre-Heat geplant</b>
+        <small id="preheatInfo">in 10 Min auf 185°C</small>
+      </div>
+      <button class="btn sm ghost" id="btnPreheatCancel" style="padding:6px 10px;min-height:32px" aria-label="Pre-Heat abbrechen">×</button>
     </div>
     <div class="temp-graph" id="tempGraph" aria-hidden="true">
       <svg viewBox="0 0 300 46" preserveAspectRatio="none">
@@ -1101,6 +1270,33 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
         <text class="glabel" x="2" y="44" id="graphMin">––</text>
         <text class="glabel" x="298" y="10" text-anchor="end">5 min</text>
       </svg>
+    </div>
+  </div>
+
+  <!-- Quick Actions: prominent on Steuerung -->
+  <div class="card">
+    <h3>Schnellzugriff</h3>
+    <div class="quick-row" id="quickActions">
+      <button class="quick-action primary" id="qaDirectDraw" aria-label="Direkt-Zug starten">
+        <span class="ico">💨</span>
+        <span class="lbl">Direkt-Zug</span>
+        <span class="meta" id="qaDirectMeta">5 Sek.</span>
+      </button>
+      <button class="quick-action" id="qaBagFill" aria-label="Ballon füllen">
+        <span class="ico">🎈</span>
+        <span class="lbl">Ballon füllen</span>
+        <span class="meta" id="qaBagMeta">38 Sek.</span>
+      </button>
+      <button class="quick-action" id="qaPreheat" aria-label="Pre-Heat Timer setzen">
+        <span class="ico">⏱</span>
+        <span class="lbl">Pre-Heat</span>
+        <span class="meta">geplant</span>
+      </button>
+      <button class="quick-action cool" id="qaAroma" aria-label="Aroma- und Sortendatenbank öffnen">
+        <span class="ico">🌿</span>
+        <span class="lbl">Aroma & Sorten</span>
+        <span class="meta">Empfehlungen</span>
+      </button>
     </div>
   </div>
 
@@ -1146,30 +1342,14 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
     <pre class="mini-log" id="miniLog"></pre>
   </div>
 
-  <!-- Bag fill helper -->
+  <!-- Session notes (kompakter) -->
   <div class="card">
-    <h3>Ballon füllen <button class="help-ico" data-help="bag">?</button></h3>
-    <div class="row" style="gap:8px">
-      <button class="btn block hot" id="btnBagFill">💨 Ballon füllen</button>
-      <button class="btn sm ghost" id="btnBagSettings" aria-label="Ballon-Einstellungen">Typ</button>
-    </div>
-    <div class="mono" id="bagCurrent" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
-  </div>
-
-  <!-- Aroma & Sortendatenbank -->
-  <div class="card">
-    <h3>Aroma & Sorten</h3>
-    <button class="btn block ghost" id="btnAroma">🌿 Empfohlene Temperaturen</button>
-  </div>
-
-  <!-- Session notes -->
-  <div class="card">
-    <h3>Notizen</h3>
+    <h3>Notizen <button class="btn sm ghost" id="btnSaveSession" style="margin-left:auto;padding:4px 10px;min-height:auto;font-size:11px">Session abschließen</button></h3>
     <div class="notes-area">
-      <textarea id="sessionNotes" placeholder="Notizen zur aktuellen Session: Sorte, Stimmung, Beobachtungen…" aria-label="Session-Notizen"></textarea>
+      <textarea id="sessionNotes" placeholder="Sorte, Stimmung, Beobachtungen…" aria-label="Session-Notizen" rows="2"></textarea>
       <div class="notes-meta">
         <span id="notesStatus">automatisch gespeichert</span>
-        <button class="btn sm ghost" id="btnSaveSession" style="padding:6px 12px;min-height:auto">Session abschließen</button>
+        <span id="bagCurrent" style="text-align:right"></span>
       </div>
     </div>
   </div>
@@ -1197,6 +1377,11 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
 <!-- ─── TAB: PROGRAMME ──────────────────────────────────────── -->
 <section class="tab" id="tab-prog" aria-labelledby="tab-prog-label">
   <h2 id="tab-prog-label" class="sr-only">Programme</h2>
+
+  <div class="card">
+    <h3>Schnell</h3>
+    <button class="btn block hot" id="btnReplayLast" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
+  </div>
 
   <div class="card">
     <h3>Eigene Programme <button class="help-ico" data-help="workflow">?</button></h3>
@@ -1244,7 +1429,10 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
       <div class="stat"><div class="num" id="statHeat">0m</div><div class="lbl">Heizzeit</div></div>
       <div class="stat"><div class="num" id="statSess">0</div><div class="lbl">Sessions</div></div>
     </div>
-    <button class="btn sm ghost block" id="btnResetStats" style="margin-top:10px">Statistik zurücksetzen</button>
+    <div class="stats-viz" id="statsViz" aria-label="Sessions der letzten 7 Tage"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn sm ghost" id="btnResetStats" style="flex:1">Statistik zurücksetzen</button>
+    </div>
   </div>
 
   <!-- App Settings -->
@@ -1368,6 +1556,7 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
     <div id="builderDuration" class="mono" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:right" aria-live="polite"></div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn block primary" id="btnAddStep">+ Schritt</button>
+      <button class="btn ghost" id="btnAddStepTpl" aria-label="Template einfügen">+ Template</button>
     </div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn ghost" id="btnEditorCancel" style="flex:1">Abbrechen</button>
@@ -1549,9 +1738,36 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
     <h2>Einstellungen</h2>
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Erscheinungsbild</h3>
+    <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sicherheit</h3>
     <div class="toggle-row">
-      <div class="info"><b>Heller Modus</b><small>Helles Theme statt dunkel</small></div>
-      <button class="toggle" id="togTheme" role="switch" aria-checked="false" aria-label="Heller Modus"></button>
+      <div class="info"><b>Sicherheits-Timer automatisch starten</b><small>Bei Heizer-an wird der Timer mit Default-Minuten gestartet</small></div>
+      <button class="toggle" id="togSafetyAuto" role="switch" aria-checked="true" aria-label="Sicherheits-Timer auto"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Sicherheits-Timer Default</b><small>Minuten bis Auto-Aus</small></div>
+      <input class="input mono" id="safetyMinInput" type="number" min="1" max="60" step="1" style="width:80px" inputmode="numeric">
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Direkt-Zug</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Sekunden pro Direkt-Zug</b><small>Pumpe X Sekunden, dann automatisch aus</small></div>
+      <div class="stepper" style="width:130px;flex-shrink:0">
+        <button id="dirSecMinus">−</button>
+        <input class="mono" type="number" min="1" max="60" step="1" id="dirSecInput" inputmode="numeric">
+        <button id="dirSecPlus">+</button>
+      </div>
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Nach Ballon-Füllung</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Auto-Cool-Down</b><small>Heizer auf Standby-Temperatur runter</small></div>
+      <button class="toggle" id="togAutoCool" role="switch" aria-checked="false" aria-label="Auto-Cool-Down"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Cool-Down Temperatur</b><small>Worauf heruntergeregelt wird</small></div>
+      <input class="input mono" id="autoCoolTempInput" type="number" min="100" max="220" step="1" style="width:80px" inputmode="numeric">
     </div>
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Feedback</h3>
@@ -1586,8 +1802,12 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Daten</h3>
     <div class="row" style="gap:8px">
-      <button class="btn sm ghost" id="btnExportAll" style="flex:1">Daten exportieren</button>
-      <button class="btn sm ghost" id="btnImportAll" style="flex:1">Daten importieren</button>
+      <button class="btn sm ghost" id="btnExportAll" style="flex:1">JSON-Backup</button>
+      <button class="btn sm ghost" id="btnImportAll" style="flex:1">Restore</button>
+    </div>
+    <div class="row" style="gap:8px;margin-top:8px">
+      <button class="btn sm ghost" id="btnExportCsv" style="flex:1">Sessions CSV</button>
+      <button class="btn sm ghost" id="btnShowDiag" style="flex:1">Diagnose</button>
     </div>
     <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px">Onboarding-Wizard neu zeigen</button>
 
@@ -1665,6 +1885,20 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
   </div>
 </div>
 
+<!-- ─── Step-Templates Modal (v4.5) ──────────────────────────── -->
+<div class="modal" id="modalStepTpl" role="dialog" aria-modal="true" aria-label="Schritt-Templates">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Schritt-Templates</h2>
+    <p class="wiz-text"><small>Fertige Schritt-Sequenzen die in dein Programm eingefügt werden.</small></p>
+    <div id="stepTplList"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnStepTplClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1687,11 +1921,11 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
    PREFERENCES SYSTEM (v4.4)
 ═══════════════════════════════════════════════════════════════ */
 const PREFS_DEFAULTS = {
-  theme:'dark',          // 'dark' | 'light'
+  theme:'dark',          // 'dark' | 'light' | 'lava' | 'forest' | 'cosmos' | 'paper'
   sound:true,
   haptic:true,
-  voice:true,            // master switch for voice control
-  voiceCmds:{            // individual voice command toggles
+  voice:true,
+  voiceCmds:{
     setTemp:true,
     heatOn:true,
     heatOff:true,
@@ -1702,13 +1936,20 @@ const PREFS_DEFAULTS = {
     stopAll:true,
     fillBag:true,
   },
-  bagType:'easy-large',  // 'easy-large' | 'easy-small' | 'solid' | 'custom'
+  bagType:'easy-large',
   bagTimes:{
     'easy-large':38,
     'easy-small':20,
     'solid':24,
     'custom':30,
   },
+  // v4.5 additions
+  safetyAutoStart:true,    // Sicherheits-Timer automatisch starten wenn Heizer angeht
+  safetyMinutes:25,        // Default Sicherheits-Timer
+  directDrawSec:5,         // Default-Sekunden für Direkt-Zug-Knopf
+  autoCoolDown:false,      // nach Bag-Fill auf coolDownTemp runter
+  autoCoolDownTemp:160,    // Temperatur fürs Cool-Down
+  preferredTemp:185,       // Lieblings-Temperatur (wird gelernt)
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -1724,36 +1965,229 @@ PREFS.stats     = Object.assign({}, PREFS_DEFAULTS.stats, PREFS.stats||{});
 function savePrefs(){ LS.set('vol_prefs', PREFS); }
 
 /* ═══════════════════════════════════════════════════════════════
-   AROMA / SORTEN-DATENBANK (v4.4)
+   AROMA / SORTEN-DATENBANK (v4.5 - massiv erweitert)
 ═══════════════════════════════════════════════════════════════ */
+// Jede Sorte: name, temps[3] (low/med/high), desc, kind (sativa/indica/hybrid/other),
+// dominant terpenes (für Programm-Generierung)
 const AROMA_DB = [
-  // Cannabis-Sorten mit empfohlenen Temperaturen
-  // Empfehlungen basieren auf Terpenen + Cannabinoid-Verdampfungspunkten
-  {name:'Sativa allgemein', temps:[180,190,200], desc:'Energetisch, klar, kreative Sorten'},
-  {name:'Indica allgemein', temps:[180,195,210], desc:'Entspannend, schwer, abendlich'},
-  {name:'Hybrid balanciert', temps:[180,190,200], desc:'Ausgewogen Sativa/Indica'},
-  {name:'Amnesia Haze', temps:[175,185,195], desc:'Zitrus, Erde, energiegeladen (Sativa)'},
-  {name:'White Widow', temps:[180,190,200], desc:'Erdig-würzig, ausgewogen (Hybrid)'},
-  {name:'Northern Lights', temps:[180,195,210], desc:'Süß, erdig, entspannend (Indica)'},
-  {name:'Blue Dream', temps:[175,185,195], desc:'Beerig, ausgleichend (Hybrid)'},
-  {name:'OG Kush', temps:[180,190,205], desc:'Erdig-zitrusartig, kraftvoll (Hybrid)'},
-  {name:'Sour Diesel', temps:[175,185,195], desc:'Diesel, Zitrus, energetisch (Sativa)'},
-  {name:'Granddaddy Purple', temps:[185,200,215], desc:'Beeren, süß, schwere Indica'},
-  {name:'Jack Herer', temps:[175,185,195], desc:'Pinie, Erde, klar (Sativa)'},
-  {name:'Skunk #1', temps:[180,190,205], desc:'Klassisch skunky (Hybrid)'},
-  {name:'Critical Mass', temps:[180,195,210], desc:'Süß, erdig, beruhigend (Indica)'},
-  {name:'Bubba Kush', temps:[185,200,215], desc:'Schokoladig, schwer (Indica)'},
-  {name:'Pineapple Express', temps:[175,185,200], desc:'Tropisch-süß (Hybrid)'},
-  {name:'Lavender / lavendelig', temps:[155,170,185], desc:'Linalool-reich, sehr entspannend'},
-  {name:'Lemon / zitrusartig', temps:[160,175,190], desc:'Limonen-reich, hellt auf'},
-  {name:'Pinie / waldig', temps:[150,170,185], desc:'Pinene, Konzentration'},
-  {name:'CBD-Sorten', temps:[160,175,180], desc:'CBD verdampft ab 160°C'},
+  // ═══ Allgemeine Kategorien ═══
+  {name:'Sativa allgemein', temps:[180,190,200], desc:'Energetisch, klar, kreative Sorten', kind:'sativa', terps:'limonene/pinene'},
+  {name:'Indica allgemein', temps:[180,195,210], desc:'Entspannend, schwer, abendlich', kind:'indica', terps:'myrcene/linalool'},
+  {name:'Hybrid balanciert', temps:[180,190,200], desc:'Ausgewogen Sativa/Indica', kind:'hybrid', terps:'mixed'},
+  {name:'CBD-Sorten', temps:[160,175,180], desc:'CBD verdampft ab 160°C, mild', kind:'cbd', terps:'low'},
+  {name:'Mikro-Dose', temps:[155,170,180], desc:'Sehr sanft, Terpene erhalten', kind:'other', terps:'preserve'},
+
+  // ═══ Klassische Sativas ═══
+  {name:'Amnesia Haze', temps:[175,185,195], desc:'Zitrus, Erde, energiegeladen', kind:'sativa', terps:'limonene'},
+  {name:'Super Lemon Haze', temps:[170,185,200], desc:'Intensiv zitrusartig, klare Sativa', kind:'sativa', terps:'limonene'},
+  {name:'Jack Herer', temps:[175,185,195], desc:'Pinie, Erde, klar', kind:'sativa', terps:'pinene/terpinolene'},
+  {name:'Sour Diesel', temps:[175,185,195], desc:'Diesel, Zitrus, energetisch', kind:'sativa', terps:'caryophyllene/limonene'},
+  {name:'Durban Poison', temps:[175,185,195], desc:'Süß, anis-artig, fokussiert', kind:'sativa', terps:'terpinolene'},
+  {name:'Green Crack', temps:[175,185,195], desc:'Mango-süß, sehr energetisch', kind:'sativa', terps:'myrcene/pinene'},
+  {name:'Maui Wowie', temps:[170,180,195], desc:'Tropisch-süß, leicht', kind:'sativa', terps:'limonene'},
+  {name:'Tangie', temps:[170,185,195], desc:'Mandarine, citrusbombe', kind:'sativa', terps:'limonene/myrcene'},
+
+  // ═══ Klassische Indicas ═══
+  {name:'Northern Lights', temps:[180,195,210], desc:'Süß, erdig, klassische Indica', kind:'indica', terps:'myrcene/caryophyllene'},
+  {name:'Granddaddy Purple', temps:[185,200,215], desc:'Beeren, süß, schwere Indica', kind:'indica', terps:'myrcene/linalool'},
+  {name:'Bubba Kush', temps:[185,200,215], desc:'Schokoladig, sehr schwer', kind:'indica', terps:'caryophyllene/myrcene'},
+  {name:'Critical Mass', temps:[180,195,210], desc:'Süß, erdig, beruhigend', kind:'indica', terps:'myrcene'},
+  {name:'Afghan Kush', temps:[180,195,215], desc:'Hash-würzig, tiefenentspannend', kind:'indica', terps:'caryophyllene/humulene'},
+  {name:'Purple Kush', temps:[185,200,215], desc:'Beerig-süß, schwer', kind:'indica', terps:'myrcene/pinene'},
+  {name:'Hindu Kush', temps:[185,200,215], desc:'Sandelholz, beruhigend', kind:'indica', terps:'myrcene/limonene'},
+  {name:'Master Kush', temps:[180,195,210], desc:'Erdig-zitrusartig, klassisch', kind:'indica', terps:'caryophyllene'},
+  {name:'Skywalker OG', temps:[180,195,210], desc:'Pinie-erdig, kraftvoll', kind:'indica', terps:'caryophyllene/limonene'},
+
+  // ═══ Beliebte Hybriden ═══
+  {name:'White Widow', temps:[180,190,200], desc:'Erdig-würzig, ausgewogen', kind:'hybrid', terps:'myrcene/pinene'},
+  {name:'Blue Dream', temps:[175,185,195], desc:'Beerig, ausgleichend', kind:'hybrid', terps:'myrcene/pinene'},
+  {name:'OG Kush', temps:[180,190,205], desc:'Erdig-zitrusartig, kraftvoll', kind:'hybrid', terps:'myrcene/limonene'},
+  {name:'Skunk #1', temps:[180,190,205], desc:'Klassisch skunky', kind:'hybrid', terps:'myrcene'},
+  {name:'Pineapple Express', temps:[175,185,200], desc:'Tropisch-süß', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'AK-47', temps:[175,185,200], desc:'Erdig-süß, langer Effekt', kind:'hybrid', terps:'caryophyllene'},
+  {name:'Gelato', temps:[180,190,200], desc:'Süß, dessert-artig', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Wedding Cake', temps:[180,195,210], desc:'Vanille, süß, schwer', kind:'hybrid', terps:'limonene/caryophyllene'},
+  {name:'Girl Scout Cookies', temps:[180,195,205], desc:'Süß-erdig, Hybrid-Klassiker', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Runtz', temps:[180,195,205], desc:'Bonbon-süß, tropisch', kind:'hybrid', terps:'caryophyllene'},
+  {name:'Zkittlez', temps:[175,190,200], desc:'Beerig-bonbon, ausgewogen', kind:'hybrid', terps:'caryophyllene/humulene'},
+  {name:'Sherbet', temps:[180,190,205], desc:'Süß-cremig, ausgewogen', kind:'hybrid', terps:'caryophyllene'},
+  {name:'Do-Si-Dos', temps:[185,195,210], desc:'Süß-floral, indica-lastig', kind:'hybrid', terps:'limonene/caryophyllene'},
+  {name:'Mimosa', temps:[175,185,200], desc:'Zitrus-fruchtig, sativa-lastig', kind:'hybrid', terps:'limonene'},
+  {name:'Gorilla Glue #4', temps:[180,195,210], desc:'Erdig-süß, sehr kraftvoll', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Bruce Banner', temps:[180,190,205], desc:'Erdig-süß, kraftvoll', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Cherry Pie', temps:[175,190,205], desc:'Süß-fruchtig', kind:'hybrid', terps:'myrcene/caryophyllene'},
+  {name:'GSC (Cookies)', temps:[180,195,205], desc:'Süß-erdig wie GSC', kind:'hybrid', terps:'caryophyllene/limonene'},
+
+  // ═══ Moderne / hochpotente ═══
+  {name:'Strawberry Cough', temps:[175,185,195], desc:'Erdbeer-süß, sativa', kind:'sativa', terps:'myrcene/limonene'},
+  {name:'Lemon Skunk', temps:[175,185,195], desc:'Zitrusartig skunky', kind:'hybrid', terps:'limonene/myrcene'},
+  {name:'Chemdog', temps:[180,195,210], desc:'Diesel-erdig, kraftvoll', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Sundae Driver', temps:[180,190,205], desc:'Süß-cremig', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Forbidden Fruit', temps:[180,195,205], desc:'Tropisch fruchtig', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Ice Cream Cake', temps:[185,195,210], desc:'Süß-cremig, schwere Indica', kind:'indica', terps:'limonene/caryophyllene'},
+  {name:'MAC (Miracle Alien Cookies)', temps:[180,190,205], desc:'Komplex süß-fruchtig', kind:'hybrid', terps:'limonene/caryophyllene'},
+
+  // ═══ Klassische Coffeeshop / Hash ═══
+  {name:'Charas / klassischer Hash', temps:[175,195,215], desc:'Würzig, lange Tradition', kind:'hash', terps:'humulene/caryophyllene'},
+  {name:'Marokkanisches Hash', temps:[180,200,215], desc:'Erdig, weich, sandig', kind:'hash', terps:'humulene'},
+  {name:'Nederwiet generisch', temps:[180,190,200], desc:'Klassische Coffeeshop-Qualität', kind:'hybrid', terps:'mixed'},
+
+  // ═══ Terpen-fokussiert ═══
+  {name:'Lavendel-aromatisch (Linalool)', temps:[155,170,185], desc:'Linalool-reich, sehr entspannend', kind:'terpen', terps:'linalool'},
+  {name:'Zitrusartig (Limonen)', temps:[160,175,190], desc:'Limonen-reich, hellt auf', kind:'terpen', terps:'limonene'},
+  {name:'Pinie/waldig (Pinen)', temps:[150,170,185], desc:'Pinen, fördert Konzentration', kind:'terpen', terps:'pinene'},
+  {name:'Pfeffer/würzig (Caryophyllen)', temps:[170,190,205], desc:'Caryophyllen, entzündungshemmend', kind:'terpen', terps:'caryophyllene'},
+  {name:'Erdig/moschus (Myrcen)', temps:[170,185,200], desc:'Myrcen-dominant, beruhigend', kind:'terpen', terps:'myrcene'},
+  {name:'Hopfen/würzig (Humulen)', temps:[180,195,210], desc:'Humulen, appetithemmend', kind:'terpen', terps:'humulene'},
+  {name:'Mango/tropisch (Terpinolen)', temps:[170,185,195], desc:'Terpinolen, frisch-fruchtig', kind:'terpen', terps:'terpinolene'},
 ];
+
+// User kann eigene Aromas hinzufügen
+function getAllAromas(){
+  const custom = LS.get('vol_custom_aromas', []);
+  return AROMA_DB.concat(custom);
+}
+function addCustomAroma(a){
+  const custom = LS.get('vol_custom_aromas', []);
+  custom.push(Object.assign({}, a, {custom:true, id:'aroma_'+Date.now()}));
+  LS.set('vol_custom_aromas', custom);
+}
+function removeCustomAroma(id){
+  const custom = LS.get('vol_custom_aromas', []).filter(a=>a.id!==id);
+  LS.set('vol_custom_aromas', custom);
+}
 function findAromaSuggestions(query){
   const q = (query||'').toLowerCase().trim();
-  if(!q) return AROMA_DB.slice(0,6);
-  return AROMA_DB.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q));
+  const all = getAllAromas();
+  if(!q) return all.slice(0,8);
+  return all.filter(a =>
+    a.name.toLowerCase().includes(q) ||
+    a.desc.toLowerCase().includes(q) ||
+    (a.kind||'').toLowerCase().includes(q) ||
+    (a.terps||'').toLowerCase().includes(q)
+  );
 }
+// Generiert ein Programm aus einer Sorte (3-Stufen-Verlauf)
+function buildProgramFromAroma(a){
+  const [low, mid, high] = a.temps;
+  return {
+    id:'aroma_'+Date.now()+Math.random().toString(36).slice(2,5),
+    name:a.name,
+    desc:'Auto-Programm aus Aroma-DB: 3-Stufen-Verlauf',
+    isPreset:false,
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:low},
+      {action:'wait_until', value:low},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:30},
+      {action:'set_temperature', value:mid},
+      {action:'wait_until', value:mid},
+      {action:'pump_for', seconds:28},
+      {action:'wait', seconds:30},
+      {action:'set_temperature', value:high},
+      {action:'wait_until', value:high},
+      {action:'pump_for', seconds:35},
+      {action:'heat_off'},
+    ],
+  };
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DEVICE CAPABILITIES (v4.5)
+═══════════════════════════════════════════════════════════════ */
+function currentCapabilities(){
+  const id = getCurrentDeviceId();
+  const p = DEVICE_PROFILES[id];
+  return p?.capabilities || { heater:true, pump:true, bagFill:true, directDraw:true, battery:false };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME PALETTES (v4.5)
+═══════════════════════════════════════════════════════════════ */
+const THEMES = {
+  dark:   { label:'Dunkel',  desc:'Mineralische Erdtöne', preview:'#0c0a08' },
+  light:  { label:'Hell',    desc:'Warmes Cremeweiß',     preview:'#faf6ee' },
+  lava:   { label:'Lava',    desc:'Vulkanisch, intensiv', preview:'#1a0608' },
+  forest: { label:'Forest',  desc:'Tiefes Waldgrün',      preview:'#0a1410' },
+  cosmos: { label:'Cosmos',  desc:'Tiefes Indigo',        preview:'#080a1c' },
+  paper:  { label:'Paper',   desc:'Editorial-Pure',       preview:'#f9f6ee' },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP TEMPLATES (v4.5)
+═══════════════════════════════════════════════════════════════ */
+const STEP_TEMPLATES = [
+  {
+    id:'three-step-aroma',
+    name:'3-Stufen Aroma-Tour',
+    desc:'180° → 190° → 200°, je 25s Pumpe',
+    steps:[
+      {action:'set_temperature', value:180},
+      {action:'wait_until', value:180},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:30},
+      {action:'set_temperature', value:190},
+      {action:'wait_until', value:190},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:30},
+      {action:'set_temperature', value:200},
+      {action:'wait_until', value:200},
+      {action:'pump_for', seconds:30},
+    ],
+  },
+  {
+    id:'bag-fill-block',
+    name:'Bag-Fill-Block (185°)',
+    desc:'Erst aufheizen, dann Ballon füllen',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:185},
+      {action:'wait_until', value:185},
+      {action:'pump_for', seconds:38},
+    ],
+  },
+  {
+    id:'cool-down',
+    name:'Cool-Down (160°)',
+    desc:'Heizer auf Standby-Temperatur',
+    steps:[
+      {action:'set_temperature', value:160},
+      {action:'wait_until', value:160},
+    ],
+  },
+  {
+    id:'safe-shutdown',
+    name:'Sicher abschalten',
+    desc:'Alles aus',
+    steps:[
+      {action:'pump_off'},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    id:'micro-dose',
+    name:'Mikro-Dose 165°',
+    desc:'Sanfter kurzer Zug',
+    steps:[
+      {action:'set_temperature', value:165},
+      {action:'wait_until', value:165},
+      {action:'pump_for', seconds:12},
+    ],
+  },
+  {
+    id:'end-extraction',
+    name:'End-Extraktion 215°',
+    desc:'Letzter Zug heiß',
+    steps:[
+      {action:'set_temperature', value:215},
+      {action:'wait_until', value:215},
+      {action:'pump_for', seconds:35},
+    ],
+  },
+];
+
 
 /* ═══════════════════════════════════════════════════════════════
    BAG PROFILES (v4.4)
@@ -2206,10 +2640,14 @@ async function connectBLE(){
     await startAllNotifications();
     setConn(true);
     toast('Verbunden mit '+State.device.name);
+    // v4.5: remember device + apply capabilities now BLE chars are set
+    rememberDevice(State.device.name||'', getCurrentDeviceId(), State.device.name);
+    applyCapabilitiesUI();
   }catch(e){
     log('Verbindungsfehler: '+e.message,'err');
     renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
     setConn(false);
+    captureDiagnostics(e.message);
   }
 }
 
@@ -2321,13 +2759,14 @@ async function cmdSetTemp(celsius){
   if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt. Auto-Mapping ausführen.');
   const c = clamp(Math.round(celsius), 40, 230);
   return withBusy(`Temp setzen → ${c} °C`, async()=>{
-    // Volcano expects Uint32 LE with value × 10
     const buf=new ArrayBuffer(4);
     new DataView(buf).setUint32(0, c*10, true);
     await State.chars.setTemp.writeValue(buf);
     State.target=c; renderStatus();
     log(`Temp gesetzt: ${c} °C (Uint32 LE = ${c*10})`,'ok');
     toast(`Ziel ${c}°C`);
+    // v4.5: Smart-Defaults lernen
+    noteUsedTemp(c);
   });
 }
 
@@ -2339,6 +2778,8 @@ async function cmdHeaterOn(){
     log('Heizer EIN','ok');
     if(PREFS.sound) toast('🔥 Heizer EIN'); else toast('Heizer EIN');
     statsHeatStart();
+    // v4.5: Sicherheits-Timer auto-start
+    maybeAutoStartSafety();
   });
 }
 async function cmdHeaterOff(){
@@ -2349,6 +2790,22 @@ async function cmdHeaterOff(){
     log('Heizer AUS','ok');
     toast('❄️ Heizer AUS');
     statsHeatStop();
+    // v4.5: heat curve analyse
+    const sec = analyzeHeatCurve();
+    if(sec){
+      rememberHeatCurve(sec);
+      const st = getHeatCurveStats();
+      if(st && st.count >= 3){
+        const diff = sec - st.avg;
+        if(Math.abs(diff) >= 3){
+          const txt = diff > 0
+            ? `Heizer war ${diff}s langsamer als üblich (${st.avg}s ⌀)`
+            : `Heizer war ${-diff}s schneller als üblich (${st.avg}s ⌀)`;
+          toast(txt);
+          log(txt, diff>10 ? 'warn' : 'ok');
+        }
+      }
+    }
   });
 }
 async function cmdPumpOn(){
@@ -2883,6 +3340,7 @@ async function runProgram(p){
   log(`▶ Start: ${p.name}`,'ok');
   await requestWakeLock();
   srAnnounce(`Programm gestartet: ${p.name}`);
+  rememberLastProgram(p);
   try{
     for(let i=0;i<p.steps.length;i++){
       if(State.running.stopFlag) throw new Error('Abgebrochen');
@@ -3122,11 +3580,6 @@ function wire(){
       el.setAttribute('aria-checked', String(newVal));
     });
   };
-  wireToggle('#togTheme', ()=>PREFS.theme==='light', v=>{
-    PREFS.theme = v?'light':'dark';
-    savePrefs();
-    applyTheme();
-  });
   wireToggle('#togSound', ()=>PREFS.sound, v=>{
     PREFS.sound = v;
     savePrefs();
@@ -3163,8 +3616,7 @@ function wire(){
   });
 
   // Bag fill
-  $('#btnBagFill').addEventListener('click', openBagModal);
-  $('#btnBagSettings').addEventListener('click', openSettings);
+  // Bag fill (Quick-Action im Hero ist Trigger)
   $('#btnBagStart').addEventListener('click', startBagFill);
   $('#btnBagStop').addEventListener('click', stopBagFill);
   $('#btnBagClose').addEventListener('click', ()=>{
@@ -3178,8 +3630,7 @@ function wire(){
     const el=$('#bagCustInput'); el.value = clamp((parseInt(el.value)||30)+1,5,120);
   });
 
-  // Aroma
-  $('#btnAroma').addEventListener('click', openAroma);
+  // Aroma (modal open from quick-action)
   $('#btnAromaClose').addEventListener('click', ()=>$('#modalAroma').classList.remove('open'));
   $('#aromaSearch').addEventListener('input', e=>renderAromaList(e.target.value));
 
@@ -3195,6 +3646,71 @@ function wire(){
   const notesEl = $('#sessionNotes');
   if(notesEl) notesEl.addEventListener('input', autosaveNotes);
   $('#btnSaveSession').addEventListener('click', finishSession);
+
+  // ═════ v4.5 wiring ═════
+
+  // Quick Actions im Hero
+  $('#qaDirectDraw').addEventListener('click', quickDirectDraw);
+  $('#qaBagFill').addEventListener('click', openBagModal);
+  $('#qaPreheat').addEventListener('click', schedulePreheat);
+  $('#qaAroma').addEventListener('click', openAroma);
+  // Device-Badge zum Geräte-Switch
+  $('#devBadge').addEventListener('click', ()=>{
+    renderDeviceList('#deviceList');
+    $('#modalDevice').classList.add('open');
+  });
+  // Pre-Heat cancel
+  $('#btnPreheatCancel')?.addEventListener('click', ()=>{
+    cancelPreheat();
+    toast('Pre-Heat abgebrochen');
+  });
+  // Theme picker (in Settings)
+  // Wird beim Öffnen der Settings gerendert
+  // CSV / Diagnose-Buttons (im Settings)
+  $('#btnExportCsv')?.addEventListener('click', exportSessionsCSV);
+  $('#btnShowDiag')?.addEventListener('click', showDiagnostics);
+  // Replay last program
+  $('#btnReplayLast')?.addEventListener('click', replayLastProgram);
+  // Safety auto-start toggle
+  $('#togSafetyAuto')?.addEventListener('click', ()=>{
+    PREFS.safetyAutoStart = !PREFS.safetyAutoStart;
+    savePrefs();
+    $('#togSafetyAuto').setAttribute('aria-checked', String(PREFS.safetyAutoStart));
+  });
+  // Auto cool-down toggle
+  $('#togAutoCool')?.addEventListener('click', ()=>{
+    PREFS.autoCoolDown = !PREFS.autoCoolDown;
+    savePrefs();
+    $('#togAutoCool').setAttribute('aria-checked', String(PREFS.autoCoolDown));
+  });
+  // Direct draw seconds settings
+  $('#dirSecMinus')?.addEventListener('click', ()=>{
+    PREFS.directDrawSec = clamp((PREFS.directDrawSec||5)-1, 1, 60);
+    savePrefs(); applyCapabilitiesUI();
+    $('#dirSecInput').value = PREFS.directDrawSec;
+  });
+  $('#dirSecPlus')?.addEventListener('click', ()=>{
+    PREFS.directDrawSec = clamp((PREFS.directDrawSec||5)+1, 1, 60);
+    savePrefs(); applyCapabilitiesUI();
+    $('#dirSecInput').value = PREFS.directDrawSec;
+  });
+  $('#dirSecInput')?.addEventListener('change', ()=>{
+    PREFS.directDrawSec = clamp(parseInt($('#dirSecInput').value)||5, 1, 60);
+    savePrefs(); applyCapabilitiesUI();
+  });
+  // Safety minutes
+  $('#safetyMinInput')?.addEventListener('change', ()=>{
+    PREFS.safetyMinutes = clamp(parseInt($('#safetyMinInput').value)||25, 1, 60);
+    savePrefs();
+  });
+  // Auto cool temp
+  $('#autoCoolTempInput')?.addEventListener('change', ()=>{
+    PREFS.autoCoolDownTemp = clamp(parseInt($('#autoCoolTempInput').value)||160, 100, 220);
+    savePrefs();
+  });
+  // Step templates from editor
+  $('#btnAddStepTpl')?.addEventListener('click', openStepTemplates);
+  $('#btnStepTplClose')?.addEventListener('click', ()=>$('#modalStepTpl').classList.remove('open'));
 
   // Migrate old v3 slots if present
   migrateFromV3();
@@ -3228,11 +3744,12 @@ const DEVICE_PROFILES = {
   'volcano-hybrid': {
     id:'volcano-hybrid',
     name:'Volcano Hybrid',
-    sub:'S&B Desktop Vaporizer',
+    sub:'Desktop · Ballon + Whip',
     icon:'🌋',
     status:'ready',
     namePrefix:'VOLCANO',
     tempRange:[40, 230],
+    capabilities:{ heater:true, pump:true, bagFill:true, directDraw:true, battery:false, autoOff:true },
     uuids:{
       uuidServiceState:'10100000-5354-4f52-5a26-4249434b454c',
       uuidServiceControl:'10110000-5354-4f52-5a26-4249434b454c',
@@ -3250,35 +3767,12 @@ const DEVICE_PROFILES = {
   'crafty-plus': {
     id:'crafty-plus',
     name:'Crafty / Crafty+',
-    sub:'S&B Portable Vaporizer',
+    sub:'Portable · Direkt-Zug',
     icon:'🔥',
     status:'beta',
     namePrefix:'STORZ&BICKEL',
     tempRange:[40, 210],
-    uuids:{
-      // Crafty: service 00000001-4c45-4b43-4942-265a524f5453
-      // Hat eigene UUIDs für Heater on/off, keine Pumpe
-      uuidServiceState:'00000001-4c45-4b43-4942-265a524f5453',
-      uuidServiceControl:'00000001-4c45-4b43-4942-265a524f5453',
-      uuidSetTemp:'00000021-4c45-4b43-4942-265a524f5453',
-      uuidCurTemp:'00000011-4c45-4b43-4942-265a524f5453',
-      uuidActivity:'00000083-4c45-4b43-4942-265a524f5453',
-      uuidHeaterOn:'00000081-4c45-4b43-4942-265a524f5453',
-      uuidHeaterOff:'00000091-4c45-4b43-4942-265a524f5453',
-      uuidPumpOn:'',   // Crafty hat keine Pumpe
-      uuidPumpOff:'',
-    },
-    features:{ heat:true, pump:false, workflows:true },
-    notes:'BETA: UUIDs verifiziert via firsttris-Code. Heater-On/Off nur bei Crafty+ Firmware ≥ 2.51. Keine Pumpe (Crafty zieht über Mundstück).',
-  },
-  'mighty-plus': {
-    id:'mighty-plus',
-    name:'Mighty / Mighty+',
-    sub:'S&B Portable Vaporizer',
-    icon:'💨',
-    status:'beta',
-    namePrefix:'STORZ&BICKEL',
-    tempRange:[40, 210],
+    capabilities:{ heater:true, pump:false, bagFill:false, directDraw:true, battery:true, autoOff:true },
     uuids:{
       uuidServiceState:'00000001-4c45-4b43-4942-265a524f5453',
       uuidServiceControl:'00000001-4c45-4b43-4942-265a524f5453',
@@ -3291,19 +3785,41 @@ const DEVICE_PROFILES = {
       uuidPumpOff:'',
     },
     features:{ heat:true, pump:false, workflows:true },
-    notes:'BETA: Mighty teilt das BLE-Protokoll mit Crafty.',
+    notes:'BETA. Heizer + Temperatur funktionieren. Keine Pumpe (Direkt-Zug). Crafty+ ab Firmware 2.51 nötig für Heater-Steuerung.',
+  },
+  'mighty-plus': {
+    id:'mighty-plus',
+    name:'Mighty / Mighty+',
+    sub:'Portable · Direkt-Zug',
+    icon:'💨',
+    status:'beta',
+    namePrefix:'STORZ&BICKEL',
+    tempRange:[40, 210],
+    capabilities:{ heater:true, pump:false, bagFill:false, directDraw:true, battery:true, autoOff:true },
+    uuids:{
+      uuidServiceState:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidServiceControl:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidSetTemp:'00000021-4c45-4b43-4942-265a524f5453',
+      uuidCurTemp:'00000011-4c45-4b43-4942-265a524f5453',
+      uuidActivity:'00000083-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOn:'00000081-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOff:'00000091-4c45-4b43-4942-265a524f5453',
+      uuidPumpOn:'',
+      uuidPumpOff:'',
+    },
+    features:{ heat:true, pump:false, workflows:true },
+    notes:'BETA. Mighty teilt das BLE-Protokoll mit Crafty.',
   },
   'venty': {
     id:'venty',
     name:'Venty',
-    sub:'S&B Portable mit Lüfter',
+    sub:'Portable · mit Lüfter',
     icon:'🌪️',
     status:'beta',
     namePrefix:'Venty',
     tempRange:[40, 210],
+    capabilities:{ heater:true, pump:true, bagFill:false, directDraw:true, battery:true, autoOff:true, boost:true },
     uuids:{
-      // Venty/Veazy hat ein ganz anderes Protokoll: ein einziger Control-Char
-      // mit Write-Masken statt separater Chars. Hier nur Service vorbelegt.
       uuidServiceState:'00000000-5354-4f52-5a26-4249434b454c',
       uuidServiceControl:'00000000-5354-4f52-5a26-4249434b454c',
       uuidSetTemp:'00000001-5354-4f52-5a26-4249434b454c',
@@ -3315,7 +3831,7 @@ const DEVICE_PROFILES = {
       uuidPumpOff:'',
     },
     features:{ heat:true, pump:true, workflows:false },
-    notes:'EXPERIMENTAL: Venty nutzt ein anderes Protokoll (Control-Char mit Write-Masken). Steuerung noch nicht implementiert, nur Verbinden möglich.',
+    notes:'EXPERIMENTELL. Venty nutzt ein anderes Protokoll (Control-Char mit Write-Masken). Aktuell nur Verbinden, Steuerung folgt.',
   }
 };
 
@@ -3600,11 +4116,12 @@ async function wizTest(){
 ═══════════════════════════════════════════════════════════════ */
 function applyTheme(){
   document.documentElement.setAttribute('data-theme', PREFS.theme);
-  const tog = $('#togTheme');
-  if(tog) tog.setAttribute('aria-checked', String(PREFS.theme==='light'));
   // Update meta theme-color
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', PREFS.theme==='light' ? '#faf6ee' : '#0c0a08');
+  if(meta){
+    const previews = { dark:'#0c0a08', light:'#faf6ee', lava:'#1a0608', forest:'#0a1410', cosmos:'#080a1c', paper:'#f9f6ee' };
+    meta.setAttribute('content', previews[PREFS.theme] || '#0c0a08');
+  }
 }
 function toggleTheme(){
   PREFS.theme = (PREFS.theme==='light') ? 'dark' : 'light';
@@ -3749,6 +4266,8 @@ async function startBagFill(){
       playSuccess();
       haptic([60,50,80]);
       srAnnounce('Ballon gefüllt', true);
+      // v4.5: Auto-Cool-Down
+      maybeAutoCoolDown();
     } else {
       $('#bagStatus').textContent = 'Gestoppt';
     }
@@ -3807,38 +4326,93 @@ function openAroma(){
 function renderAromaList(query){
   const list = $('#aromaList'); if(!list) return;
   list.innerHTML='';
+
+  // "Eigene Sorte hinzufügen"-Card am Anfang
+  const addCard = document.createElement('div');
+  addCard.className='aroma-card';
+  addCard.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px';
+  addCard.innerHTML = `
+    <div>
+      <div class="name">+ Eigene Sorte hinzufügen</div>
+      <div class="desc" style="margin-bottom:0">Mit eigenen Temperaturen und Beschreibung</div>
+    </div>
+    <button class="btn sm primary" id="btnAddCustomAroma" aria-label="Eigene Sorte hinzufügen">Hinzufügen</button>
+  `;
+  list.appendChild(addCard);
+  addCard.querySelector('#btnAddCustomAroma').addEventListener('click', addCustomAromaPrompt);
+
   const results = findAromaSuggestions(query);
   if(!results.length){
-    list.innerHTML = '<p class="wiz-text" style="text-align:center;color:var(--muted)">Keine Treffer</p>';
+    const empty = document.createElement('p');
+    empty.className='wiz-text';
+    empty.style.cssText='text-align:center;color:var(--muted);margin-top:14px';
+    empty.textContent = 'Keine Treffer für „'+query+'"';
+    list.appendChild(empty);
     return;
   }
   for(const a of results){
     const card = document.createElement('div');
     card.className='aroma-card';
+    const kindBadge = a.kind ? `<span class="aroma-temp" style="cursor:default;background:transparent;font-size:9px;letter-spacing:.08em;text-transform:uppercase">${escapeHtml(a.kind)}</span>` : '';
+    const customDel = a.custom ? `<button class="btn sm ghost" data-act="del-custom" style="padding:3px 8px;min-height:auto;font-size:10px;color:var(--err)" aria-label="Eigene Sorte löschen">Löschen</button>` : '';
     card.innerHTML = `
-      <div class="name">${escapeHtml(a.name)}</div>
+      <div class="name">${escapeHtml(a.name)} ${a.custom ? '<span style="font-size:9px;letter-spacing:.1em;color:var(--cool);text-transform:uppercase;margin-left:6px">eigene</span>' : ''}</div>
       <div class="desc">${escapeHtml(a.desc)}</div>
-      <div class="aroma-temps"></div>
+      <div class="aroma-temps">
+        ${kindBadge}
+        <button class="aroma-temp" data-act="set" data-temp="${a.temps[0]}" aria-label="Auf ${a.temps[0]} Grad setzen">${a.temps[0]}°</button>
+        <button class="aroma-temp" data-act="set" data-temp="${a.temps[1]}" aria-label="Auf ${a.temps[1]} Grad setzen">${a.temps[1]}°</button>
+        <button class="aroma-temp" data-act="set" data-temp="${a.temps[2]}" aria-label="Auf ${a.temps[2]} Grad setzen">${a.temps[2]}°</button>
+      </div>
+      <div class="row" style="margin-top:8px;gap:6px">
+        <button class="btn sm hot" data-act="program" style="flex:1" aria-label="Programm mit 3-Stufen-Verlauf erzeugen">▶ Programm erzeugen</button>
+        ${customDel}
+      </div>
     `;
-    const tempsEl = card.querySelector('.aroma-temps');
-    for(const t of a.temps){
-      const b = document.createElement('button');
-      b.className='aroma-temp';
-      b.textContent = t+'°C';
-      b.setAttribute('aria-label', `Auf ${t} Grad setzen`);
-      b.addEventListener('click', async ()=>{
-        if(!State.connected){ toast('Erst verbinden'); return; }
-        try{
-          await cmdSetTemp(t);
+    card.querySelectorAll('button[data-act]').forEach(b=>{
+      b.addEventListener('click', async()=>{
+        const act = b.dataset.act;
+        if(act==='set'){
+          const t = parseInt(b.dataset.temp);
+          if(!State.connected){ toast('Erst verbinden'); return; }
+          try{
+            await cmdSetTemp(t);
+            $('#modalAroma').classList.remove('open');
+          }catch(e){
+            log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err');
+          }
+        } else if(act==='program'){
+          const prog = buildProgramFromAroma(a);
+          State.programs.unshift(prog);
+          LS.set('vol_programs', State.programs);
+          renderPrograms();
+          toast('Programm „'+a.name+'" angelegt');
           $('#modalAroma').classList.remove('open');
-        }catch(e){
-          log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err');
+          switchTab('prog');
+        } else if(act==='del-custom'){
+          if(confirm('Eigene Sorte „'+a.name+'" löschen?')){
+            removeCustomAroma(a.id);
+            renderAromaList(query);
+            toast('Gelöscht');
+          }
         }
       });
-      tempsEl.appendChild(b);
-    }
+    });
     list.appendChild(card);
   }
+}
+
+function addCustomAromaPrompt(){
+  const name = prompt('Name der Sorte:');
+  if(!name || !name.trim()) return;
+  const tempsStr = prompt('3 empfohlene Temperaturen in °C, komma-getrennt (z.B. 175,185,200):', '175,185,200');
+  if(!tempsStr) return;
+  const temps = tempsStr.split(',').map(s=>parseInt(s.trim())).filter(t=>t>=40 && t<=230);
+  if(temps.length !== 3){ alert('Bitte genau 3 Temperaturen zwischen 40 und 230 angeben.'); return; }
+  const desc = prompt('Kurze Beschreibung:', '') || 'Eigene Sorte';
+  addCustomAroma({name:name.trim(), temps, desc:desc.trim(), kind:'custom', terps:''});
+  renderAromaList('');
+  toast('Sorte „'+name+'" hinzugefügt');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4224,15 +4798,20 @@ function finishSession(){
 ═══════════════════════════════════════════════════════════════ */
 function openSettings(){
   // Sync toggles with current PREFS
-  $('#togTheme').setAttribute('aria-checked', String(PREFS.theme==='light'));
   $('#togSound').setAttribute('aria-checked', String(!!PREFS.sound));
   $('#togHaptic').setAttribute('aria-checked', String(!!PREFS.haptic));
   $('#togVoice').setAttribute('aria-checked', String(!!PREFS.voice));
+  $('#togSafetyAuto')?.setAttribute('aria-checked', String(!!PREFS.safetyAutoStart));
+  $('#togAutoCool')?.setAttribute('aria-checked', String(!!PREFS.autoCoolDown));
+  const safIn = $('#safetyMinInput'); if(safIn) safIn.value = PREFS.safetyMinutes||25;
+  const dirIn = $('#dirSecInput'); if(dirIn) dirIn.value = PREFS.directDrawSec||5;
+  const cIn = $('#autoCoolTempInput'); if(cIn) cIn.value = PREFS.autoCoolDownTemp||160;
   $('#voiceCmdSub').hidden = !PREFS.voice;
   document.querySelectorAll('[data-vc]').forEach(b=>{
     const k = b.dataset.vc;
     b.setAttribute('aria-checked', String(!!PREFS.voiceCmds[k]));
   });
+  renderThemePicker();
   renderBagProfileSettings();
   $('#modalSettings').classList.add('open');
 }
@@ -4324,8 +4903,485 @@ function importAllData(){
 }
 
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: QUICK ACTIONS — DEVICE BADGE — CAPABILITIES UI
+═══════════════════════════════════════════════════════════════ */
+function renderDeviceBadge(){
+  const id = getCurrentDeviceId();
+  const dev = DEVICE_PROFILES[id] || DEVICE_PROFILES['volcano-hybrid'];
+  const ico = $('#devBadgeIco'); if(ico) ico.textContent = dev.icon;
+  const nameEl = $('#devBadgeName'); if(nameEl) nameEl.textContent = dev.name;
+}
+function applyCapabilitiesUI(){
+  const caps = currentCapabilities();
+  // Pumpe-Buttons im manuellen Steuerung
+  const btnPump = $('#btnPump');
+  const btnPumpFor = $('#btnPumpFor');
+  const qaBag = $('#qaBagFill');
+  const qaDirect = $('#qaDirectDraw');
+  if(btnPump) btnPump.style.display = caps.pump ? '' : 'none';
+  if(btnPumpFor) btnPumpFor.style.display = caps.pump ? '' : 'none';
+  if(qaBag) qaBag.disabled = !caps.bagFill;
+  if(qaDirect) qaDirect.disabled = !(caps.directDraw || caps.pump);
+  // Pumpe-Indikator im Hero ausblenden wenn nicht vorhanden
+  const indPump = $('#indPump');
+  if(indPump) indPump.style.display = caps.pump ? '' : 'none';
+  // Quick-Action Meta-Texte aktualisieren
+  const dmeta = $('#qaDirectMeta');
+  if(dmeta) dmeta.textContent = (PREFS.directDrawSec||5)+' Sek.';
+  const bmeta = $('#qaBagMeta');
+  if(bmeta) bmeta.textContent = (PREFS.bagTimes[PREFS.bagType]||38)+' Sek.';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: DIRECT-DRAW (Pumpe X Sek. + aus)
+═══════════════════════════════════════════════════════════════ */
+async function quickDirectDraw(){
+  if(!State.connected){ toast('Erst verbinden'); return; }
+  const caps = currentCapabilities();
+  if(!caps.directDraw && !caps.pump){
+    toast('Direkt-Zug für dieses Gerät nicht verfügbar');
+    return;
+  }
+  const sec = clamp(PREFS.directDrawSec||5, 1, 60);
+  try{
+    if(caps.pump){
+      await cmdPumpFor(sec);
+    } else {
+      // Crafty/Mighty haben keine Pumpe, aber Direkt-Zug heißt nur „Heizer kurz an für Zug"
+      toast('Direkt aus dem Mundstück ziehen');
+      haptic([50,30,50]);
+      srAnnounce('Bereit zum Ziehen', false);
+    }
+  }catch(e){
+    log('Direkt-Zug Fehler: '+e.message,'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: PRE-HEAT TIMER
+═══════════════════════════════════════════════════════════════ */
+let preheatTimer = null;
+let preheatEndAt = null;
+let preheatTargetTemp = 185;
+
+function schedulePreheat(){
+  const minStr = prompt('In wievielen Minuten aufheizen? (1–180)', '10');
+  if(!minStr) return;
+  const min = clamp(parseInt(minStr)||10, 1, 180);
+  const tStr = prompt('Auf welche Temperatur? (40–230 °C)', String(PREFS.preferredTemp||185));
+  if(!tStr) return;
+  const temp = clamp(parseInt(tStr)||185, 40, 230);
+  preheatTargetTemp = temp;
+  preheatEndAt = Date.now() + min*60000;
+  startPreheatCountdown();
+  log(`Pre-Heat geplant: in ${min} Min auf ${temp}°C`, 'ok');
+  srAnnounce(`Pre-Heat geplant in ${min} Minuten auf ${temp} Grad`, false);
+}
+function startPreheatCountdown(){
+  if(preheatTimer) clearInterval(preheatTimer);
+  const box = $('#preheatRunning');
+  if(box) box.hidden = false;
+  const updateInfo = ()=>{
+    const remain = preheatEndAt - Date.now();
+    if(remain <= 0){
+      // Trigger!
+      executePreheat();
+      return;
+    }
+    const min = Math.floor(remain/60000);
+    const sec = Math.floor((remain%60000)/1000);
+    const info = $('#preheatInfo');
+    if(info) info.textContent = `in ${min}m ${String(sec).padStart(2,'0')}s auf ${preheatTargetTemp}°C`;
+  };
+  updateInfo();
+  preheatTimer = setInterval(updateInfo, 1000);
+}
+async function executePreheat(){
+  cancelPreheat();
+  if(!State.connected){
+    toast('Pre-Heat: Nicht verbunden — bitte manuell starten');
+    playSuccess();
+    haptic([100,80,100,80,100]);
+    srAnnounce('Pre-Heat Zeit erreicht. Bitte manuell verbinden und starten.', true);
+    return;
+  }
+  try{
+    await cmdSetTemp(preheatTargetTemp);
+    await cmdHeaterOn();
+    playSuccess();
+    haptic([100,80,100]);
+    toast(`Pre-Heat: ${preheatTargetTemp}°C aktiviert`);
+    srAnnounce(`Pre-Heat aktiv. Heizer an, Ziel ${preheatTargetTemp} Grad`, true);
+  }catch(e){
+    log('Pre-Heat Trigger Fehler: '+e.message,'err');
+    toast('Pre-Heat Fehler');
+  }
+}
+function cancelPreheat(){
+  if(preheatTimer){ clearInterval(preheatTimer); preheatTimer=null; }
+  preheatEndAt = null;
+  const box = $('#preheatRunning');
+  if(box) box.hidden = true;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: SAFETY TIMER AUTO-START on heater-on
+═══════════════════════════════════════════════════════════════ */
+function maybeAutoStartSafety(){
+  if(!PREFS.safetyAutoStart) return;
+  if(State.safetyTimer) return; // bereits aktiv
+  const sInput = $('#sInput');
+  const min = clamp(PREFS.safetyMinutes||25, 1, 60);
+  if(sInput) sInput.value = min;
+  // existing safety start (uses sInput value)
+  if(typeof startSafetyTimer === 'function'){
+    startSafetyTimer();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: AUTO COOL-DOWN after bag fill
+═══════════════════════════════════════════════════════════════ */
+async function maybeAutoCoolDown(){
+  if(!PREFS.autoCoolDown) return;
+  if(!State.connected || !State.heater) return;
+  const t = clamp(PREFS.autoCoolDownTemp||160, 100, 220);
+  try{
+    await cmdSetTemp(t);
+    log(`Auto-Cool-Down auf ${t}°C`, 'ok');
+    toast(`❄️ Cool-Down ${t}°C`);
+  }catch(e){
+    log('Auto-Cool-Down Fehler: '+e.message,'err');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: THEME PICKER
+═══════════════════════════════════════════════════════════════ */
+function renderThemePicker(){
+  const root = $('#themeGrid'); if(!root) return;
+  root.innerHTML='';
+  for(const [id, t] of Object.entries(THEMES)){
+    const card = document.createElement('button');
+    card.className = 'theme-card '+(PREFS.theme===id?'active':'');
+    card.setAttribute('aria-label', t.label+' Theme');
+    card.setAttribute('aria-pressed', String(PREFS.theme===id));
+    card.innerHTML = `
+      <span class="swatch" style="background:${t.preview}"></span>
+      <span class="lbl">${escapeHtml(t.label)}</span>
+      <span class="desc">${escapeHtml(t.desc)}</span>
+    `;
+    card.addEventListener('click', ()=>{
+      PREFS.theme = id;
+      savePrefs();
+      applyTheme();
+      renderThemePicker();
+      toast(t.label+' Theme aktiv');
+    });
+    root.appendChild(card);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: STEP TEMPLATES (im Editor einfügbar)
+═══════════════════════════════════════════════════════════════ */
+function openStepTemplates(){
+  const root = $('#stepTplList'); if(!root) return;
+  root.innerHTML='';
+  for(const tpl of STEP_TEMPLATES){
+    const c = document.createElement('button');
+    c.className='act';
+    c.style.display='block';
+    c.style.width='100%';
+    c.style.marginBottom='8px';
+    c.innerHTML = `<b>${escapeHtml(tpl.name)}</b><small>${escapeHtml(tpl.desc)} · ${tpl.steps.length} Schritte</small>`;
+    c.addEventListener('click', ()=>{
+      // Insert at end
+      editorState.steps = editorState.steps.concat(JSON.parse(JSON.stringify(tpl.steps)));
+      renderBuilder();
+      $('#modalStepTpl').classList.remove('open');
+      toast('„'+tpl.name+'" eingefügt');
+    });
+    root.appendChild(c);
+  }
+  $('#modalStepTpl').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: CSV EXPORT & STATS VISUALIZATION
+═══════════════════════════════════════════════════════════════ */
+function exportSessionsCSV(){
+  const sessions = LS.get('vol_sessions', []);
+  if(!sessions.length){
+    toast('Keine Sessions zum Exportieren');
+    return;
+  }
+  const header = 'Datum;Zeit;Ballons;Heizdauer (Sek);Notizen';
+  const rows = sessions.map(s=>{
+    const d = new Date(s.at);
+    const dateStr = d.toLocaleDateString('de-DE');
+    const timeStr = d.toLocaleTimeString('de-DE');
+    const notes = (s.notes||'').replace(/[\r\n]+/g,' ').replace(/"/g,'""');
+    return `${dateStr};${timeStr};${s.bagsFilled||0};${s.heatSec||0};"${notes}"`;
+  });
+  const csv = '\ufeff' + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sessions-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('CSV wird heruntergeladen');
+}
+function renderStatsViz(){
+  const root = $('#statsViz'); if(!root) return;
+  const sessions = LS.get('vol_sessions', []);
+  // Letzte 7 Tage als Bar-Chart
+  const days = [];
+  const now = new Date();
+  for(let i=6;i>=0;i--){
+    const d = new Date(now); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+    const start = d.getTime();
+    const end = start + 86400000;
+    const inDay = sessions.filter(s=>s.at>=start && s.at<end);
+    const bags = inDay.reduce((s,x)=>s+(x.bagsFilled||0), 0);
+    days.push({
+      label: d.toLocaleDateString('de-DE',{weekday:'short'}),
+      sessions: inDay.length,
+      bags,
+    });
+  }
+  const maxBags = Math.max(1, ...days.map(d=>d.bags));
+  let html = '';
+  for(const d of days){
+    const w = (d.bags / maxBags * 100).toFixed(1);
+    html += `<div class="bar-row"><span class="lbl">${escapeHtml(d.label)}</span><div class="bar"><div style="width:${w}%"></div></div><span class="val">${d.bags}</span></div>`;
+  }
+  if(sessions.length===0){
+    html = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:8px">Noch keine archivierten Sessions</div>';
+  }
+  root.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: SESSION REPLAY (letztes Programm nochmal starten)
+═══════════════════════════════════════════════════════════════ */
+function rememberLastProgram(p){
+  LS.set('vol_last_program', {
+    name:p.name,
+    desc:p.desc||'',
+    steps:p.steps,
+    at:Date.now(),
+  });
+}
+function replayLastProgram(){
+  const last = LS.get('vol_last_program', null);
+  if(!last){
+    toast('Noch kein Programm gestartet');
+    return;
+  }
+  runProgram(last);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: QUICK FAVORITES (4 Lieblings-Temperaturen)
+═══════════════════════════════════════════════════════════════ */
+function getQuickFavs(){
+  return LS.get('vol_quick_favs', [170, 180, 190, 200]);
+}
+function setQuickFav(idx, temp){
+  const favs = getQuickFavs();
+  favs[idx] = clamp(temp, 40, 230);
+  LS.set('vol_quick_favs', favs);
+}
+function renderQuickFavs(){
+  // Map existing .pills to favorites
+  const favs = getQuickFavs();
+  $$('.pill').forEach((p, i)=>{
+    if(favs[i] !== undefined){
+      p.dataset.temp = String(favs[i]);
+      p.textContent = favs[i]+'°';
+      p.setAttribute('aria-label', `${favs[i]} Grad setzen, lange tippen zum Ändern`);
+    }
+  });
+}
+function setupFavLongPress(){
+  $$('.pill').forEach((p, i)=>{
+    let pressTimer = null;
+    const start = (e)=>{
+      pressTimer = setTimeout(()=>{
+        const cur = p.dataset.temp || '180';
+        const newT = prompt('Neue Lieblings-Temperatur (°C):', cur);
+        if(newT){
+          const t = clamp(parseInt(newT)||180, 40, 230);
+          setQuickFav(i, t);
+          renderQuickFavs();
+          toast('Favorit gespeichert');
+        }
+      }, 800);
+    };
+    const cancel = ()=>{ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } };
+    p.addEventListener('pointerdown', start);
+    p.addEventListener('pointerup', cancel);
+    p.addEventListener('pointerleave', cancel);
+    p.addEventListener('pointercancel', cancel);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: SMART DEFAULTS — App lernt häufige Lieblings-Temperatur
+═══════════════════════════════════════════════════════════════ */
+function noteUsedTemp(t){
+  if(!isFinite(t)) return;
+  const hist = LS.get('vol_temp_hist', []);
+  hist.push(t);
+  if(hist.length > 60) hist.shift();
+  LS.set('vol_temp_hist', hist);
+  // Aktualisiere preferred: häufigste Temp der letzten 30
+  if(hist.length >= 5){
+    const last30 = hist.slice(-30);
+    const counts = {};
+    last30.forEach(t=>{ counts[t] = (counts[t]||0)+1; });
+    const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    PREFS.preferredTemp = parseInt(sorted[0][0]);
+    savePrefs();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: HEIZKURVEN-ANALYSE
+═══════════════════════════════════════════════════════════════ */
+function analyzeHeatCurve(){
+  // Während eines Heat-Cycles: messe wie lang von Raumtemp bis 180°
+  const h = State.tempHistory;
+  if(h.length < 5) return null;
+  let lowIdx = -1;
+  for(let i=0;i<h.length;i++){
+    if(h[i].c < 50){ lowIdx = i; break; }
+  }
+  if(lowIdx === -1) return null;
+  let hiIdx = -1;
+  for(let i=lowIdx;i<h.length;i++){
+    if(h[i].c >= 180){ hiIdx = i; break; }
+  }
+  if(hiIdx === -1) return null;
+  const sec = Math.round((h[hiIdx].t - h[lowIdx].t)/1000);
+  return sec;
+}
+function rememberHeatCurve(sec){
+  if(!sec || sec < 30 || sec > 600) return;
+  const hist = LS.get('vol_heat_curves', []);
+  hist.push({sec, at:Date.now()});
+  if(hist.length > 20) hist.shift();
+  LS.set('vol_heat_curves', hist);
+}
+function getHeatCurveStats(){
+  const hist = LS.get('vol_heat_curves', []);
+  if(!hist.length) return null;
+  const secs = hist.map(h=>h.sec);
+  const avg = Math.round(secs.reduce((s,v)=>s+v,0)/secs.length);
+  const lastSec = secs[secs.length-1];
+  return {avg, last:lastSec, count:hist.length};
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: PWA UPDATE PROMPT
+═══════════════════════════════════════════════════════════════ */
+function setupPwaUpdate(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    reg.addEventListener('updatefound', ()=>{
+      const nw = reg.installing;
+      if(!nw) return;
+      nw.addEventListener('statechange', ()=>{
+        if(nw.state === 'installed' && navigator.serviceWorker.controller){
+          // Neue Version verfügbar
+          if(confirm('Eine neue Version von Sessions ist verfügbar. Jetzt aktualisieren?')){
+            nw.postMessage({type:'SKIP_WAITING'});
+            window.location.reload();
+          }
+        }
+      });
+    });
+  }).catch(()=>{});
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: MULTI-DEVICE LIST (gemerkte Geräte mit Alias)
+═══════════════════════════════════════════════════════════════ */
+function getKnownDevices(){
+  return LS.get('vol_known_devices', []);
+}
+function rememberDevice(bleName, devTypeId, alias){
+  const known = getKnownDevices();
+  const exists = known.find(d=>d.bleName===bleName);
+  if(exists){
+    exists.alias = alias || exists.alias;
+    exists.devType = devTypeId;
+    exists.lastUsed = Date.now();
+  } else {
+    known.unshift({
+      id:'dev_'+Date.now(),
+      bleName, devType:devTypeId,
+      alias: alias || bleName || 'Mein Gerät',
+      lastUsed:Date.now(),
+    });
+  }
+  LS.set('vol_known_devices', known.slice(0,8));
+}
+function removeKnownDevice(id){
+  const known = getKnownDevices().filter(d=>d.id!==id);
+  LS.set('vol_known_devices', known);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.5: NOTFALL-DIAGNOSE
+═══════════════════════════════════════════════════════════════ */
+function captureDiagnostics(errMsg=''){
+  const diag = {
+    at: new Date().toISOString(),
+    appVersion: 'v4.5',
+    error: errMsg,
+    connected: State.connected,
+    device: State.device?.name || null,
+    deviceType: getCurrentDeviceId(),
+    currentTemp: State.cur,
+    targetTemp: State.target,
+    heater: State.heater,
+    pump: State.pump,
+    autoOff: State.autoOff,
+    chars: Object.fromEntries(Object.entries(State.chars).map(([k,v])=>[k, !!v])),
+    userAgent: navigator.userAgent,
+  };
+  const log = LS.get('vol_diag_log', []);
+  log.unshift(diag);
+  LS.set('vol_diag_log', log.slice(0,10));
+  return diag;
+}
+function showDiagnostics(){
+  const log = LS.get('vol_diag_log', []);
+  if(!log.length){
+    toast('Keine Diagnose-Einträge');
+    return;
+  }
+  const txt = log.map(d=>JSON.stringify(d, null, 2)).join('\n\n---\n\n');
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sessions-diagnostics-'+new Date().toISOString().slice(0,10)+'.txt';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('Diagnose heruntergeladen');
+}
+
+
 function init(){
-  // v4.4: apply theme first to avoid flash
+  // v4.5: apply theme first to avoid flash
   applyTheme();
 
   loadUUIDs();
@@ -4351,6 +5407,13 @@ function init(){
   // Check URL hash for incoming QR-shared program
   checkImportFromUrl();
 
+  // v4.5: device badge, capabilities-driven UI, favorites, stats viz
+  renderDeviceBadge();
+  applyCapabilitiesUI();
+  renderQuickFavs();
+  setupFavLongPress();
+  renderStatsViz();
+
   // Environment check
   const env = detectEnv();
   if(!env.hasBLE){
@@ -4358,12 +5421,10 @@ function init(){
   }
   maybeShowIosBanner();
 
-  log('App bereit (v4.4).','ok');
+  log('Sessions v4.5 bereit.','ok');
 
-  // PWA install hint
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline disabled silently */ });
-  }
+  // v4.5: PWA update prompt (replaces simple register)
+  setupPwaUpdate();
 
   // First-time onboarding
   const onboarded = LS.get('vol_onboarded', false);

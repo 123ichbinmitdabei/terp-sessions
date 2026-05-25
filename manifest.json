@@ -1,13 +1,13 @@
 {
-  "name": "Volcano Hybrid Controller",
-  "short_name": "Volcano",
-  "description": "Steuerung und Programme für den Storz & Bickel Volcano Hybrid.",
+  "name": "Sessions — S&B Vape Controller",
+  "short_name": "Sessions",
+  "description": "Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty und Venty",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0908",
-  "theme_color": "#0a0908",
+  "background_color": "#0c0a08",
+  "theme_color": "#0c0a08",
   "categories": ["utilities", "lifestyle"],
   "icons": [
     {
