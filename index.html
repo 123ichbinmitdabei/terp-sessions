@@ -435,6 +435,62 @@ details summary:hover{color:var(--text)}
   display:none;
   box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
+
+/* ── Last action banner ─────────────────────────────────────── */
+.last-action{
+  margin-top:10px;
+  padding:8px 12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  font-size:13px;
+  display:flex;align-items:center;gap:8px;
+  min-height:36px;
+  position:relative;z-index:1;
+}
+.last-action .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.last-action .msg{flex:1;font-family:'JetBrains Mono';font-size:12px}
+.last-action.busy{border-color:rgba(245,158,11,.4)}
+.last-action.busy .msg{color:var(--heat)}
+.last-action.busy::before{
+  content:"";width:8px;height:8px;border-radius:50%;
+  background:var(--heat);box-shadow:0 0 12px var(--heat);
+  animation:pulse 1s ease-in-out infinite;
+}
+.last-action.ok{border-color:rgba(16,185,129,.35)}
+.last-action.ok .msg{color:var(--ok)}
+.last-action.err{border-color:rgba(239,68,68,.4)}
+.last-action.err .msg{color:var(--err)}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.5;transform:scale(1.3)}
+}
+
+/* Busy ring on connection dot */
+.brand-dot.busy{
+  background:var(--heat);
+  box-shadow:0 0 12px var(--heat);
+  animation:pulse 1s ease-in-out infinite;
+}
+
+/* Quick mini-log on Steuerung tab */
+.mini-log{
+  margin-top:10px;
+  padding:8px 10px;
+  background:#080706;
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  font-family:'JetBrains Mono';
+  font-size:11px;
+  color:#cfc9bf;
+  max-height:80px;
+  overflow:auto;
+  line-height:1.5;
+}
+.mini-log:empty{display:none}
+.mini-log .err{color:var(--err)}
+.mini-log .ok{color:var(--ok)}
+.mini-log .warn{color:var(--warn)}
 .ios-banner.show{display:block;animation:slideUp .3s ease}
 .ios-banner .head{font-weight:700;color:#fde047;margin-bottom:4px;font-size:14px}
 .ios-banner .body{font-size:13px;color:var(--text);line-height:1.45}
@@ -488,6 +544,10 @@ details summary:hover{color:var(--text)}
       <div class="ind" id="indHeat"><span class="dot"></span><span>Heizer</span></div>
       <div class="ind" id="indPump"><span class="dot"></span><span>Pumpe</span></div>
     </div>
+    <div class="last-action" id="lastAction">
+      <span class="label">Bereit</span>
+      <span class="msg" id="lastActionMsg">Tippe „Verbinden" um zu starten</span>
+    </div>
   </div>
 
   <!-- Manual temp control -->
@@ -529,6 +589,7 @@ details summary:hover{color:var(--text)}
       </div>
       <button class="btn lg" id="btnPumpFor" style="align-self:flex-end">Start</button>
     </div>
+    <pre class="mini-log" id="miniLog"></pre>
   </div>
 
   <!-- Safety -->
@@ -610,32 +671,40 @@ details summary:hover{color:var(--text)}
   <div class="card">
     <h3>UUID-Mapping <button class="help-ico" data-help="uuid">?</button></h3>
     <div class="field">
-      <label>Service</label>
-      <input class="input mono" id="uuidService" value="10100000-5354-4f52-5a26-4249434b454c">
+      <label>Service State (Notify-Service)</label>
+      <input class="input mono" id="uuidServiceState" value="10100000-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
-      <label>Set Temp (write)</label>
-      <input class="input mono" id="uuidSetTemp" value="10100006-5354-4f52-5a26-4249434b454c">
+      <label>Service Control (Befehls-Service)</label>
+      <input class="input mono" id="uuidServiceControl" value="10110000-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Set Temp (write, Uint32 LE × 10)</label>
+      <input class="input mono" id="uuidSetTemp" value="10110003-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
       <label>Current Temp (notify)</label>
       <input class="input mono" id="uuidCurTemp" value="10110001-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
-      <label>Target Temp (notify, optional)</label>
-      <input class="input mono" id="uuidTargetNotify" value="1010000d-5354-4f52-5a26-4249434b454c">
+      <label>Activity (notify, Bitmaske für Heizer/Pumpe-Status)</label>
+      <input class="input mono" id="uuidActivity" value="1010000c-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
-      <label>Status (notify, Bits für Heizer/Pumpe)</label>
-      <input class="input mono" id="uuidStatus" value="1010000c-5354-4f52-5a26-4249434b454c">
+      <label>Heater AN (write)</label>
+      <input class="input mono" id="uuidHeaterOn" value="1011000f-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
-      <label>Heater (write)</label>
-      <input class="input mono" id="uuidHeater" value="10110003-5354-4f52-5a26-4249434b454c">
+      <label>Heater AUS (write)</label>
+      <input class="input mono" id="uuidHeaterOff" value="10110010-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="field" style="margin-top:8px">
-      <label>Pump (write)</label>
-      <input class="input mono" id="uuidPump" value="10110004-5354-4f52-5a26-4249434b454c">
+      <label>Pump AN (write)</label>
+      <input class="input mono" id="uuidPumpOn" value="10110013-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Pump AUS (write)</label>
+      <input class="input mono" id="uuidPumpOff" value="10110014-5354-4f52-5a26-4249434b454c">
     </div>
     <div class="row" style="margin-top:12px">
       <button class="btn sm" id="btnSaveUUIDs">Speichern</button>
@@ -884,40 +953,73 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const State={
   connected:false,
   device:null, server:null,
-  chars:{setTemp:null, curTemp:null, targetNotify:null, status:null, heater:null, pump:null},
+  chars:{setTemp:null, curTemp:null, activity:null, heaterOn:null, heaterOff:null, pumpOn:null, pumpOff:null},
   allServices:[],
-  cur:NaN, target:NaN, heater:false, pump:false,
+  cur:NaN, target:NaN, heater:false, pump:false, autoOff:false,
   programs:LS.get('vol_programs',[]),
   editingId:null,
-  running:null, // {programId, idx, stopFlag, total}
+  running:null,
   safetyTimer:null, safetyEndAt:null,
+  lastAction:'', busy:false,
 };
 
 const DEFAULTS={
-  uuidService:'10100000-5354-4f52-5a26-4249434b454c',
-  uuidSetTemp:'10100006-5354-4f52-5a26-4249434b454c',
+  uuidServiceState:'10100000-5354-4f52-5a26-4249434b454c',
+  uuidServiceControl:'10110000-5354-4f52-5a26-4249434b454c',
+  uuidSetTemp:'10110003-5354-4f52-5a26-4249434b454c',
   uuidCurTemp:'10110001-5354-4f52-5a26-4249434b454c',
-  uuidTargetNotify:'1010000d-5354-4f52-5a26-4249434b454c',
-  uuidStatus:'1010000c-5354-4f52-5a26-4249434b454c',
-  uuidHeater:'10110003-5354-4f52-5a26-4249434b454c',
-  uuidPump:'10110004-5354-4f52-5a26-4249434b454c',
+  uuidActivity:'1010000c-5354-4f52-5a26-4249434b454c',
+  uuidHeaterOn:'1011000f-5354-4f52-5a26-4249434b454c',
+  uuidHeaterOff:'10110010-5354-4f52-5a26-4249434b454c',
+  uuidPumpOn:'10110013-5354-4f52-5a26-4249434b454c',
+  uuidPumpOff:'10110014-5354-4f52-5a26-4249434b454c',
+};
+
+// Activity status bitmask
+const ACT_BITS = {
+  HEAT: 0x0020,        // bit 5
+  AUTO_OFF: 0x0200,    // bit 9
+  PUMP: 0x2000,        // bit 13
 };
 
 /* ═══════════════════════════════════════════════════════════════
    LOGGING & UI HELPERS
 ═══════════════════════════════════════════════════════════════ */
 function log(msg, kind=''){
-  const el=$('#log'); if(!el) return;
   const t=new Date().toLocaleTimeString();
-  const line=document.createElement('div');
-  if(kind) line.className=kind;
-  line.textContent=`[${t}] ${msg}`;
-  el.appendChild(line);
-  el.scrollTop=el.scrollHeight;
-  // also surface errors as toast
+  // Main log
+  const el=$('#log');
+  if(el){
+    const line=document.createElement('div');
+    if(kind) line.className=kind;
+    line.textContent=`[${t}] ${msg}`;
+    el.appendChild(line);
+    el.scrollTop=el.scrollHeight;
+  }
+  // Mini log on Steuerung tab (last 5 lines)
+  const mini=$('#miniLog');
+  if(mini){
+    const line=document.createElement('div');
+    if(kind) line.className=kind;
+    line.textContent=`${t}  ${msg}`;
+    mini.appendChild(line);
+    while(mini.children.length>5) mini.removeChild(mini.firstChild);
+    mini.scrollTop=mini.scrollHeight;
+  }
   if(kind==='err') toast(msg);
 }
-function clearLog(){ $('#log').innerHTML='' }
+function clearLog(){ $('#log').innerHTML=''; const m=$('#miniLog'); if(m) m.innerHTML=''; }
+
+function renderLastAction(msg, kind='ok'){
+  State.lastAction = msg;
+  const el = $('#lastAction'); if(!el) return;
+  const msgEl = $('#lastActionMsg');
+  if(msgEl) msgEl.textContent = msg;
+  el.classList.remove('busy','ok','err');
+  if(kind) el.classList.add(kind);
+  // Busy ring on top brand dot
+  $('#dot').classList.toggle('busy', kind==='busy');
+}
 
 let toastTimer=null;
 function toast(msg){
@@ -937,6 +1039,11 @@ function setConn(connected){
   $('#btnConnect').disabled=connected;
   $('#btnConnect2').disabled=connected;
   $('#btnDisconnect').disabled=!connected;
+  if(connected){
+    renderLastAction('Verbunden mit '+(State.device?.name||'Gerät'), 'ok');
+  }else{
+    renderLastAction('Tippe „Verbinden" um zu starten', '');
+  }
 }
 
 function setHeatGlow(){
@@ -968,13 +1075,15 @@ function renderStatus(){
 ═══════════════════════════════════════════════════════════════ */
 function getUUIDs(){
   return {
-    service:  $('#uuidService').value.trim().toLowerCase(),
-    setTemp:  $('#uuidSetTemp').value.trim().toLowerCase(),
-    curTemp:  $('#uuidCurTemp').value.trim().toLowerCase(),
-    targetNotify: $('#uuidTargetNotify').value.trim().toLowerCase(),
-    status:   $('#uuidStatus').value.trim().toLowerCase(),
-    heater:   $('#uuidHeater').value.trim().toLowerCase(),
-    pump:     $('#uuidPump').value.trim().toLowerCase(),
+    serviceState:    $('#uuidServiceState').value.trim().toLowerCase(),
+    serviceControl:  $('#uuidServiceControl').value.trim().toLowerCase(),
+    setTemp:         $('#uuidSetTemp').value.trim().toLowerCase(),
+    curTemp:         $('#uuidCurTemp').value.trim().toLowerCase(),
+    activity:        $('#uuidActivity').value.trim().toLowerCase(),
+    heaterOn:        $('#uuidHeaterOn').value.trim().toLowerCase(),
+    heaterOff:       $('#uuidHeaterOff').value.trim().toLowerCase(),
+    pumpOn:          $('#uuidPumpOn').value.trim().toLowerCase(),
+    pumpOff:         $('#uuidPumpOff').value.trim().toLowerCase(),
   };
 }
 function loadUUIDs(){
@@ -1007,11 +1116,16 @@ async function connectBLE(){
     return;
   }
   try{
+    renderLastAction('Geräteauswahl öffnen…','busy');
     const u=getUUIDs();
-    const services = [...new Set([u.service,
+    const services = [...new Set([u.serviceState, u.serviceControl,
       '10100000-5354-4f52-5a26-4249434b454c',
       '10110000-5354-4f52-5a26-4249434b454c',
-      '10130000-5354-4f52-5a26-4249434b454c'].filter(Boolean))];
+      '10130000-5354-4f52-5a26-4249434b454c',
+      '00000001-4c45-4b43-4942-265a524f5453',
+      '00000002-4c45-4b43-4942-265a524f5453',
+      '00000003-4c45-4b43-4942-265a524f5453',
+      '00000000-5354-4f52-5a26-4249434b454c'].filter(Boolean))];
     log('Gerätedialog öffnen…');
     State.device = await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
@@ -1021,14 +1135,19 @@ async function connectBLE(){
       log('BLE getrennt.','warn');
       setConn(false);
     });
+    renderLastAction('Verbinde mit '+State.device.name+'…','busy');
     State.server = await State.device.gatt.connect();
     State.allServices = await State.server.getPrimaryServices();
     log(`Verbunden mit ${State.device.name||'Gerät'}.`,'ok');
+    renderLastAction('Suche Characteristics…','busy');
     await bindAllChars();
+    renderLastAction('Aktiviere Live-Status…','busy');
     await startAllNotifications();
     setConn(true);
+    toast('Verbunden mit '+State.device.name);
   }catch(e){
     log('Verbindungsfehler: '+e.message,'err');
+    renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
     setConn(false);
   }
 }
@@ -1053,15 +1172,21 @@ async function getCharByUUID(uuid){
 
 async function bindAllChars(){
   const u=getUUIDs();
-  State.chars.setTemp     = await getCharByUUID(u.setTemp);
-  State.chars.curTemp     = await getCharByUUID(u.curTemp);
-  State.chars.targetNotify= await getCharByUUID(u.targetNotify);
-  State.chars.status      = await getCharByUUID(u.status);
-  State.chars.heater      = await getCharByUUID(u.heater);
-  State.chars.pump        = await getCharByUUID(u.pump);
+  State.chars.setTemp    = await getCharByUUID(u.setTemp);
+  State.chars.curTemp    = await getCharByUUID(u.curTemp);
+  State.chars.activity   = await getCharByUUID(u.activity);
+  State.chars.heaterOn   = await getCharByUUID(u.heaterOn);
+  State.chars.heaterOff  = await getCharByUUID(u.heaterOff);
+  State.chars.pumpOn     = await getCharByUUID(u.pumpOn);
+  State.chars.pumpOff    = await getCharByUUID(u.pumpOff);
   const missing=[];
   for(const [k,v] of Object.entries(State.chars)){ if(!v) missing.push(k); }
-  if(missing.length) log('Nicht gefunden: '+missing.join(', '),'warn');
+  if(missing.length){
+    log('Nicht gefunden: '+missing.join(', '),'warn');
+    toast('UUIDs unvollständig: '+missing.length+' fehlen');
+  } else {
+    log('Alle 7 Characteristics gebunden ✓','ok');
+  }
 }
 
 /* ── Notify parsing ─────────────────────────────────────────────
@@ -1090,49 +1215,107 @@ async function startAllNotifications(){
       log(`Notify ${name} fehlgeschlagen: ${e.message}`,'warn');
     }
   };
-  await wire(State.chars.curTemp,    v=>{ State.cur=parseTempU16LE(v); renderStatus(); }, 'CurTemp');
-  await wire(State.chars.targetNotify,v=>{ State.target=parseTempU16LE(v); renderStatus(); }, 'TargetTemp');
-  await wire(State.chars.status, v=>{
-    // Volcano-Status: Bitfeld. Wir testen die häufigsten Layouts.
-    const b=new Uint8Array(v.buffer);
-    if(b.length>=2){
-      // Versuch: status word als Uint16 LE, dann Bit-Mapping
-      const w = v.getUint16(0,true);
-      State.heater = !!(w & 0x0020);  // bit 5
-      State.pump   = !!(w & 0x2000);  // bit 13  (häufig bei Hybrid)
-    }
+  await wire(State.chars.curTemp, v=>{
+    State.cur = parseTempU16LE(v);
     renderStatus();
-  }, 'Status');
+  }, 'CurrentTemp');
+  await wire(State.chars.setTemp, v=>{
+    // Target temp also notifies on this char
+    State.target = parseTempU16LE(v);
+    renderStatus();
+  }, 'TargetTemp');
+  await wire(State.chars.activity, v=>{
+    if(v.byteLength<2) return;
+    const w = v.getUint16(0, true);
+    State.heater = !!(w & ACT_BITS.HEAT);
+    State.pump   = !!(w & ACT_BITS.PUMP);
+    State.autoOff= !!(w & ACT_BITS.AUTO_OFF);
+    renderStatus();
+  }, 'Activity');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BLE COMMANDS
+   BLE COMMANDS — korrigiert auf echte Volcano-Hybrid Spec
+   - SetTemp: Uint32 LE, value*10
+   - HeaterOn/HeaterOff: SEPARATE chars, Uint8 = 0
+   - PumpOn/PumpOff: SEPARATE chars, Uint8 = 0
 ═══════════════════════════════════════════════════════════════ */
+async function withBusy(label, fn){
+  State.lastAction = label;
+  State.busy = true;
+  renderLastAction(label, 'busy');
+  try{
+    const result = await fn();
+    renderLastAction(label, 'ok');
+    return result;
+  }catch(e){
+    renderLastAction(label+' — FEHLER: '+e.message, 'err');
+    throw e;
+  }finally{
+    State.busy = false;
+  }
+}
+
 async function cmdSetTemp(celsius){
-  if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt.');
-  const c=clamp(Math.round(celsius),40,230);
-  const buf=new ArrayBuffer(2);
-  new DataView(buf).setUint16(0, c*10, true);
-  await State.chars.setTemp.writeValueWithoutResponse(buf);
-  State.target=c; renderStatus();
-  log(`Temp gesetzt: ${c} °C`,'ok');
+  if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt. Auto-Mapping ausführen.');
+  const c = clamp(Math.round(celsius), 40, 230);
+  return withBusy(`Temp setzen → ${c} °C`, async()=>{
+    // Volcano expects Uint32 LE with value × 10
+    const buf=new ArrayBuffer(4);
+    new DataView(buf).setUint32(0, c*10, true);
+    await State.chars.setTemp.writeValue(buf);
+    State.target=c; renderStatus();
+    log(`Temp gesetzt: ${c} °C (Uint32 LE = ${c*10})`,'ok');
+    toast(`Ziel ${c}°C`);
+  });
 }
-async function cmdHeater(on){
-  if(!State.chars.heater) throw new Error('Heater-Char fehlt.');
-  await State.chars.heater.writeValueWithoutResponse(new Uint8Array([on?1:0]));
-  State.heater=!!on; renderStatus();
-  log(`Heizer ${on?'EIN':'AUS'}`,'ok');
+
+async function cmdHeaterOn(){
+  if(!State.chars.heaterOn) throw new Error('HeaterOn-Char fehlt.');
+  return withBusy('Heizer EIN', async()=>{
+    const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
+    await State.chars.heaterOn.writeValue(buf);
+    log('Heizer EIN','ok');
+    toast('🔥 Heizer EIN');
+  });
 }
-async function cmdPump(on){
-  if(!State.chars.pump) throw new Error('Pump-Char fehlt.');
-  await State.chars.pump.writeValueWithoutResponse(new Uint8Array([on?1:0]));
-  State.pump=!!on; renderStatus();
-  log(`Pumpe ${on?'EIN':'AUS'}`,'ok');
+async function cmdHeaterOff(){
+  if(!State.chars.heaterOff) throw new Error('HeaterOff-Char fehlt.');
+  return withBusy('Heizer AUS', async()=>{
+    const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
+    await State.chars.heaterOff.writeValue(buf);
+    log('Heizer AUS','ok');
+    toast('❄️ Heizer AUS');
+  });
 }
+async function cmdPumpOn(){
+  if(!State.chars.pumpOn) throw new Error('PumpOn-Char fehlt.');
+  return withBusy('Pumpe EIN', async()=>{
+    const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
+    await State.chars.pumpOn.writeValue(buf);
+    log('Pumpe EIN','ok');
+    toast('💨 Pumpe EIN');
+  });
+}
+async function cmdPumpOff(){
+  if(!State.chars.pumpOff) throw new Error('PumpOff-Char fehlt.');
+  return withBusy('Pumpe AUS', async()=>{
+    const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
+    await State.chars.pumpOff.writeValue(buf);
+    log('Pumpe AUS','ok');
+    toast('⭘ Pumpe AUS');
+  });
+}
+// Compat wrappers for workflow engine
+async function cmdHeater(on){ return on ? cmdHeaterOn() : cmdHeaterOff(); }
+async function cmdPump(on){ return on ? cmdPumpOn() : cmdPumpOff(); }
 async function cmdPumpFor(seconds){
-  await cmdPump(true);
-  await sleep(seconds*1000);
-  await cmdPump(false);
+  return withBusy(`Pumpe für ${seconds}s`, async()=>{
+    await cmdPumpOn();
+    log(`Pumpe läuft ${seconds}s …`);
+    await sleep(seconds*1000);
+    await cmdPumpOff();
+  });
 }
 async function waitUntilReached(targetC, timeoutSec=180){
   const t0=Date.now();
@@ -1165,53 +1348,96 @@ async function discover(){
 
 async function autoMap(){
   if(!State.server){ toast('Erst verbinden'); return; }
+  renderLastAction('Auto-Mapping läuft…','busy');
   const services=State.allServices;
   const svcMap={};
   for(const s of services){
     svcMap[s.uuid.toLowerCase()] = await s.getCharacteristics();
   }
-  const svc1010=Object.keys(svcMap).find(u=>u.startsWith('10100000-'));
-  const svc1011=Object.keys(svcMap).find(u=>u.startsWith('10110000-'));
+  // Volcano hat zwei Services: 10100000 (state) und 10110000 (control)
+  const svcState   = Object.keys(svcMap).find(u=>u.startsWith('10100000-'));
+  const svcControl = Object.keys(svcMap).find(u=>u.startsWith('10110000-'));
+  // Crafty hat einen Service: 00000001-4c45...
+  const svcCrafty  = Object.keys(svcMap).find(u=>u.startsWith('00000001-4c45'));
+
   const has=(c,p)=>c?.properties?.[p];
   const pick=(chars,pred)=>chars?.find(c=>pred((c.uuid||'').toLowerCase(), c)) || null;
+  const looksLike=(uuid,fragment)=>uuid.includes(fragment.toLowerCase());
 
-  const setTemp = svc1010 && pick(svcMap[svc1010],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10100006'));
-  // current temp is typically in 10110001
-  const curTemp = svc1011 && pick(svcMap[svc1011],(u,c)=>has(c,'notify') && u.includes('10110001'));
-  // target temp notify
-  const targetN = svc1010 && pick(svcMap[svc1010],(u,c)=>has(c,'notify') && (u.includes('1010000d')||u.includes('10100003')));
-  // status bits
-  const status  = svc1010 && pick(svcMap[svc1010],(u,c)=>has(c,'notify') && (u.includes('1010000c')||u.includes('10110015')||u.includes('10110016')));
-  const heater  = svc1011 && pick(svcMap[svc1011],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10110003'));
-  const pump    = svc1011 && pick(svcMap[svc1011],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10110004'));
+  let found = 0;
 
-  if(svc1010) $('#uuidService').value=svc1010;
-  if(setTemp) $('#uuidSetTemp').value=setTemp.uuid;
-  if(curTemp) $('#uuidCurTemp').value=curTemp.uuid;
-  if(targetN) $('#uuidTargetNotify').value=targetN.uuid;
-  if(status)  $('#uuidStatus').value=status.uuid;
-  if(heater)  $('#uuidHeater').value=heater.uuid;
-  if(pump)    $('#uuidPump').value=pump.uuid;
+  if(svcState && svcControl){
+    // VOLCANO HYBRID PROFILE
+    $('#uuidServiceState').value   = svcState;
+    $('#uuidServiceControl').value = svcControl;
+    const setTemp   = pick(svcMap[svcControl], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'10110003'));
+    const curTemp   = pick(svcMap[svcControl], (u,c)=>has(c,'notify') && looksLike(u,'10110001'));
+    const activity  = pick(svcMap[svcState], (u,c)=>has(c,'notify') && looksLike(u,'1010000c'));
+    const heaterOn  = pick(svcMap[svcControl], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'1011000f'));
+    const heaterOff = pick(svcMap[svcControl], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'10110010'));
+    const pumpOn    = pick(svcMap[svcControl], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'10110013'));
+    const pumpOff   = pick(svcMap[svcControl], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'10110014'));
+    if(setTemp){ $('#uuidSetTemp').value=setTemp.uuid; found++; }
+    if(curTemp){ $('#uuidCurTemp').value=curTemp.uuid; found++; }
+    if(activity){ $('#uuidActivity').value=activity.uuid; found++; }
+    if(heaterOn){ $('#uuidHeaterOn').value=heaterOn.uuid; found++; }
+    if(heaterOff){ $('#uuidHeaterOff').value=heaterOff.uuid; found++; }
+    if(pumpOn){ $('#uuidPumpOn').value=pumpOn.uuid; found++; }
+    if(pumpOff){ $('#uuidPumpOff').value=pumpOff.uuid; found++; }
+    log(`Auto-Mapping Volcano: ${found}/7 Chars gefunden`,'ok');
+  } else if(svcCrafty){
+    // CRAFTY PROFILE
+    $('#uuidServiceState').value   = svcCrafty;
+    $('#uuidServiceControl').value = svcCrafty;
+    const setTemp   = pick(svcMap[svcCrafty], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'00000021'));
+    const curTemp   = pick(svcMap[svcCrafty], (u,c)=>has(c,'notify') && looksLike(u,'00000011'));
+    const activity  = pick(svcMap[svcCrafty], (u,c)=>has(c,'notify') && looksLike(u,'00000083'));
+    const heaterOn  = pick(svcMap[svcCrafty], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'00000081'));
+    const heaterOff = pick(svcMap[svcCrafty], (u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && looksLike(u,'00000091'));
+    if(setTemp){ $('#uuidSetTemp').value=setTemp.uuid; found++; }
+    if(curTemp){ $('#uuidCurTemp').value=curTemp.uuid; found++; }
+    if(activity){ $('#uuidActivity').value=activity.uuid; found++; }
+    if(heaterOn){ $('#uuidHeaterOn').value=heaterOn.uuid; found++; }
+    if(heaterOff){ $('#uuidHeaterOff').value=heaterOff.uuid; found++; }
+    log(`Auto-Mapping Crafty: ${found}/5 Chars gefunden`,'ok');
+  } else {
+    log('Auto-Mapping: keine bekannten S&B-Services gefunden','warn');
+    toast('Unbekanntes Gerät, manuell mappen');
+    renderLastAction('Auto-Mapping: keine bekannten Services', 'err');
+    return;
+  }
+
   saveUUIDs();
   await bindAllChars();
   await startAllNotifications();
-  log('Auto-Mapping fertig. Falls Werte falsch, prüfe Discovery-Liste.','ok');
+  renderLastAction(`Auto-Mapping fertig: ${found} Chars gebunden`, 'ok');
+  toast(`${found} Chars gefunden`);
 }
 
 async function testUUIDs(){
   if(!State.connected){ toast('Erst verbinden'); return; }
+  renderLastAction('UUID-Test läuft…','busy');
   const results=[];
   const T = isFinite(State.target) ? State.target : 185;
   const target = clamp(T+5, 40, 230);
   try{ await cmdSetTemp(target); results.push('✓ set_temp'); }catch(e){ results.push('✗ set_temp: '+e.message); }
-  await sleep(400);
-  try{ await cmdHeater(true); results.push('✓ heater_on'); }catch(e){ results.push('✗ heater_on: '+e.message); }
-  await sleep(800);
-  try{ await cmdPump(true); results.push('✓ pump_on'); }catch(e){ results.push('✗ pump_on: '+e.message); }
-  await sleep(800);
-  try{ await cmdPump(false); results.push('✓ pump_off'); }catch(e){ results.push('✗ pump_off: '+e.message); }
-  try{ await cmdHeater(false); results.push('✓ heater_off'); }catch(e){ results.push('✗ heater_off: '+e.message); }
-  log('Test: '+results.join(' | '),'ok');
+  await sleep(500);
+  try{ await cmdHeaterOn(); results.push('✓ heater_on'); }catch(e){ results.push('✗ heater_on: '+e.message); }
+  await sleep(1000);
+  try{ await cmdPumpOn(); results.push('✓ pump_on'); }catch(e){ results.push('✗ pump_on: '+e.message); }
+  await sleep(1500);
+  try{ await cmdPumpOff(); results.push('✓ pump_off'); }catch(e){ results.push('✗ pump_off: '+e.message); }
+  await sleep(500);
+  try{ await cmdHeaterOff(); results.push('✓ heater_off'); }catch(e){ results.push('✗ heater_off: '+e.message); }
+  const fails = results.filter(r=>r.startsWith('✗')).length;
+  log('UUID-Tester: '+results.join(' | '), fails?'warn':'ok');
+  if(fails===0){
+    renderLastAction(`Test bestanden: alle 5 Befehle ok`, 'ok');
+    toast('Test bestanden ✓');
+  } else {
+    renderLastAction(`Test: ${5-fails}/5 ok, ${fails} fehlgeschlagen`, 'err');
+    toast(`${fails} Fehler im Test`);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1807,7 +2033,7 @@ function migrateFromV3(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DEVICE PROFILES (Volcano + Crafty/Mighty/Venty)
+   DEVICE PROFILES - UUIDs verifiziert aus firsttris/reactive-volcano-app
 ═══════════════════════════════════════════════════════════════ */
 const DEVICE_PROFILES = {
   'volcano-hybrid': {
@@ -1819,16 +2045,18 @@ const DEVICE_PROFILES = {
     namePrefix:'VOLCANO',
     tempRange:[40, 230],
     uuids:{
-      uuidService:'10100000-5354-4f52-5a26-4249434b454c',
-      uuidSetTemp:'10100006-5354-4f52-5a26-4249434b454c',
+      uuidServiceState:'10100000-5354-4f52-5a26-4249434b454c',
+      uuidServiceControl:'10110000-5354-4f52-5a26-4249434b454c',
+      uuidSetTemp:'10110003-5354-4f52-5a26-4249434b454c',
       uuidCurTemp:'10110001-5354-4f52-5a26-4249434b454c',
-      uuidTargetNotify:'1010000d-5354-4f52-5a26-4249434b454c',
-      uuidStatus:'1010000c-5354-4f52-5a26-4249434b454c',
-      uuidHeater:'10110003-5354-4f52-5a26-4249434b454c',
-      uuidPump:'10110004-5354-4f52-5a26-4249434b454c',
+      uuidActivity:'1010000c-5354-4f52-5a26-4249434b454c',
+      uuidHeaterOn:'1011000f-5354-4f52-5a26-4249434b454c',
+      uuidHeaterOff:'10110010-5354-4f52-5a26-4249434b454c',
+      uuidPumpOn:'10110013-5354-4f52-5a26-4249434b454c',
+      uuidPumpOff:'10110014-5354-4f52-5a26-4249434b454c',
     },
     features:{ heat:true, pump:true, workflows:true },
-    notes:'Vollständig unterstützt. UUIDs aus Reverse Engineering, in der Praxis bewährt.',
+    notes:'Voll unterstützt. UUIDs verifiziert.',
   },
   'crafty-plus': {
     id:'crafty-plus',
@@ -1839,17 +2067,20 @@ const DEVICE_PROFILES = {
     namePrefix:'STORZ&BICKEL',
     tempRange:[40, 210],
     uuids:{
-      // Crafty+ verwendet andere UUIDs. Anwender bitte über Auto-Mapping kalibrieren.
-      uuidService:'00000001-4c45-4b43-4942-265523625a29',
-      uuidSetTemp:'00000021-4c45-4b43-4942-265523625a29',
-      uuidCurTemp:'00000011-4c45-4b43-4942-265523625a29',
-      uuidTargetNotify:'00000021-4c45-4b43-4942-265523625a29',
-      uuidStatus:'00000031-4c45-4b43-4942-265523625a29',
-      uuidHeater:'',  // Crafty: keine separate Heater-Char, Heizen wird via Power-Bit gesteuert
-      uuidPump:'',    // Crafty hat keine Pumpe
+      // Crafty: service 00000001-4c45-4b43-4942-265a524f5453
+      // Hat eigene UUIDs für Heater on/off, keine Pumpe
+      uuidServiceState:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidServiceControl:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidSetTemp:'00000021-4c45-4b43-4942-265a524f5453',
+      uuidCurTemp:'00000011-4c45-4b43-4942-265a524f5453',
+      uuidActivity:'00000083-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOn:'00000081-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOff:'00000091-4c45-4b43-4942-265a524f5453',
+      uuidPumpOn:'',   // Crafty hat keine Pumpe
+      uuidPumpOff:'',
     },
-    features:{ heat:true, pump:false, workflows:false },
-    notes:'BETA: Verbindung läuft, aber UUIDs müssen ggf. per Auto-Mapping korrigiert werden. Keine Pumpen-Funktion (Crafty zieht über Mundstück). Schick mir nach erstem Connect den Discovery-Output für volle Unterstützung.',
+    features:{ heat:true, pump:false, workflows:true },
+    notes:'BETA: UUIDs verifiziert via firsttris-Code. Heater-On/Off nur bei Crafty+ Firmware ≥ 2.51. Keine Pumpe (Crafty zieht über Mundstück).',
   },
   'mighty-plus': {
     id:'mighty-plus',
@@ -1860,36 +2091,42 @@ const DEVICE_PROFILES = {
     namePrefix:'STORZ&BICKEL',
     tempRange:[40, 210],
     uuids:{
-      uuidService:'00000001-4c45-4b43-4942-265523625a29',
-      uuidSetTemp:'00000021-4c45-4b43-4942-265523625a29',
-      uuidCurTemp:'00000011-4c45-4b43-4942-265523625a29',
-      uuidTargetNotify:'00000021-4c45-4b43-4942-265523625a29',
-      uuidStatus:'00000031-4c45-4b43-4942-265523625a29',
-      uuidHeater:'',
-      uuidPump:'',
+      uuidServiceState:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidServiceControl:'00000001-4c45-4b43-4942-265a524f5453',
+      uuidSetTemp:'00000021-4c45-4b43-4942-265a524f5453',
+      uuidCurTemp:'00000011-4c45-4b43-4942-265a524f5453',
+      uuidActivity:'00000083-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOn:'00000081-4c45-4b43-4942-265a524f5453',
+      uuidHeaterOff:'00000091-4c45-4b43-4942-265a524f5453',
+      uuidPumpOn:'',
+      uuidPumpOff:'',
     },
-    features:{ heat:true, pump:false, workflows:false },
-    notes:'BETA: Verbindung läuft, Profile ggf. via Auto-Mapping anpassen. Mighty teilt das BLE-Protokoll mit Crafty.',
+    features:{ heat:true, pump:false, workflows:true },
+    notes:'BETA: Mighty teilt das BLE-Protokoll mit Crafty.',
   },
   'venty': {
     id:'venty',
     name:'Venty',
-    sub:'S&B Portable Vaporizer (mit Lüfter)',
+    sub:'S&B Portable mit Lüfter',
     icon:'🌪️',
     status:'beta',
     namePrefix:'Venty',
     tempRange:[40, 210],
     uuids:{
-      uuidService:'',
-      uuidSetTemp:'',
+      // Venty/Veazy hat ein ganz anderes Protokoll: ein einziger Control-Char
+      // mit Write-Masken statt separater Chars. Hier nur Service vorbelegt.
+      uuidServiceState:'00000000-5354-4f52-5a26-4249434b454c',
+      uuidServiceControl:'00000000-5354-4f52-5a26-4249434b454c',
+      uuidSetTemp:'00000001-5354-4f52-5a26-4249434b454c',
       uuidCurTemp:'',
-      uuidTargetNotify:'',
-      uuidStatus:'',
-      uuidHeater:'',
-      uuidPump:'',
+      uuidActivity:'',
+      uuidHeaterOn:'',
+      uuidHeaterOff:'',
+      uuidPumpOn:'',
+      uuidPumpOff:'',
     },
-    features:{ heat:true, pump:true, workflows:true },
-    notes:'BETA, weitgehend ungetestet: Bitte einmal verbinden + Setup → "Services scannen" und Discovery-Output schicken. Dann kalibriere ich das Profil exakt.',
+    features:{ heat:true, pump:true, workflows:false },
+    notes:'EXPERIMENTAL: Venty nutzt ein anderes Protokoll (Control-Char mit Write-Masken). Steuerung noch nicht implementiert, nur Verbinden möglich.',
   }
 };
 
@@ -1899,18 +2136,16 @@ function getCurrentDeviceId(){
 function setCurrentDevice(id){
   const p = DEVICE_PROFILES[id]; if(!p) return;
   LS.set('vol_device', id);
-  // Apply UUIDs
   for(const [k,v] of Object.entries(p.uuids)){
     const el=document.getElementById(k);
     if(el) el.value = v || '';
   }
   saveUUIDs();
-  // Update UI labels
   $('#devName').textContent = p.name;
   $('#devSub').textContent = p.sub;
   $('#devIcon').textContent = p.icon;
   log(`Profil geladen: ${p.name}${p.status==='beta'?' (Beta)':''}`,'ok');
-  if(p.notes) toast(p.notes.slice(0,80));
+  toast('Profil: '+p.name);
 }
 
 function renderDeviceList(targetSel){
@@ -1932,7 +2167,6 @@ function renderDeviceList(targetSel){
     div.addEventListener('click', ()=>{
       setCurrentDevice(id);
       renderDeviceList(targetSel);
-      // After picking, close the modal (only main picker)
       if(targetSel==='#deviceList'){
         $('#modalDevice').classList.remove('open');
       }
@@ -2192,7 +2426,7 @@ function init(){
   }
   maybeShowIosBanner();
 
-  log('App bereit (v4.1).','ok');
+  log('App bereit (v4.2 - UUID-Fix).','ok');
 
   // PWA install hint
   if('serviceWorker' in navigator){
