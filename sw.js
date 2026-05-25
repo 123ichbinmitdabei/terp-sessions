@@ -1,5 +1,5 @@
 // Sessions (formerly Volcano Controller) — app-shell SW
-const VERSION = 'v4.7.0';
+const VERSION = 'v4.8.0';
 const CACHE = `sessions-${VERSION}`;
 const SHELL = [
   './',
@@ -10,9 +10,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e=>{
-  e.waitUntil(
-    caches.open(CACHE).then(c=>c.addAll(SHELL))
-  );
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));
 });
 
 self.addEventListener('activate', e=>{
@@ -24,16 +22,22 @@ self.addEventListener('activate', e=>{
 });
 
 self.addEventListener('message', e=>{
-  if(e.data && e.data.type === 'SKIP_WAITING'){
-    self.skipWaiting();
-  }
+  if(e.data && e.data.type === 'SKIP_WAITING'){ self.skipWaiting(); }
 });
 
 self.addEventListener('fetch', e=>{
   const req=e.request;
   if(req.method!=='GET') return;
   const url=new URL(req.url);
+
+  // v4.8: Wetter API immer network-first (Daten sollen frisch sein)
+  if(url.hostname === 'api.open-meteo.com' || url.hostname === 'geocoding-api.open-meteo.com'){
+    e.respondWith(fetch(req).catch(()=>caches.match(req)));
+    return;
+  }
+
   if(url.origin===location.origin){
+    // App-Shell: network-first, fall back to cache
     e.respondWith(
       fetch(req).then(res=>{
         const copy=res.clone();
@@ -42,6 +46,7 @@ self.addEventListener('fetch', e=>{
       }).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html')))
     );
   }else{
+    // Cross-origin (fonts etc.): cache-first
     e.respondWith(
       caches.match(req).then(r=>r || fetch(req).then(res=>{
         const copy=res.clone();

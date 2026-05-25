@@ -1505,11 +1505,118 @@ html.hc-mode :focus-visible{
   color:var(--hot);font-size:15px;margin-bottom:4px;
 }
 .glossar-item .def{font-size:12px;color:var(--text);line-height:1.5}
+
+/* ═══ v4.8: Tooltip popup ═══════════════════════════════════════ */
+.tooltip-popup{
+  position:fixed;
+  bottom:calc(108px + var(--safe-bot-padding));
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg-3);color:var(--text);
+  padding:10px 14px;border-radius:8px;
+  border:1px solid var(--line);
+  font-size:13px;max-width:80vw;text-align:center;
+  z-index:140;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s, transform .2s;
+  box-shadow:0 6px 30px rgba(0,0,0,.4);
+}
+.tooltip-popup.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══ v4.8: Hotel overlay ═══════════════════════════════════════ */
+.hotel-overlay{
+  position:fixed;inset:0;z-index:180;
+  background:linear-gradient(180deg, #061425, #0a0612);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px;
+  color:#fff;
+}
+.hotel-icon{font-size:96px;margin-bottom:20px}
+.hotel-temp{
+  font-family:var(--font-display);font-size:72px;font-weight:300;
+  letter-spacing:-.04em;line-height:1;margin-bottom:6px;
+}
+.hotel-cond{
+  font-size:18px;color:rgba(255,255,255,.7);margin-bottom:40px;
+  letter-spacing:.04em;
+}
+.hotel-hint{
+  position:absolute;bottom:30px;left:0;right:0;text-align:center;
+  font-size:11px;color:rgba(255,255,255,.3);font-family:var(--font-mono);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* ═══ v4.8: Offline indicator ═══════════════════════════════════ */
+.offline-indicator{
+  position:fixed;top:0;left:0;right:0;z-index:130;
+  background:#7a3a14;color:#fff;
+  padding:6px 14px;text-align:center;
+  font-size:12px;font-family:var(--font-mono);
+  display:none;align-items:center;justify-content:center;gap:6px;
+  border-bottom:1px solid #944714;
+}
+
+/* ═══ v4.8: DSL editor ══════════════════════════════════════════ */
+.dsl-editor{
+  width:100%;min-height:200px;
+  font-family:var(--font-mono);font-size:13px;line-height:1.6;
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:12px;outline:none;
+  resize:vertical;
+}
+.dsl-editor:focus{border-color:var(--hot)}
+.dsl-output{
+  font-family:var(--font-mono);font-size:11px;
+  background:var(--bg);color:var(--ok);
+  padding:10px;border-radius:var(--r-sm);
+  max-height:200px;overflow:auto;white-space:pre-wrap;
+  border:1px solid var(--line);
+  margin-top:10px;
+}
+
+/* ═══ v4.8: Power-saver mode ════════════════════════════════════ */
+html.power-saver .vape-buddy,
+html.power-saver #tempGraph,
+html.power-saver .stats-viz{display:none !important}
+html.power-saver .card{animation:none !important}
+
+/* ═══ v4.8: Manual modal ════════════════════════════════════════ */
+.manual-search{
+  width:100%;padding:10px 14px;
+  background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);color:var(--text);
+  font-size:14px;outline:none;
+  margin-bottom:14px;
+}
+.manual-search:focus{border-color:var(--hot)}
+
+/* ═══ v4.8: Settings danger button ══════════════════════════════ */
+.btn.danger{
+  background:rgba(248,113,113,.12);
+  color:var(--err);
+  border-color:rgba(248,113,113,.3);
+}
+.btn.danger:hover{background:rgba(248,113,113,.2)}
+
 </style>
 </head>
 <body>
 
 <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
+
+<!-- v4.8: Offline indicator -->
+<div class="offline-indicator" id="offlineIndicator" role="status" aria-live="polite">
+  <span aria-hidden="true">📡</span> Offline — alle Funktionen außer Bluetooth-Verbindung verfügbar
+</div>
+
+<!-- v4.8: Hotel-Mode Overlay -->
+<div class="hotel-overlay" id="hotelOverlay" role="dialog" aria-label="Wetter">
+  <div id="hotelExitArea" style="position:absolute;inset:0;cursor:pointer" aria-label="5 Sekunden drücken zum Entsperren"></div>
+  <div class="hotel-icon" id="hotelIcon" aria-hidden="true">🌤</div>
+  <div class="hotel-temp" id="hotelTemp">–°</div>
+  <div class="hotel-cond" id="hotelCond">Wetter</div>
+  <div class="hotel-hint">5 Sekunden drücken zum Entsperren</div>
+</div>
 
 <!-- v4.6: PIN overlay -->
 <div class="pin-overlay" id="pinOverlay" role="dialog" aria-modal="true" aria-label="PIN-Sperre">
@@ -1793,17 +1900,28 @@ html.hc-mode :focus-visible{
     </details>
   </div>
 
-  <!-- v4.7: Tools-Sammlung -->
+  <!-- v4.7+v4.8: Tools-Sammlung -->
   <div class="card">
-    <h3>Werkzeuge (v4.7)</h3>
+    <h3>Werkzeuge</h3>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <button class="btn sm ghost" id="btnOpenManual">📖 Anleitung</button>
       <button class="btn sm ghost" id="btnOpenAudio">🎵 Audio & Atmen</button>
       <button class="btn sm ghost" id="btnOpenLearn">📚 Wissen & Quiz</button>
       <button class="btn sm ghost" id="btnOpenSymPre">📋 Symptom-Tracker</button>
       <button class="btn sm ghost" id="btnOpenReport">📄 Konsum-Protokoll</button>
       <button class="btn sm ghost" id="btnImportLib">📥 Bibliothek</button>
       <button class="btn sm ghost" id="btnOpenUsers">👥 Profile</button>
+      <button class="btn sm ghost" id="btnOpenDsl">📜 DSL-Editor</button>
+      <button class="btn sm ghost" id="btnOpenBleConsole">📟 BLE-Console</button>
     </div>
+  </div>
+
+  <!-- v4.8: Custom BLE Profiles -->
+  <div class="card">
+    <h3>Eigene Geräteprofile</h3>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5">Eigene UUIDs für nicht-S&B-Geräte oder Forschung. Wird nach Speichern in der Geräte-Liste verfügbar.</p>
+    <div id="customProfilesList" style="margin-bottom:10px"></div>
+    <button class="btn sm ghost block" id="btnAddCustomProfile">+ Custom Profile</button>
   </div>
 
   <!-- App Settings -->
@@ -2118,6 +2236,10 @@ html.hc-mode :focus-visible{
     <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Inklusion (v4.6)</h3>
+    <div class="toggle-row" style="background:rgba(255,87,34,.06);padding:12px;border-radius:var(--r);margin:0 -4px 8px;border:1px solid rgba(255,87,34,.2)">
+      <div class="info"><b>♿ Blinden-Modus</b><small>Aktiviert Großschrift 150%, Hochkontrast, Voice-Readout und Tooltip-TTS auf einmal</small></div>
+      <button class="toggle" id="togBlindMode" role="switch" aria-checked="false" aria-label="Blinden-Modus"></button>
+    </div>
     <div class="toggle-row">
       <div class="info"><b>Schriftgröße</b><small>100% · 125% · 150%</small></div>
       <div style="display:flex;gap:4px">
@@ -2138,9 +2260,44 @@ html.hc-mode :focus-visible{
       <div class="info"><b>Differenzierte Vibration</b><small>Verschiedene Patterns für Touch / Ziel / Warnung / Fehler</small></div>
       <button class="toggle" id="togHaptiCustom" role="switch" aria-checked="true" aria-label="Differenzierte Haptik"></button>
     </div>
+    <div class="toggle-row">
+      <div class="info"><b>Tooltips per TTS vorlesen</b><small>Beim Fokussieren eines Knopfes wird der Hilfetext gesprochen</small></div>
+      <button class="toggle" id="togTooltipsVoice" role="switch" aria-checked="false" aria-label="Tooltips per TTS"></button>
+    </div>
     <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">
       <b>Tastatur-Shortcuts:</b><br>
       1–9 → Lieblings-Temperatur · Space → Heizer · B → Ballon · D → Direkt-Zug · V → Status vorlesen · ESC → Notaus
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Reise-Modi (v4.8)</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Hotel-Modus</b><small>App hinter Wetter-Splash verstecken. 5 Sekunden Druck entsperrt.</small></div>
+      <button class="toggle" id="togHotelMode" role="switch" aria-checked="false" aria-label="Hotel-Modus"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Akku-Spar-Modus</b><small>Wake-Lock aus, Temperatur-Graph aus, Buddy aus</small></div>
+      <button class="toggle" id="togPowerSaver" role="switch" aria-checked="false" aria-label="Akku-Spar-Modus"></button>
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Externe Integration (v4.8)</h3>
+    <div class="toggle-row" style="flex-direction:column;align-items:stretch">
+      <div class="info" style="margin-bottom:6px"><b>Webhook URL</b><small>POST mit JSON bei Events</small></div>
+      <input class="input mono" id="webhookUrlInput" type="text" placeholder="https://webhook.example.com/hook" style="width:100%;font-size:11px">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:6px;font-size:11px;color:var(--muted)">
+        <label><input type="checkbox" id="webhookEvHeatOn"> Heizer an</label>
+        <label><input type="checkbox" id="webhookEvHeatOff"> Heizer aus</label>
+        <label><input type="checkbox" id="webhookEvBagDone"> Bag fertig</label>
+        <label><input type="checkbox" id="webhookEvError"> Fehler</label>
+      </div>
+    </div>
+    <div class="toggle-row" style="flex-direction:column;align-items:stretch;margin-top:8px">
+      <div class="info" style="margin-bottom:6px"><b>MQTT WebSocket-URL</b><small>z.B. wss://test.mosquitto.org:8081/mqtt</small></div>
+      <input class="input mono" id="mqttUrlInput" type="text" placeholder="wss://broker.example.com:8884/mqtt" style="width:100%;font-size:11px">
+      <input class="input mono" id="mqttTopicInput" type="text" placeholder="sessions/" style="width:100%;font-size:11px;margin-top:6px">
+      <div class="row" style="gap:6px;margin-top:6px">
+        <button class="btn sm ghost" id="btnMqttConnect" style="flex:1">Verbinden</button>
+        <button class="btn sm ghost" id="btnMqttDisconnect" style="flex:1">Trennen</button>
+      </div>
     </div>
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sicherheit</h3>
@@ -2486,6 +2643,63 @@ html.hc-mode :focus-visible{
   </div>
 </div>
 
+<!-- ─── v4.8 Modals ─────────────────────────────────────────── -->
+
+<!-- Manual / Anleitung Modal -->
+<div class="modal" id="modalManual" role="dialog" aria-modal="true" aria-label="Anleitung">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:520px">
+    <div class="grab"></div>
+    <h2>📖 Anleitung</h2>
+    <p class="wiz-text"><small>Alle Funktionen der App, gegliedert nach Kategorien. Such-Feld zum Filtern.</small></p>
+    <input type="text" class="manual-search" id="manualSearch" placeholder="Suchen…" aria-label="Anleitung durchsuchen">
+    <div id="manualContent" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnManualClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- DSL Editor Modal -->
+<div class="modal" id="modalDsl" role="dialog" aria-modal="true" aria-label="DSL Editor">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:520px">
+    <div class="grab"></div>
+    <h2>📜 DSL-Editor</h2>
+    <p class="wiz-text"><small>Programm-Skript-Sprache. Beispiele: <code>heat on</code>, <code>set 185</code>, <code>wait until 185</code>, <code>pump 25s</code>, <code>wait 30s</code>, <code>loop 3</code> … <code>end loop</code>, <code>heat off</code>.</small></p>
+    <textarea class="dsl-editor" id="dslEditor" spellcheck="false" aria-label="DSL Skript"></textarea>
+    <div class="row" style="margin-top:8px;gap:8px">
+      <button class="btn sm ghost" id="btnDslParse" style="flex:1">Prüfen</button>
+      <button class="btn sm primary" id="btnDslSave" style="flex:1">Als Programm speichern</button>
+    </div>
+    <div class="dsl-output" id="dslOutput"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnDslClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- BLE Console Modal -->
+<div class="modal" id="modalBleConsole" role="dialog" aria-modal="true" aria-label="BLE Console">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:480px">
+    <div class="grab"></div>
+    <h2>📟 Raw BLE Console</h2>
+    <p class="wiz-text"><small>Direkter Zugriff auf Characteristics. Für Forscher und Bastler.</small></p>
+    <label style="display:block;margin-top:10px;font-size:12px;color:var(--muted)">Characteristic-UUID</label>
+    <input type="text" class="input mono" id="bleConsoleUuid" placeholder="10110001-5354-4f52-..." style="width:100%;font-size:11px">
+    <div class="row" style="margin-top:10px;gap:8px">
+      <button class="btn sm ghost" id="btnBleRead" style="flex:1">Lesen</button>
+      <input type="text" class="input mono" id="bleConsoleHex" placeholder="00 ff a0 …" style="flex:2;font-size:11px">
+      <button class="btn sm primary" id="btnBleWrite">Schreiben</button>
+    </div>
+    <pre class="dsl-output" id="bleConsoleOutput" style="margin-top:10px"></pre>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnBleConsoleClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2572,6 +2786,17 @@ const PREFS_DEFAULTS = {
   tBreakActive:false,
   tBreakStartDate:null,
   tBreakGoalDays:14,
+  // v4.8 additions
+  blindMode:false,         // aktiviert Großschrift + Hochkontrast + Voice-Readout + Tooltips-Vorlesen
+  tooltipsVoice:false,     // Tooltips per TTS vorlesen wenn Fokus drauf landet
+  hotelMode:false,         // Splash-Screen verbergen
+  powerSaver:false,        // Wake-Lock aus, Graph aus, weniger Updates
+  webhookUrl:'',           // Webhook bei Events
+  webhookEvents:{heaterOn:false, heaterOff:false, bagDone:false, error:true},
+  mqttUrl:'',              // wss://broker.example.com:8884/mqtt
+  mqttTopicPrefix:'sessions/',
+  mqttConnected:false,     // runtime
+  customBleProfiles:[],    // user-defined device profiles
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -3403,8 +3628,11 @@ async function cmdHeaterOn(){
     log('Heizer EIN','ok');
     if(PREFS.sound) toast('🔥 Heizer EIN'); else toast('Heizer EIN');
     statsHeatStart();
-    // v4.5: Sicherheits-Timer auto-start
     maybeAutoStartSafety();
+    // v4.8: webhook + mqtt
+    fireWebhook('heaterOn', {temp:State.target});
+    mqttPublish('heater', 'on');
+    broadcastShared('Heizer an');
   });
 }
 async function cmdHeaterOff(){
@@ -3415,6 +3643,10 @@ async function cmdHeaterOff(){
     log('Heizer AUS','ok');
     toast('❄️ Heizer AUS');
     statsHeatStop();
+    // v4.8: webhook + mqtt
+    fireWebhook('heaterOff');
+    mqttPublish('heater', 'off');
+    broadcastShared('Heizer aus');
     // v4.5: heat curve analyse
     const sec = analyzeHeatCurve();
     if(sec){
@@ -4604,6 +4836,91 @@ function wire(){
   $('#btnUsersClose')?.addEventListener('click', ()=>$('#modalUsers').classList.remove('open'));
   $('#btnAddUser')?.addEventListener('click', addUserProfile);
 
+  // ═════ v4.8 wiring ═════
+
+  // Manual / Anleitung
+  $('#btnOpenManual')?.addEventListener('click', openManual);
+  $('#btnManualClose')?.addEventListener('click', ()=>$('#modalManual').classList.remove('open'));
+  $('#manualSearch')?.addEventListener('input', e=>renderManual(e.target.value));
+  // Topbar-Help-Knopf öffnet Anleitung (überschreibt Wizard-Verhalten)
+  const helpEl = $('#btnHelp');
+  if(helpEl){
+    // Vorhandene Listener entfernen, ersetzen
+    const clone = helpEl.cloneNode(true);
+    helpEl.parentNode.replaceChild(clone, helpEl);
+    clone.addEventListener('click', openManual);
+  }
+
+  // Blinden-Modus
+  const togBlind = $('#togBlindMode');
+  if(togBlind){
+    togBlind.addEventListener('click', toggleBlindMode);
+  }
+  // Tooltip-Voice
+  wireToggle('#togTooltipsVoice', ()=>PREFS.tooltipsVoice, v=>{
+    PREFS.tooltipsVoice = v; savePrefs();
+  });
+
+  // Hotel + Power-Saver
+  wireToggle('#togHotelMode', ()=>PREFS.hotelMode, v=>{
+    PREFS.hotelMode = v; savePrefs();
+    if(v) enterHotelMode(); else exitHotelMode();
+  });
+  wireToggle('#togPowerSaver', ()=>PREFS.powerSaver, v=>{
+    PREFS.powerSaver = v; savePrefs();
+    applyPowerSaver();
+  });
+
+  // Custom BLE Profiles
+  $('#btnAddCustomProfile')?.addEventListener('click', addCustomBleProfile);
+
+  // DSL
+  $('#btnOpenDsl')?.addEventListener('click', openDsl);
+  $('#btnDslClose')?.addEventListener('click', ()=>$('#modalDsl').classList.remove('open'));
+  $('#btnDslParse')?.addEventListener('click', dslParse);
+  $('#btnDslSave')?.addEventListener('click', dslSaveAsProgram);
+
+  // BLE Console
+  $('#btnOpenBleConsole')?.addEventListener('click', openBleConsole);
+  $('#btnBleConsoleClose')?.addEventListener('click', ()=>$('#modalBleConsole').classList.remove('open'));
+  $('#btnBleRead')?.addEventListener('click', async ()=>{
+    const uuid = $('#bleConsoleUuid').value.trim();
+    if(!uuid){ $('#bleConsoleOutput').textContent = 'UUID eingeben'; return; }
+    const r = await bleConsoleRead(uuid);
+    $('#bleConsoleOutput').textContent = r;
+  });
+  $('#btnBleWrite')?.addEventListener('click', async ()=>{
+    const uuid = $('#bleConsoleUuid').value.trim();
+    const hex = $('#bleConsoleHex').value.trim();
+    if(!uuid || !hex){ $('#bleConsoleOutput').textContent = 'UUID und Hex eingeben'; return; }
+    const r = await bleConsoleWrite(uuid, hex);
+    $('#bleConsoleOutput').textContent = r;
+  });
+
+  // Webhook URL + Events
+  $('#webhookUrlInput')?.addEventListener('change', e=>{
+    PREFS.webhookUrl = e.target.value.trim(); savePrefs();
+  });
+  for(const [k, ev] of [['HeatOn','heaterOn'],['HeatOff','heaterOff'],['BagDone','bagDone'],['Error','error']]){
+    const el = $('#webhookEv'+k);
+    if(!el) continue;
+    el.addEventListener('change', ()=>{
+      PREFS.webhookEvents = PREFS.webhookEvents || {};
+      PREFS.webhookEvents[ev] = el.checked;
+      savePrefs();
+    });
+  }
+
+  // MQTT
+  $('#mqttUrlInput')?.addEventListener('change', e=>{
+    PREFS.mqttUrl = e.target.value.trim(); savePrefs();
+  });
+  $('#mqttTopicInput')?.addEventListener('change', e=>{
+    PREFS.mqttTopicPrefix = e.target.value.trim() || 'sessions/'; savePrefs();
+  });
+  $('#btnMqttConnect')?.addEventListener('click', mqttConnectStart);
+  $('#btnMqttDisconnect')?.addEventListener('click', ()=>{ mqttDisconnect(); toast('MQTT getrennt'); });
+
   // Migrate old v3 slots if present
   migrateFromV3();
 }
@@ -5241,6 +5558,10 @@ async function startBagFill(){
       // v4.6: Achievements check
       checkAchievements();
       maybeAutoCoolDown();
+      // v4.8: webhook + mqtt
+      fireWebhook('bagDone', {totalBags:PREFS.stats.bagsFilled});
+      mqttPublish('bag', 'done');
+      broadcastShared('Ballon gefüllt');
     } else {
       $('#bagStatus').textContent = 'Gestoppt';
     }
@@ -5801,6 +6122,22 @@ function openSettings(){
   $('#togVoiceReadout')?.setAttribute('aria-checked', String(!!PREFS.voiceReadout));
   $('#togHaptiCustom')?.setAttribute('aria-checked', String(!!PREFS.haptiCustom));
   $('#togBuddy')?.setAttribute('aria-checked', String(!!PREFS.vapeBuddy));
+  // v4.8
+  $('#togBlindMode')?.setAttribute('aria-checked', String(!!PREFS.blindMode));
+  $('#togTooltipsVoice')?.setAttribute('aria-checked', String(!!PREFS.tooltipsVoice));
+  $('#togHotelMode')?.setAttribute('aria-checked', String(!!PREFS.hotelMode));
+  $('#togPowerSaver')?.setAttribute('aria-checked', String(!!PREFS.powerSaver));
+  const whIn = $('#webhookUrlInput'); if(whIn) whIn.value = PREFS.webhookUrl||'';
+  const evs = PREFS.webhookEvents || {};
+  const setCb = (id, v) => { const el = $('#'+id); if(el) el.checked = !!v; };
+  setCb('webhookEvHeatOn', evs.heaterOn);
+  setCb('webhookEvHeatOff', evs.heaterOff);
+  setCb('webhookEvBagDone', evs.bagDone);
+  setCb('webhookEvError', evs.error);
+  const mqIn = $('#mqttUrlInput'); if(mqIn) mqIn.value = PREFS.mqttUrl||'';
+  const mqTop = $('#mqttTopicInput'); if(mqTop) mqTop.value = PREFS.mqttTopicPrefix||'sessions/';
+  // Render custom profiles in settings? No - separate card in setup
+  renderCustomProfiles();
   const safIn = $('#safetyMinInput'); if(safIn) safIn.value = PREFS.safetyMinutes||25;
   const dirIn = $('#dirSecInput'); if(dirIn) dirIn.value = PREFS.directDrawSec||5;
   const cIn = $('#autoCoolTempInput'); if(cIn) cIn.value = PREFS.autoCoolDownTemp||160;
@@ -7768,6 +8105,652 @@ function detectRoutine(){
 }
 
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: HANDBUCH / ANLEITUNG
+═══════════════════════════════════════════════════════════════ */
+const MANUAL = [
+  {cat:'Erste Schritte', icon:'🚀', items:[
+    {q:'Wie verbinde ich mein Gerät?', a:'Tippe oben rechts auf „Verbinden". Es öffnet sich ein BLE-Dialog. Wähle dein Volcano / Crafty / Mighty / Venty aus. Beim ersten Mal muss der Volcano sichtbar sein (BT-Symbol oder App-Knopf am Gerät drücken).'},
+    {q:'Welcher Browser funktioniert?', a:'Android Chrome (alles), Windows/macOS/Linux Chrome+Edge (alles), iPhone/iPad NUR mit der App „Bluefy" (kostenlos im App Store). Safari iOS hat KEIN Web Bluetooth.'},
+    {q:'Was tun bei Verbindungsproblemen?', a:'1) Volcano komplett aus- und wieder einschalten. 2) Browser-Tab schließen und neu öffnen. 3) Setup-Tab → „Auto-Mapping" um UUIDs zu reparieren.'},
+    {q:'Geräte-Wechsel?', a:'Tippe auf das kleine Geräte-Badge im Hero (unter „Aktuelle Temperatur"). Der Picker öffnet sich.'},
+  ]},
+  {cat:'Steuerung', icon:'🎛', items:[
+    {q:'Temperatur setzen', a:'Per Stepper, per Lieblings-Pill (lange tippen ändert Wert), oder per Voice „Heize auf 185 Grad".'},
+    {q:'Heizer an/aus', a:'Großer Knopf in der Steuerung-Karte. Tastatur-Shortcut: Space. Sicherheits-Timer startet automatisch.'},
+    {q:'Direkt-Zug', a:'Quick-Action im Hero. Pumpe läuft X Sekunden (Default 5) und stoppt automatisch. Für Crafty/Mighty: aus dem Mundstück ziehen.'},
+    {q:'Ballon füllen', a:'Quick-Action im Hero oder per Voice. Wähle Ballontyp (Easy Valve groß/klein, Solid, Custom). Live-Countdown.'},
+    {q:'Pre-Heat-Timer', a:'„In X Minuten auf Y°C aufheizen". Bei offener App: Auto-Aktivierung. Sonst Erinnerung beim Öffnen.'},
+  ]},
+  {cat:'Programme', icon:'⚙️', items:[
+    {q:'Vorlagen nutzen', a:'Programme-Tab → Vorlagen sind editierbar. „▶ Starten" oder „Bearbeiten". „↻ Werkseinstellungen" stellt Originale her.'},
+    {q:'Eigenes Programm bauen', a:'„+ Neues Programm" → Schritte mit „+ Schritt". Sortieren per ≡-Handle. „+ Template" für fertige Blöcke. „+ Loop" für Wiederholungen.'},
+    {q:'Variable Programme', a:'Schritt-Wert auf `{temp}` oder `{seconds}` setzen. Beim Start wird gefragt.'},
+    {q:'Loop / Wiederhole', a:'Im Editor „+ Loop" → Anzahl. Alle Schritte zwischen loop_start und loop_end werden N-mal wiederholt.'},
+    {q:'Timeline-View', a:'Im Editor „📊 Timeline" → horizontale Darstellung als farbige Blöcke.'},
+    {q:'Programme teilen', a:'🔗-Button auf einer Programm-Karte → QR-Code wird erzeugt.'},
+    {q:'Aroma → Programm', a:'In der Aroma-DB hat jede Sorte einen „Programm erzeugen"-Button für 3-Stufen-Verlauf.'},
+    {q:'DSL-Editor', a:'Setup → Werkzeuge → 📜 DSL: Programm als Text schreiben. Beispiel: `heat on; set 185; wait until 185; pump 25s; heat off`.'},
+    {q:'Home-Assistant-Export', a:'Setup → Werkzeuge → 🏠 HA-YAML: aktuelles Programm als HA-Script exportieren. Brücke zu Phase 2.'},
+  ]},
+  {cat:'Sicherheit', icon:'🔒', items:[
+    {q:'Sicherheits-Timer', a:'Default an: bei Heizer-An startet Timer mit Default-Minuten. Schaltet Heizer + Pumpe automatisch aus.'},
+    {q:'PIN-Sperre', a:'Einstellungen → Sicherheit → „PIN ändern". 4-8 Ziffern. Wird beim Start abgefragt.'},
+    {q:'Auto-Lock', a:'Nach X Min Inaktivität wird PIN erneut abgefragt.'},
+    {q:'Tageslimit Ballons', a:'Optionale Selbstkontrolle: Warnt ab eingestellter Anzahl pro Tag.'},
+    {q:'Notaus', a:'ESC-Taste oder Voice „Alles stoppen" → Heizer + Pumpe + Programm aus.'},
+    {q:'Forget-Me', a:'Einstellungen ganz unten → löscht ALLES: Einstellungen, Programme, Sessions, PIN, Caches.'},
+    {q:'Hotel-Modus', a:'Setup → Reise-Modi → „Hotel": versteckt App hinter Wetter-Overlay. Entsperren per 5-Sekunden-Druck.'},
+  ]},
+  {cat:'Accessibility', icon:'♿', items:[
+    {q:'Blinden-Modus', a:'Einstellungen → Inklusion → „Blinden-Modus" aktiviert alle a11y-Features auf einmal: Großschrift, Hochkontrast, Voice-Readout, Tooltips per TTS.'},
+    {q:'Tastatur-Shortcuts', a:'1-9 → Lieblings-Temperatur, Space → Heizer, B → Ballon, D → Direkt-Zug, V → Status vorlesen, ESC → Notaus.'},
+    {q:'Voice-Status', a:'V drücken oder „Voice-Readout alle 30s" aktivieren.'},
+    {q:'Sprachsteuerung', a:'Mikro-FAB unten rechts → Befehl sprechen.'},
+    {q:'Großschrift / Hochkontrast', a:'Einstellungen → Inklusion → 3 Stufen / WCAG-AAA Toggle.'},
+    {q:'Tooltips überall', a:'Lange auf einen Knopf tippen (mobile) zeigt Hilfetext. Bei Voice-Tooltips wird er beim Fokus vorgelesen.'},
+    {q:'Differenzierte Vibration', a:'Verschiedene Patterns für Touch / Erfolg / Ziel / Fehler / Achievement. Lernbar durch Nutzung.'},
+  ]},
+  {cat:'Audio & Wohlbefinden', icon:'🎵', items:[
+    {q:'Soundscape', a:'Setup → Werkzeuge → Audio: 5 Stimmungen (Regen, Ozean, Wald, Lo-fi, Ambient).'},
+    {q:'Binaurale Beats', a:'Audio-Modal → Binaural-Tab. 5 Presets (Delta bis Gamma). Mit Kopfhörern.'},
+    {q:'Atemübung 4-7-8', a:'Audio-Modal → Atmen-Tab. Animierter Atem-Kreis.'},
+  ]},
+  {cat:'Wartung', icon:'🧽', items:[
+    {q:'Reinigung', a:'Setup → Wartung-Karte. Erinnerung nach X Sessions oder Y Heizstunden.'},
+    {q:'Sieb-Wechsel', a:'Eigener Counter, default alle 50 Sessions.'},
+    {q:'Service-Historie', a:'Wartung-Karte aufklappen → chronologisches Log.'},
+  ]},
+  {cat:'Medizinisch', icon:'🩺', items:[
+    {q:'Symptom-Tracker', a:'Setup → Werkzeuge → Symptom-Tracker. 5 Skalen (Schmerz, Schlaf, Appetit, Stimmung, Angst).'},
+    {q:'Tolerance-Break', a:'Setup-Tab → T-Break-Karte → „Starten". Tagezähler, Fortschritts-Bar.'},
+    {q:'Konsum-Protokoll', a:'Setup → Werkzeuge → 📄 → öffnet HTML-Report im neuen Tab → drucken oder als PDF speichern.'},
+  ]},
+  {cat:'Power-User', icon:'🔧', items:[
+    {q:'Custom BLE-Profile', a:'Setup → Werkzeuge → ⚙️ Custom Profile: eigene UUIDs für nicht-S&B-Geräte definieren.'},
+    {q:'Raw BLE-Console', a:'Setup → Werkzeuge → 📟 Console: Hex-Bytes pro Char schreiben/lesen.'},
+    {q:'Webhook bei Events', a:'Einstellungen → Externe Integration → URL eingeben. POST mit JSON bei Heizer-an / Bag-Done / Fehler.'},
+    {q:'MQTT-Publisher', a:'Einstellungen → Externe Integration → WSS-URL und Topic-Prefix. Verbindet sich mit MQTT-Broker und published Events.'},
+    {q:'DevTools-Console', a:'F12 → `sessions.about()` zeigt App-Info. `sessions.state` zeigt State, `sessions.prefs` zeigt Einstellungen.'},
+  ]},
+  {cat:'Tipps', icon:'💡', items:[
+    {q:'Konami-Code', a:'↑↑↓↓←→←→ba auf der Tastatur → alle Achievements freischalten.'},
+    {q:'Lange tippen', a:'Temperatur-Pill lange tippen ändert Wert. Im Aroma-Modal eigene Sorten hinzufügen.'},
+    {q:'Sortennamen-Generator', a:'Einstellungen → Engagement → 🎲 generiert Cannabis-Namen.'},
+  ]},
+];
+
+function renderManual(query=''){
+  const root = $('#manualContent');
+  if(!root) return;
+  const q = (query||'').toLowerCase().trim();
+  root.innerHTML = '';
+  for(const cat of MANUAL){
+    const matches = q ? cat.items.filter(it=>(it.q+' '+(it.a||'')).toLowerCase().includes(q)) : cat.items;
+    if(!matches.length) continue;
+    const sec = document.createElement('div');
+    sec.style.cssText='margin-bottom:18px';
+    sec.innerHTML = `<h3 style="font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px;display:flex;align-items:center;gap:8px;color:var(--text)"><span aria-hidden="true">${cat.icon}</span><span>${escapeHtml(cat.cat)}</span></h3>`;
+    for(const it of matches){
+      const det = document.createElement('details');
+      det.style.cssText = 'margin-bottom:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0';
+      det.innerHTML = `<summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:14px;font-family:var(--font-body);color:var(--text)">${escapeHtml(it.q)}</summary><div style="padding:0 14px 12px;font-size:13px;color:var(--text);line-height:1.6">${escapeHtml(it.a||'')}</div>`;
+      sec.appendChild(det);
+    }
+    root.appendChild(sec);
+  }
+  if(!root.children.length){
+    root.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px">Keine Treffer für „'+escapeHtml(query)+'"</p>';
+  }
+}
+
+function openManual(){
+  renderManual('');
+  const s = $('#manualSearch'); if(s) s.value = '';
+  $('#modalManual').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: BLINDEN-MODUS (alle a11y-Features auf einmal)
+═══════════════════════════════════════════════════════════════ */
+function toggleBlindMode(){
+  PREFS.blindMode = !PREFS.blindMode;
+  if(PREFS.blindMode){
+    PREFS.fontScale = 150;
+    PREFS.highContrast = true;
+    PREFS.voiceReadout = true;
+    PREFS.tooltipsVoice = true;
+    PREFS.haptiCustom = true;
+    PREFS.sound = true;
+    PREFS.haptic = true;
+    toast('Blinden-Modus aktiv. ESC = Notaus, V = Status, B = Ballon.');
+    haptiPattern('success');
+    if('speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance('Blinden-Modus aktiv. Tastatur: V für Status, Escape für Notaus, B für Ballon, D für Direkt-Zug, eins bis neun für Temperaturen, Leertaste für Heizer.');
+      u.lang = 'de-DE'; u.rate = 0.95;
+      try{ speechSynthesis.cancel(); speechSynthesis.speak(u); }catch{}
+    }
+  } else {
+    PREFS.fontScale = 100;
+    PREFS.highContrast = false;
+    PREFS.voiceReadout = false;
+    PREFS.tooltipsVoice = false;
+    toast('Blinden-Modus aus');
+  }
+  savePrefs();
+  applyFontScale();
+  applyHighContrast();
+  setupVoiceReadoutInterval();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: TOOLTIPS (überall via title-Attribut + Long-Press + TTS)
+═══════════════════════════════════════════════════════════════ */
+const TOOLTIPS = {
+  'btnConnect':'Bluetooth-Verbindung herstellen oder trennen',
+  'userAvatar':'Profil wechseln oder verwalten',
+  'btnHelp':'Anleitung und Hilfe öffnen',
+  'btnSettings':'Einstellungen öffnen',
+  'devBadge':'Gerätetyp wechseln (Volcano, Crafty, Mighty, Venty)',
+  'qaDirectDraw':'Pumpe für eingestellte Sekunden, dann automatisch aus',
+  'qaBagFill':'Ballon füllen mit gewähltem Typ und Zeit',
+  'qaPreheat':'In X Minuten automatisch auf Y Grad aufheizen',
+  'qaAroma':'Aroma- und Sortendatenbank mit Empfehlungen',
+  'btnPreheatCancel':'Geplante Pre-Heat-Aktion abbrechen',
+  'btnHeat':'Heizer einschalten oder ausschalten (Tastatur: Space)',
+  'btnPump':'Pumpe an oder aus',
+  'btnSetTemp':'Eingestellte Temperatur an Gerät senden',
+  'btnPumpFor':'Pumpe für angegebene Sekunden, dann aus',
+  'btnNewProg':'Neues eigenes Programm erstellen',
+  'btnReplayLast':'Zuletzt gelaufenes Programm nochmal starten',
+  'btnDevicePick':'Gerätetyp im Picker auswählen',
+  'btnDiscover':'Verfügbare BLE-Services scannen',
+  'btnAutoMap':'UUIDs automatisch auf bekannte Volcano-Werte setzen',
+  'btnExportCsv':'Sessions als CSV-Datei herunterladen',
+  'btnShowDiag':'Diagnose-Log als Textdatei herunterladen',
+  'btnEncrypt':'Sessions und Notizen mit PIN verschlüsseln',
+  'btnDecrypt':'Verschlüsselte Daten mit PIN entschlüsseln',
+  'btnForgetMe':'ALLE Daten unwiederbringlich löschen',
+  'btnOpenAudio':'Audio-Soundscapes, Binaurale Beats und Atemübung',
+  'btnOpenLearn':'Glossar, Verdampfungs-Wissenschaft und Quiz',
+  'btnOpenSymPre':'Symptome vor oder nach der Session erfassen',
+  'btnOpenReport':'Konsum-Protokoll als PDF für Arztgespräche',
+  'btnImportLib':'Programme aus URL importieren',
+  'btnOpenUsers':'Benutzer-Profile verwalten',
+  'btnOpenManual':'Vollständige Anleitung mit allen Funktionen',
+  'btnOpenBleConsole':'Raw BLE-Console für Forscher und Bastler',
+  'btnOpenDsl':'Programm-Skript-Sprache: heat 180; pump 25s',
+  'btnAddCustomProfile':'Eigenes Geräteprofil mit Custom-UUIDs anlegen',
+};
+
+function installTooltips(){
+  for(const [id, txt] of Object.entries(TOOLTIPS)){
+    const el = document.getElementById(id);
+    if(!el) continue;
+    el.setAttribute('title', txt);
+    if(!el.getAttribute('aria-label')){ el.setAttribute('aria-label', txt); }
+    let pressTimer = null;
+    el.addEventListener('pointerdown', (e)=>{
+      if(e.pointerType === 'mouse') return;
+      pressTimer = setTimeout(()=>{
+        showTooltipPopup(txt);
+        if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
+          try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.05; speechSynthesis.speak(u); }catch{}
+        }
+      }, 600);
+    });
+    el.addEventListener('pointerup', ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} });
+    el.addEventListener('pointercancel', ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} });
+    el.addEventListener('focus', ()=>{
+      if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
+        try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.1; speechSynthesis.speak(u); }catch{}
+      }
+    });
+  }
+}
+
+function showTooltipPopup(txt){
+  let tp = $('#tooltipPopup');
+  if(!tp){
+    tp = document.createElement('div');
+    tp.id = 'tooltipPopup';
+    tp.className = 'tooltip-popup';
+    document.body.appendChild(tp);
+  }
+  tp.textContent = txt;
+  tp.classList.add('show');
+  clearTimeout(showTooltipPopup._t);
+  showTooltipPopup._t = setTimeout(()=>tp.classList.remove('show'), 3500);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: HOTEL-MODE
+═══════════════════════════════════════════════════════════════ */
+function enterHotelMode(){
+  PREFS.hotelMode = true;
+  savePrefs();
+  const ov = $('#hotelOverlay');
+  if(ov) ov.style.display='flex';
+  stopSoundscape(); stopBeats();
+  // Update wetter
+  if(PREFS.wetterLat) fetchWetter().then(w=>{
+    if(!w) return;
+    const t = $('#hotelTemp'); if(t) t.textContent = Math.round(w.temperature_2m)+'°';
+    const c = $('#hotelCond'); if(c) c.textContent = wetterDesc(w.weather_code);
+    const i = $('#hotelIcon'); if(i) i.textContent = wetterIcon(w.weather_code);
+  });
+}
+function exitHotelMode(){
+  PREFS.hotelMode = false;
+  savePrefs();
+  const ov = $('#hotelOverlay');
+  if(ov) ov.style.display='none';
+}
+function setupHotelExitGesture(){
+  const exitBtn = $('#hotelExitArea');
+  if(!exitBtn) return;
+  let pt = null;
+  const start = ()=>{
+    pt = setTimeout(()=>{
+      exitHotelMode();
+      toast('Hotel-Modus aus');
+    }, 5000);
+  };
+  const cancel = ()=>{ if(pt){clearTimeout(pt); pt=null;} };
+  exitBtn.addEventListener('pointerdown', start);
+  exitBtn.addEventListener('pointerup', cancel);
+  exitBtn.addEventListener('pointerleave', cancel);
+  exitBtn.addEventListener('pointercancel', cancel);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: POWER-SAVER MODE
+═══════════════════════════════════════════════════════════════ */
+function applyPowerSaver(){
+  if(PREFS.powerSaver){
+    releaseWakeLock();
+    const g = $('#tempGraph'); if(g) g.style.display='none';
+    const b = $('#vapeBuddy'); if(b) b.style.display='none';
+    document.documentElement.classList.add('power-saver');
+  } else {
+    const g = $('#tempGraph'); if(g) g.style.display='';
+    if(PREFS.vapeBuddy) renderVapeBuddy();
+    document.documentElement.classList.remove('power-saver');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: OFFLINE INDICATOR
+═══════════════════════════════════════════════════════════════ */
+function setupOfflineIndicator(){
+  const update = ()=>{
+    const ind = $('#offlineIndicator');
+    if(!ind) return;
+    ind.style.display = navigator.onLine ? 'none' : 'flex';
+  };
+  window.addEventListener('online', update);
+  window.addEventListener('offline', update);
+  update();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: CUSTOM BLE PROFILES
+═══════════════════════════════════════════════════════════════ */
+function getCustomProfiles(){ return PREFS.customBleProfiles || []; }
+function addCustomBleProfile(){
+  const name = prompt('Profil-Name (z.B. „Mein Gerät"):');
+  if(!name || !name.trim()) return;
+  const serviceState = prompt('Service-UUID (notify):', '10100000-5354-4f52-5a26-4249434b454c');
+  const serviceControl = prompt('Service-UUID (control):', '10110000-5354-4f52-5a26-4249434b454c');
+  if(!serviceState || !serviceControl) return;
+  const id = 'custom_'+Date.now();
+  const profile = {
+    id, name:name.trim(), sub:'Eigenes Profil', icon:'⚙️', status:'custom',
+    namePrefix:'', tempRange:[40,230],
+    capabilities:{heater:true, pump:true, bagFill:true, directDraw:true, battery:false, autoOff:true},
+    uuids:{
+      uuidServiceState:serviceState.trim(),
+      uuidServiceControl:serviceControl.trim(),
+      uuidSetTemp:'', uuidCurTemp:'', uuidActivity:'',
+      uuidHeaterOn:'', uuidHeaterOff:'', uuidPumpOn:'', uuidPumpOff:'',
+    },
+    features:{heat:true, pump:true, workflows:true},
+    notes:'Custom-Profil. Nach Verbindung „Auto-Mapping" verwenden.',
+    custom:true,
+  };
+  PREFS.customBleProfiles = (PREFS.customBleProfiles||[]).concat([profile]);
+  DEVICE_PROFILES[id] = profile;
+  savePrefs();
+  toast('Custom-Profil „'+name+'" angelegt');
+  renderCustomProfiles();
+}
+function removeCustomBleProfile(id){
+  if(!confirm('Profil löschen?')) return;
+  PREFS.customBleProfiles = (PREFS.customBleProfiles||[]).filter(p=>p.id!==id);
+  delete DEVICE_PROFILES[id];
+  savePrefs();
+  renderCustomProfiles();
+  toast('Gelöscht');
+}
+function renderCustomProfiles(){
+  const root = $('#customProfilesList');
+  if(!root) return;
+  const profiles = getCustomProfiles();
+  if(!profiles.length){
+    root.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:14px">Keine Custom-Profile</div>';
+    return;
+  }
+  root.innerHTML = '';
+  for(const p of profiles){
+    const div = document.createElement('div');
+    div.className='dev-card';
+    div.innerHTML = `
+      <span class="dev-icon">⚙️</span>
+      <div class="dev-info">
+        <b>${escapeHtml(p.name)}</b>
+        <small>State: ${escapeHtml(p.uuids.uuidServiceState.slice(0,8))}…</small>
+      </div>
+      <button class="btn sm ghost" data-act="del" style="padding:3px 9px;min-height:auto;color:var(--err)" aria-label="Profil löschen">×</button>
+    `;
+    div.querySelector('[data-act="del"]').addEventListener('click', ()=>removeCustomBleProfile(p.id));
+    root.appendChild(div);
+  }
+}
+function loadCustomProfilesIntoDeviceList(){
+  for(const p of (PREFS.customBleProfiles||[])){ DEVICE_PROFILES[p.id] = p; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: RAW BLE CONSOLE
+═══════════════════════════════════════════════════════════════ */
+async function bleConsoleRead(charUuid){
+  if(!State.connected) return 'Nicht verbunden.';
+  try{
+    for(const svc of State.allServices||[]){
+      try{
+        const chars = await svc.getCharacteristics();
+        for(const c of chars){
+          if(c.uuid.toLowerCase() === charUuid.toLowerCase()){
+            if(!c.properties.read) return 'Char hat kein read-Property.';
+            const v = await c.readValue();
+            const bytes = Array.from(new Uint8Array(v.buffer));
+            return 'Bytes: ['+bytes.map(b=>b.toString(16).padStart(2,'0')).join(' ')+']\n' +
+                   'Uint8: '+bytes[0]+'\n' +
+                   'Uint16 LE: '+(bytes[0] + (bytes[1]||0)*256)+'\n' +
+                   'Uint32 LE: '+(bytes[0] + (bytes[1]||0)*256 + (bytes[2]||0)*65536 + (bytes[3]||0)*16777216);
+          }
+        }
+      }catch{}
+    }
+    return 'Char nicht gefunden.';
+  }catch(e){ return 'Fehler: '+e.message; }
+}
+async function bleConsoleWrite(charUuid, hexStr){
+  if(!State.connected) return 'Nicht verbunden.';
+  try{
+    const hex = hexStr.replace(/[\s,]+/g,'');
+    if(!/^[0-9a-fA-F]+$/.test(hex) || hex.length%2!==0) return 'Ungültiges Hex.';
+    const bytes = new Uint8Array(hex.length/2);
+    for(let i=0;i<bytes.length;i++) bytes[i] = parseInt(hex.substr(i*2,2), 16);
+    for(const svc of State.allServices||[]){
+      try{
+        const chars = await svc.getCharacteristics();
+        for(const c of chars){
+          if(c.uuid.toLowerCase() === charUuid.toLowerCase()){
+            if(!(c.properties.write || c.properties.writeWithoutResponse)) return 'Char hat kein write.';
+            await c.writeValue(bytes);
+            return 'OK: '+bytes.length+' Bytes geschrieben';
+          }
+        }
+      }catch{}
+    }
+    return 'Char nicht gefunden.';
+  }catch(e){ return 'Fehler: '+e.message; }
+}
+function openBleConsole(){ $('#modalBleConsole').classList.add('open'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: DSL (Skript-Sprache)
+═══════════════════════════════════════════════════════════════ */
+function parseDsl(text){
+  const steps = [];
+  const lines = text.split(/\r?\n/);
+  let lineNo = 0;
+  for(let line of lines){
+    lineNo++;
+    line = line.replace(/[#;].*/, '').trim().toLowerCase();
+    if(!line) continue;
+    let m;
+    if((m = line.match(/^heat\s+on/))){ steps.push({action:'heat_on'}); continue; }
+    if((m = line.match(/^heat\s+off/))){ steps.push({action:'heat_off'}); continue; }
+    if((m = line.match(/^pump\s+on/))){ steps.push({action:'pump_on'}); continue; }
+    if((m = line.match(/^pump\s+off/))){ steps.push({action:'pump_off'}); continue; }
+    if((m = line.match(/^pump\s+(\d+)\s*s?/))){ steps.push({action:'pump_for', seconds:parseInt(m[1])}); continue; }
+    if((m = line.match(/^set\s+(\d+)\s*c?/))){ steps.push({action:'set_temperature', value:parseInt(m[1])}); continue; }
+    if((m = line.match(/^wait\s+until\s+(\d+)/))){ steps.push({action:'wait_until', value:parseInt(m[1])}); continue; }
+    if((m = line.match(/^wait\s+(\d+)\s*s?/))){ steps.push({action:'wait', seconds:parseInt(m[1])}); continue; }
+    if((m = line.match(/^loop\s+(\d+)/))){ steps.push({action:'loop_start', repeat:parseInt(m[1])}); continue; }
+    if((m = line.match(/^end\s+loop|^endloop|^end$/))){ steps.push({action:'loop_end'}); continue; }
+    throw new Error(`Zeile ${lineNo}: "${line}" konnte nicht geparst werden`);
+  }
+  return steps;
+}
+function stepsToDsl(steps){
+  return steps.map(s=>{
+    switch(s.action){
+      case 'heat_on': return 'heat on';
+      case 'heat_off': return 'heat off';
+      case 'pump_on': return 'pump on';
+      case 'pump_off': return 'pump off';
+      case 'pump_for': return `pump ${s.seconds}s`;
+      case 'set_temperature': return `set ${s.value}`;
+      case 'wait_until': return `wait until ${s.value}`;
+      case 'wait': return `wait ${s.seconds}s`;
+      case 'loop_start': return `loop ${s.repeat||2}`;
+      case 'loop_end': return 'end loop';
+      default: return '# '+s.action;
+    }
+  }).join('\n');
+}
+function openDsl(){
+  const txt = LS.get('vol_dsl_draft', '# DSL Beispiel\nheat on\nset 185\nwait until 185\npump 25s\nwait 30s\nset 200\nwait until 200\npump 30s\nheat off\n');
+  const ed = $('#dslEditor'); if(ed) ed.value = txt;
+  const out = $('#dslOutput'); if(out) out.textContent = '';
+  $('#modalDsl').classList.add('open');
+}
+function dslParse(){
+  const txt = $('#dslEditor').value;
+  LS.set('vol_dsl_draft', txt);
+  try{
+    const steps = parseDsl(txt);
+    const est = estimateDuration(expandLoops(steps));
+    $('#dslOutput').textContent = `✓ ${steps.length} Schritte. Dauer: ${fmtDuration(est)}.\n\n`+JSON.stringify(steps, null, 2);
+    $('#dslOutput').style.color = 'var(--ok)';
+    return steps;
+  }catch(e){
+    $('#dslOutput').textContent = '✗ '+e.message;
+    $('#dslOutput').style.color = 'var(--err)';
+    return null;
+  }
+}
+function dslSaveAsProgram(){
+  const steps = dslParse();
+  if(!steps) return;
+  const name = prompt('Name für das Programm:', 'DSL-Programm '+new Date().toLocaleTimeString('de-DE'));
+  if(!name) return;
+  const prog = {id:'dsl_'+Date.now(), name, desc:'Aus DSL-Editor', steps, isPreset:false};
+  State.programs.unshift(prog);
+  LS.set('vol_programs', State.programs);
+  renderPrograms();
+  toast('Gespeichert: '+name);
+  $('#modalDsl').classList.remove('open');
+  switchTab('prog');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: HOME ASSISTANT YAML EXPORT
+═══════════════════════════════════════════════════════════════ */
+function exportProgramAsHaYaml(p){
+  const slug = (p.name||'sessions_program').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
+  const steps = expandLoops(p.steps);
+  const lines = [];
+  lines.push(`# Home Assistant Script — exportiert von Sessions PWA`);
+  lines.push(`# Programm: ${p.name}`);
+  lines.push(``);
+  lines.push(`script:`);
+  lines.push(`  ${slug}:`);
+  lines.push(`    alias: "${p.name}"`);
+  lines.push(`    description: "${(p.desc||'').replace(/"/g,"'")}"`);
+  lines.push(`    mode: single`);
+  lines.push(`    sequence:`);
+  for(const s of steps){
+    switch(s.action){
+      case 'heat_on':
+        lines.push(`      - service: switch.turn_on`);
+        lines.push(`        target: { entity_id: switch.volcano_heater }`); break;
+      case 'heat_off':
+        lines.push(`      - service: switch.turn_off`);
+        lines.push(`        target: { entity_id: switch.volcano_heater }`); break;
+      case 'pump_on':
+        lines.push(`      - service: switch.turn_on`);
+        lines.push(`        target: { entity_id: switch.volcano_pump }`); break;
+      case 'pump_off':
+        lines.push(`      - service: switch.turn_off`);
+        lines.push(`        target: { entity_id: switch.volcano_pump }`); break;
+      case 'pump_for':
+        lines.push(`      - service: switch.turn_on`);
+        lines.push(`        target: { entity_id: switch.volcano_pump }`);
+        lines.push(`      - delay: "00:00:${String(s.seconds).padStart(2,'0')}"`);
+        lines.push(`      - service: switch.turn_off`);
+        lines.push(`        target: { entity_id: switch.volcano_pump }`); break;
+      case 'set_temperature':
+        lines.push(`      - service: number.set_value`);
+        lines.push(`        target: { entity_id: number.volcano_target_temp }`);
+        lines.push(`        data: { value: ${s.value} }`); break;
+      case 'wait_until':
+        lines.push(`      - wait_template: "{{ states('sensor.volcano_temp')|float >= ${s.value} }}"`);
+        lines.push(`        timeout: "00:04:00"`); break;
+      case 'wait': {
+        const mins = Math.floor(s.seconds/60), secs = s.seconds%60;
+        lines.push(`      - delay: "00:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}"`);
+        break;
+      }
+    }
+  }
+  return lines.join('\n');
+}
+function downloadHaYaml(p){
+  const yaml = exportProgramAsHaYaml(p);
+  const blob = new Blob([yaml], {type:'text/yaml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sessions-${(p.name||'program').toLowerCase().replace(/[^a-z0-9]+/g,'-')}.yaml`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('HA-YAML heruntergeladen');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: WEBHOOKS
+═══════════════════════════════════════════════════════════════ */
+async function fireWebhook(event, payload={}){
+  if(!PREFS.webhookUrl) return;
+  if(!PREFS.webhookEvents?.[event]) return;
+  try{
+    await fetch(PREFS.webhookUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event, t:Date.now(), user:currentUser().name, ...payload}),
+      mode:'no-cors',
+    });
+  }catch(e){ log('Webhook-Fehler: '+e.message, 'warn'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.8: MQTT (über WebSocket-Broker)
+═══════════════════════════════════════════════════════════════ */
+let mqttWs = null;
+function mqttEncodeMsg(topic, payload){
+  const topicBytes = new TextEncoder().encode(topic);
+  const payloadBytes = new TextEncoder().encode(payload);
+  const varHeader = new Uint8Array(2 + topicBytes.length);
+  varHeader[0] = (topicBytes.length >> 8) & 0xff;
+  varHeader[1] = topicBytes.length & 0xff;
+  varHeader.set(topicBytes, 2);
+  const remainingLen = varHeader.length + payloadBytes.length;
+  const remLenBytes = [];
+  let x = remainingLen;
+  do{ let b = x % 128; x = Math.floor(x/128); if(x>0) b |= 128; remLenBytes.push(b); }while(x>0);
+  const packet = new Uint8Array(1 + remLenBytes.length + remainingLen);
+  packet[0] = 0x30;
+  for(let i=0;i<remLenBytes.length;i++) packet[1+i] = remLenBytes[i];
+  packet.set(varHeader, 1+remLenBytes.length);
+  packet.set(payloadBytes, 1+remLenBytes.length+varHeader.length);
+  return packet;
+}
+function mqttEncodeConnect(clientId){
+  const protoName = new TextEncoder().encode('MQTT');
+  const idBytes = new TextEncoder().encode(clientId);
+  const varHeader = new Uint8Array(10);
+  varHeader[0] = 0; varHeader[1] = protoName.length;
+  varHeader.set(protoName, 2);
+  varHeader[6] = 4; varHeader[7] = 0x02; varHeader[8] = 0; varHeader[9] = 60;
+  const payload = new Uint8Array(2 + idBytes.length);
+  payload[0] = (idBytes.length>>8)&0xff;
+  payload[1] = idBytes.length & 0xff;
+  payload.set(idBytes, 2);
+  const remainingLen = varHeader.length + payload.length;
+  const packet = new Uint8Array(2 + remainingLen);
+  packet[0] = 0x10; packet[1] = remainingLen;
+  packet.set(varHeader, 2);
+  packet.set(payload, 2 + varHeader.length);
+  return packet;
+}
+function mqttConnectStart(){
+  if(!PREFS.mqttUrl){ toast('MQTT-URL fehlt'); return; }
+  if(mqttWs && mqttWs.readyState === WebSocket.OPEN){ mqttWs.close(); }
+  try{
+    mqttWs = new WebSocket(PREFS.mqttUrl, ['mqtt']);
+    mqttWs.binaryType = 'arraybuffer';
+    mqttWs.onopen = ()=>{
+      const clientId = 'sessions_'+Math.random().toString(36).slice(2,10);
+      mqttWs.send(mqttEncodeConnect(clientId));
+    };
+    mqttWs.onmessage = (ev)=>{
+      const data = new Uint8Array(ev.data);
+      if(data[0] === 0x20 && data[1] === 0x02){
+        if(data[3] === 0){
+          PREFS.mqttConnected = true;
+          toast('MQTT verbunden');
+          log('MQTT: CONNACK ok', 'ok');
+        } else {
+          toast('MQTT: Verbindung abgelehnt ('+data[3]+')');
+        }
+      }
+    };
+    mqttWs.onerror = ()=>{ log('MQTT-Fehler', 'err'); toast('MQTT-Fehler'); PREFS.mqttConnected = false; };
+    mqttWs.onclose = ()=>{ log('MQTT getrennt', 'warn'); PREFS.mqttConnected = false; };
+  }catch(e){ toast('MQTT-Fehler: '+e.message); }
+}
+function mqttDisconnect(){
+  if(mqttWs && mqttWs.readyState === WebSocket.OPEN){
+    try{ mqttWs.send(new Uint8Array([0xe0, 0x00])); }catch{}
+    mqttWs.close();
+  }
+  PREFS.mqttConnected = false;
+}
+function mqttPublish(subTopic, value){
+  if(!mqttWs || mqttWs.readyState !== WebSocket.OPEN) return;
+  try{
+    const topic = (PREFS.mqttTopicPrefix||'sessions/') + subTopic;
+    const packet = mqttEncodeMsg(topic, String(value));
+    mqttWs.send(packet);
+  }catch{}
+}
+
+
 async function init(){
   // v4.5: apply theme first to avoid flash
   applyTheme();
@@ -7822,6 +8805,21 @@ async function init(){
   renderContextCard();
   renderTBreak();
   setupSharedSessions();
+
+  // v4.8 init
+  loadCustomProfilesIntoDeviceList();
+  installTooltips();
+  setupOfflineIndicator();
+  setupHotelExitGesture();
+  applyPowerSaver();
+  renderCustomProfiles();
+  if(PREFS.hotelMode) enterHotelMode();
+  if(PREFS.blindMode){
+    // Stelle a11y-States wieder her ohne Toggle-Effekt
+    applyFontScale();
+    applyHighContrast();
+    setupVoiceReadoutInterval();
+  }
   // Routine suggestion check (one-shot per day)
   setTimeout(()=>{
     const lastShown = LS.get('vol_routine_shown', '');
@@ -7845,7 +8843,7 @@ async function init(){
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.7 bereit.','ok');
+  log('Sessions v4.8 bereit.','ok');
 
   setupPwaUpdate();
 

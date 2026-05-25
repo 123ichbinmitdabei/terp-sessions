@@ -1,52 +1,89 @@
-# Sessions — S&B Vape Controller (v4.7)
+# Sessions — S&B Vape Controller (v4.8)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern (Volcano Hybrid, Crafty, Mighty, Venty) über Web Bluetooth.
-Single-File HTML PWA, ~300 KB, mobile-first, accessibility-orientiert.
+Single-File HTML PWA, ~348 KB, mobile-first, accessibility-zentriert.
 
-## Was ist neu in v4.7 — Audio, Lernen, Kontext, Medizinisch, Soziales
+## Was ist neu in v4.8 — letzte Phase-1-Batch
 
-18 substantielle neue Features in 5 Kategorien.
+15 substantielle Features in 6 Kategorien. Mit dieser Version ist Phase 1 fertig.
 
-### Audio (3)
+### Anleitung und Bedienung (Schwerpunkt)
 
-- **Hintergrund-Soundscape** mit 5 Stimmungen (Regen, Ozean, Wald, Lo-fi, Ambient) — alles direkt im Browser über Web Audio API generiert. Kein Streaming, kein externes Asset. Lautstärke regelbar.
-- **Binaurale Beats** mit 5 Presets (Delta 3 Hz, Theta 6 Hz, Alpha 10 Hz, Beta 18 Hz, Gamma 40 Hz) — zwei leicht verschiedene Frequenzen pro Ohr für Brainwave-Entrainment. Mit Kopfhörern wirksam.
-- **4-7-8 Atemübung** mit animiertem Atem-Kreis. 4s einatmen, 7s halten, 8s ausatmen. Nutzt die Aufheizzeit für Ruhe.
+- **📖 Eingebautes Handbuch** mit allen Funktionen, gegliedert in 10 Kategorien (Erste Schritte, Steuerung, Programme, Sicherheit, Accessibility, Audio, Wartung, Medizinisch, Power-User, Tipps). Such-Feld zum Filtern, ausklappbare Antworten. Hilfe-Knopf in der Topbar öffnet die Anleitung direkt.
+- **♿ Blinden-Modus**: ein-Toggle aktiviert alle a11y-Features auf einmal: Großschrift 150%, Hochkontrast, Voice-Readout alle 30s, Tooltips per TTS, Vibration. TTS-Willkommens-Ansage erklärt die Shortcuts.
+- **🗯 Tooltips überall**: jeder wichtige Knopf hat einen Hilfetext. Mobile Long-Press zeigt Tooltip-Popup. Bei aktivem „Tooltips per TTS"-Modus wird der Text beim Fokussieren mit Tab vorgelesen.
+- **A11y-Audit**: aria-Labels, title-Attribute, Reading-Order durchgegangen. WCAG-AAA Hochkontrast mit 3px-Fokus-Ring.
 
-### Lernen (3)
+### Reise-Modi
 
-- **Glossar** mit 21 Begriffen zu Cannabinoiden, Terpenen, Verdampfungstechniken (THC, CBD, CBN, Limonen, Linalool, Decarboxylierung, Entourage-Effekt, Konduktion vs. Konvektion, AVB, Mikrodose, T-Break …)
-- **Verdampfungs-Wissenschaft**: Diagramm mit allen relevanten Cannabinoiden und Terpenen, jeweils mit Verdampfungstemperatur und Beschreibung. Cannabinoide orange hervorgehoben, Terpene blau.
-- **Sortenkunde-Quiz**: 10 Fragen-Pool, 5 zufällige pro Runde, sofortige Auflösung mit Highlight der richtigen Antwort, Score am Ende.
+- **🏨 Hotel-Modus**: App versteckt sich hinter einem Wetter-Splash-Screen (zeigt aktuelles Wetter wenn Standort gesetzt). Entsperren per 5-Sekunden-Druck. Audio stoppt automatisch.
+- **🔋 Akku-Spar-Modus**: Wake-Lock aus, Temperatur-Graph aus, Vape-Buddy aus, Animationen reduziert. Schont Handy-Akku unterwegs.
+- **📡 Offline-Indikator**: Banner oben sichtbar wenn keine Internet-Verbindung. Alle App-Funktionen außer BLE-Discovery funktionieren weiter.
 
-### Kontext (4)
+### Power-User Tools
 
-- **Wetter-Integration** via Open-Meteo API (frei, ohne API-Key). Aktuelle Temperatur und Wetter-Code mit deutschen Bezeichnungen. Standort einmalig setzen, danach auto-fetch.
-- **Mond-Phase** berechnet (Conway-Approximation) als achtelige Phase mit Emoji.
-- **Tageszeit-Empfehlung**: morgens Sativa-leicht, mittags Hybrid, abends Indica-betont, nachts schwere Indica.
-- **Saison-Empfehlung**: Winter höhere Temps + schwerere Sorten, Sommer leichter mit Zitrus-Terpenen, etc.
+- **⚙️ Custom BLE-Profile**: User kann eigene Geräteprofile mit Custom-UUIDs anlegen. Erweiterbar für nicht-S&B-Geräte oder Forschungs-Setups. Erscheinen in der Geräte-Liste nach Anlage.
+- **📟 Raw BLE-Console**: Hex-Bytes pro Characteristic schreiben und lesen. Mit Decoding als Uint8/Uint16-LE/Uint32-LE. Für Reverse-Engineering und Forschung.
+- **📜 DSL-Editor**: Programm-Skript-Sprache als Alternative zum visuellen Editor. Syntax: `heat on; set 185; wait until 185; pump 25s; loop 3 ... end loop; heat off`. Parser mit Live-Prüfung und Direkt-Speichern als Programm.
+- **🏠 HA-YAML-Export**: jedes Programm kann als Home-Assistant-Script-YAML exportiert werden. Erzeugt Entity-IDs `switch.volcano_heater`, `switch.volcano_pump`, `number.volcano_target_temp`, `sensor.volcano_temp`. Brücke zu Phase 2.
 
-### Medizinisch (4)
+### Externe Integration
 
-- **Symptom-Tracker**: 5-Skalen-Erfassung (Schmerz, Schlaf-Qualität, Appetit, Stimmung, Angst-Level) jeweils 1-10. Vor und nach der Session. Nach Session-Abschluss wird automatisch gefragt ob nochmal erfasst werden soll.
-- **Tolerance-Break-Modus**: Konsum-Pause-Tracker mit Tagezähler, Ziel-Tagen (default 14, einstellbar), Fortschritts-Bar. Wenn aktiv warnt der Bag-Fill mit Bestätigungs-Dialog. T-Break-History wird gespeichert.
-- **Konsum-Protokoll**: PDF-fähiger HTML-Report mit allen Sessions der letzten 90 Tage, Symptom-Daten der letzten 40 Erfassungen, Zusammenfassung. Öffnet in neuem Fenster, von dort über Browser-Druck als PDF speicherbar. Für Arztgespräche und Selbst-Dokumentation.
-- **Bag-Fill-Schutz im T-Break**: aktiver T-Break löst beim Bag-Fill eine Bestätigungs-Abfrage aus, schützt vor versehentlichem Bruch.
+- **🔗 Webhook bei Events**: konfigurierbare URL die bei Events angerufen wird (Heizer-an, Heizer-aus, Bag-fertig, Fehler). POST mit JSON-Body. Einzeln pro Event togglebar.
+- **📡 MQTT-Publisher**: Verbindung zu MQTT-Broker über WebSocket (z.B. test.mosquitto.org). Published Events unter konfigurierbarem Topic-Prefix. MQTT 3.1.1 Raw-Encoding ohne externe Library.
 
-### Soziales (4)
+### Polishing
 
-- **Multi-User-Profile** mit Avatar-Button oben in der Topbar. Mehrere Profile mit Namen und Emoji. Schneller Wechsel über Profile-Modal. Default-Profil immer vorhanden.
-- **Gemeinsame Session-Modus** über BroadcastChannel — Geräte im selben WiFi sehen Aktionen anderer Nutzer als Toast. Privacy-friendly: kein Server, nur lokal.
-- **Programm-Bibliothek**: JSON-URL importieren und mehrere Programme auf einmal in die Liste laden. Marianas Sammlung könnte z.B. unter `marianacannabis.github.io/sessions-library/programs.json` gehostet werden.
-- **Routine-Erkennung**: nach 30 Sessions sucht die App nach Patterns (Wochentag + Stunde). Wenn 3+ Treffer am selben Slot, Toast mit Vorschlag: „Routine erkannt: Sonntags gegen 19:00".
+- **Wetter network-first**: CC's Hinweis aus v4.7 umgesetzt. Open-Meteo-API wird jetzt immer frisch geladen, nicht aus Cache.
+- **Manual als Topbar-Hilfe**: ? in der Topbar öffnet jetzt die Anleitung statt nur Wizard.
+- **Einstellungen aufgeräumt**: Inklusion an oberster Stelle, Blinden-Modus prominent in oranger Box hervorgehoben.
 
-### Plus
+## Vollständige Werkzeuge im Setup-Tab
 
-- **Im Setup-Tab eine Tools-Karte** mit allen 6 neuen Hauptfunktionen als Schnellzugriff.
+| Werkzeug | Zweck |
+|---|---|
+| 📖 Anleitung | Vollständiges Handbuch mit Suche |
+| 🎵 Audio & Atmen | Soundscapes, Beats, Breathing |
+| 📚 Wissen & Quiz | Glossar, Verdampfungs-Wissenschaft, Quiz |
+| 📋 Symptom-Tracker | Vor/Nach-Session-Bewertung |
+| 📄 Konsum-Protokoll | PDF-Report für Arztgespräche |
+| 📥 Bibliothek | JSON-Programm-Import |
+| 👥 Profile | Multi-User-Profile |
+| 📜 DSL-Editor | Programm-Skript-Sprache |
+| 📟 BLE-Console | Raw BLE für Forscher |
 
-## Was war in v4.6
+## Tastatur-Shortcuts
 
-22 Features: Großschrift, Hochkontrast, Tastatur-Shortcuts, Voice-Readout, differenzierte Haptik · PIN-Sperre, Auto-Lock, Bags-Tageslimit, Forget-Me, AES-Encryption · Reinigung, Sieb, Service-Log, Firmware · Loops, Variablen, Timeline-View · 12 Achievements, Streak, Sortennamen-Generator, Vape-Buddy, Easter Eggs.
+| Taste | Aktion |
+|---|---|
+| 1 - 9 | Lieblings-Temperatur setzen |
+| Space | Heizer ein/aus |
+| B | Ballon füllen |
+| D | Direkt-Zug starten |
+| V | Status vorlesen |
+| ESC | Notaus (Heizer + Pumpe aus) bzw. Modal schließen |
+
+## Was war vorher
+
+- **v4.7** (18 Features): Audio (Soundscape, Binaural, Atmung), Lernen (Glossar 21 Begriffe, Vapor-Wissenschaft, Quiz), Kontext (Wetter, Mond, Saison), Medizinisch (Symptome, T-Break, Konsum-PDF), Soziales (Multi-User, Shared Session, Bibliothek)
+- **v4.6** (22 Features): Großschrift, Hochkontrast, Tastatur-Shortcuts, Voice-Readout, PIN, Auto-Lock, Bags-Limit, Forget-Me, AES-Encryption, Reinigungs-Reminder, Sieb-Counter, Service-Log, Loops, Variablen, Timeline, 12 Achievements, Streak, Sortennamen-Generator, Vape-Buddy, Easter Eggs
+- **v4.5** (25 Features): Umbenannt auf „Sessions", Geräte-Capabilities, Quick-Actions, Pre-Heat, Auto-Cool, Step-Templates, 57 Sorten, 6 Themes, Multi-Geräte, Replay, Favoriten, Smart-Defaults, PWA-Update, Heizkurven, Notfall-Diagnose
+
+## Phase 1 Abschluss
+
+Mit v4.8 ist die App **Feature-vollständig** für den Single-File-Browser-Ansatz. Was in dieser Architektur noch ginge: 3D-Volcano-Visualisierung (Three.js, ~600 KB extra) — auf v4.9 verschoben falls gewünscht.
+
+## Phase 2 (jetzt machbar)
+
+Mit dem HA-YAML-Export aus v4.8 ist die Brücke gebaut:
+
+- Raspberry Pi 4 (4 GB) ~75 €
+- Home Assistant OS
+- HACS → Chuffnugget volcano_integration (BLE-Native Bridge)
+- Lovelace-Dashboard mit Sessions-Programmen als Scripts
+- Nabu Casa Cloud (5,40 €/Monat) ODER eigene AWS Lambda für Alexa Smart Home Skill
+
+Sag Bescheid wenn Phase 2 als nächstes startet.
 
 ## Plattform-Kompatibilität
 
@@ -55,36 +92,11 @@ Single-File HTML PWA, ~300 KB, mobile-first, accessibility-orientiert.
 | Bluetooth | ✅ | ✅ | ✅ | ❌ |
 | Sprachsteuerung | ✅ | ✅ | eingeschr. | ❌ |
 | Soundscapes | ✅ | ✅ | ✅ | ✅ |
-| Binaural Beats | ✅ | ✅ | ✅ | ✅ |
-| Wetter API | ✅ | ✅ | ✅ | ✅ |
-| Geolokation | ✅ | ✅ | ✅ | ✅ |
-| Shared Session | ✅ | ✅ | ✅ | ✅ |
-| Web Crypto | ✅ | ✅ | ✅ | ✅ |
-
-## Datenschutz
-
-- Soundscapes: alle Sounds werden lokal erzeugt, kein Tracking
-- Wetter: einziger externer Call ist die Open-Meteo API mit Latitude/Longitude (anonymisiert, kein Account)
-- Reverse-Geocoding: Open-Meteo Geocoding für Stadtnamen
-- Multi-User: alle Profile lokal, nichts wird hochgeladen
-- Shared Session: nur über BroadcastChannel im selben Browser-Kontext, kein Server
-
-## Werkzeuge im Setup-Tab
-
-| Werkzeug | Zweck |
-|---|---|
-| 🎵 Audio & Atmen | Soundscapes, Beats, Breathing |
-| 📚 Wissen & Quiz | Glossar, Wissenschaft, Quiz |
-| 📋 Symptom-Tracker | Vor/Nach-Session-Bewertung |
-| 📄 Konsum-Protokoll | PDF-Report für Arzt/Eigendoku |
-| 📥 Bibliothek | JSON-Programm-Import |
-| 👥 Profile | Multi-User-Profile |
-
-## Roadmap
-
-**v4.8** geplant: Power-User (Custom BLE-UUIDs, Raw-BLE-Console, DSL-Script, HA-YAML-Export), Externe Integration (MQTT-Publisher, Webhooks), Reise-Modi (Hotel, Akku-Spar, Offline-First), 3D-Volcano-Vorschau optional. ~15-20 Features.
-
-Nach v4.8 ist Phase 1 wirklich fertig — dann Phase 2 (Raspberry Pi + Home Assistant + Alexa) als separates Setup.
+| Wetter / Geolokation | ✅ | ✅ | ✅ | ✅ |
+| Web Crypto / PIN | ✅ | ✅ | ✅ | ✅ |
+| MQTT (WebSocket) | ✅ | ✅ | ✅ | ✅ |
+| Webhook | ✅ | ✅ | ✅ | ✅ |
+| Speech Synthesis | ✅ | ✅ | eingeschr. | ✅ |
 
 ## Hinweis zur Ballon-Füllung
 
