@@ -1,82 +1,91 @@
-# Sessions — S&B Vape Controller (v4.6)
+# Sessions — S&B Vape Controller (v4.7)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern (Volcano Hybrid, Crafty, Mighty, Venty) über Web Bluetooth.
-Single-File HTML, PWA-fähig, mobile-first, accessibility-orientiert.
+Single-File HTML PWA, ~300 KB, mobile-first, accessibility-orientiert.
 
-## Was ist neu in v4.6 — Accessibility, Sicherheit, Wartung, Engagement
+## Was ist neu in v4.7 — Audio, Lernen, Kontext, Medizinisch, Soziales
 
-22 neue Features in 6 Kategorien.
+18 substantielle neue Features in 5 Kategorien.
 
-### Inklusion und Bedienbarkeit
+### Audio (3)
 
-- **Großschrift-Modus**: drei Stufen (100% / 125% / 150%) in den Einstellungen
-- **Hochkontrast-Modus** (WCAG AAA): Schwarz/Weiß-Palette mit dickeren Borders und 3px-Fokus-Ring
-- **Tastatur-Shortcuts**: 1-9 für Lieblings-Temperaturen, Space für Heizer-Toggle, B für Ballon, D für Direkt-Zug, V für Status-Vorlesen, ESC für Notaus
-- **Voice-Status-Readout**: TTS-Vorlesefunktion auf Tastendruck (V) oder automatisch alle 30 Sekunden während verbunden. Liest aktuelle Temperatur, Ziel, Heizer-Status und ETA
-- **Differenzierte Haptik-Patterns**: kurz (Touch), zwei-zu-eins (Erfolg), drei-mal (Ziel erreicht), zwei-lang (Warnung), drei-lang (Fehler), fünf-Takt (Achievement). Blinde lernen die Signale schnell
+- **Hintergrund-Soundscape** mit 5 Stimmungen (Regen, Ozean, Wald, Lo-fi, Ambient) — alles direkt im Browser über Web Audio API generiert. Kein Streaming, kein externes Asset. Lautstärke regelbar.
+- **Binaurale Beats** mit 5 Presets (Delta 3 Hz, Theta 6 Hz, Alpha 10 Hz, Beta 18 Hz, Gamma 40 Hz) — zwei leicht verschiedene Frequenzen pro Ohr für Brainwave-Entrainment. Mit Kopfhörern wirksam.
+- **4-7-8 Atemübung** mit animiertem Atem-Kreis. 4s einatmen, 7s halten, 8s ausatmen. Nutzt die Aufheizzeit für Ruhe.
 
-### Sicherheit und Schutz
+### Lernen (3)
 
-- **PIN-Sperre**: 4-8-stellige PIN, SHA-256 mit Salt gehasht, beim Start abgefragt. Über Einstellungen aktivierbar
-- **Auto-Lock**: nach X Minuten Inaktivität (0-60) wird die PIN erneut abgefragt. Erkennung über Click/Keyboard/Touch-Events
-- **Selbstkontroll-Limit**: max X Ballons pro Tag — bei Überschreiten Warnung mit Fortsetzungs-Bestätigung
-- **Forget-Me-Knopf**: alles weg: alle LocalStorage-Keys, Service Worker, Caches. Doppelte Sicherheitsabfrage, danach App-Neustart
-- **Encryption at Rest**: Sessions-History und Notizen optional AES-GCM-verschlüsselt mit PBKDF2-Key-Derivation (100k Iterationen) aus der PIN. Verschlüsseln/Entschlüsseln in Einstellungen
+- **Glossar** mit 21 Begriffen zu Cannabinoiden, Terpenen, Verdampfungstechniken (THC, CBD, CBN, Limonen, Linalool, Decarboxylierung, Entourage-Effekt, Konduktion vs. Konvektion, AVB, Mikrodose, T-Break …)
+- **Verdampfungs-Wissenschaft**: Diagramm mit allen relevanten Cannabinoiden und Terpenen, jeweils mit Verdampfungstemperatur und Beschreibung. Cannabinoide orange hervorgehoben, Terpene blau.
+- **Sortenkunde-Quiz**: 10 Fragen-Pool, 5 zufällige pro Runde, sofortige Auflösung mit Highlight der richtigen Antwort, Score am Ende.
 
-### Wartung und Pflege
+### Kontext (4)
 
-- **Reinigungs-Reminder**: nach X Sessions oder Y Heizstunden erscheint Reminder mit „Erledigt"-Bestätigung
-- **Sieb-Wechsel-Counter**: separater Counter, Default alle 50 Sessions
-- **Service-Historie**: chronologisches Log was wann gewartet wurde, ausklappbar im Setup-Tab
-- **Firmware-Anzeige**: manuell eintragbares Feld, wird in Diagnose-Export aufgenommen
-- **Visuelle Reminder-Balken**: zeigen Fortschritt zur nächsten Wartung als Bar — wird gelb bei 80%, rot bei 100%
+- **Wetter-Integration** via Open-Meteo API (frei, ohne API-Key). Aktuelle Temperatur und Wetter-Code mit deutschen Bezeichnungen. Standort einmalig setzen, danach auto-fetch.
+- **Mond-Phase** berechnet (Conway-Approximation) als achtelige Phase mit Emoji.
+- **Tageszeit-Empfehlung**: morgens Sativa-leicht, mittags Hybrid, abends Indica-betont, nachts schwere Indica.
+- **Saison-Empfehlung**: Winter höhere Temps + schwerere Sorten, Sommer leichter mit Zitrus-Terpenen, etc.
 
-### Programm-Editor Power
+### Medizinisch (4)
 
-- **Loop / Wiederhole** als Step-Action: „+ Loop"-Button im Editor fügt ein `loop_start`/`loop_end`-Paar ein. Alle Schritte dazwischen werden 2-20x wiederholt
-- **Variablen-Platzhalter**: ein Programm-Step kann `{temp}` oder `{seconds}` enthalten. Beim Start wird der User per Prompt nach Werten gefragt
-- **Timeline-View** im Editor: alternative Darstellung als horizontale Timeline mit farbigen Blöcken (Heizer rot, Pumpe blau, Pause grau, Loop violett). Per Tab umschaltbar
-- **Loops werden zur Laufzeit expandiert**: bei einer Loop mit 3x Wiederholung werden die inneren Schritte 3x nacheinander ausgeführt
+- **Symptom-Tracker**: 5-Skalen-Erfassung (Schmerz, Schlaf-Qualität, Appetit, Stimmung, Angst-Level) jeweils 1-10. Vor und nach der Session. Nach Session-Abschluss wird automatisch gefragt ob nochmal erfasst werden soll.
+- **Tolerance-Break-Modus**: Konsum-Pause-Tracker mit Tagezähler, Ziel-Tagen (default 14, einstellbar), Fortschritts-Bar. Wenn aktiv warnt der Bag-Fill mit Bestätigungs-Dialog. T-Break-History wird gespeichert.
+- **Konsum-Protokoll**: PDF-fähiger HTML-Report mit allen Sessions der letzten 90 Tage, Symptom-Daten der letzten 40 Erfassungen, Zusammenfassung. Öffnet in neuem Fenster, von dort über Browser-Druck als PDF speicherbar. Für Arztgespräche und Selbst-Dokumentation.
+- **Bag-Fill-Schutz im T-Break**: aktiver T-Break löst beim Bag-Fill eine Bestätigungs-Abfrage aus, schützt vor versehentlichem Bruch.
 
-### Engagement und Spaß
+### Soziales (4)
 
-- **Achievements**: 12 freischaltbare Erfolge (Erster Ballon, 10 Ballons, 100 Ballons, Erstes eigenes Programm, 7-Tage-Streak, 30-Tage-Streak, alle Themes ausprobiert, 5 Sorten getestet, eigene Sorte, Reinigung, Sprachsteuerung-Nutzer). Toast mit Vibration beim Freischalten
-- **Streak-Counter**: aufeinanderfolgende Tage mit mindestens einer Session — als 4. Stat-Kachel
-- **Sortennamen-Generator**: zufällige Cannabis-Sorten-Namen mit Adjektiv + Nomen + Nummer („Crystal Lightning #42"). Generator-Button in Einstellungen, kann direkt als Custom-Sorte übernommen werden
-- **Vape-Buddy-Charakter**: kleines Charakter-Icon unten links das mit dir kommuniziert. Mood je nach Geräte-Status (Schlafend wenn unverbunden, Heizt-auf während Aufheizung, Bereit wenn Ziel erreicht). Optional ein-/ausschaltbar
-- **Easter Eggs**: Konami-Code (↑↑↓↓←→←→ba) schaltet alle Achievements frei. `sessions.about()` in der DevTools-Console zeigt Credits
-- **ASCII-Volcano** in der DevTools-Console beim App-Start — kleine Geste für Entwickler
+- **Multi-User-Profile** mit Avatar-Button oben in der Topbar. Mehrere Profile mit Namen und Emoji. Schneller Wechsel über Profile-Modal. Default-Profil immer vorhanden.
+- **Gemeinsame Session-Modus** über BroadcastChannel — Geräte im selben WiFi sehen Aktionen anderer Nutzer als Toast. Privacy-friendly: kein Server, nur lokal.
+- **Programm-Bibliothek**: JSON-URL importieren und mehrere Programme auf einmal in die Liste laden. Marianas Sammlung könnte z.B. unter `marianacannabis.github.io/sessions-library/programs.json` gehostet werden.
+- **Routine-Erkennung**: nach 30 Sessions sucht die App nach Patterns (Wochentag + Stunde). Wenn 3+ Treffer am selben Slot, Toast mit Vorschlag: „Routine erkannt: Sonntags gegen 19:00".
 
-## Was war in v4.5
+### Plus
 
-App-Umbenennung in „Sessions", Geräte-Capabilities-System, Quick-Actions im Hero, Pre-Heat-Timer, Auto-Cool-Down, Step-Templates, Aroma-DB auf 57 Sorten + Programm-Generator, Custom-Aromas, CSV-Export, Stats-Visualisierung, 6-Theme-Picker (Dark, Light, Lava, Forest, Cosmos, Paper), Multi-Geräte-Liste, Session-Replay, Quick-Favoriten, Smart-Defaults, PWA-Update-Prompt, Heizkurven-Analyse, Notfall-Diagnose, Sicherheits-Timer default an, Layout-Cleanup.
+- **Im Setup-Tab eine Tools-Karte** mit allen 6 neuen Hauptfunktionen als Schnellzugriff.
 
-## Plattform-Hinweise
+## Was war in v4.6
 
-| Plattform | Web Bluetooth | Sprachsteuerung | Web Crypto (PIN+Encryption) | Wake Lock |
+22 Features: Großschrift, Hochkontrast, Tastatur-Shortcuts, Voice-Readout, differenzierte Haptik · PIN-Sperre, Auto-Lock, Bags-Tageslimit, Forget-Me, AES-Encryption · Reinigung, Sieb, Service-Log, Firmware · Loops, Variablen, Timeline-View · 12 Achievements, Streak, Sortennamen-Generator, Vape-Buddy, Easter Eggs.
+
+## Plattform-Kompatibilität
+
+| Feature | Android Chrome | Desktop Chrome | Bluefy iOS | Safari iOS |
 |---|---|---|---|---|
-| Android Chrome | ✅ | ✅ | ✅ | ✅ |
-| Desktop Chrome/Edge | ✅ | ✅ | ✅ | ✅ |
-| iPhone/iPad Bluefy | ✅ | eingeschränkt | ✅ | ✅ |
-| iPhone/iPad Safari | ❌ | ✅ | ✅ | ✅ |
+| Bluetooth | ✅ | ✅ | ✅ | ❌ |
+| Sprachsteuerung | ✅ | ✅ | eingeschr. | ❌ |
+| Soundscapes | ✅ | ✅ | ✅ | ✅ |
+| Binaural Beats | ✅ | ✅ | ✅ | ✅ |
+| Wetter API | ✅ | ✅ | ✅ | ✅ |
+| Geolokation | ✅ | ✅ | ✅ | ✅ |
+| Shared Session | ✅ | ✅ | ✅ | ✅ |
+| Web Crypto | ✅ | ✅ | ✅ | ✅ |
 
-## Tastatur-Shortcuts (v4.6)
+## Datenschutz
 
-| Taste | Aktion |
+- Soundscapes: alle Sounds werden lokal erzeugt, kein Tracking
+- Wetter: einziger externer Call ist die Open-Meteo API mit Latitude/Longitude (anonymisiert, kein Account)
+- Reverse-Geocoding: Open-Meteo Geocoding für Stadtnamen
+- Multi-User: alle Profile lokal, nichts wird hochgeladen
+- Shared Session: nur über BroadcastChannel im selben Browser-Kontext, kein Server
+
+## Werkzeuge im Setup-Tab
+
+| Werkzeug | Zweck |
 |---|---|
-| 1 - 9 | Lieblings-Temperatur setzen |
-| Space | Heizer ein/aus |
-| B | Ballon füllen |
-| D | Direkt-Zug starten |
-| V | Status vorlesen |
-| ESC | Notaus (Heizer + Pumpe aus) bzw. Modal schließen |
+| 🎵 Audio & Atmen | Soundscapes, Beats, Breathing |
+| 📚 Wissen & Quiz | Glossar, Wissenschaft, Quiz |
+| 📋 Symptom-Tracker | Vor/Nach-Session-Bewertung |
+| 📄 Konsum-Protokoll | PDF-Report für Arzt/Eigendoku |
+| 📥 Bibliothek | JSON-Programm-Import |
+| 👥 Profile | Multi-User-Profile |
 
 ## Roadmap
 
-**v4.7** geplant: Audio (Soundscapes, Binaurale Beats, Atemübung), Lernen (Glossar, Quiz, Verdampfungs-Wissenschaft), Kontext (Wetter, Standort, Saison, Mond), Medizinisch (Symptom-Tracker, T-Break-Modus), Soziales (Multi-User-Profil, Gemeinsame Sessions, Programm-Bibliothek)
+**v4.8** geplant: Power-User (Custom BLE-UUIDs, Raw-BLE-Console, DSL-Script, HA-YAML-Export), Externe Integration (MQTT-Publisher, Webhooks), Reise-Modi (Hotel, Akku-Spar, Offline-First), 3D-Volcano-Vorschau optional. ~15-20 Features.
 
-**v4.8** geplant: Power-User (Custom BLE-UUIDs, Raw-BLE-Console, DSL-Script, HA-YAML-Export), Externe Integration (MQTT-Publisher, Webhooks), Reise-Modi (Hotel, Akku-Spar, Offline-First), Rest
+Nach v4.8 ist Phase 1 wirklich fertig — dann Phase 2 (Raspberry Pi + Home Assistant + Alexa) als separates Setup.
 
 ## Hinweis zur Ballon-Füllung
 
-Volcano hat keinen Drucksensor — zeitbasiert gefüllt. Werte in den Einstellungen feinjustierbar. **Niemals unbeaufsichtigt füllen.**
+Volcano hat keinen Drucksensor — zeitbasiert gefüllt. **Niemals unbeaufsichtigt füllen.**

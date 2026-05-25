@@ -1355,6 +1355,156 @@ html.hc-mode :focus-visible{
   display:grid;grid-template-columns:1fr;gap:6px;
   max-height:50vh;overflow-y:auto;
 }
+
+/* ═══ v4.7: Audio modal ═════════════════════════════════════════ */
+.audio-tabs{
+  display:flex;gap:4px;margin-bottom:14px;
+  background:var(--bg-2);padding:4px;border-radius:var(--r);
+  border:1px solid var(--line);
+}
+.audio-tabs button{
+  flex:1;padding:8px;font-size:11px;
+  background:transparent;color:var(--muted);
+  border:0;border-radius:var(--r-sm);cursor:pointer;
+  font-family:var(--font-mono);font-weight:600;
+  transition:all .15s;
+}
+.audio-tabs button.active{background:var(--bg-3);color:var(--text)}
+.audio-pane{display:none}
+.audio-pane.active{display:block}
+.sound-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sound-card{
+  padding:14px 8px;background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r);
+  cursor:pointer;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:all .18s;
+}
+.sound-card:hover{border-color:#3d3225}
+.sound-card.active{border-color:var(--hot);background:rgba(255,87,34,.06)}
+.sound-card .ico{font-size:30px}
+.sound-card .lbl{font-size:12px;font-weight:600}
+
+/* Breathing */
+.breath-stage{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:240px;padding:20px;
+}
+.breath-circle{
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle, var(--hot), var(--hot-deep));
+  box-shadow:0 0 60px rgba(255,87,34,.4);
+  transition:transform 4s ease-in-out;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+  margin-bottom:18px;
+}
+.breath-phase{
+  font-family:var(--font-display);font-size:22px;font-weight:600;
+  margin-bottom:4px;
+}
+.breath-count{
+  font-family:var(--font-mono);font-size:36px;font-weight:700;
+  color:var(--heat);min-height:48px;line-height:1;
+}
+
+/* Vapor science chart */
+.vapor-chart{
+  position:relative;background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r);
+  padding:20px 10px;
+  margin:10px 0;
+  min-height:340px;
+}
+.vapor-axis{
+  position:absolute;left:50px;right:14px;
+  border-top:1px solid var(--line);
+}
+.vapor-point{
+  position:absolute;left:50px;
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;
+  cursor:default;
+}
+.vapor-point .temp{
+  width:50px;text-align:right;
+  font-family:var(--font-mono);font-weight:600;color:var(--hot);
+  flex-shrink:0;
+}
+.vapor-point .dot-line{
+  flex:1;height:1px;background:var(--line);
+  position:relative;
+}
+.vapor-point .name{
+  white-space:nowrap;font-size:11px;
+}
+.vapor-point.terp{color:var(--cool)}
+.vapor-point.cb{color:var(--heat);font-weight:600}
+
+/* Symptom sliders */
+.sym-row{
+  margin-bottom:14px;
+}
+.sym-row label{
+  display:flex;justify-content:space-between;
+  font-size:13px;font-weight:600;margin-bottom:6px;
+}
+.sym-row label .val{
+  font-family:var(--font-mono);color:var(--hot);font-weight:700;font-size:16px;
+}
+.sym-row input[type="range"]{
+  width:100%;
+  -webkit-appearance:none;appearance:none;
+  height:6px;border-radius:3px;
+  background:var(--bg-3);
+  outline:none;
+}
+.sym-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--hot);cursor:pointer;
+  box-shadow:0 0 0 3px rgba(255,87,34,.15);
+}
+.sym-row input[type="range"]::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--hot);cursor:pointer;border:0;
+}
+
+/* User avatar */
+.user-avatar{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--bg-3);border:1px solid var(--line);
+  font-size:14px;cursor:pointer;
+  transition:all .15s;
+  margin-left:2px;
+}
+.user-avatar:hover{border-color:var(--muted)}
+
+/* Context Card */
+.ctx-list{
+  display:flex;flex-direction:column;gap:6px;
+}
+.ctx-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 10px;background:var(--bg-2);
+  border-radius:var(--r-sm);font-size:13px;
+  gap:10px;
+}
+.ctx-row > span:first-child{color:var(--muted);flex-shrink:0}
+.ctx-row b{color:var(--text);text-align:right;font-weight:600}
+
+/* Glossar list */
+.glossar-list{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto}
+.glossar-item{
+  padding:10px 12px;background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+}
+.glossar-item .term{
+  font-family:var(--font-display);font-weight:600;
+  color:var(--hot);font-size:15px;margin-bottom:4px;
+}
+.glossar-item .def{font-size:12px;color:var(--text);line-height:1.5}
 </style>
 </head>
 <body>
@@ -1389,6 +1539,7 @@ html.hc-mode :focus-visible{
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
     <button class="btn sm ghost" id="btnConnect" aria-label="Mit Volcano verbinden">Verbinden</button>
+    <button class="user-avatar" id="userAvatar" aria-label="Profil wechseln">👤</button>
     <button class="help-ico" id="btnHelp" aria-label="Hilfe und Anleitung öffnen">?</button>
     <button class="help-ico" id="btnSettings" aria-label="Einstellungen öffnen" style="margin-left:4px">⚙</button>
   </div>
@@ -1617,6 +1768,12 @@ html.hc-mode :focus-visible{
     </div>
   </div>
 
+  <!-- v4.7: Context (Wetter, Mond, Tageszeit, Saison) -->
+  <div class="card" id="contextCard"></div>
+
+  <!-- v4.7: T-Break Card -->
+  <div class="card" id="tbreakCard"></div>
+
   <!-- v4.6: Wartung -->
   <div class="card" id="maintenanceCard">
     <h3>Wartung & Pflege</h3>
@@ -1634,6 +1791,19 @@ html.hc-mode :focus-visible{
       <summary>Service-Historie</summary>
       <div id="serviceLog" style="margin-top:8px"></div>
     </details>
+  </div>
+
+  <!-- v4.7: Tools-Sammlung -->
+  <div class="card">
+    <h3>Werkzeuge (v4.7)</h3>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <button class="btn sm ghost" id="btnOpenAudio">🎵 Audio & Atmen</button>
+      <button class="btn sm ghost" id="btnOpenLearn">📚 Wissen & Quiz</button>
+      <button class="btn sm ghost" id="btnOpenSymPre">📋 Symptom-Tracker</button>
+      <button class="btn sm ghost" id="btnOpenReport">📄 Konsum-Protokoll</button>
+      <button class="btn sm ghost" id="btnImportLib">📥 Bibliothek</button>
+      <button class="btn sm ghost" id="btnOpenUsers">👥 Profile</button>
+    </div>
   </div>
 
   <!-- App Settings -->
@@ -2184,6 +2354,138 @@ html.hc-mode :focus-visible{
   </div>
 </div>
 
+<!-- ─── v4.7 Modals ─────────────────────────────────────────── -->
+
+<!-- Audio Modal -->
+<div class="modal" id="modalAudio" role="dialog" aria-modal="true" aria-label="Audio und Atmen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>🎵 Audio & Atmen</h2>
+    <div class="audio-tabs" role="tablist">
+      <button data-audio-tab="sound" class="active" role="tab" aria-selected="true">Soundscape</button>
+      <button data-audio-tab="beats" role="tab" aria-selected="false">Binaural</button>
+      <button data-audio-tab="breath" role="tab" aria-selected="false">Atmen</button>
+    </div>
+
+    <div class="audio-pane active" data-audio-pane="sound">
+      <p class="wiz-text"><small>Sanfter Sound im Hintergrund während deiner Session.</small></p>
+      <div class="sound-grid" id="soundGrid"></div>
+      <div style="margin-top:14px">
+        <label style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px">Lautstärke <span id="volVal" class="mono">30%</span></label>
+        <input type="range" id="audioVolRange" min="0" max="100" value="30" style="width:100%">
+      </div>
+    </div>
+
+    <div class="audio-pane" data-audio-pane="beats">
+      <p class="wiz-text"><small>Zwei leicht verschiedene Frequenzen pro Ohr erzeugen einen Schwebungseffekt im Gehirn. Mit Kopfhörern wirksam.</small></p>
+      <div id="beatsList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="btn ghost block" id="btnStopBeats" style="margin-top:10px">Stop</button>
+    </div>
+
+    <div class="audio-pane" data-audio-pane="breath">
+      <p class="wiz-text"><small>4-7-8 Atemübung: 4s einatmen, 7s halten, 8s ausatmen. Nutzt die Aufheizzeit für Ruhe.</small></p>
+      <div class="breath-stage">
+        <div class="breath-circle" id="breathCircle"></div>
+        <div class="breath-phase" id="breathPhase">Bereit</div>
+        <div class="breath-count" id="breathCount">–</div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn primary" id="btnBreathStart" style="flex:1">Start</button>
+        <button class="btn ghost" id="btnBreathStop" style="flex:1">Stop</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnAudioClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Learn Modal -->
+<div class="modal" id="modalLearn" role="dialog" aria-modal="true" aria-label="Wissen und Quiz">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>📚 Wissen & Quiz</h2>
+    <div class="audio-tabs" role="tablist">
+      <button data-learn-tab="glossar" class="active" role="tab" aria-selected="true">Glossar</button>
+      <button data-learn-tab="science" role="tab" aria-selected="false">Wissenschaft</button>
+      <button data-learn-tab="quiz" role="tab" aria-selected="false">Quiz</button>
+    </div>
+    <div class="audio-pane active" data-learn-pane="glossar">
+      <div class="glossar-list" id="glossarList"></div>
+    </div>
+    <div class="audio-pane" data-learn-pane="science">
+      <p class="wiz-text"><small>Was verdampft bei welcher Temperatur. Cannabinoide (orange) und Terpene (blau).</small></p>
+      <div class="vapor-chart" id="vaporChart"></div>
+    </div>
+    <div class="audio-pane" data-learn-pane="quiz">
+      <div id="quizBox">
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:48px;margin-bottom:10px">🎓</div>
+          <p style="color:var(--muted);margin-bottom:14px">5 zufällige Fragen aus dem Glossar.</p>
+          <button class="btn primary block" id="btnQuizStart">Quiz starten</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnLearnClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Symptom Tracker Modal -->
+<div class="modal" id="modalSymptoms" role="dialog" aria-modal="true" aria-label="Symptom-Tracker">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>📋 Symptom-Tracker</h2>
+    <p class="wiz-text"><small>Bewerte deinen Zustand <b id="symWhen" data-when="pre">VOR der Session</b> auf einer Skala von 1 bis 10.</small></p>
+
+    <div class="sym-row">
+      <label for="symPain">Schmerz <span class="val" id="symPainVal">5</span></label>
+      <input type="range" id="symPain" min="1" max="10" value="5" aria-label="Schmerz">
+    </div>
+    <div class="sym-row">
+      <label for="symSleep">Schlaf-Qualität <span class="val" id="symSleepVal">5</span></label>
+      <input type="range" id="symSleep" min="1" max="10" value="5" aria-label="Schlaf-Qualität">
+    </div>
+    <div class="sym-row">
+      <label for="symAppetite">Appetit <span class="val" id="symAppetiteVal">5</span></label>
+      <input type="range" id="symAppetite" min="1" max="10" value="5" aria-label="Appetit">
+    </div>
+    <div class="sym-row">
+      <label for="symMood">Stimmung <span class="val" id="symMoodVal">5</span></label>
+      <input type="range" id="symMood" min="1" max="10" value="5" aria-label="Stimmung">
+    </div>
+    <div class="sym-row">
+      <label for="symAnxiety">Angst-Level <span class="val" id="symAnxietyVal">5</span></label>
+      <input type="range" id="symAnxiety" min="1" max="10" value="5" aria-label="Angst-Level">
+    </div>
+
+    <div class="row" style="gap:8px;margin-top:12px">
+      <button class="btn ghost" id="btnSymCancel" style="flex:1">Abbrechen</button>
+      <button class="btn primary" id="btnSymSave" style="flex:2">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Profiles Modal -->
+<div class="modal" id="modalUsers" role="dialog" aria-modal="true" aria-label="Benutzer-Profile">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>👥 Benutzer-Profile</h2>
+    <p class="wiz-text"><small>Mehrere Profile nutzen dieselbe App. Statistik, Notizen und Favoriten bleiben pro Profil getrennt.</small></p>
+    <div class="dev-list" id="userList"></div>
+    <button class="btn block primary" id="btnAddUser" style="margin-top:10px">+ Neues Profil</button>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnUsersClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2259,6 +2561,17 @@ const PREFS_DEFAULTS = {
   // Engagement
   vapeBuddy:false,          // Charakter ein/aus
   achievementsUnlocked:[],  // Liste der unlocked Achievement-IDs
+  // v4.7 additions
+  currentUserId:'default',  // Multi-User-Profil
+  audioVolume:30,           // Soundscape Volume 0-100
+  defaultSoundscape:'rain', // 'rain' | 'ocean' | 'forest' | 'lofi' | 'ambient' | 'off'
+  contextMode:true,         // Tages-/Saison-Empfehlung aktiv
+  wetterLat:null,
+  wetterLon:null,
+  wetterPlace:'',
+  tBreakActive:false,
+  tBreakStartDate:null,
+  tBreakGoalDays:14,
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -4192,8 +4505,180 @@ function wire(){
   });
   seenObserver.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
+  // ═════ v4.7 wiring ═════
+
+  // Topbar avatar
+  $('#userAvatar')?.addEventListener('click', ()=>{
+    renderUserList();
+    $('#modalUsers').classList.add('open');
+  });
+
+  // Audio Modal
+  $('#btnOpenAudio')?.addEventListener('click', ()=>{
+    renderSoundscapeGrid();
+    renderBeatsList();
+    $('#modalAudio').classList.add('open');
+  });
+  $('#btnAudioClose')?.addEventListener('click', ()=>$('#modalAudio').classList.remove('open'));
+  document.querySelectorAll('[data-audio-tab]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const tab = b.dataset.audioTab;
+      document.querySelectorAll('[data-audio-tab]').forEach(bb=>{
+        const a = bb.dataset.audioTab===tab;
+        bb.classList.toggle('active', a);
+        bb.setAttribute('aria-selected', String(a));
+      });
+      document.querySelectorAll('[data-audio-pane]').forEach(p=>{
+        p.classList.toggle('active', p.dataset.audioPane===tab);
+      });
+    });
+  });
+  $('#audioVolRange')?.addEventListener('input', e=>{
+    PREFS.audioVolume = parseInt(e.target.value);
+    savePrefs();
+    $('#volVal').textContent = PREFS.audioVolume+'%';
+    // Live-update if soundscape running
+    if(soundscapeNodes){ playSoundscape(soundscapeNodes.kind); }
+  });
+  $('#btnBreathStart')?.addEventListener('click', startBreathing);
+  $('#btnBreathStop')?.addEventListener('click', stopBreathing);
+  $('#btnStopBeats')?.addEventListener('click', ()=>{ stopBeats(); toast('Beats gestoppt'); });
+
+  // Learn Modal
+  $('#btnOpenLearn')?.addEventListener('click', ()=>{
+    renderGlossar();
+    renderVaporChart();
+    $('#modalLearn').classList.add('open');
+  });
+  $('#btnLearnClose')?.addEventListener('click', ()=>$('#modalLearn').classList.remove('open'));
+  document.querySelectorAll('[data-learn-tab]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const tab = b.dataset.learnTab;
+      document.querySelectorAll('[data-learn-tab]').forEach(bb=>{
+        const a = bb.dataset.learnTab===tab;
+        bb.classList.toggle('active', a);
+        bb.setAttribute('aria-selected', String(a));
+      });
+      document.querySelectorAll('[data-learn-pane]').forEach(p=>{
+        p.classList.toggle('active', p.dataset.learnPane===tab);
+      });
+    });
+  });
+  $('#btnQuizStart')?.addEventListener('click', startQuiz);
+
+  // Symptom Tracker
+  ['Pain','Sleep','Appetite','Mood','Anxiety'].forEach(k=>{
+    const inp = $('#sym'+k);
+    const val = $('#sym'+k+'Val');
+    if(inp && val){
+      inp.addEventListener('input', ()=>{ val.textContent = inp.value; });
+    }
+  });
+  $('#btnOpenSymPre')?.addEventListener('click', ()=>openSymptomTracker('pre'));
+  $('#btnSymCancel')?.addEventListener('click', ()=>$('#modalSymptoms').classList.remove('open'));
+  $('#btnSymSave')?.addEventListener('click', ()=>{
+    const when = $('#symWhen').dataset.when;
+    const vals = {
+      pain: parseInt($('#symPain').value),
+      sleep: parseInt($('#symSleep').value),
+      appetite: parseInt($('#symAppetite').value),
+      mood: parseInt($('#symMood').value),
+      anxiety: parseInt($('#symAnxiety').value),
+    };
+    recordSymptoms(when, vals);
+    $('#modalSymptoms').classList.remove('open');
+    toast('Symptome '+(when==='pre'?'vorher':'nachher')+' gespeichert');
+  });
+
+  // Konsum-Protokoll
+  $('#btnOpenReport')?.addEventListener('click', openConsumptionReport);
+
+  // Programm-Bibliothek
+  $('#btnImportLib')?.addEventListener('click', importLibraryFromUrl);
+
+  // User Profiles
+  $('#btnOpenUsers')?.addEventListener('click', ()=>{
+    renderUserList();
+    $('#modalUsers').classList.add('open');
+  });
+  $('#btnUsersClose')?.addEventListener('click', ()=>$('#modalUsers').classList.remove('open'));
+  $('#btnAddUser')?.addEventListener('click', addUserProfile);
+
   // Migrate old v3 slots if present
   migrateFromV3();
+}
+
+function renderSoundscapeGrid(){
+  const root = $('#soundGrid'); if(!root) return;
+  const sounds = [
+    {id:'rain', ico:'🌧', lbl:'Regen'},
+    {id:'ocean', ico:'🌊', lbl:'Ozean'},
+    {id:'forest', ico:'🌲', lbl:'Wald'},
+    {id:'lofi', ico:'🎹', lbl:'Lo-fi'},
+    {id:'ambient', ico:'🌌', lbl:'Ambient'},
+    {id:'off', ico:'🔇', lbl:'Aus'},
+  ];
+  root.innerHTML = '';
+  for(const s of sounds){
+    const c = document.createElement('button');
+    c.className = 'sound-card'+(soundscapeNodes?.kind===s.id?' active':'');
+    c.innerHTML = `<span class="ico">${s.ico}</span><span class="lbl">${escapeHtml(s.lbl)}</span>`;
+    c.addEventListener('click', ()=>{
+      playSoundscape(s.id);
+      PREFS.defaultSoundscape = s.id;
+      savePrefs();
+      renderSoundscapeGrid();
+    });
+    root.appendChild(c);
+  }
+  // Volume slider
+  const v = $('#audioVolRange'); if(v) v.value = PREFS.audioVolume||30;
+  const vv = $('#volVal'); if(vv) vv.textContent = (PREFS.audioVolume||30)+'%';
+}
+
+function renderBeatsList(){
+  const root = $('#beatsList'); if(!root) return;
+  root.innerHTML = '';
+  for(const b of BINAURAL_PRESETS){
+    const c = document.createElement('button');
+    c.className = 'btn block';
+    c.style.cssText = 'justify-content:flex-start;text-align:left;flex-direction:column;align-items:flex-start;padding:12px 14px';
+    c.innerHTML = `<div style="font-weight:600;font-size:13px">${escapeHtml(b.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(b.desc)}</div>`;
+    c.addEventListener('click', ()=>{
+      playBinauralBeat(b.base, b.delta);
+      toast('Beat: '+b.name);
+    });
+    root.appendChild(c);
+  }
+}
+
+function renderGlossar(){
+  const root = $('#glossarList'); if(!root) return;
+  root.innerHTML = '';
+  for(const g of GLOSSAR){
+    const c = document.createElement('div');
+    c.className = 'glossar-item';
+    c.innerHTML = `<div class="term">${escapeHtml(g.term)}</div><div class="def">${escapeHtml(g.desc)}</div>`;
+    root.appendChild(c);
+  }
+}
+
+function renderVaporChart(){
+  const root = $('#vaporChart'); if(!root) return;
+  const tMin = 100, tMax = 230;
+  const points = VAPOR_POINTS.slice().sort((a,b)=>a.t-b.t);
+  root.innerHTML = '';
+  const height = Math.max(340, points.length*26 + 40);
+  root.style.minHeight = height+'px';
+  points.forEach((p,i)=>{
+    const yPct = ((p.t - tMin) / (tMax - tMin)) * 100;
+    const top = 20 + (height-40) * (yPct/100);
+    const div = document.createElement('div');
+    div.className = 'vapor-point '+p.kind;
+    div.style.top = top+'px';
+    div.innerHTML = `<span class="temp">${p.t}°C</span><span class="dot-line"></span><span class="name"><b>${escapeHtml(p.name)}</b> — ${escapeHtml(p.desc)}</span>`;
+    root.appendChild(div);
+  });
 }
 
 function migrateFromV3(){
@@ -4704,6 +5189,12 @@ async function startBagFill(){
   if(!State.connected){ toast('Erst verbinden'); return; }
   if(!State.heater){
     if(!confirm('Heizer ist aus. Erst aufheizen und dann starten?')) return;
+  }
+  // v4.7: T-Break Check
+  if(PREFS.tBreakActive){
+    const startedAt = new Date(PREFS.tBreakStartDate).getTime();
+    const days = Math.floor((Date.now() - startedAt) / 86400000);
+    if(!confirm(`🛑 Tolerance-Break aktiv (Tag ${days} / ${PREFS.tBreakGoalDays}).\n\nWirklich brechen?`)) return;
   }
   // v4.6: Bags-Limit prüfen
   if(!checkBagsLimit()){ return; }
@@ -5285,6 +5776,13 @@ function finishSession(){
   checkMaintenanceReminders();
   renderMaintenance();
   renderStatsViz();
+  // v4.7: Symptom-Tracker optional anbieten
+  const hasPreToday = (LS.get('vol_symptoms', [])||[]).some(s=>s.when==='pre' && (Date.now()-s.at) < 24*3600000);
+  if(hasPreToday){
+    setTimeout(()=>{
+      if(confirm('Symptome jetzt NACH der Session erfassen?')) openSymptomTracker('post');
+    }, 600);
+  }
   toast('Session abgeschlossen ✓');
   $('#notesStatus').textContent='Session archiviert';
 }
@@ -6539,6 +7037,736 @@ function renderVapeBuddy(){
   $('#buddyMsg').textContent = msg;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: AUDIO — SOUNDSCAPES + BINAURAL BEATS + BREATHING
+═══════════════════════════════════════════════════════════════ */
+let soundscapeNodes = null;
+let beatsNodes = null;
+
+function stopSoundscape(){
+  if(!soundscapeNodes) return;
+  try{
+    soundscapeNodes.nodes.forEach(n=>{ try{n.stop?.();}catch{} try{n.disconnect();}catch{} });
+  }catch{}
+  soundscapeNodes = null;
+}
+
+function playSoundscape(kind){
+  stopSoundscape();
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  if(kind === 'off'){ return; }
+  const master = ctx.createGain();
+  master.gain.value = (PREFS.audioVolume||30) / 100 * 0.6;
+  master.connect(ctx.destination);
+  const nodes = [master];
+
+  if(kind === 'rain'){
+    // White noise filtered to brown for "rain"
+    const bufSize = 2 * ctx.sampleRate;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let lastOut = 0;
+    for(let i=0; i<bufSize; i++){
+      const w = Math.random()*2 - 1;
+      data[i] = (lastOut + (0.02 * w)) / 1.02;
+      lastOut = data[i];
+      data[i] *= 3.5;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 800;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 5000;
+    src.connect(hp).connect(lp).connect(master);
+    src.start();
+    nodes.push(src, hp, lp);
+  } else if(kind === 'ocean'){
+    // Slow LFO modulating noise for waves
+    const bufSize = 2 * ctx.sampleRate;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0; i<bufSize; i++) data[i] = (Math.random()*2 - 1) * 0.6;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 600;
+    const gain = ctx.createGain();
+    // Wave LFO (very slow)
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.12;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.7;
+    lfo.connect(lfoGain).connect(gain.gain);
+    gain.gain.value = 0.3;
+    src.connect(lp).connect(gain).connect(master);
+    src.start(); lfo.start();
+    nodes.push(src, lp, gain, lfo, lfoGain);
+  } else if(kind === 'forest'){
+    // Layered: low rumble + occasional chirps via sine bursts
+    const bufSize = 2 * ctx.sampleRate;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0; i<bufSize; i++) data[i] = (Math.random()*2 - 1) * 0.3;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.2;
+    const lpRumble = ctx.createBiquadFilter();
+    lpRumble.type = 'lowpass'; lpRumble.frequency.value = 200;
+    src.connect(bp).connect(master);
+    src.connect(lpRumble).connect(master);
+    src.start();
+    nodes.push(src, bp, lpRumble);
+    // Sporadic chirps
+    const chirpFn = ()=>{
+      if(!soundscapeNodes) return;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = 2000 + Math.random()*2000;
+      g.gain.value = 0;
+      o.connect(g).connect(master);
+      const now = ctx.currentTime;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.15, now + 0.04);
+      g.gain.linearRampToValueAtTime(0, now + 0.18);
+      o.start(now); o.stop(now + 0.2);
+      setTimeout(chirpFn, 2000 + Math.random()*6000);
+    };
+    setTimeout(chirpFn, 2000);
+  } else if(kind === 'lofi'){
+    // Slow chord pad: 3 sine oscillators with detuning
+    const freqs = [220, 277.18, 329.63]; // A3, C#4, E4
+    freqs.forEach(f=>{
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      o.detune.value = (Math.random()-0.5)*4;
+      const g = ctx.createGain();
+      g.gain.value = 0.08;
+      // Slow tremolo
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.25 + Math.random()*0.2;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.04;
+      lfo.connect(lfoGain).connect(g.gain);
+      o.connect(g).connect(master);
+      o.start(); lfo.start();
+      nodes.push(o, g, lfo, lfoGain);
+    });
+  } else if(kind === 'ambient'){
+    // Drone: 2 detuned saws + filter sweep
+    const fundamental = 110;
+    [1, 1.5].forEach((m, idx)=>{
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = fundamental * m;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 400 + idx*200;
+      filter.Q.value = 6;
+      const g = ctx.createGain();
+      g.gain.value = 0.06;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.08 + idx*0.03;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 200;
+      lfo.connect(lfoGain).connect(filter.frequency);
+      o.connect(filter).connect(g).connect(master);
+      o.start(); lfo.start();
+      nodes.push(o, filter, g, lfo, lfoGain);
+    });
+  }
+
+  soundscapeNodes = { kind, nodes };
+}
+
+function stopBeats(){
+  if(!beatsNodes) return;
+  try{
+    beatsNodes.nodes.forEach(n=>{ try{n.stop?.();}catch{} try{n.disconnect();}catch{} });
+  }catch{}
+  beatsNodes = null;
+}
+
+function playBinauralBeat(baseFreq, deltaHz){
+  stopBeats();
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const merger = ctx.createChannelMerger(2);
+  const gainL = ctx.createGain(); gainL.gain.value = 0.15;
+  const gainR = ctx.createGain(); gainR.gain.value = 0.15;
+  const oL = ctx.createOscillator();
+  oL.frequency.value = baseFreq;
+  oL.type = 'sine';
+  const oR = ctx.createOscillator();
+  oR.frequency.value = baseFreq + deltaHz;
+  oR.type = 'sine';
+  oL.connect(gainL).connect(merger, 0, 0);
+  oR.connect(gainR).connect(merger, 0, 1);
+  merger.connect(ctx.destination);
+  oL.start(); oR.start();
+  beatsNodes = { nodes:[oL, oR, gainL, gainR, merger] };
+}
+
+const BINAURAL_PRESETS = [
+  {name:'Tiefe Entspannung (Delta 3 Hz)', base:200, delta:3, desc:'Schlaf, tiefe Ruhe'},
+  {name:'Entspannung (Theta 6 Hz)', base:200, delta:6, desc:'Meditation, Tiefenentspannung'},
+  {name:'Kreativität (Alpha 10 Hz)', base:220, delta:10, desc:'Ruhig aber wach, fließend'},
+  {name:'Fokus (Beta 18 Hz)', base:220, delta:18, desc:'Konzentration, Klarheit'},
+  {name:'Höchster Fokus (Gamma 40 Hz)', base:220, delta:40, desc:'Spitzen-Aufmerksamkeit'},
+];
+
+/* ── Breathing exercise 4-7-8 ── */
+let breathingTimer = null;
+function startBreathing(){
+  let phase = 0; // 0=inhale, 1=hold, 2=exhale
+  const phases = [
+    {name:'Einatmen', duration:4, scale:1.6},
+    {name:'Halten', duration:7, scale:1.6},
+    {name:'Ausatmen', duration:8, scale:1.0},
+  ];
+  let phaseStart = Date.now();
+  const tick = ()=>{
+    const elapsed = (Date.now() - phaseStart) / 1000;
+    const cur = phases[phase];
+    if(elapsed >= cur.duration){
+      phase = (phase + 1) % phases.length;
+      phaseStart = Date.now();
+      haptiPattern('touch');
+      return;
+    }
+    const remain = Math.ceil(cur.duration - elapsed);
+    $('#breathPhase').textContent = cur.name;
+    $('#breathCount').textContent = remain;
+    $('#breathCircle').style.transform = `scale(${cur.scale})`;
+    $('#breathCircle').style.transition = `transform ${cur.duration}s ease-in-out`;
+  };
+  tick();
+  breathingTimer = setInterval(tick, 200);
+}
+function stopBreathing(){
+  if(breathingTimer){ clearInterval(breathingTimer); breathingTimer = null; }
+  $('#breathPhase').textContent = '';
+  $('#breathCount').textContent = '';
+  $('#breathCircle').style.transform = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: GLOSSAR
+═══════════════════════════════════════════════════════════════ */
+const GLOSSAR = [
+  {term:'THC', desc:'Tetrahydrocannabinol — der bekannteste psychoaktive Wirkstoff der Cannabis-Pflanze. Verdampft ab ca. 157°C, voll aktiv bei 180-200°C.'},
+  {term:'CBD', desc:'Cannabidiol — nicht psychoaktiv, wirkt entzündungshemmend und entspannend. Verdampft ab ca. 160-180°C.'},
+  {term:'CBN', desc:'Cannabinol — entsteht durch Abbau von THC, wirkt sedierend. Verdampft ab ca. 185°C.'},
+  {term:'Terpene', desc:'Aromastoffe in vielen Pflanzen, auch in Cannabis. Bestimmen Geruch und Wirkung. Verdampfen je nach Terpen zwischen 155-220°C.'},
+  {term:'Linalool', desc:'Terpen mit Lavendel-Aroma. Beruhigend, entspannend. Verdampft ab 198°C.'},
+  {term:'Limonen', desc:'Terpen mit Zitrus-Aroma. Stimmungsaufhellend, hilft gegen Stress. Verdampft ab 176°C.'},
+  {term:'Myrcen', desc:'Terpen mit moschus-erdigem Aroma. Beruhigend, schmerzlindernd. Verdampft ab 167°C.'},
+  {term:'Pinen', desc:'Terpen mit Pinien-Aroma. Konzentrationsfördernd. Verdampft ab 156°C.'},
+  {term:'Caryophyllen', desc:'Terpen mit pfeffrig-würzigem Aroma. Entzündungshemmend. Verdampft ab 119°C.'},
+  {term:'Humulen', desc:'Terpen mit Hopfen-Aroma. Appetithemmend. Verdampft ab 222°C.'},
+  {term:'Decarboxylierung', desc:'Chemischer Prozess bei dem THCA in THC und CBDA in CBD umgewandelt wird — durch Hitze. Beim Verdampfen automatisch.'},
+  {term:'Entourage-Effekt', desc:'Theorie dass Cannabinoide und Terpene zusammen stärker und differenzierter wirken als isoliert. Daher Vollspektrum-Verdampfung.'},
+  {term:'Indica', desc:'Cannabis-Familie mit typisch sedierend-körperlicher Wirkung. Hilfreich gegen Schmerz, Schlafstörung, Spannungen.'},
+  {term:'Sativa', desc:'Cannabis-Familie mit typisch energetisch-zerebraler Wirkung. Hilfreich für Stimmungsaufhellung, Kreativität.'},
+  {term:'Hybrid', desc:'Kreuzung aus Indica und Sativa, oft ausgewogen, je nach Eltern-Sorte Indica- oder Sativa-betont.'},
+  {term:'Konduktion', desc:'Wärmeübertragung durch direkten Kontakt (Crafty, Mighty). Schneller, aber Risiko der Verbrennung.'},
+  {term:'Konvektion', desc:'Wärmeübertragung durch heiße Luft (Volcano). Sanfter, gleichmäßiger.'},
+  {term:'Hybrid-Heizung', desc:'Mischung aus Konduktion und Konvektion (Volcano Hybrid, Venty). Schnellere Aufwärmzeit + Effizienz.'},
+  {term:'AVB', desc:'Already Vaped Bud — bereits verdampftes Cannabis. Lässt sich noch zu Edibles weiterverarbeiten.'},
+  {term:'Mikrodose', desc:'Sehr geringe Konsum-Menge bei niedrigerer Temperatur (155-175°C). Wenig psychoaktive, mehr therapeutische Wirkung.'},
+  {term:'Tolerance Break', desc:'Bewusste Konsum-Pause um Toleranz abzubauen. Typisch 7-21 Tage. Nach 30 Tagen größtenteils zurückgesetzt.'},
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: VERDAMPFUNGS-WISSENSCHAFT (Daten für Diagramm)
+═══════════════════════════════════════════════════════════════ */
+const VAPOR_POINTS = [
+  // Cannabinoide
+  {t:119, name:'Caryophyllen', kind:'terp', desc:'pfeffrig-würzig, entzündungshemmend'},
+  {t:156, name:'Pinen', kind:'terp', desc:'pinienartig, fokussiert'},
+  {t:157, name:'THC', kind:'cb', desc:'beginnt zu verdampfen'},
+  {t:160, name:'CBD', kind:'cb', desc:'beginnt zu verdampfen'},
+  {t:166, name:'Humulen', kind:'terp', desc:'hopfig, appetithemmend'},
+  {t:167, name:'Myrcen', kind:'terp', desc:'erdig-moschus, beruhigend'},
+  {t:176, name:'Limonen', kind:'terp', desc:'zitrus, stimmungsaufhellend'},
+  {t:185, name:'CBN', kind:'cb', desc:'sedierend, entsteht durch THC-Abbau'},
+  {t:198, name:'Linalool', kind:'terp', desc:'lavendel, entspannend'},
+  {t:220, name:'THCV', kind:'cb', desc:'psychoaktiv aber kürzer wirksam'},
+  {t:222, name:'Humulen Peak', kind:'terp', desc:'voll aktiv'},
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: SORTENKUNDE QUIZ
+═══════════════════════════════════════════════════════════════ */
+const QUIZ_QUESTIONS = [
+  {q:'Bei welcher Temperatur verdampft THC erstmals?', a:'157°C', opts:['100°C','120°C','157°C','200°C']},
+  {q:'Welches Terpen riecht nach Lavendel?', a:'Linalool', opts:['Limonen','Linalool','Myrcen','Pinen']},
+  {q:'Sativa-dominante Sorten wirken typisch eher…', a:'energetisch-zerebral', opts:['energetisch-zerebral','sedierend-körperlich','antiseptisch','schlaffördernd']},
+  {q:'Welches Cannabinoid wirkt nicht psychoaktiv?', a:'CBD', opts:['THC','CBD','THCV','CBN']},
+  {q:'Wie nennt man bereits verdampftes Cannabis?', a:'AVB', opts:['AVB','THCA','CBN','OG']},
+  {q:'Welche Heizart nutzt der Volcano Hybrid?', a:'Konduktion und Konvektion', opts:['Nur Konduktion','Nur Konvektion','Konduktion und Konvektion','Mikrowelle']},
+  {q:'Mikrodose-Temperaturen liegen typisch bei…', a:'155-175°C', opts:['100-130°C','155-175°C','200-220°C','>220°C']},
+  {q:'Was bedeutet "Entourage-Effekt"?', a:'Zusammenspiel von Cannabinoiden und Terpenen', opts:['Effekt durch Begleitperson','Zusammenspiel von Cannabinoiden und Terpenen','Verstärkung durch Alkohol','Marketing-Begriff']},
+  {q:'Limonen findet sich auch in…', a:'Zitrusfrüchten', opts:['Zitrusfrüchten','Lavendel','Pinien','Pfeffer']},
+  {q:'Wie lange dauert ein typisches Tolerance-Break um die Toleranz wesentlich zurückzusetzen?', a:'2-4 Wochen', opts:['1 Tag','3-5 Tage','2-4 Wochen','6 Monate']},
+];
+let quizState = null;
+function startQuiz(){
+  quizState = {idx:0, score:0, qs:[...QUIZ_QUESTIONS].sort(()=>Math.random()-0.5).slice(0,5)};
+  renderQuizQ();
+}
+function renderQuizQ(){
+  if(!quizState) return;
+  const box = $('#quizBox'); if(!box) return;
+  if(quizState.idx >= quizState.qs.length){
+    box.innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:48px;margin-bottom:8px">🏆</div>
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:600">${quizState.score} / ${quizState.qs.length}</div>
+        <div style="color:var(--muted);margin-top:6px">${quizState.score===quizState.qs.length?'Perfekt!':quizState.score>=quizState.qs.length*0.7?'Sehr gut!':quizState.score>=quizState.qs.length*0.4?'Solide.':'Schau nochmal ins Glossar.'}</div>
+        <button class="btn primary block" id="btnQuizRestart" style="margin-top:14px">Nochmal spielen</button>
+      </div>`;
+    $('#btnQuizRestart').addEventListener('click', startQuiz);
+    return;
+  }
+  const q = quizState.qs[quizState.idx];
+  const opts = [...q.opts].sort(()=>Math.random()-0.5);
+  box.innerHTML = `
+    <div style="color:var(--muted);font-size:11px;margin-bottom:6px;font-family:var(--font-mono);letter-spacing:.1em">FRAGE ${quizState.idx+1} / ${quizState.qs.length}</div>
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:16px;line-height:1.3">${escapeHtml(q.q)}</div>
+    <div id="quizOpts" style="display:flex;flex-direction:column;gap:8px"></div>
+  `;
+  const optsEl = $('#quizOpts');
+  for(const opt of opts){
+    const b = document.createElement('button');
+    b.className = 'btn block';
+    b.style.cssText = 'justify-content:flex-start;text-align:left';
+    b.textContent = opt;
+    b.addEventListener('click', ()=>{
+      if(opt === q.a){
+        b.style.background = 'rgba(52,211,153,.15)';
+        b.style.borderColor = 'var(--ok)';
+        b.style.color = 'var(--ok)';
+        quizState.score++;
+        haptiPattern('success');
+      } else {
+        b.style.background = 'rgba(248,113,113,.12)';
+        b.style.borderColor = 'var(--err)';
+        b.style.color = 'var(--err)';
+        haptiPattern('warning');
+        // Highlight correct
+        optsEl.querySelectorAll('button').forEach(bb=>{
+          if(bb.textContent === q.a){
+            bb.style.background = 'rgba(52,211,153,.15)';
+            bb.style.borderColor = 'var(--ok)';
+            bb.style.color = 'var(--ok)';
+          }
+        });
+      }
+      optsEl.querySelectorAll('button').forEach(bb=>bb.disabled = true);
+      setTimeout(()=>{ quizState.idx++; renderQuizQ(); }, 1100);
+    });
+    optsEl.appendChild(b);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: WETTER (Open-Meteo, frei)
+═══════════════════════════════════════════════════════════════ */
+async function fetchWetter(){
+  if(!PREFS.wetterLat || !PREFS.wetterLon) return null;
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${PREFS.wetterLat}&longitude=${PREFS.wetterLon}&current=temperature_2m,weather_code,relative_humidity_2m&timezone=auto`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data.current;
+  }catch{ return null; }
+}
+async function setupWetterByGeolocation(){
+  if(!navigator.geolocation){ toast('Geolokation nicht verfügbar'); return; }
+  toast('Standort wird abgefragt …');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    PREFS.wetterLat = pos.coords.latitude.toFixed(3);
+    PREFS.wetterLon = pos.coords.longitude.toFixed(3);
+    // Reverse geocode für Stadtname via Open-Meteo Geocoding
+    try{
+      const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${PREFS.wetterLat}&longitude=${PREFS.wetterLon}&language=de`);
+      const gd = await geo.json();
+      PREFS.wetterPlace = gd.results?.[0]?.name || '';
+    }catch{}
+    savePrefs();
+    toast('Standort gespeichert: '+(PREFS.wetterPlace||'lat/lon'));
+    renderContextCard();
+  }, err=>{
+    toast('Standort-Fehler: '+err.message);
+  }, {timeout:8000});
+}
+const WMO_DESC = {
+  0:'Klar', 1:'Meist klar', 2:'Teilweise bewölkt', 3:'Bedeckt',
+  45:'Nebel', 48:'Reifnebel', 51:'Leichter Nieselregen', 53:'Nieselregen',
+  55:'Starker Nieselregen', 61:'Leichter Regen', 63:'Regen', 65:'Starker Regen',
+  71:'Leichter Schneefall', 73:'Schneefall', 75:'Starker Schneefall',
+  80:'Regenschauer', 81:'Regenschauer', 82:'Heftige Regenschauer',
+  95:'Gewitter', 96:'Gewitter mit Hagel', 99:'Schweres Gewitter',
+};
+function wetterDesc(code){ return WMO_DESC[code] || 'Wetter '+code; }
+function wetterIcon(code){
+  if([0,1].includes(code)) return '☀️';
+  if(code===2) return '⛅';
+  if(code===3) return '☁️';
+  if([45,48].includes(code)) return '🌫';
+  if([51,53,55,61,63,65,80,81,82].includes(code)) return '🌧';
+  if([71,73,75].includes(code)) return '🌨';
+  if([95,96,99].includes(code)) return '⛈';
+  return '🌤';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: MOND-PHASE (vereinfachte Berechnung)
+═══════════════════════════════════════════════════════════════ */
+function moonPhase(date=new Date()){
+  // Conway's approximation
+  const yr = date.getFullYear(), mo = date.getMonth()+1, dy = date.getDate();
+  let y = yr; let m = mo;
+  if(m < 3){ y -= 1; m += 12; }
+  m += 1;
+  const c = 365.25 * y;
+  const e = 30.6 * m;
+  const jd = c + e + dy - 694039.09;
+  const phase = (jd / 29.5305882) % 1;
+  const phaseNum = (phase + 1) % 1;
+  const names = ['🌑 Neumond','🌒 Zunehmende Sichel','🌓 Erstes Viertel','🌔 Zunehmend','🌕 Vollmond','🌖 Abnehmend','🌗 Letztes Viertel','🌘 Abnehmende Sichel'];
+  const idx = Math.floor(phaseNum * 8) % 8;
+  return {percent:Math.round(phaseNum*100), name:names[idx]};
+}
+
+function getSeasonAdvice(){
+  const m = new Date().getMonth()+1;
+  const h = new Date().getHours();
+  let timeAdvice = '';
+  if(h<11) timeAdvice = 'Morgens: leichte Sativa, 175-185°C für klaren Kopf';
+  else if(h<17) timeAdvice = 'Nachmittag: balancierter Hybrid, 180-195°C';
+  else if(h<21) timeAdvice = 'Abend: Indica-betont, 185-200°C zum Runterkommen';
+  else timeAdvice = 'Späte Stunde: schwere Indica, 195-215°C für Schlaf';
+  let seasonAdvice = '';
+  if([12,1,2].includes(m)) seasonAdvice = 'Winter: höhere Temps (190-210°C), schwerere Sorten';
+  else if([3,4,5].includes(m)) seasonAdvice = 'Frühling: ausgewogen, 180-195°C';
+  else if([6,7,8].includes(m)) seasonAdvice = 'Sommer: leichter, 175-190°C, Zitrus-Terpene';
+  else seasonAdvice = 'Herbst: erdig, 185-200°C, Caryophyllen-betont';
+  return {timeAdvice, seasonAdvice};
+}
+
+async function renderContextCard(){
+  const card = $('#contextCard');
+  if(!card) return;
+  if(!PREFS.contextMode){ card.style.display='none'; return; }
+  card.style.display = '';
+  const moon = moonPhase();
+  const adv = getSeasonAdvice();
+  let wetterHtml = '';
+  if(PREFS.wetterLat && PREFS.wetterLon){
+    const w = await fetchWetter();
+    if(w){
+      wetterHtml = `<div class="ctx-row"><span>${wetterIcon(w.weather_code)} Wetter</span><b>${Math.round(w.temperature_2m)}°C · ${wetterDesc(w.weather_code)}</b></div>`;
+    }
+  } else {
+    wetterHtml = '<div class="ctx-row"><span>📍 Wetter</span><button class="btn sm ghost" id="btnGetLocation" style="padding:3px 9px;min-height:auto;font-size:11px">Standort setzen</button></div>';
+  }
+  card.innerHTML = `
+    <h3>Heute · Kontext</h3>
+    <div class="ctx-list">
+      ${wetterHtml}
+      <div class="ctx-row"><span>${moon.name.split(' ')[0]} Mond</span><b>${escapeHtml(moon.name.split(' ').slice(1).join(' '))}</b></div>
+      <div class="ctx-row"><span>⏰ Tageszeit</span><b style="text-align:right;font-size:12px;font-weight:500">${escapeHtml(adv.timeAdvice)}</b></div>
+      <div class="ctx-row"><span>🍂 Saison</span><b style="text-align:right;font-size:12px;font-weight:500">${escapeHtml(adv.seasonAdvice)}</b></div>
+    </div>
+  `;
+  const locBtn = $('#btnGetLocation');
+  if(locBtn) locBtn.addEventListener('click', setupWetterByGeolocation);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: SYMPTOM TRACKER (Pre / Post Session)
+═══════════════════════════════════════════════════════════════ */
+function recordSymptoms(when, values){
+  // when: 'pre' | 'post', values: {pain, sleep, appetite, mood, anxiety}
+  const log = LS.get('vol_symptoms', []);
+  log.unshift({at:Date.now(), when, ...values});
+  LS.set('vol_symptoms', log.slice(0,200));
+}
+function openSymptomTracker(when='pre'){
+  const modal = $('#modalSymptoms');
+  if(!modal) return;
+  $('#symWhen').textContent = when==='pre' ? 'VOR der Session' : 'NACH der Session';
+  $('#symWhen').dataset.when = when;
+  // Reset sliders
+  ['symPain','symSleep','symAppetite','symMood','symAnxiety'].forEach(id=>{
+    const el = $('#'+id); if(el) el.value = 5;
+    const lab = $('#'+id+'Val'); if(lab) lab.textContent = '5';
+  });
+  modal.classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: T-BREAK (Toleranz-Pause-Modus)
+═══════════════════════════════════════════════════════════════ */
+function startTBreak(){
+  const days = prompt('Wie viele Tage Pause anstreben? (typisch 14-21)', '14');
+  if(!days) return;
+  PREFS.tBreakActive = true;
+  PREFS.tBreakStartDate = new Date().toISOString();
+  PREFS.tBreakGoalDays = clamp(parseInt(days)||14, 1, 90);
+  savePrefs();
+  toast('T-Break gestartet — viel Erfolg!');
+  renderTBreak();
+}
+function endTBreak(){
+  if(!confirm('T-Break wirklich beenden?\n\nDeine Toleranz wird ab jetzt wieder normal zählen.')) return;
+  const startedAt = PREFS.tBreakStartDate ? new Date(PREFS.tBreakStartDate).getTime() : Date.now();
+  const days = Math.floor((Date.now() - startedAt) / 86400000);
+  // Save to history
+  const hist = LS.get('vol_tbreak_history', []);
+  hist.unshift({startedAt:PREFS.tBreakStartDate, endedAt:new Date().toISOString(), goalDays:PREFS.tBreakGoalDays, actualDays:days});
+  LS.set('vol_tbreak_history', hist.slice(0,20));
+  PREFS.tBreakActive = false;
+  PREFS.tBreakStartDate = null;
+  savePrefs();
+  toast(`T-Break beendet nach ${days} Tag${days===1?'':'en'}`);
+  renderTBreak();
+}
+function renderTBreak(){
+  const card = $('#tbreakCard');
+  if(!card) return;
+  if(!PREFS.tBreakActive){
+    card.innerHTML = `
+      <h3>Tolerance-Break</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5">Konsum-Pause um Toleranz zurückzusetzen. Typisch 14-21 Tage für deutliche Wirkung.</p>
+      <button class="btn block primary" id="btnStartTBreak">T-Break starten</button>
+    `;
+    $('#btnStartTBreak').addEventListener('click', startTBreak);
+    return;
+  }
+  const startedAt = new Date(PREFS.tBreakStartDate).getTime();
+  const elapsedDays = Math.floor((Date.now() - startedAt) / 86400000);
+  const pct = Math.min(100, (elapsedDays / PREFS.tBreakGoalDays) * 100);
+  const remaining = Math.max(0, PREFS.tBreakGoalDays - elapsedDays);
+  card.innerHTML = `
+    <h3>Tolerance-Break · aktiv</h3>
+    <div style="text-align:center;margin:14px 0">
+      <div style="font-family:var(--font-display);font-size:48px;font-weight:600;color:var(--hot);line-height:1">${elapsedDays}</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px;font-family:var(--font-mono);letter-spacing:.08em">TAGE / ${PREFS.tBreakGoalDays}</div>
+    </div>
+    <div class="maint-bar" style="margin-bottom:12px"><div style="width:${pct.toFixed(1)}%;background:linear-gradient(90deg,var(--cool),var(--ok))"></div></div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:10px;line-height:1.5">${remaining > 0 ? `Noch ${remaining} Tage bis zum Ziel.` : '🏆 Ziel erreicht! Du kannst die Pause beenden oder weiterführen.'}</div>
+    <button class="btn block danger" id="btnEndTBreak">T-Break beenden</button>
+  `;
+  $('#btnEndTBreak').addEventListener('click', endTBreak);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: KONSUM-PROTOKOLL (HTML zum Drucken/Speichern als PDF)
+═══════════════════════════════════════════════════════════════ */
+function buildConsumptionReport(){
+  const sessions = LS.get('vol_sessions', []);
+  const symptoms = LS.get('vol_symptoms', []);
+  const rows = sessions.slice(0,90).map(s=>{
+    const d = new Date(s.at);
+    return `<tr><td>${d.toLocaleDateString('de-DE')} ${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</td><td>${s.bagsFilled||0}</td><td>${Math.round((s.heatSec||0)/60)} min</td><td style="font-size:11px">${escapeHtml(s.notes||'')}</td></tr>`;
+  }).join('');
+  const symRows = symptoms.slice(0,40).map(e=>{
+    const d = new Date(e.at);
+    return `<tr><td>${d.toLocaleDateString('de-DE')} ${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</td><td>${e.when==='pre'?'vor':'nach'}</td><td>${e.pain||'–'}</td><td>${e.sleep||'–'}</td><td>${e.appetite||'–'}</td><td>${e.mood||'–'}</td><td>${e.anxiety||'–'}</td></tr>`;
+  }).join('');
+  const totalBags = sessions.reduce((s,x)=>s+(x.bagsFilled||0),0);
+  const totalHeat = sessions.reduce((s,x)=>s+(x.heatSec||0),0);
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>Konsum-Protokoll</title>
+<style>
+body{font-family:-apple-system,system-ui,sans-serif;color:#000;max-width:800px;margin:20px auto;padding:0 20px;line-height:1.5}
+h1{font-size:22px;margin-bottom:4px}
+h2{font-size:16px;margin-top:24px;border-bottom:1px solid #999;padding-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;vertical-align:top}
+th{background:#f0f0f0;font-weight:600}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.summary > div{padding:12px;background:#f5f5f5;border-radius:8px;text-align:center}
+.summary .num{font-size:24px;font-weight:600;color:#c83a0e}
+.summary .lbl{font-size:11px;color:#666;text-transform:uppercase}
+.foot{margin-top:30px;color:#666;font-size:11px;text-align:center;border-top:1px solid #ddd;padding-top:14px}
+@media print { body{margin:0} }
+</style></head><body>
+<h1>Cannabis-Konsum-Protokoll</h1>
+<div style="color:#666;font-size:13px">Generiert am ${new Date().toLocaleString('de-DE')} · App: Sessions PWA</div>
+<h2>Zusammenfassung</h2>
+<div class="summary">
+  <div><div class="num">${sessions.length}</div><div class="lbl">Sessions</div></div>
+  <div><div class="num">${totalBags}</div><div class="lbl">Ballons</div></div>
+  <div><div class="num">${Math.round(totalHeat/3600)} h</div><div class="lbl">Heizzeit</div></div>
+</div>
+${rows ? `<h2>Sessions (letzte 90)</h2><table><thead><tr><th>Datum/Zeit</th><th>Ballons</th><th>Heizdauer</th><th>Notizen</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
+${symRows ? `<h2>Symptom-Tracker (letzte 40)</h2><table><thead><tr><th>Datum/Zeit</th><th>Phase</th><th>Schmerz</th><th>Schlaf</th><th>Appetit</th><th>Stimmung</th><th>Angst</th></tr></thead><tbody>${symRows}</tbody></table><div style="font-size:11px;color:#666;margin-top:4px">Skala: 1 (sehr gering) bis 10 (sehr hoch)</div>` : ''}
+<div class="foot">Selbst-Dokumentation · keine ärztliche Diagnose · keine Beratung<br>Generiert mit Sessions PWA — by Mariana Cannabis</div>
+<div style="margin-top:20px;text-align:center"><button onclick="window.print()" style="padding:10px 22px;font-size:14px;cursor:pointer;background:#c83a0e;color:#fff;border:none;border-radius:6px">🖨 Drucken / als PDF speichern</button></div>
+</body></html>`;
+}
+function openConsumptionReport(){
+  const html = buildConsumptionReport();
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: MULTI-USER PROFILE
+═══════════════════════════════════════════════════════════════ */
+function getUserProfiles(){
+  let profiles = LS.get('vol_user_profiles', null);
+  if(!profiles){
+    profiles = [{id:'default', name:'Standard', icon:'👤'}];
+    LS.set('vol_user_profiles', profiles);
+  }
+  return profiles;
+}
+function currentUser(){
+  return getUserProfiles().find(u=>u.id===PREFS.currentUserId) || getUserProfiles()[0];
+}
+function switchUser(id){
+  PREFS.currentUserId = id;
+  savePrefs();
+  // Apply user-specific stats overlay (later: separate LS namespace)
+  toast('Profil: '+currentUser().name);
+  renderUserAvatar();
+}
+function addUserProfile(){
+  const name = prompt('Name des neuen Profils:');
+  if(!name || !name.trim()) return;
+  const icon = prompt('Emoji als Avatar (optional):', '🌱') || '👤';
+  const profiles = getUserProfiles();
+  profiles.push({id:'user_'+Date.now(), name:name.trim(), icon});
+  LS.set('vol_user_profiles', profiles);
+  renderUserList();
+  toast('Profil angelegt');
+}
+function removeUserProfile(id){
+  if(id === 'default'){ toast('Standard-Profil kann nicht entfernt werden'); return; }
+  if(!confirm('Profil wirklich löschen?')) return;
+  let profiles = getUserProfiles().filter(u=>u.id!==id);
+  LS.set('vol_user_profiles', profiles);
+  if(PREFS.currentUserId === id){ switchUser('default'); }
+  renderUserList();
+}
+function renderUserAvatar(){
+  const el = $('#userAvatar');
+  if(!el) return;
+  const u = currentUser();
+  el.textContent = u.icon;
+  el.setAttribute('aria-label', 'Profil: '+u.name);
+}
+function renderUserList(){
+  const root = $('#userList');
+  if(!root) return;
+  const profiles = getUserProfiles();
+  root.innerHTML = '';
+  for(const u of profiles){
+    const card = document.createElement('div');
+    card.className = 'dev-card '+(u.id===PREFS.currentUserId?'active':'');
+    card.innerHTML = `
+      <span class="dev-icon">${escapeHtml(u.icon)}</span>
+      <div class="dev-info">
+        <b>${escapeHtml(u.name)}</b>
+        <small>${u.id===PREFS.currentUserId?'Aktiv':'Profil'}</small>
+      </div>
+      ${u.id!=='default' ? `<button class="btn sm ghost" data-act="del" style="padding:3px 9px;min-height:auto;color:var(--err)" aria-label="Profil löschen">×</button>` : ''}
+    `;
+    card.addEventListener('click', e=>{
+      if(e.target.closest('[data-act="del"]')){ removeUserProfile(u.id); return; }
+      switchUser(u.id);
+      renderUserList();
+    });
+    root.appendChild(card);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: GEMEINSAME SESSION (BroadcastChannel)
+═══════════════════════════════════════════════════════════════ */
+let sharedChan = null;
+function setupSharedSessions(){
+  if(!('BroadcastChannel' in window)) return;
+  try{
+    sharedChan = new BroadcastChannel('sessions-shared');
+    sharedChan.addEventListener('message', (ev)=>{
+      const m = ev.data;
+      if(!m || m.userId === PREFS.currentUserId) return;
+      if(m.kind === 'state' && PREFS.sharedSession){
+        toast(`👥 ${m.user}: ${m.action}`);
+      }
+    });
+  }catch{}
+}
+function broadcastShared(action){
+  if(!sharedChan || !PREFS.sharedSession) return;
+  try{ sharedChan.postMessage({userId:PREFS.currentUserId, user:currentUser().name, action, t:Date.now()}); }catch{}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: PROGRAMM-BIBLIOTHEK (JSON-URL-Import)
+═══════════════════════════════════════════════════════════════ */
+async function importLibraryFromUrl(){
+  const url = prompt('URL einer Programm-Sammlung (JSON):', 'https://marianacannabis.github.io/sessions-library/programs.json');
+  if(!url) return;
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.programs || []);
+    if(!list.length) throw new Error('Keine Programme gefunden');
+    if(!confirm(`${list.length} Programme importieren?\n\nVorschau: "${list[0].name||'Unbenannt'}" mit ${list[0].steps?.length||0} Schritten`)) return;
+    let count = 0;
+    for(const p of list){
+      if(!p.name || !Array.isArray(p.steps)) continue;
+      State.programs.push({
+        id:'lib_'+Date.now()+'_'+count,
+        name:p.name,
+        desc:p.desc||'Aus Bibliothek importiert',
+        steps:p.steps,
+        isPreset:false,
+      });
+      count++;
+    }
+    LS.set('vol_programs', State.programs);
+    renderPrograms();
+    toast(`${count} Programme importiert`);
+    switchTab('prog');
+  }catch(e){
+    toast('Import-Fehler: '+e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.7: ROUTINE-ERKENNUNG
+═══════════════════════════════════════════════════════════════ */
+function detectRoutine(){
+  // Schaue auf die letzten Sessions: gibt es ein häufiges Pattern (Wochentag + Stunde)?
+  const sessions = LS.get('vol_sessions', []).slice(0, 30);
+  if(sessions.length < 5) return null;
+  const buckets = {};
+  for(const s of sessions){
+    const d = new Date(s.at);
+    const key = d.getDay() + '_' + d.getHours();
+    buckets[key] = (buckets[key]||0) + 1;
+  }
+  const sorted = Object.entries(buckets).sort((a,b)=>b[1]-a[1]);
+  if(sorted[0][1] < 3) return null;
+  const [day, hour] = sorted[0][0].split('_').map(Number);
+  const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  return {day:days[day], hour, count:sorted[0][1]};
+}
+
 
 async function init(){
   // v4.5: apply theme first to avoid flash
@@ -6589,13 +7817,35 @@ async function init(){
   checkAchievements();
   checkMaintenanceReminders();
 
+  // v4.7 init
+  renderUserAvatar();
+  renderContextCard();
+  renderTBreak();
+  setupSharedSessions();
+  // Routine suggestion check (one-shot per day)
+  setTimeout(()=>{
+    const lastShown = LS.get('vol_routine_shown', '');
+    const today = new Date().toISOString().slice(0,10);
+    if(lastShown !== today){
+      const r = detectRoutine();
+      if(r){
+        LS.set('vol_routine_shown', today);
+        const now = new Date();
+        const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+        if(days[now.getDay()] === r.day && Math.abs(now.getHours() - r.hour) <= 1){
+          toast(`📅 Routine erkannt: ${r.day}s gegen ${r.hour}:00 — soll ich Pre-Heat planen?`);
+        }
+      }
+    }
+  }, 4000);
+
   const env = detectEnv();
   if(!env.hasBLE){
     log('Web Bluetooth nicht verfügbar in diesem Browser.','warn');
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.6 bereit.','ok');
+  log('Sessions v4.7 bereit.','ok');
 
   setupPwaUpdate();
 
