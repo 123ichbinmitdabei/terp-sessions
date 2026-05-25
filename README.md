@@ -1,111 +1,102 @@
-# Volcano Hybrid Controller v4.3
+# Volcano Hybrid Controller v4.4
 
 Web-App zur Steuerung des Storz & Bickel Volcano Hybrid (und in Beta: Crafty, Mighty, Venty) über Web Bluetooth.
-Single-File HTML, PWA-fähig, mobile-first, mit interaktivem Onboarding, Screenreader-Unterstützung und Wake Lock.
+Single-File HTML, PWA-fähig, mobile-first, mit interaktivem Onboarding, Screenreader, Wake Lock, Sprachsteuerung und vielem mehr.
 
-## Was ist neu in v4.3
+## Was ist neu in v4.4
 
-**Mobile-Optimierung (iOS / Bluefy / Android)**
+**10 neue Features als zusammenhängende Erweiterung:**
 
-- Bottom-Nav klebt jetzt mit Mindest-Abstand zum iPhone Home-Indicator und Bluefy-Toolbar (`--safe-bot-padding: max(env(safe-area-inset-bottom), 16px)`)
-- Viewport-Höhe `100dvh` statt `100vh`, damit die Adressleiste der Browser keine Inhalte mehr abschneidet
-- Run-Card und Toasts orientieren sich an der Safe Area
-- `viewport-fit=cover` und `user-scalable=yes` für Zoom-Fähigkeit
+### 1. Settings-Modal (Zahnrad-Icon oben rechts)
+Zentrale Schaltzentrale für alle Präferenzen: Theme, Sound, Haptik, Sprachsteuerung (mit einzelnen Befehlen abschaltbar), Ballonprofile, Datenexport/-import, Onboarding neu zeigen.
 
-**Vollständige Screenreader-Unterstützung (VoiceOver / TalkBack)**
+### 2. Heller Modus
+Sauberer Light-Theme mit warmen Erdtönen, umschaltbar in den Einstellungen. Die `theme-color`-Meta wird automatisch angepasst.
 
-- `lang="de"` Attribut, semantisches HTML mit `<main role="main">`, `<header role="banner">`, `<nav role="tablist">`
-- Skip-Link „Zum Hauptinhalt springen" für Tastatur-Nutzer (oben links beim Fokussieren)
-- Zwei dedizierte aria-live Regionen: `polite` für Status-Updates, `assertive` für kritische Meldungen
-- aria-labels und aria-pressed an allen Buttons (Heizer-Toggle, Pumpe-Toggle, Tab-Navigation)
-- Modals mit `role="dialog" aria-modal="true"` und beschreibendem aria-label
-- Progressbar mit `role="progressbar" aria-valuemin/max/now` für Programm-Fortschritt
-- Sichtbare Fokus-Indikatoren (gelber Ring auf allen interaktiven Elementen)
-- Indicator-Status werden in aria-label aktualisiert: „Heizer: an" / „Heizer: aus"
-- Bei Erreichen der Zieltemperatur: gesprochene Ankündigung
-- Bei Verbindungsproblemen: gesprochene Warnung
+### 3. Session-Statistiken
+Drei Counter im Setup-Tab: Anzahl gefüllter Ballons, akkumulierte Heizdauer, Anzahl abgeschlossener Sessions. Werden bei Aktionen automatisch fortgeschrieben.
 
-**Neue Features**
+### 4. Notizen pro Session
+Textfeld im Steuerung-Tab mit Auto-Save (700 ms debounce). „Session abschließen" archiviert die Notiz in die History (letzte 50 Sessions werden behalten) und resettet.
 
-- **Wake Lock**: das Display schaltet sich während aktivem Heizer und laufenden Programmen nicht ab (`navigator.wakeLock.request('screen')`). Re-acquire bei visibility change.
-- **Audio + Haptic Feedback**: zweistimmiger Chime und Vibration bei Erreichen der Zieltemperatur
-- **Live-Temperatur-Graph** im Hero: letzte 5 Minuten als SVG-Linie mit Gradient-Fill, dynamische min/max-Labels
-- **Aufheiz-Schätzung (ETA)**: „noch 28s bis 185°C" basierend auf der Heizrate der letzten 60 Sekunden
-- **Auto-Reconnect**: bei BLE-Abbruch 3 automatische Versuche mit 2s Backoff
-- **Reach-Flash**: visuelle Bestätigung „185°C erreicht" wenn das Ziel zum ersten Mal erreicht wird
+### 5. Sprachsteuerung (Web Speech API, Deutsch)
+Mikrofon-FAB unten rechts. Default an, alle Befehle einzeln in den Einstellungen schaltbar:
+- „Heize auf 185 Grad" / „Setze 200 Grad"
+- „Heizer an" / „Heizer aus"
+- „Pumpe an" / „Pumpe aus"
+- „Pumpe 5 Sekunden"
+- „Ballon füllen"
+- „Starte Programm Aroma Tour"
+- „Alles stoppen" / „Notaus"
 
-**Design-Refresh**
+Web Speech Recognition ist auf iOS/Bluefy oft eingeschränkt — auf Android Chrome funktioniert es zuverlässig. Bei nicht-Verfügbarkeit verschwindet der FAB einfach.
 
-- Neue Typografie: **Fraunces** (Variable, character-volle Display-Schrift) für Überschriften und große Werte, **Inter Tight** für Body, **IBM Plex Mono** für Mono-Sektionen
-- Mineralische Erd-Tones: tieferes Schwarz mit warmen Brauntönen, Lava-Orange Akzent
-- Subtile Grain-Textur als Overlay für Atmosphäre
-- Animierte Heat-Waves im Hero wenn der Heizer aktiv ist
-- Verstärkte Glow-Effekte am Wert in Abhängigkeit der Heat-Level
-- Bessere Karten-Hierarchie mit dekorativen Trennlinien
-- `prefers-reduced-motion` wird respektiert (alle Animationen abgeschaltet wenn aktiv)
+### 6. Aroma- und Sortendatenbank
+20+ Sorten mit empfohlenen Verdampfungstemperaturen (3 Stufen pro Sorte). Sortierbar nach Suche („Sativa", „OG Kush", „Zitrus"…). Direktes Setzen der Temperatur per Tap.
+
+### 7. Editierbare Vorlagen + Drag-Reorder
+Die 6 Vorlagen-Programme werden beim ersten Start in den Storage migriert und sind jetzt voll editier- und löschbar. Im Editor lassen sich Schritte per Drag (≡-Handle) neu sortieren (Touch + Maus). „↻ Vorlagen auf Werkseinstellungen" stellt die Originale wieder her.
+
+### 8. Programm-Dauer-Schätzung
+In jeder Programm-Card und im Editor wird die geschätzte Gesamtdauer angezeigt („~5m 12s"). Berechnung berücksichtigt Aufheizrate (0.6 s/°C wenn schon heiß, 0.8 s/°C aus Raumtemperatur), Pausen und Pumpzeiten.
+
+### 9. QR-Code-Share und -Import
+- Jedes Programm hat einen 🔗-Button → QR-Code mit eingebetteter URL erscheint
+- Empfänger scannt den QR mit dem Handy, App-URL öffnet mit `#prog=…` und fragt: importieren?
+- Plus „URL kopieren" und „Teilen…" (nativer Share-Dialog wo verfügbar)
+
+### 10. Ballon-Füll-Helper
+Eigene Karte und Modal: vier Ballontypen (Easy Valve groß/klein, Solid Valve, Custom) mit voreingestellten Pumpzeiten, Live-Countdown, Warnung in den letzten 3 Sekunden (Vibration + Ton), Stop-Button, Auto-Counter für Statistiken. Pumpzeiten pro Typ in den Einstellungen anpassbar.
+
+### Plus: Daten-Export/Import
+Komplettes Backup als JSON-Datei (Einstellungen, Programme, Sessions, Notizen). Wiederherstellbar mit Bestätigung.
+
+## Hinweis zum Ballon-Füllen
+
+Der Volcano hat **keinen Drucksensor und keinen Volumen-Sensor** für die Ballons. Die App füllt rein zeitbasiert mit empirischen Default-Zeiten:
+
+| Ballon | Volumen | Default-Pumpzeit |
+|---|---|---|
+| Easy Valve Ballon groß | ~6 L | 38 s |
+| Easy Valve klein | ~3 L | 20 s |
+| Solid Valve | ~3.5 L | 24 s |
+| Custom | frei | 30 s |
+
+Werte hängen leicht von Firmware-Version, Restdruck im Schlauch und Pumpenverschleiß ab. In den Einstellungen kannst du die Zeit pro Typ feinjustieren. Niemals unbeaufsichtigt füllen.
+
+## Was war neu in v4.3
+
+- iOS Safe-Area-Fix, dynamische Viewport-Höhe
+- Vollständige Screenreader-Unterstützung (Skip-Link, aria-live, aria-pressed, sichtbare Fokus-Indikatoren)
+- Wake Lock (Display bleibt an)
+- Audio + Haptic Feedback
+- Live-Temperatur-Graph, ETA, Auto-Reconnect
+- Design-Refresh: Fraunces / Inter Tight / IBM Plex Mono, mineralische Erd-Tones
 
 ## Was war neu in v4.2
 
-- Kritischer Bug-Fix: korrekte UUIDs für Heater/Pumpe (separate Chars für On/Off statt einer Char mit Wert)
-- Temperatur als Uint32 LE × 10
-- „Letzte Aktion"-Banner und Mini-Log im Steuerung-Tab
-- Auto-Mapping mit Trefferzahl
-
-## Was war neu in v4.1
-
-- Interaktiver 9-Slide Beginner-Wizard
-- iOS-Erkennung mit Bluefy-Hinweis
-- Geräte-Auswahl mit Profilen für Volcano, Crafty, Mighty, Venty
-- Kontextuelle Hilfe-Buttons
+- Kritischer Bug-Fix: separate UUIDs für Heater/Pumpe On/Off, Uint32 LE Temperatur
+- „Letzte Aktion"-Banner, Mini-Log
 
 ## Voraussetzungen
 
 | Plattform | Browser | Funktioniert? |
 |---|---|---|
-| Android | Chrome | ✅ ja |
-| Windows / macOS / Linux | Chrome oder Edge | ✅ ja |
-| iPhone / iPad | **Bluefy** (App Store, kostenlos) | ✅ ja, nur dort |
-| iPhone / iPad | Safari, Chrome iOS, Firefox iOS | ❌ Apple sperrt Web Bluetooth |
+| Android | Chrome | ✅ ja (alle Features inkl. Sprachsteuerung) |
+| Windows / macOS / Linux | Chrome / Edge | ✅ ja |
+| iPhone / iPad | **Bluefy** | ✅ ja (Sprachsteuerung ggf. eingeschränkt) |
+| iPhone / iPad | Safari / Chrome iOS | ❌ kein Web Bluetooth |
 
 ## Live-URL
 
 https://marianacannabis.github.io/volcano/
 
-## Welche Geräte funktionieren
+## Roadmap (v4.5+ Ideen)
 
-Jeder Volcano Hybrid weltweit (UUIDs sind über die Firmware-Versionen stabil). Genauso jeder Crafty / Crafty+ / Mighty / Mighty+ mit Bluetooth (Beta). Venty ist experimentell, das Protokoll unterscheidet sich. Du musst immer in ca. 2-5 m BLE-Reichweite sein.
-
-## Workflow-Aktionen
-
-- `heat_on` / `heat_off`
-- `pump_on` / `pump_off`
-- `pump_for { seconds }`
-- `set_temperature { value }`
-- `wait_until { value }` (bis Temp erreicht, max 240s)
-- `wait { seconds }`
-
-## Sicherheit
-
-- Volcano niemals unbeaufsichtigt lassen.
-- Sicherheits-Timer schaltet nach X Minuten Heizer + Pumpe automatisch aus.
-- Bei Programmfehler werden Heizer und Pumpe automatisch abgeschaltet.
-- Wake Lock hält das Display an, damit Programme nicht durch System-Schlaf unterbrochen werden.
-- `prefers-reduced-motion` wird respektiert (für Menschen mit Bewegungs-Empfindlichkeit).
-
-## Roadmap (potentielle v4.4+ Ideen)
-
-Diese Features sind im Code vorgesehen aber noch nicht implementiert, du wählst nach v4.3 welche du willst:
-
-- **Session-Statistiken**: Ballons-Counter, Total Heizdauer pro Session, Energie-Verbrauch
-- **Voice Control**: Web Speech API für „Heize auf 185 Grad"
-- **QR-Code-Share** von Programmen für Geräte-übergreifende Vorlagen
-- **Aroma-Datenbank**: Cannabissorten mit empfohlenen Temperaturen
-- **Notizen pro Session**: was war drin, Bewertung, Stimmung
-- **Programm-Estimated-Duration** im Editor
-- **Drag-Reorder** für Workflow-Schritte
-- **Light-Mode** als optionaler Toggle
-- **PWA-Sync** mit lokalem Speicher-Backup
-
-## Quelle der UUIDs
-
-UUIDs und Write-Formate sind verifiziert gegen `firsttris/reactive-volcano-app` (CC BY-NC 4.0). Die UUIDs selbst sind technische Fakten über die Geräte-Firmware. Unsere App ist eine eigenständige Implementation mit eigener UX.
+- Pre-Heat-Timer („in 10 Min auf 185°C")
+- Auto-Cool-Down nach Bag-Fill
+- Step-Templates im Editor
+- Multi-Theme-Picker (Lava, Forest, Cosmos, Paper)
+- CSV-Export von Sessions
+- Statistik-Visualisierung über Zeit
+- Bluetooth-Mesh für Multi-Device-Setups

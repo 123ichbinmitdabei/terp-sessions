@@ -763,6 +763,272 @@ details summary:hover{color:var(--text)}
   60%{opacity:1;transform:translateY(-50%) scale(1)}
   100%{opacity:0;transform:translateY(-50%) scale(1)}
 }
+
+/* ═══ LIGHT MODE (v4.4) ════════════════════════════════════════ */
+html[data-theme="light"]{
+  --bg:#faf6ee;
+  --bg-1:#f1eadc;
+  --bg-2:#e8dec8;
+  --bg-3:#dfd0b2;
+  --line:#d0bfa0;
+  --line-soft:#dfd0b2;
+  --text:#1c1610;
+  --muted:#6b5e4a;
+  --dim:#9e8e75;
+
+  --hot:#c83a0e;
+  --hot-soft:#e0532b;
+  --hot-deep:#a02c08;
+  --heat:#c87f0b;
+  --ember:#d4a017;
+  --cool:#0284c7;
+  --ok:#059669;
+  --warn:#c87f0b;
+  --err:#dc2626;
+
+  --shadow:0 8px 28px rgba(60,40,20,.12);
+  --shadow-glow:0 0 30px rgba(200,58,14,.15);
+}
+html[data-theme="light"] body{
+  background-image:
+    radial-gradient(1400px 700px at 50% -300px, rgba(200,58,14,.10), transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, rgba(2,132,199,.06), transparent),
+    radial-gradient(700px 400px at 0% 60%, rgba(200,127,11,.06), transparent);
+}
+html[data-theme="light"] body::before{ opacity:.25 }
+html[data-theme="light"] .hero{
+  background:
+    radial-gradient(140% 90% at 50% 0%, rgba(200,58,14,.18), transparent 65%),
+    linear-gradient(180deg, #f6ead2, #e8dec8);
+}
+html[data-theme="light"] .topbar{
+  background:linear-gradient(180deg, rgba(250,246,238,.97), rgba(250,246,238,.78));
+}
+html[data-theme="light"] .bottom-nav{ background:rgba(250,246,238,.96) }
+html[data-theme="light"] .modal .back{ background:rgba(60,40,20,.45) }
+html[data-theme="light"] .modal .sheet{ background:linear-gradient(180deg, #faf6ee, #f1eadc) }
+html[data-theme="light"] .log,
+html[data-theme="light"] .mini-log{ background:#fefbf5; color:#3a2f20 }
+html[data-theme="light"] .input,
+html[data-theme="light"] .select,
+html[data-theme="light"] textarea.input{ background:#fefbf5 }
+html[data-theme="light"] .stepper input{ background:#fefbf5 }
+html[data-theme="light"] .ios-banner{
+  background:linear-gradient(180deg, #fef3d4, #fae3a8);
+  border-color:rgba(180,100,20,.4);
+}
+html[data-theme="light"] .ios-banner .head,
+html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
+
+/* ═══ NOTES card (v4.4) ════════════════════════════════════════ */
+.notes-area{
+  margin-top:10px;
+}
+.notes-area textarea{
+  width:100%;min-height:60px;resize:vertical;
+  padding:10px 12px;
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  outline:none;
+  font-family:var(--font-body);font-size:13px;line-height:1.5;
+  transition:border-color .18s, box-shadow .18s;
+}
+.notes-area textarea:focus{
+  border-color:var(--hot);
+  box-shadow:0 0 0 3px rgba(255,87,34,.15);
+}
+.notes-meta{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:var(--muted);
+  margin-top:6px;font-family:var(--font-mono);
+}
+
+/* ═══ STATS card (v4.4) ════════════════════════════════════════ */
+.stats-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+.stat{
+  padding:14px 10px;text-align:center;
+  background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);
+}
+.stat .num{
+  font-family:var(--font-display);
+  font-size:28px;font-weight:600;line-height:1;
+  letter-spacing:-.02em;color:var(--hot);
+}
+.stat .lbl{
+  font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.12em;
+  margin-top:6px;font-family:var(--font-mono);font-weight:500;
+}
+
+/* ═══ Settings toggles (v4.4) ══════════════════════════════════ */
+.toggle-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line-soft);
+  gap:12px;
+}
+.toggle-row:last-child{border-bottom:0}
+.toggle-row .info{flex:1;min-width:0}
+.toggle-row .info b{display:block;font-size:14px;font-weight:600}
+.toggle-row .info small{display:block;color:var(--muted);font-size:11px;margin-top:2px;line-height:1.4}
+.toggle{
+  position:relative;width:44px;height:24px;flex-shrink:0;
+  background:var(--bg-3);border:1px solid var(--line);
+  border-radius:999px;cursor:pointer;
+  transition:background .18s, border-color .18s;
+}
+.toggle::after{
+  content:"";position:absolute;top:2px;left:2px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--text);
+  transition:transform .18s;
+}
+.toggle[aria-checked="true"]{
+  background:var(--hot);border-color:var(--hot);
+}
+.toggle[aria-checked="true"]::after{
+  transform:translateX(20px);
+  background:#fff;
+}
+.toggle:focus-visible{outline-offset:3px}
+
+/* Subsetting indent */
+.sub-toggles{
+  margin-top:8px;padding-left:14px;
+  border-left:2px solid var(--line);
+}
+.sub-toggles .toggle-row{padding:8px 0;border-bottom:0}
+.sub-toggles .toggle-row .info b{font-size:13px}
+
+/* ═══ Drag-reorder (v4.4) ══════════════════════════════════════ */
+.step{
+  touch-action:pan-y;
+  user-select:none;-webkit-user-select:none;
+}
+.step.dragging{
+  opacity:.5;
+  border-color:var(--hot);
+  box-shadow:0 8px 28px rgba(255,87,34,.4);
+  transform:scale(1.02);
+}
+.step .drag-handle{
+  cursor:grab;color:var(--muted);
+  padding:4px 6px;
+  user-select:none;-webkit-user-select:none;touch-action:none;
+}
+.step .drag-handle:active{cursor:grabbing;color:var(--text)}
+
+/* ═══ Bag fill modal (v4.4) ════════════════════════════════════ */
+.bag-countdown{
+  font-family:var(--font-display);
+  font-size:84px;font-weight:600;
+  line-height:1;letter-spacing:-.03em;
+  text-align:center;margin:18px 0 8px;
+  color:var(--hot);
+  text-shadow:0 0 24px rgba(255,87,34,.4);
+  font-variation-settings:"opsz" 144;
+}
+.bag-status{
+  text-align:center;font-size:13px;color:var(--muted);
+  margin-bottom:14px;font-family:var(--font-mono);
+}
+.bag-status.warn{color:var(--heat)}
+
+/* ═══ QR display (v4.4) ════════════════════════════════════════ */
+.qr-box{
+  display:flex;justify-content:center;align-items:center;
+  padding:18px;background:#fff;
+  border-radius:var(--r);margin:14px 0;
+  min-height:240px;
+}
+.qr-box img{max-width:100%;height:auto;display:block;border-radius:6px}
+.qr-url{
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--muted);word-break:break-all;
+  padding:10px;background:var(--bg);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  margin-bottom:10px;
+}
+
+/* ═══ Voice indicator (v4.4) ═══════════════════════════════════ */
+.voice-fab{
+  position:fixed;
+  bottom:calc(108px + var(--safe-bot-padding));right:18px;
+  z-index:35;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--bg-3);color:var(--text);
+  border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
+  transition:all .2s;
+}
+.voice-fab:hover{transform:scale(1.05);border-color:var(--hot)}
+.voice-fab.listening{
+  background:var(--hot);color:#fff;border-color:var(--hot);
+  animation:pulse 1.3s ease-in-out infinite;
+  box-shadow:0 6px 24px rgba(255,87,34,.5);
+}
+.voice-feedback{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(170px + var(--safe-bot-padding));z-index:36;
+  background:rgba(42,34,26,.96);color:var(--text);
+  padding:9px 16px;border-radius:var(--r);
+  border:1px solid var(--line);
+  font-size:13px;font-family:var(--font-mono);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s, transform .25s;
+  max-width:80%;text-align:center;
+}
+.voice-feedback.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+/* ═══ Aroma cards (v4.4) ═══════════════════════════════════════ */
+.aroma-search{
+  width:100%;padding:11px 14px;
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--line);border-radius:var(--r);
+  font-size:14px;margin-bottom:12px;outline:none;
+  font-family:var(--font-body);
+}
+.aroma-search:focus{
+  border-color:var(--hot);
+  box-shadow:0 0 0 3px rgba(255,87,34,.15);
+}
+.aroma-list{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:55vh;overflow-y:auto;
+}
+.aroma-card{
+  padding:12px 14px;
+  background:var(--bg-2);border:1px solid var(--line);
+  border-radius:var(--r);
+}
+.aroma-card .name{
+  font-weight:600;font-size:14px;margin-bottom:3px;
+  font-family:var(--font-display);letter-spacing:-.01em;
+}
+.aroma-card .desc{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5}
+.aroma-temps{display:flex;gap:6px;flex-wrap:wrap}
+.aroma-temp{
+  padding:5px 10px;
+  background:var(--bg-3);border:1px solid var(--line);
+  border-radius:6px;font-family:var(--font-mono);
+  font-size:12px;font-weight:600;color:var(--hot);
+  cursor:pointer;transition:all .15s;
+}
+.aroma-temp:hover{background:rgba(255,87,34,.1);border-color:var(--hot)}
+
+/* Duration estimate badge */
+.duration-est{
+  display:inline-block;font-size:11px;
+  padding:2px 7px;border-radius:6px;
+  background:var(--bg-3);border:1px solid var(--line);
+  color:var(--muted);font-family:var(--font-mono);
+  margin-left:6px;font-weight:500;
+}
 </style>
 </head>
 <body>
@@ -783,6 +1049,7 @@ details summary:hover{color:var(--text)}
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
     <button class="btn sm ghost" id="btnConnect" aria-label="Mit Volcano verbinden">Verbinden</button>
     <button class="help-ico" id="btnHelp" aria-label="Hilfe und Anleitung öffnen">?</button>
+    <button class="help-ico" id="btnSettings" aria-label="Einstellungen öffnen" style="margin-left:4px">⚙</button>
   </div>
 </header>
 
@@ -879,6 +1146,34 @@ details summary:hover{color:var(--text)}
     <pre class="mini-log" id="miniLog"></pre>
   </div>
 
+  <!-- Bag fill helper -->
+  <div class="card">
+    <h3>Ballon füllen <button class="help-ico" data-help="bag">?</button></h3>
+    <div class="row" style="gap:8px">
+      <button class="btn block hot" id="btnBagFill">💨 Ballon füllen</button>
+      <button class="btn sm ghost" id="btnBagSettings" aria-label="Ballon-Einstellungen">Typ</button>
+    </div>
+    <div class="mono" id="bagCurrent" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
+  </div>
+
+  <!-- Aroma & Sortendatenbank -->
+  <div class="card">
+    <h3>Aroma & Sorten</h3>
+    <button class="btn block ghost" id="btnAroma">🌿 Empfohlene Temperaturen</button>
+  </div>
+
+  <!-- Session notes -->
+  <div class="card">
+    <h3>Notizen</h3>
+    <div class="notes-area">
+      <textarea id="sessionNotes" placeholder="Notizen zur aktuellen Session: Sorte, Stimmung, Beobachtungen…" aria-label="Session-Notizen"></textarea>
+      <div class="notes-meta">
+        <span id="notesStatus">automatisch gespeichert</span>
+        <button class="btn sm ghost" id="btnSaveSession" style="padding:6px 12px;min-height:auto">Session abschließen</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Safety -->
   <div class="card">
     <h3>Sicherheits-Timer <button class="help-ico" data-help="safety">?</button></h3>
@@ -939,6 +1234,23 @@ details summary:hover{color:var(--text)}
       </span>
       <span class="arrow">›</span>
     </button>
+  </div>
+
+  <!-- Statistics -->
+  <div class="card">
+    <h3>Statistik</h3>
+    <div class="stats-grid">
+      <div class="stat"><div class="num" id="statBags">0</div><div class="lbl">Ballons</div></div>
+      <div class="stat"><div class="num" id="statHeat">0m</div><div class="lbl">Heizzeit</div></div>
+      <div class="stat"><div class="num" id="statSess">0</div><div class="lbl">Sessions</div></div>
+    </div>
+    <button class="btn sm ghost block" id="btnResetStats" style="margin-top:10px">Statistik zurücksetzen</button>
+  </div>
+
+  <!-- App Settings -->
+  <div class="card">
+    <h3>App-Einstellungen</h3>
+    <button class="btn block" id="btnOpenSettings">⚙ Einstellungen öffnen</button>
   </div>
 
   <div class="card">
@@ -1030,6 +1342,10 @@ details summary:hover{color:var(--text)}
 <!-- Visual flash when target temperature reached -->
 <div class="reach-flash" id="reachFlash" role="status" aria-live="assertive"></div>
 
+<!-- Voice control FAB -->
+<button class="voice-fab" id="voiceFab" aria-label="Sprachsteuerung aktivieren" style="display:none">🎤</button>
+<div class="voice-feedback" id="voiceFeedback" role="status" aria-live="polite"></div>
+
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
   <button class="nav-btn active" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
@@ -1049,6 +1365,7 @@ details summary:hover{color:var(--text)}
     </div>
     <h3 style="margin:14px 0 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Schritte</h3>
     <div class="builder" id="builder"></div>
+    <div id="builderDuration" class="mono" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:right" aria-live="polite"></div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn block primary" id="btnAddStep">+ Schritt</button>
     </div>
@@ -1224,6 +1541,130 @@ details summary:hover{color:var(--text)}
   </div>
 </div>
 
+<!-- ─── Settings Modal (v4.4) ────────────────────────────────── -->
+<div class="modal" id="modalSettings" role="dialog" aria-modal="true" aria-label="Einstellungen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Einstellungen</h2>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Erscheinungsbild</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Heller Modus</b><small>Helles Theme statt dunkel</small></div>
+      <button class="toggle" id="togTheme" role="switch" aria-checked="false" aria-label="Heller Modus"></button>
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Feedback</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Sound</b><small>Töne bei Aktionen und Zielerreichen</small></div>
+      <button class="toggle" id="togSound" role="switch" aria-checked="true" aria-label="Sound"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Haptik (Vibration)</b><small>Vibrieren bei Aktionen</small></div>
+      <button class="toggle" id="togHaptic" role="switch" aria-checked="true" aria-label="Haptik"></button>
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sprachsteuerung</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-Symbol unten rechts, „Heize auf 185 Grad" usw.</small></div>
+      <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
+    </div>
+    <div id="voiceCmdSub" class="sub-toggles" hidden>
+      <div class="toggle-row"><div class="info"><b>Temperatur setzen</b></div><button class="toggle" data-vc="setTemp" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Heizer an</b></div><button class="toggle" data-vc="heatOn" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Heizer aus</b></div><button class="toggle" data-vc="heatOff" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Pumpe an</b></div><button class="toggle" data-vc="pumpOn" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Pumpe aus</b></div><button class="toggle" data-vc="pumpOff" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Pumpe X Sekunden</b></div><button class="toggle" data-vc="pumpFor" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Programm starten</b></div><button class="toggle" data-vc="runProgram" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Alles stoppen</b></div><button class="toggle" data-vc="stopAll" role="switch"></button></div>
+      <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Ballon-Profil</h3>
+    <div id="bagProfileList"></div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Daten</h3>
+    <div class="row" style="gap:8px">
+      <button class="btn sm ghost" id="btnExportAll" style="flex:1">Daten exportieren</button>
+      <button class="btn sm ghost" id="btnImportAll" style="flex:1">Daten importieren</button>
+    </div>
+    <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px">Onboarding-Wizard neu zeigen</button>
+
+    <div class="row" style="margin-top:18px">
+      <button class="btn ghost block" id="btnSettingsClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Bag Fill Modal (v4.4) ────────────────────────────────── -->
+<div class="modal" id="modalBag" role="dialog" aria-modal="true" aria-label="Ballon füllen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Ballon füllen</h2>
+
+    <div id="bagSelectBox">
+      <p class="wiz-text"><small>Wähle den Ballontyp. Die App pumpt die passende Zeit. Du kannst jederzeit stoppen.</small></p>
+      <div id="bagTypePicker" class="dev-list" style="margin-bottom:14px"></div>
+      <div class="field" id="bagCustomTime" style="display:none">
+        <label>Eigene Pumpzeit (Sekunden)</label>
+        <div class="stepper">
+          <button id="bagCustMinus">−</button>
+          <input class="mono" id="bagCustInput" type="number" min="5" max="120" step="1" value="30" inputmode="numeric">
+          <button id="bagCustPlus">+</button>
+        </div>
+      </div>
+      <button class="btn hot block lg" id="btnBagStart">▶ Füllen starten</button>
+    </div>
+
+    <div id="bagRunBox" hidden>
+      <div class="bag-countdown" id="bagCountdown">––</div>
+      <div class="bag-status" id="bagStatus">Pumpe läuft …</div>
+      <div class="bar" style="margin-bottom:14px" role="progressbar" aria-label="Ballon-Fortschritt"><div id="bagBar"></div></div>
+      <button class="btn block danger" id="btnBagStop">Stop</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost block" id="btnBagClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Aroma Modal (v4.4) ───────────────────────────────────── -->
+<div class="modal" id="modalAroma" role="dialog" aria-modal="true" aria-label="Aroma und Sorten">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Aroma & Sorten</h2>
+    <p class="wiz-text"><small>Empfohlene Verdampfungstemperaturen für verschiedene Sorten und Terpen-Profile. Tipp eine Temperatur an um sie direkt zu setzen.</small></p>
+    <input class="aroma-search" id="aromaSearch" placeholder="Sorte suchen (z.B. Sativa, OG Kush, Zitrus…)" aria-label="Aroma suchen">
+    <div class="aroma-list" id="aromaList"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnAromaClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── QR-Share Modal (v4.4) ────────────────────────────────── -->
+<div class="modal" id="modalQR" role="dialog" aria-modal="true" aria-label="Programm teilen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="qrTitle">Programm teilen</h2>
+    <p class="wiz-text"><small>Scanne diesen Code in der Volcano-App eines anderen Geräts um das Programm zu importieren.</small></p>
+    <div class="qr-box" id="qrBox"></div>
+    <div class="qr-url" id="qrUrl"></div>
+    <div class="row" style="gap:8px">
+      <button class="btn sm ghost" id="btnQrCopy" style="flex:1">URL kopieren</button>
+      <button class="btn sm ghost" id="btnQrShare" style="flex:1">Teilen…</button>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnQrClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1241,6 +1682,88 @@ const LS={
 };
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ═══════════════════════════════════════════════════════════════
+   PREFERENCES SYSTEM (v4.4)
+═══════════════════════════════════════════════════════════════ */
+const PREFS_DEFAULTS = {
+  theme:'dark',          // 'dark' | 'light'
+  sound:true,
+  haptic:true,
+  voice:true,            // master switch for voice control
+  voiceCmds:{            // individual voice command toggles
+    setTemp:true,
+    heatOn:true,
+    heatOff:true,
+    pumpOn:true,
+    pumpOff:true,
+    pumpFor:true,
+    runProgram:true,
+    stopAll:true,
+    fillBag:true,
+  },
+  bagType:'easy-large',  // 'easy-large' | 'easy-small' | 'solid' | 'custom'
+  bagTimes:{
+    'easy-large':38,
+    'easy-small':20,
+    'solid':24,
+    'custom':30,
+  },
+  stats:{
+    bagsFilled:0,
+    totalHeatSec:0,
+    sessionsCount:0,
+    lastSessionAt:null,
+  },
+};
+const PREFS = Object.assign({}, PREFS_DEFAULTS, LS.get('vol_prefs',{}));
+// Ensure nested objects exist
+PREFS.voiceCmds = Object.assign({}, PREFS_DEFAULTS.voiceCmds, PREFS.voiceCmds||{});
+PREFS.bagTimes  = Object.assign({}, PREFS_DEFAULTS.bagTimes, PREFS.bagTimes||{});
+PREFS.stats     = Object.assign({}, PREFS_DEFAULTS.stats, PREFS.stats||{});
+function savePrefs(){ LS.set('vol_prefs', PREFS); }
+
+/* ═══════════════════════════════════════════════════════════════
+   AROMA / SORTEN-DATENBANK (v4.4)
+═══════════════════════════════════════════════════════════════ */
+const AROMA_DB = [
+  // Cannabis-Sorten mit empfohlenen Temperaturen
+  // Empfehlungen basieren auf Terpenen + Cannabinoid-Verdampfungspunkten
+  {name:'Sativa allgemein', temps:[180,190,200], desc:'Energetisch, klar, kreative Sorten'},
+  {name:'Indica allgemein', temps:[180,195,210], desc:'Entspannend, schwer, abendlich'},
+  {name:'Hybrid balanciert', temps:[180,190,200], desc:'Ausgewogen Sativa/Indica'},
+  {name:'Amnesia Haze', temps:[175,185,195], desc:'Zitrus, Erde, energiegeladen (Sativa)'},
+  {name:'White Widow', temps:[180,190,200], desc:'Erdig-würzig, ausgewogen (Hybrid)'},
+  {name:'Northern Lights', temps:[180,195,210], desc:'Süß, erdig, entspannend (Indica)'},
+  {name:'Blue Dream', temps:[175,185,195], desc:'Beerig, ausgleichend (Hybrid)'},
+  {name:'OG Kush', temps:[180,190,205], desc:'Erdig-zitrusartig, kraftvoll (Hybrid)'},
+  {name:'Sour Diesel', temps:[175,185,195], desc:'Diesel, Zitrus, energetisch (Sativa)'},
+  {name:'Granddaddy Purple', temps:[185,200,215], desc:'Beeren, süß, schwere Indica'},
+  {name:'Jack Herer', temps:[175,185,195], desc:'Pinie, Erde, klar (Sativa)'},
+  {name:'Skunk #1', temps:[180,190,205], desc:'Klassisch skunky (Hybrid)'},
+  {name:'Critical Mass', temps:[180,195,210], desc:'Süß, erdig, beruhigend (Indica)'},
+  {name:'Bubba Kush', temps:[185,200,215], desc:'Schokoladig, schwer (Indica)'},
+  {name:'Pineapple Express', temps:[175,185,200], desc:'Tropisch-süß (Hybrid)'},
+  {name:'Lavender / lavendelig', temps:[155,170,185], desc:'Linalool-reich, sehr entspannend'},
+  {name:'Lemon / zitrusartig', temps:[160,175,190], desc:'Limonen-reich, hellt auf'},
+  {name:'Pinie / waldig', temps:[150,170,185], desc:'Pinene, Konzentration'},
+  {name:'CBD-Sorten', temps:[160,175,180], desc:'CBD verdampft ab 160°C'},
+];
+function findAromaSuggestions(query){
+  const q = (query||'').toLowerCase().trim();
+  if(!q) return AROMA_DB.slice(0,6);
+  return AROMA_DB.filter(a => a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BAG PROFILES (v4.4)
+═══════════════════════════════════════════════════════════════ */
+const BAG_PROFILES = {
+  'easy-large':{label:'Easy Valve groß', volume:'~6 L', defaultSec:38},
+  'easy-small':{label:'Easy Valve klein', volume:'~3 L', defaultSec:20},
+  'solid':     {label:'Solid Valve', volume:'~3.5 L', defaultSec:24},
+  'custom':    {label:'Eigene Zeit', volume:'frei', defaultSec:30},
+};
 
 const State={
   connected:false,
@@ -1374,7 +1897,7 @@ function getAudioCtx(){
   return audioCtx;
 }
 function playTone(freq=880, duration=180, volume=.15, type='sine'){
-  if(LS.get('vol_mute', false)) return;
+  if(!PREFS.sound) return;
   const ctx = getAudioCtx(); if(!ctx) return;
   try{
     const osc = ctx.createOscillator();
@@ -1395,6 +1918,7 @@ function playSuccess(){
   setTimeout(()=>playTone(880, 200, .15), 130);
 }
 function haptic(pattern=20){
+  if(!PREFS.haptic) return;
   if(navigator.vibrate){
     try{ navigator.vibrate(pattern); }catch{}
   }
@@ -1813,7 +2337,8 @@ async function cmdHeaterOn(){
     const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
     await State.chars.heaterOn.writeValue(buf);
     log('Heizer EIN','ok');
-    toast('🔥 Heizer EIN');
+    if(PREFS.sound) toast('🔥 Heizer EIN'); else toast('Heizer EIN');
+    statsHeatStart();
   });
 }
 async function cmdHeaterOff(){
@@ -1823,6 +2348,7 @@ async function cmdHeaterOff(){
     await State.chars.heaterOff.writeValue(buf);
     log('Heizer AUS','ok');
     toast('❄️ Heizer AUS');
+    statsHeatStop();
   });
 }
 async function cmdPumpOn(){
@@ -2102,37 +2628,48 @@ function stepSummary(steps){
 }
 
 function renderPrograms(){
-  // Saved
+  // Saved (user-created, isPreset=false)
   const saved=$('#progSaved');
   saved.innerHTML='';
-  if(!State.programs.length){
+  const userProgs = State.programs.filter(p=>!p.isPreset);
+  if(!userProgs.length){
     saved.innerHTML='<div style="font-size:13px;color:var(--muted)">Noch keine eigenen Programme. Tipp auf „+ Neues Programm" oder dupliziere eine Vorlage.</div>';
   }else{
-    for(const p of State.programs){
+    for(const p of userProgs){
       saved.appendChild(progCard(p,'saved'));
     }
   }
-  // Presets
+  // Presets (now editable from storage)
   const pre=$('#progPresets');
   pre.innerHTML='';
-  for(let i=0;i<PRESETS.length;i++){
-    pre.appendChild(progCard({...PRESETS[i], id:'preset-'+i}, 'preset'));
+  const presetProgs = State.programs.filter(p=>p.isPreset);
+  for(const p of presetProgs){
+    pre.appendChild(progCard(p, 'preset'));
   }
+  // Add reset button at end of presets
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn sm ghost block';
+  resetBtn.style.marginTop = '10px';
+  resetBtn.textContent = '↻ Vorlagen auf Werkseinstellungen';
+  resetBtn.addEventListener('click', resetPresetsToDefault);
+  pre.appendChild(resetBtn);
 }
 function progCard(p, kind){
   const div=document.createElement('div');
   div.className='prog';
+  const est = estimateDuration(p.steps);
+  const tagLabel = (kind==='preset')?'Vorlage':'Eigen';
   div.innerHTML=`
     <div class="prog-head">
-      <div class="prog-name">${escapeHtml(p.name)}<small>${escapeHtml(p.desc||'')||(p.steps.length+' Schritte')}</small></div>
-      <div class="prog-tag ${kind}">${kind==='preset'?'Vorlage':'Eigen'}</div>
+      <div class="prog-name">${escapeHtml(p.name)}<small>${escapeHtml(p.desc||'')||(p.steps.length+' Schritte')} <span class="duration-est">~${fmtDuration(est)}</span></small></div>
+      <div class="prog-tag ${kind}">${tagLabel}</div>
     </div>
     <div class="prog-steps">${escapeHtml(stepSummary(p.steps))}</div>
     <div class="prog-actions">
       <button class="btn sm hot" data-act="run" style="flex:1">▶ Starten</button>
-      ${kind==='saved'
-        ? `<button class="btn sm ghost" data-act="edit">Bearbeiten</button>`
-        : `<button class="btn sm ghost" data-act="dup">Duplizieren</button>`}
+      <button class="btn sm ghost" data-act="edit">Bearbeiten</button>
+      <button class="btn sm ghost" data-act="share" aria-label="Programm teilen">🔗</button>
+      ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" aria-label="Programm löschen">🗑</button>` : ''}
     </div>
   `;
   div.querySelectorAll('button[data-act]').forEach(b=>{
@@ -2140,15 +2677,26 @@ function progCard(p, kind){
       const a=b.dataset.act;
       if(a==='run') runProgram(p);
       else if(a==='edit') openEditor(p.id);
-      else if(a==='dup') duplicatePreset(p);
+      else if(a==='share') openQRShare(p);
+      else if(a==='del') deleteProgram(p.id);
     });
   });
   return div;
 }
 
+function deleteProgram(id){
+  const p = State.programs.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`Programm „${p.name}" wirklich löschen?`)) return;
+  State.programs = State.programs.filter(x=>x.id!==id);
+  LS.set('vol_programs', State.programs);
+  renderPrograms();
+  toast('Gelöscht');
+}
+
 function duplicatePreset(p){
   const id='wf-'+Date.now();
-  const copy={id, name:p.name+' (Kopie)', desc:p.desc, steps:JSON.parse(JSON.stringify(p.steps))};
+  const copy={id, name:p.name+' (Kopie)', desc:p.desc, steps:JSON.parse(JSON.stringify(p.steps)), isPreset:false};
   State.programs.unshift(copy);
   LS.set('vol_programs', State.programs);
   renderPrograms();
@@ -2188,26 +2736,30 @@ function renderBuilder(){
     const el=document.createElement('div');
     el.className='step';
     el.innerHTML=`
+      <span class="drag-handle" aria-label="Ziehen zum Verschieben">≡</span>
       <span class="num">${i+1}</span>
       <span class="label">${stepLabel(s)}</span>
-      <div class="move">
-        <button data-act="up" aria-label="hoch">▲</button>
-        <button data-act="down" aria-label="runter">▼</button>
-      </div>
-      <button class="btn sm ghost" data-act="edit" style="padding:4px 10px;min-height:32px">✎</button>
-      <button class="btn sm ghost" data-act="del" style="padding:4px 10px;min-height:32px;color:var(--err)">✕</button>
+      <button class="btn sm ghost" data-act="edit" style="padding:4px 10px;min-height:32px" aria-label="Schritt bearbeiten">✎</button>
+      <button class="btn sm ghost" data-act="del" style="padding:4px 10px;min-height:32px;color:var(--err)" aria-label="Schritt löschen">✕</button>
     `;
     el.querySelectorAll('button[data-act]').forEach(b=>{
       b.addEventListener('click', ()=>{
         const a=b.dataset.act;
-        if(a==='up' && i>0){[editorState.steps[i-1],editorState.steps[i]]=[editorState.steps[i],editorState.steps[i-1]];renderBuilder();}
-        else if(a==='down' && i<editorState.steps.length-1){[editorState.steps[i+1],editorState.steps[i]]=[editorState.steps[i],editorState.steps[i+1]];renderBuilder();}
-        else if(a==='del'){editorState.steps.splice(i,1);renderBuilder();}
+        if(a==='del'){editorState.steps.splice(i,1);renderBuilder();}
         else if(a==='edit'){editStepAt(i);}
       });
     });
     root.appendChild(el);
   });
+  // Activate drag-reorder
+  enableStepDragReorder(root, (newOrder)=>{
+    editorState.steps = newOrder.map(idx => editorState.steps[idx]);
+    renderBuilder();
+  });
+  // Show duration estimate
+  const est = estimateDuration(editorState.steps);
+  const dEl = $('#builderDuration');
+  if(dEl) dEl.textContent = '~'+fmtDuration(est)+' Gesamtdauer';
 }
 
 function openAddStep(){
@@ -2553,6 +3105,96 @@ function wire(){
     $('#iosBanner').classList.remove('show');
     LS.set('vol_ios_banner_dismissed', true);
   });
+
+  // ═════ v4.4 wiring ═════
+
+  // Settings modal
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#btnOpenSettings').addEventListener('click', openSettings);
+  $('#btnSettingsClose').addEventListener('click', ()=>$('#modalSettings').classList.remove('open'));
+
+  // Toggle helpers
+  const wireToggle = (sel, get, set)=>{
+    const el = $(sel); if(!el) return;
+    el.addEventListener('click', ()=>{
+      const newVal = !get();
+      set(newVal);
+      el.setAttribute('aria-checked', String(newVal));
+    });
+  };
+  wireToggle('#togTheme', ()=>PREFS.theme==='light', v=>{
+    PREFS.theme = v?'light':'dark';
+    savePrefs();
+    applyTheme();
+  });
+  wireToggle('#togSound', ()=>PREFS.sound, v=>{
+    PREFS.sound = v;
+    savePrefs();
+    if(v) playTone(660, 100, .1);
+  });
+  wireToggle('#togHaptic', ()=>PREFS.haptic, v=>{
+    PREFS.haptic = v;
+    savePrefs();
+    if(v) haptic(20);
+  });
+  wireToggle('#togVoice', ()=>PREFS.voice, v=>{
+    PREFS.voice = v;
+    savePrefs();
+    $('#voiceCmdSub').hidden = !v;
+    initVoice();
+  });
+  document.querySelectorAll('[data-vc]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const k = b.dataset.vc;
+      PREFS.voiceCmds[k] = !PREFS.voiceCmds[k];
+      savePrefs();
+      b.setAttribute('aria-checked', String(PREFS.voiceCmds[k]));
+    });
+  });
+
+  // Stats
+  $('#btnResetStats').addEventListener('click', statsReset);
+  $('#btnExportAll').addEventListener('click', exportAllData);
+  $('#btnImportAll').addEventListener('click', importAllData);
+  $('#btnResetOnboarding').addEventListener('click', ()=>{
+    LS.set('vol_onboarded', false);
+    $('#modalSettings').classList.remove('open');
+    openWizard(true);
+  });
+
+  // Bag fill
+  $('#btnBagFill').addEventListener('click', openBagModal);
+  $('#btnBagSettings').addEventListener('click', openSettings);
+  $('#btnBagStart').addEventListener('click', startBagFill);
+  $('#btnBagStop').addEventListener('click', stopBagFill);
+  $('#btnBagClose').addEventListener('click', ()=>{
+    if(bagRunState){ stopBagFill(); }
+    $('#modalBag').classList.remove('open');
+  });
+  $('#bagCustMinus').addEventListener('click', ()=>{
+    const el=$('#bagCustInput'); el.value = clamp((parseInt(el.value)||30)-1,5,120);
+  });
+  $('#bagCustPlus').addEventListener('click', ()=>{
+    const el=$('#bagCustInput'); el.value = clamp((parseInt(el.value)||30)+1,5,120);
+  });
+
+  // Aroma
+  $('#btnAroma').addEventListener('click', openAroma);
+  $('#btnAromaClose').addEventListener('click', ()=>$('#modalAroma').classList.remove('open'));
+  $('#aromaSearch').addEventListener('input', e=>renderAromaList(e.target.value));
+
+  // QR
+  $('#btnQrClose').addEventListener('click', ()=>$('#modalQR').classList.remove('open'));
+  $('#btnQrCopy').addEventListener('click', copyQRUrl);
+  $('#btnQrShare').addEventListener('click', shareQRUrl);
+
+  // Voice FAB
+  $('#voiceFab').addEventListener('click', toggleVoiceListening);
+
+  // Notes
+  const notesEl = $('#sessionNotes');
+  if(notesEl) notesEl.addEventListener('input', autosaveNotes);
+  $('#btnSaveSession').addEventListener('click', finishSession);
 
   // Migrate old v3 slots if present
   migrateFromV3();
@@ -2953,7 +3595,739 @@ async function wizTest(){
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   THEME SYSTEM (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', PREFS.theme);
+  const tog = $('#togTheme');
+  if(tog) tog.setAttribute('aria-checked', String(PREFS.theme==='light'));
+  // Update meta theme-color
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', PREFS.theme==='light' ? '#faf6ee' : '#0c0a08');
+}
+function toggleTheme(){
+  PREFS.theme = (PREFS.theme==='light') ? 'dark' : 'light';
+  savePrefs();
+  applyTheme();
+  toast(PREFS.theme==='light' ? '☀️ Heller Modus' : '🌙 Dunkler Modus');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SESSION STATS (v4.4)
+═══════════════════════════════════════════════════════════════ */
+let heatStartedAt = null;
+function statsHeatStart(){
+  if(heatStartedAt) return;
+  heatStartedAt = Date.now();
+}
+function statsHeatStop(){
+  if(!heatStartedAt) return;
+  const elapsed = Math.round((Date.now() - heatStartedAt)/1000);
+  PREFS.stats.totalHeatSec += elapsed;
+  heatStartedAt = null;
+  savePrefs();
+  renderStats();
+}
+function statsAddBag(){
+  PREFS.stats.bagsFilled++;
+  savePrefs();
+  renderStats();
+}
+function statsAddSession(){
+  PREFS.stats.sessionsCount++;
+  PREFS.stats.lastSessionAt = Date.now();
+  savePrefs();
+  renderStats();
+}
+function statsReset(){
+  PREFS.stats = Object.assign({}, PREFS_DEFAULTS.stats);
+  savePrefs();
+  renderStats();
+  toast('Statistik zurückgesetzt');
+}
+function fmtHeat(sec){
+  if(sec < 60) return sec+'s';
+  if(sec < 3600) return Math.floor(sec/60)+'m';
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  return h+'h'+m+'m';
+}
+function renderStats(){
+  const b=$('#statBags'); if(b) b.textContent = PREFS.stats.bagsFilled;
+  const h=$('#statHeat'); if(h) h.textContent = fmtHeat(PREFS.stats.totalHeatSec);
+  const s=$('#statSess'); if(s) s.textContent = PREFS.stats.sessionsCount;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BAG FILL HELPER (v4.4)
+═══════════════════════════════════════════════════════════════ */
+let bagRunState = null; // {stop:bool, total:sec, elapsed:sec}
+
+function openBagModal(){
+  renderBagPicker();
+  $('#bagSelectBox').hidden = false;
+  $('#bagRunBox').hidden = true;
+  $('#modalBag').classList.add('open');
+}
+function renderBagPicker(){
+  const root = $('#bagTypePicker'); if(!root) return;
+  root.innerHTML='';
+  for(const [id, p] of Object.entries(BAG_PROFILES)){
+    const div=document.createElement('div');
+    const active = PREFS.bagType===id;
+    div.className = 'dev-card '+(active?'active':'');
+    div.innerHTML = `
+      <span class="dev-icon">💨</span>
+      <div class="dev-info">
+        <b>${escapeHtml(p.label)}</b>
+        <small>${p.volume} · ${PREFS.bagTimes[id]} Sek.</small>
+      </div>
+      ${active?'<span class="dev-status ready">aktiv</span>':''}
+    `;
+    div.addEventListener('click', ()=>{
+      PREFS.bagType = id;
+      savePrefs();
+      renderBagPicker();
+      $('#bagCustomTime').style.display = (id==='custom')?'flex':'none';
+      $('#bagCustInput').value = PREFS.bagTimes[id];
+      renderBagCurrent();
+    });
+    root.appendChild(div);
+  }
+  $('#bagCustomTime').style.display = (PREFS.bagType==='custom')?'flex':'none';
+  $('#bagCustInput').value = PREFS.bagTimes[PREFS.bagType];
+}
+function renderBagCurrent(){
+  const el = $('#bagCurrent'); if(!el) return;
+  const p = BAG_PROFILES[PREFS.bagType];
+  el.textContent = `Aktueller Typ: ${p.label} · ${PREFS.bagTimes[PREFS.bagType]} Sek.`;
+}
+
+async function startBagFill(){
+  if(!State.connected){ toast('Erst verbinden'); return; }
+  if(!State.heater){
+    if(!confirm('Heizer ist aus. Erst aufheizen und dann starten?')) return;
+  }
+  // Save custom time if changed
+  if(PREFS.bagType==='custom'){
+    PREFS.bagTimes.custom = clamp(parseInt($('#bagCustInput').value)||30, 5, 120);
+    savePrefs();
+  }
+  const total = PREFS.bagTimes[PREFS.bagType];
+  bagRunState = { stop:false, total, elapsed:0 };
+  $('#bagSelectBox').hidden = true;
+  $('#bagRunBox').hidden = false;
+  $('#bagCountdown').textContent = total;
+  $('#bagStatus').textContent = 'Pumpe startet …';
+  $('#bagStatus').classList.remove('warn');
+  $('#bagBar').style.width = '0%';
+  try{
+    await cmdPumpOn();
+    const t0 = Date.now();
+    while(!bagRunState.stop){
+      const elapsed = (Date.now()-t0)/1000;
+      const remain = total - elapsed;
+      if(remain <= 0) break;
+      $('#bagCountdown').textContent = Math.ceil(remain);
+      $('#bagBar').style.width = (elapsed/total*100).toFixed(1)+'%';
+      if(remain <= 3){
+        $('#bagStatus').textContent = 'Achtung — fast voll!';
+        $('#bagStatus').classList.add('warn');
+        haptic(20);
+      } else {
+        $('#bagStatus').textContent = 'Pumpe läuft …';
+      }
+      await sleep(150);
+    }
+    await cmdPumpOff();
+    if(!bagRunState.stop){
+      // completed
+      statsAddBag();
+      $('#bagCountdown').textContent = '✓';
+      $('#bagStatus').textContent = 'Ballon gefüllt!';
+      $('#bagBar').style.width = '100%';
+      playSuccess();
+      haptic([60,50,80]);
+      srAnnounce('Ballon gefüllt', true);
+    } else {
+      $('#bagStatus').textContent = 'Gestoppt';
+    }
+    setTimeout(()=>$('#modalBag').classList.remove('open'), 1200);
+  }catch(e){
+    log('Bag-Fill Fehler: '+e.message,'err');
+    try{ await cmdPumpOff(); }catch{}
+  }
+  bagRunState = null;
+}
+function stopBagFill(){
+  if(bagRunState){ bagRunState.stop = true; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRAM DURATION ESTIMATION (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function estimateDuration(steps){
+  if(!steps || !steps.length) return 0;
+  let total = 0;
+  let curTemp = 23;        // Raumtemperatur Default
+  let isHot = false;
+  for(const s of steps){
+    switch(s.action){
+      case 'heat_on':  total += 1; isHot=true; break;
+      case 'heat_off': total += 1; isHot=false; break;
+      case 'pump_on':
+      case 'pump_off': total += 1; break;
+      case 'set_temperature': curTemp = s.value; break;
+      case 'wait_until': {
+        const dT = Math.max(0, s.value - curTemp);
+        // Volcano: ca. 5°C/s zu Beginn, etwa 36s für 60°C bei warmen Start
+        total += Math.round(dT * (isHot ? 0.6 : 0.8));
+        curTemp = s.value;
+        break;
+      }
+      case 'wait': total += s.seconds||0; break;
+      case 'pump_for': total += s.seconds||0; break;
+    }
+  }
+  return total;
+}
+function fmtDuration(sec){
+  if(sec < 60) return sec+'s';
+  return Math.floor(sec/60)+'m '+(sec%60).toString().padStart(2,'0')+'s';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AROMA / SORTEN MODAL (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function openAroma(){
+  $('#aromaSearch').value='';
+  renderAromaList('');
+  $('#modalAroma').classList.add('open');
+}
+function renderAromaList(query){
+  const list = $('#aromaList'); if(!list) return;
+  list.innerHTML='';
+  const results = findAromaSuggestions(query);
+  if(!results.length){
+    list.innerHTML = '<p class="wiz-text" style="text-align:center;color:var(--muted)">Keine Treffer</p>';
+    return;
+  }
+  for(const a of results){
+    const card = document.createElement('div');
+    card.className='aroma-card';
+    card.innerHTML = `
+      <div class="name">${escapeHtml(a.name)}</div>
+      <div class="desc">${escapeHtml(a.desc)}</div>
+      <div class="aroma-temps"></div>
+    `;
+    const tempsEl = card.querySelector('.aroma-temps');
+    for(const t of a.temps){
+      const b = document.createElement('button');
+      b.className='aroma-temp';
+      b.textContent = t+'°C';
+      b.setAttribute('aria-label', `Auf ${t} Grad setzen`);
+      b.addEventListener('click', async ()=>{
+        if(!State.connected){ toast('Erst verbinden'); return; }
+        try{
+          await cmdSetTemp(t);
+          $('#modalAroma').classList.remove('open');
+        }catch(e){
+          log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err');
+        }
+      });
+      tempsEl.appendChild(b);
+    }
+    list.appendChild(card);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VOICE CONTROL (Web Speech API, v4.4)
+═══════════════════════════════════════════════════════════════ */
+let voiceRec = null;
+let voiceListening = false;
+
+function voiceAvailable(){
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+function initVoice(){
+  const fab = $('#voiceFab');
+  if(!fab) return;
+  if(!voiceAvailable()){
+    fab.style.display='none';
+    return;
+  }
+  if(!PREFS.voice){
+    fab.style.display='none';
+    return;
+  }
+  fab.style.display='flex';
+}
+function voiceFeedback(text, timeout=2500){
+  const el = $('#voiceFeedback'); if(!el) return;
+  el.textContent = text;
+  el.classList.add('show');
+  if(timeout){
+    setTimeout(()=>el.classList.remove('show'), timeout);
+  }
+}
+function startVoice(){
+  if(!voiceAvailable()){
+    toast('Sprachsteuerung nicht verfügbar (in iOS Safari/Bluefy oft eingeschränkt)');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(voiceRec){ try{ voiceRec.abort(); }catch{} voiceRec=null; }
+  voiceRec = new SR();
+  voiceRec.lang = 'de-DE';
+  voiceRec.continuous = false;
+  voiceRec.interimResults = false;
+  voiceRec.maxAlternatives = 1;
+
+  voiceRec.onstart = ()=>{
+    voiceListening = true;
+    $('#voiceFab').classList.add('listening');
+    voiceFeedback('🎤 Höre zu…', 0);
+    haptic(15);
+  };
+  voiceRec.onresult = (ev)=>{
+    const txt = ev.results[0][0].transcript;
+    voiceFeedback('„'+txt+'"');
+    handleVoiceCommand(txt);
+  };
+  voiceRec.onerror = (ev)=>{
+    voiceFeedback('Fehler: '+ev.error, 3000);
+    voiceListening = false;
+    $('#voiceFab').classList.remove('listening');
+  };
+  voiceRec.onend = ()=>{
+    voiceListening = false;
+    $('#voiceFab').classList.remove('listening');
+  };
+  try{ voiceRec.start(); }catch(e){ voiceFeedback('Start fehlgeschlagen: '+e.message,3000) }
+}
+function stopVoice(){
+  if(voiceRec){ try{ voiceRec.abort(); }catch{} }
+  voiceListening = false;
+  $('#voiceFab')?.classList.remove('listening');
+}
+function toggleVoiceListening(){
+  if(voiceListening) stopVoice(); else startVoice();
+}
+
+async function handleVoiceCommand(txt){
+  const t = txt.toLowerCase().trim();
+  log('🎤 Befehl: "'+txt+'"','ok');
+
+  // Stop everything
+  if(PREFS.voiceCmds.stopAll && /(stopp|alles aus|alles stoppen|abbrechen|notaus)/.test(t)){
+    try{
+      if(State.running){ State.running.stopFlag=true; }
+      if(State.heater) await cmdHeaterOff();
+      if(State.pump) await cmdPumpOff();
+      voiceFeedback('✓ Alles gestoppt');
+    }catch(e){ voiceFeedback('Fehler: '+e.message, 3000); }
+    return;
+  }
+
+  // Heater on/off
+  if(PREFS.voiceCmds.heatOn && /(heize?r?\s*(an|ein|start)|aufheizen|heizen\s*starten)/.test(t)){
+    try{ await cmdHeaterOn(); voiceFeedback('✓ Heizer an'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+    return;
+  }
+  if(PREFS.voiceCmds.heatOff && /(heize?r?\s*(aus|stop|off)|heizen\s*(stop|aus))/.test(t)){
+    try{ await cmdHeaterOff(); voiceFeedback('✓ Heizer aus'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+    return;
+  }
+
+  // Pump for X seconds
+  if(PREFS.voiceCmds.pumpFor){
+    const m = t.match(/pumpe?\s+(?:für\s+)?(\d+)\s*(?:sek|sekunden|s)/);
+    if(m){
+      const sec = clamp(parseInt(m[1]),1,120);
+      try{ await cmdPumpFor(sec); voiceFeedback('✓ Pumpe '+sec+'s'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+      return;
+    }
+  }
+
+  // Pump on/off
+  if(PREFS.voiceCmds.pumpOn && /pumpe?\s*(an|ein|start)/.test(t)){
+    try{ await cmdPumpOn(); voiceFeedback('✓ Pumpe an'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+    return;
+  }
+  if(PREFS.voiceCmds.pumpOff && /pumpe?\s*(aus|stop|off)/.test(t)){
+    try{ await cmdPumpOff(); voiceFeedback('✓ Pumpe aus'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+    return;
+  }
+
+  // Set temperature: "Heize auf 185 Grad" or "Setze 185 Grad"
+  if(PREFS.voiceCmds.setTemp){
+    const m = t.match(/(?:heize?|setze?|stelle?|auf)\s*(?:auf\s*)?(\d{2,3})\s*(?:grad|°c?|°)?/);
+    if(m){
+      const c = parseInt(m[1]);
+      if(c>=40 && c<=230){
+        try{ await cmdSetTemp(c); voiceFeedback('✓ '+c+'°C'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
+        return;
+      }
+    }
+  }
+
+  // Fill bag
+  if(PREFS.voiceCmds.fillBag && /(ballon|bag)\s*(füllen|fill|voll)/.test(t)){
+    openBagModal();
+    setTimeout(startBagFill, 400);
+    voiceFeedback('✓ Ballon füllen');
+    return;
+  }
+
+  // Run program: "starte Programm Aroma-Tour"
+  if(PREFS.voiceCmds.runProgram){
+    const m = t.match(/(?:starte?|spiele?|run)\s+(?:das\s+)?(?:programm\s+)?(.+)/);
+    if(m){
+      const name = m[1].trim();
+      const all = getAllPrograms();
+      const found = all.find(p => p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase().split(' ')[0]));
+      if(found){
+        voiceFeedback('✓ Starte: '+found.name);
+        runProgram(found);
+        return;
+      }
+      voiceFeedback('Programm "'+name+'" nicht gefunden', 3000);
+      return;
+    }
+  }
+
+  voiceFeedback('Befehl nicht erkannt', 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QR-CODE SHARE & IMPORT (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function programToShareUrl(p){
+  const payload = {
+    n:p.name,
+    d:p.desc||'',
+    s:p.steps,
+  };
+  const json = JSON.stringify(payload);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  const base = location.origin + location.pathname;
+  return base + '#prog=' + b64;
+}
+function openQRShare(p){
+  const url = programToShareUrl(p);
+  $('#qrTitle').textContent = 'Teilen: '+p.name;
+  $('#qrUrl').textContent = url;
+  const qrSize = 240;
+  // Use external QR-API (free, no account)
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size='+qrSize+'x'+qrSize+'&data='+encodeURIComponent(url)+'&margin=12';
+  $('#qrBox').innerHTML = `<img src="${qrSrc}" alt="QR-Code für ${escapeHtml(p.name)}" width="${qrSize}" height="${qrSize}">`;
+  $('#modalQR').classList.add('open');
+  // Store current URL for copy/share buttons
+  $('#modalQR').dataset.url = url;
+  $('#modalQR').dataset.name = p.name;
+}
+async function copyQRUrl(){
+  const url = $('#modalQR').dataset.url;
+  try{
+    await navigator.clipboard.writeText(url);
+    toast('URL kopiert');
+  }catch{
+    toast('Kopieren nicht möglich');
+  }
+}
+async function shareQRUrl(){
+  const url = $('#modalQR').dataset.url;
+  const name = $('#modalQR').dataset.name;
+  if(navigator.share){
+    try{
+      await navigator.share({ title:'Volcano-Programm: '+name, text:'Tippe um Programm zu importieren', url });
+    }catch{}
+  } else {
+    copyQRUrl();
+  }
+}
+function checkImportFromUrl(){
+  // Check URL hash for #prog=<base64>
+  const hash = location.hash;
+  if(!hash.startsWith('#prog=')) return;
+  try{
+    const b64 = hash.slice(6);
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    if(!data.n || !Array.isArray(data.s)) throw new Error('Ungültiges Format');
+    if(confirm(`Programm "${data.n}" importieren?\n\n${data.s.length} Schritte\nDauer: ~${fmtDuration(estimateDuration(data.s))}`)){
+      const np = {
+        id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
+        name:data.n,
+        desc:data.d || '',
+        steps:data.s,
+        isPreset:false,
+      };
+      State.programs.push(np);
+      LS.set('vol_programs', State.programs);
+      renderPrograms();
+      toast('Programm importiert: '+data.n);
+      switchTab('prog');
+    }
+  }catch(e){
+    log('Import fehlgeschlagen: '+e.message,'err');
+    toast('Import-Fehler');
+  }
+  history.replaceState(null,'',location.pathname);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRAMS: editable presets + drag reorder (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function ensurePresetsInStorage(){
+  // First-time migration: copy PRESETS into State.programs as editable, mark them isPreset
+  if(LS.get('vol_presets_migrated', false)) return;
+  for(const p of PRESETS){
+    State.programs.push({
+      id:'preset_'+p.name.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+      name:p.name,
+      desc:p.desc,
+      steps:JSON.parse(JSON.stringify(p.steps)),
+      isPreset:true,
+    });
+  }
+  LS.set('vol_programs', State.programs);
+  LS.set('vol_presets_migrated', true);
+}
+function getAllPrograms(){
+  // returns all programs (both presets and user-saved) from storage
+  return State.programs;
+}
+function resetPresetsToDefault(){
+  if(!confirm('Alle Vorlagen auf Werkseinstellungen zurücksetzen?\nDeine eigenen Programme bleiben erhalten.')) return;
+  // Remove all isPreset items, re-add fresh
+  State.programs = State.programs.filter(p=>!p.isPreset);
+  for(const p of PRESETS){
+    State.programs.push({
+      id:'preset_'+p.name.toLowerCase().replace(/[^a-z0-9]+/g,'_'),
+      name:p.name,
+      desc:p.desc,
+      steps:JSON.parse(JSON.stringify(p.steps)),
+      isPreset:true,
+    });
+  }
+  LS.set('vol_programs', State.programs);
+  renderPrograms();
+  toast('Vorlagen zurückgesetzt');
+}
+
+/* Drag and drop reorder for workflow steps */
+function enableStepDragReorder(container, onReorder){
+  let dragging = null;
+  let startY = 0;
+  let originalIndex = -1;
+
+  container.querySelectorAll('.step').forEach((stepEl, idx)=>{
+    stepEl.dataset.idx = idx;
+    const handle = stepEl.querySelector('.drag-handle');
+    if(!handle) return;
+
+    const pointerDown = (e)=>{
+      e.preventDefault();
+      dragging = stepEl;
+      originalIndex = idx;
+      startY = (e.touches?e.touches[0].clientY:e.clientY);
+      stepEl.classList.add('dragging');
+      document.addEventListener('pointermove', pointerMove);
+      document.addEventListener('pointerup', pointerUp, {once:true});
+    };
+    const pointerMove = (e)=>{
+      if(!dragging) return;
+      e.preventDefault();
+      const y = (e.touches?e.touches[0].clientY:e.clientY);
+      const dy = y - startY;
+      dragging.style.transform = `translateY(${dy}px) scale(1.02)`;
+
+      // Find drop target
+      const siblings = [...container.querySelectorAll('.step:not(.dragging)')];
+      const draggingRect = dragging.getBoundingClientRect();
+      const draggingMid = draggingRect.top + draggingRect.height/2;
+      for(const s of siblings){
+        const r = s.getBoundingClientRect();
+        const mid = r.top + r.height/2;
+        if(draggingMid < mid){
+          container.insertBefore(dragging, s);
+          break;
+        } else if(s === siblings[siblings.length-1]){
+          container.appendChild(dragging);
+        }
+      }
+    };
+    const pointerUp = ()=>{
+      if(!dragging) return;
+      dragging.style.transform = '';
+      dragging.classList.remove('dragging');
+      document.removeEventListener('pointermove', pointerMove);
+      // compute new order
+      const newOrder = [...container.querySelectorAll('.step')].map(s=>parseInt(s.dataset.idx));
+      if(newOrder.some((v,i)=>v!==i)){
+        onReorder(newOrder);
+      }
+      dragging = null;
+    };
+
+    handle.addEventListener('pointerdown', pointerDown);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SESSION NOTES (v4.4)
+═══════════════════════════════════════════════════════════════ */
+let notesSaveTimer = null;
+function loadNotes(){
+  const ta = $('#sessionNotes');
+  if(!ta) return;
+  ta.value = LS.get('vol_current_notes','');
+}
+function autosaveNotes(){
+  clearTimeout(notesSaveTimer);
+  notesSaveTimer = setTimeout(()=>{
+    const ta = $('#sessionNotes');
+    if(!ta) return;
+    LS.set('vol_current_notes', ta.value);
+    const status = $('#notesStatus');
+    if(status){
+      status.textContent='gespeichert · '+new Date().toLocaleTimeString();
+    }
+  }, 800);
+}
+function finishSession(){
+  const ta = $('#sessionNotes');
+  const notes = ta?.value||'';
+  if(notes.trim()){
+    // Save to archive
+    const history = LS.get('vol_sessions',[]);
+    history.unshift({
+      at: Date.now(),
+      notes,
+      bagsFilled: PREFS.stats.bagsFilled,
+      heatSec: PREFS.stats.totalHeatSec,
+    });
+    LS.set('vol_sessions', history.slice(0,50)); // keep last 50
+  }
+  // Reset notes
+  if(ta) ta.value='';
+  LS.set('vol_current_notes','');
+  statsAddSession();
+  toast('Session abgeschlossen ✓');
+  $('#notesStatus').textContent='Session archiviert';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS MODAL (v4.4)
+═══════════════════════════════════════════════════════════════ */
+function openSettings(){
+  // Sync toggles with current PREFS
+  $('#togTheme').setAttribute('aria-checked', String(PREFS.theme==='light'));
+  $('#togSound').setAttribute('aria-checked', String(!!PREFS.sound));
+  $('#togHaptic').setAttribute('aria-checked', String(!!PREFS.haptic));
+  $('#togVoice').setAttribute('aria-checked', String(!!PREFS.voice));
+  $('#voiceCmdSub').hidden = !PREFS.voice;
+  document.querySelectorAll('[data-vc]').forEach(b=>{
+    const k = b.dataset.vc;
+    b.setAttribute('aria-checked', String(!!PREFS.voiceCmds[k]));
+  });
+  renderBagProfileSettings();
+  $('#modalSettings').classList.add('open');
+}
+function renderBagProfileSettings(){
+  const root = $('#bagProfileList'); if(!root) return;
+  root.innerHTML='';
+  for(const [id, p] of Object.entries(BAG_PROFILES)){
+    const row = document.createElement('div');
+    row.className='toggle-row';
+    row.innerHTML = `
+      <div class="info">
+        <b>${escapeHtml(p.label)}</b>
+        <small>${p.volume} · aktuell ${PREFS.bagTimes[id]} Sek.</small>
+      </div>
+      <div class="stepper" style="width:130px;flex-shrink:0">
+        <button data-bagminus="${id}">−</button>
+        <input class="mono" type="number" min="5" max="120" step="1" value="${PREFS.bagTimes[id]}" data-bagval="${id}" inputmode="numeric">
+        <button data-bagplus="${id}">+</button>
+      </div>
+    `;
+    root.appendChild(row);
+  }
+  root.querySelectorAll('[data-bagminus]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const id = b.dataset.bagminus;
+      PREFS.bagTimes[id] = Math.max(5, PREFS.bagTimes[id]-1);
+      savePrefs(); renderBagProfileSettings(); renderBagCurrent();
+    });
+  });
+  root.querySelectorAll('[data-bagplus]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const id = b.dataset.bagplus;
+      PREFS.bagTimes[id] = Math.min(120, PREFS.bagTimes[id]+1);
+      savePrefs(); renderBagProfileSettings(); renderBagCurrent();
+    });
+  });
+  root.querySelectorAll('[data-bagval]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const id = inp.dataset.bagval;
+      PREFS.bagTimes[id] = clamp(parseInt(inp.value)||30,5,120);
+      savePrefs(); renderBagCurrent();
+    });
+  });
+}
+function exportAllData(){
+  const blob = new Blob([JSON.stringify({
+    prefs: PREFS,
+    programs: State.programs,
+    sessions: LS.get('vol_sessions',[]),
+    notes: LS.get('vol_current_notes',''),
+    exportedAt: new Date().toISOString(),
+    version: 'v4.4',
+  }, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'volcano-export-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('Datei wird heruntergeladen…');
+}
+function importAllData(){
+  const inp = document.createElement('input');
+  inp.type='file';
+  inp.accept='application/json';
+  inp.addEventListener('change', async ()=>{
+    const f = inp.files?.[0]; if(!f) return;
+    try{
+      const txt = await f.text();
+      const data = JSON.parse(txt);
+      if(!confirm('Daten wirklich überschreiben? Aktuelle Einstellungen, Programme und Sessions gehen verloren.')) return;
+      if(data.prefs) Object.assign(PREFS, data.prefs);
+      if(Array.isArray(data.programs)) State.programs = data.programs;
+      if(Array.isArray(data.sessions)) LS.set('vol_sessions', data.sessions);
+      if(typeof data.notes==='string') LS.set('vol_current_notes', data.notes);
+      savePrefs();
+      LS.set('vol_programs', State.programs);
+      applyTheme();
+      renderPrograms();
+      renderStats();
+      loadNotes();
+      toast('Import erfolgreich');
+    }catch(e){
+      toast('Import-Fehler: '+e.message);
+    }
+  });
+  inp.click();
+}
+
+
 function init(){
+  // v4.4: apply theme first to avoid flash
+  applyTheme();
+
   loadUUIDs();
   // Apply current device profile labels
   const devId = getCurrentDeviceId();
@@ -2962,9 +4336,20 @@ function init(){
   $('#devSub').textContent = dev.sub;
   $('#devIcon').textContent = dev.icon;
 
+  // v4.4: migrate hard-coded presets into storage so they become editable
+  ensurePresetsInStorage();
+
   wire();
   renderStatus();
   renderPrograms();
+
+  // v4.4: hydrate stats/notes/voice/bag UI
+  renderStats();
+  loadNotes();
+  renderBagCurrent();
+  initVoice();
+  // Check URL hash for incoming QR-shared program
+  checkImportFromUrl();
 
   // Environment check
   const env = detectEnv();
@@ -2973,7 +4358,7 @@ function init(){
   }
   maybeShowIosBanner();
 
-  log('App bereit (v4.2 - UUID-Fix).','ok');
+  log('App bereit (v4.4).','ok');
 
   // PWA install hint
   if('serviceWorker' in navigator){
