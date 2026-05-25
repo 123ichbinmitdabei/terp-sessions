@@ -11,6 +11,9 @@
 <meta name="description" content="Sessions — Storz & Bickel Bluetooth Controller für Volcano, Crafty, Mighty und Venty">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="shortcut icon" href="icon-192.png">
 <title>Sessions — S&B Vape Controller</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4707,8 +4710,14 @@ function wire(){
   $('#btnStepCancel').addEventListener('click', closeStepEdit);
   $('#btnStepSave').addEventListener('click', saveStepEdit);
 
-  // close modals on backdrop
-  $$('.modal .back').forEach(b=>b.addEventListener('click', e=>{ e.target.closest('.modal').classList.remove('open') }));
+  // v4.9.1: close modals on backdrop via event-delegation (greift auch für dynamisch erzeugte Modals)
+  document.addEventListener('click', e=>{
+    if(!e.target.classList || !e.target.classList.contains('back')) return;
+    const modal = e.target.closest('.modal');
+    if(modal && modal.classList.contains('open')){
+      modal.classList.remove('open');
+    }
+  });
 
   // Run engine
   $('#btnRunStop').addEventListener('click', stopRun);
@@ -9105,14 +9114,8 @@ async function init(){
     setupVoiceReadoutInterval();
   }
 
-  // v4.9 init: Focus-Trap-Observer für alle Modals + Backdrop-Click
+  // v4.9 init: Focus-Trap-Observer für alle Modals (Backdrop-Close läuft via Event-Delegation in wire())
   setupModalFocusObserver();
-  document.querySelectorAll('.modal .back').forEach(back=>{
-    back.addEventListener('click', ()=>{
-      const modal = back.closest('.modal');
-      if(modal) modal.classList.remove('open');
-    });
-  });
   // Routine suggestion check (one-shot per day)
   setTimeout(()=>{
     const lastShown = LS.get('vol_routine_shown', '');
@@ -9136,7 +9139,7 @@ async function init(){
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.9 bereit.','ok');
+  log('Sessions v4.9.1 bereit.','ok');
 
   setupPwaUpdate();
 
