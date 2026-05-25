@@ -67,7 +67,8 @@ body{
   font-size:15px;
   line-height:1.5;
   padding-top:var(--safe-top);
-  padding-bottom:calc(110px + var(--safe-bot-padding));
+  /* v4.9.2: erhöhtes Padding damit Voice-FAB + Vape-Buddy nicht mit Content kollidieren */
+  padding-bottom:calc(170px + var(--safe-bot-padding));
   min-height:100dvh;
   background-image:
     radial-gradient(1400px 700px at 50% -300px, rgba(255,87,34,.10), transparent 60%),
@@ -394,6 +395,11 @@ input,select,textarea{font:inherit;color:inherit}
 
 .tab{display:none}
 .tab.active{display:block;animation:fadeUp .3s ease}
+/* v4.9.2: Letzte Card im Tab bekommt extra Luft nach unten */
+.tab > .card:last-child,
+.tab > div:last-child{margin-bottom:30px}
+/* v4.9.2: Wenn Run-Card aktiv, noch mehr Padding-Bottom damit nicht verdeckt */
+body:has(.run-card.show){padding-bottom:calc(250px + var(--safe-bot-padding))}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 .prog-list{display:flex;flex-direction:column;gap:10px}
@@ -497,8 +503,9 @@ input,select,textarea{font:inherit;color:inherit}
   background:linear-gradient(180deg, #1a1510, #14100c);
   border-top:1px solid var(--line);
   border-top-left-radius:26px;border-top-right-radius:26px;
-  padding:22px 20px calc(22px + var(--safe-bot-padding));
+  padding:22px 20px calc(30px + var(--safe-bot-padding));
   max-height:90dvh;overflow:auto;
+  overscroll-behavior:contain;
   animation:slideUp .35s ease;
   box-shadow:0 -10px 50px rgba(0,0,0,.6);
 }
@@ -4570,6 +4577,8 @@ function switchTab(name){
     b.setAttribute('aria-selected', String(active));
     b.setAttribute('aria-current', active ? 'page' : 'false');
   });
+  // v4.9.2: scroll to top damit User nicht in der Mitte vom vorigen Tab landet
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -9139,7 +9148,7 @@ async function init(){
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.9.1 bereit.','ok');
+  log('Sessions v4.9.2 bereit.','ok');
 
   setupPwaUpdate();
 

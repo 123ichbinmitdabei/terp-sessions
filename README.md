@@ -1,78 +1,68 @@
-# Sessions — S&B Vape Controller (v4.9.1)
+# Sessions — S&B Vape Controller (v4.9.2)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern (Volcano Hybrid, Crafty, Mighty, Venty) über Web Bluetooth.
 Single-File HTML PWA, ~358 KB, mobile-first, accessibility-zentriert.
 
-## Was ist neu in v4.9.1 — CC-Test-Befunde umgesetzt
+## Was ist neu in v4.9.2 — Bottom-Layout-Fix
 
-Kleiner Polish-Patch nach systematischem Test von Claude Code via Puppeteer (18/19 Checks waren bereits grün).
+Andre's Befund: „unten noch immer nicht alles lesbar". Ursache identifiziert: Voice-FAB (bottom: 108px) und Vape-Buddy ragen ~160px über den Bildschirmrand, aber das Body-Padding war nur 110px. Bei aktivem FAB wurde der letzte Content der Tabs überdeckt.
 
-### Fixes
+### Layout-Fixes
 
-- **Favicon-Link ergänzt**: `<link rel="icon">` mit 192px und 512px im Head. Behebt den 404-Browser-Warnhinweis auf der Konsole. Plus `<link rel="shortcut icon">` für ältere Browser.
-- **Backdrop-Close per Event-Delegation**: war vorher statisch an `.modal .back` während `wire()` gebunden — funktionierte für alle existierenden Modals, aber nicht für später dynamisch erzeugte. Jetzt globaler Click-Listener auf `document`, der jeden Klick auf eine `.back`-Klasse abfängt und das nächstgelegene Modal schließt. Damit zukunftssicher: jedes neue Modal mit `.back`-Backdrop schließt automatisch.
-- **README-Doku korrekt**: vorherige Behauptung „Backdrop-Close via MutationObserver" war ungenau. Tatsächlich nutzt nur der **Focus-Trap** einen MutationObserver (für `class`-Änderungen, um trap zu installieren/entfernen). Backdrop-Close läuft jetzt sauber über Event-Delegation, beides klar dokumentiert.
+- **Body-Padding-Bottom drastisch erhöht** von 110px auf 170px (plus safe-area-inset). Das deckt jetzt Voice-FAB (160px) + Vape-Buddy + Bottom-Nav komplett ab.
+- **Letzte Card im Tab bekommt extra 30px Margin** — visueller Atem-Raum vor der Bottom-Nav
+- **Dynamic Padding wenn Run-Card aktiv**: `body:has(.run-card.show)` erhöht Padding auf 250px wenn ein Programm läuft — die schwebende Run-Card verdeckt damit keinen Content
+- **Smooth Scroll-to-Top bei Tab-Wechsel**: User landet bei jedem Tab oben statt in der Mitte eines vorherigen Tabs
 
-### Was Andre noch auf echtem Handy prüfen sollte
+### Modal-Polishing
 
-CC's Headless-Test meldete `ERR_BLOCKED_BY_ORB` für Google Fonts (Fraunces, Inter Tight, IBM Plex Mono). **Das ist sehr wahrscheinlich ein Headless-Artefakt** — echte Browser laden die Fonts normal. Bitte einmal auf dem iPhone (Bluefy) und einem Android-Gerät checken: kommen die Fonts in den serifenbetonten Headlines (Fraunces) tatsächlich an?
+- **Modal-Sheet Padding-Bottom erhöht** von 22px auf 30px (plus safe-area) — Schließen-Button am Ende langer Modals war zu nah am Rand
+- **`overscroll-behavior:contain`** im Modal — verhindert Scroll-Chaining auf Body wenn man im Modal am Ende ist (kein versehentlicher Pull-to-Refresh)
 
-**Falls nicht**, gibt es zwei Optionen:
-1. Fonts lokal mitliefern (3 Familien als WOFF2, ca. 300-400 KB extra → vollständig offline-fähig)
-2. Bestehender System-Font-Fallback (`-apple-system, system-ui, sans-serif`) reicht — keine Änderung
+### Was war in v4.9.1
 
-Sag Bescheid wie der Test ausfällt, dann entscheiden wir.
+CC-Test-Findings: Favicon-Link für 404-Fix, Backdrop-Close per Event-Delegation (zukunftssicher), README-Doku korrigiert.
 
-## Was war in v4.9 — Polishing & Reorganization
+### Was war in v4.9
 
-Settings-Modal in **6 Sub-Tabs** umgebaut (🎨 Stil · ♿ Inklusion · 🔒 Sicherheit · 🛠 Workflow · 🚀 Erweitert · 💾 Daten). Setup-Tab mit 5 Section-Headern strukturiert. Focus-Trap in allen Modals. `aria-current="page"` für Bottom-Nav. Backdrop-Click schließt Modals. `focus-visible` konsistent. HA-YAML-Button auf Programm-Karten. Empty-State für Programme. Hover-/Transition-Polishing.
+Polishing & Reorganization: Settings-Modal in 6 Sub-Tabs, Setup-Tab Section-Headers, Focus-Trap, aria-current, Backdrop-Close, HA-YAML-Button, Empty-State.
 
-CC's Puppeteer-Test ergab: **18/19 Checks grün**. Der eine „Fail" war ein Test-Artefakt (direktes `.open` umging `openSettings()` → Theme-Picker wurde nicht gefüllt). Re-Test mit echtem Funktions-Call: 6 Theme-Swatches korrekt da.
+## Layout-Math (für die Doku)
 
-## CC's Test-Bericht (Zusammenfassung)
+| Element | Bottom-Position | Höhe | Top-Edge |
+|---|---|---|---|
+| Bottom-Nav | 0 + safe-bot | ~64px | 64+safe |
+| Voice-FAB | 108+safe | 52px | 160+safe |
+| Vape-Buddy | 108+safe | ~60px | 168+safe |
+| Run-Card | 96+safe | ~80px | 176+safe |
 
-| Fokus-Bereich | Ergebnis |
-|---|---|
-| Settings-Sub-Tabs | ✅ Alle 6 erreichbar, Inhalte korrekt (8/7/10/21/8 interaktive Elemente in den datengetriebenen Panes, „Stil" = 6 Theme-Swatches als radiogroup) |
-| Setup Section-Header | ✅ Genau 5 sichtbar: 📱 Gerät · 📊 Übersicht · 🛠 Werkzeuge · 🔧 Erweitert · 📡 Verbindung & Debugging |
-| Focus-Trap | ✅ Vorwärts und rückwärts zyklisch über 15 fokussierbare Elemente |
-| Backdrop-Click | ✅ Alle 19 Modals, `.back`/`.sheet` als Geschwister (Inhalt-Click schließt nicht versehentlich) |
-| HA-YAML-Button 🏠 | ✅ Auf 6/6 Programm-Karten mit aria-label |
-| aria-current | ✅ Bei Nav-Wechsel korrekt gesetzt |
-| Empty-State | ✅ Bei 0 eigenen Programmen sichtbar |
+Body-Padding-Bottom: **170+safe-bot** (deckt alle obigen ab, Margin auf letzter Card: 30px für Komfort-Abstand).
 
-Voller Bericht im Conversation-Log.
+Mit Run-Card aktiv: **250+safe-bot** (deckt zusätzlich die laufende Run-Card ab).
 
-## Was bleibt unangekreuzt (BLE-Hardware nötig)
+## Was zu testen ist
 
-CC konnte nur Headless-UI-Tests machen. Folgende Punkte brauchen einen echten Volcano + iPhone/Android:
+1. **Scrollen im Steuerung-Tab bis ganz unten**: Sicherheits-Timer-Karte und Mini-Log sollten vollständig sichtbar sein, nicht abgeschnitten
+2. **Setup-Tab ganz unten**: UUID-Mapping-Card und letzte Buttons müssen sichtbar sein
+3. **Vape-Buddy einschalten** (Settings → Erweitert → Engagement): danach noch sichtbarer Content beim Scrollen?
+4. **Programm starten**: Run-Card erscheint unten, Body-Padding wird automatisch größer
+5. **Tab-Wechsel**: smooth scroll nach oben
 
-- **BLE-Connect** zu Volcano via Bluefy/Chrome
-- **Temperatur-Steuerung**, Heizer an/aus, Pumpe
-- **Ballon füllen** mit verschiedenen Profilen
-- **Reconnect** nach Trennung
-- **Sprachsteuerung** (TTS funktioniert nur auf echten Devices)
-- **Long-Press-Tooltips** (Touch-spezifisch)
-- **MQTT/Webhook** gegen echte Endpunkte
-- **Custom BLE-Profile** mit eigenem Gerät
-- **Raw BLE-Console** für Hex-Read/Write
+## Hardware-Test (offen)
 
-Hier können wir gleich nach v4.9.1-Deploy einen Hardware-Test auf deinem iPhone durchführen.
-
-## Plattform-Kompatibilität
-
-| Plattform | Web Bluetooth | TTS | Web Crypto | MQTT |
-|---|---|---|---|---|
-| Android Chrome | ✅ | ✅ | ✅ | ✅ |
-| Desktop Chrome/Edge | ✅ | ✅ | ✅ | ✅ |
-| Bluefy iOS | ✅ | eingeschr. | ✅ | ✅ |
-| Safari iOS | ❌ | ✅ | ✅ | ✅ |
+Mit echtem Volcano + iPhone/Android Bluefy noch zu testen:
+- BLE-Connect, Heizer-Steuerung, Pumpe, Ballon-Füllung
+- Sprachsteuerung (TTS)
+- Long-Press-Tooltips
+- MQTT/Webhook gegen echte Endpunkte
+- Custom BLE-Profile mit eigenem Gerät
+- Raw BLE-Console (Hex Read/Write)
 
 ## Roadmap
 
-**v4.10** (optional): 3D-Volcano-Vorschau (Three.js dynamic load, ~600 KB lazy)
+**v4.10 (auf Andre's Go)**: 3D-Volcano-Vorschau mit Three.js (dynamic load, optional)
 
-**Phase 2** (Hardware-Setup): Raspberry Pi 4 + Home Assistant + HACS volcano_integration + Lovelace-Dashboard + Nabu Casa Cloud für Alexa-Skill. HA-YAML-Export aus v4.8/v4.9 ist die Brücke.
+**Phase 2 (Andre sagt Bescheid)**: Raspberry Pi 4 + Home Assistant + HACS volcano_integration + Lovelace + Nabu Casa/Alexa-Skill. HA-YAML-Export aus der App ist die Brücke.
 
 ## Hinweis zur Ballon-Füllung
 
