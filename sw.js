@@ -1,5 +1,5 @@
 // Volcano Controller — minimal app-shell SW
-const VERSION = 'v4.2.0';
+const VERSION = 'v4.3.0';
 const CACHE = `volcano-${VERSION}`;
 const SHELL = [
   './',
