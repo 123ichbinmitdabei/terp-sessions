@@ -1,102 +1,200 @@
-# Sessions — S&B Vape Controller (v4.8)
+# Sessions — S&B Vape Controller (v4.9)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern (Volcano Hybrid, Crafty, Mighty, Venty) über Web Bluetooth.
-Single-File HTML PWA, ~348 KB, mobile-first, accessibility-zentriert.
+Single-File HTML PWA, ~358 KB, mobile-first, accessibility-zentriert.
 
-## Was ist neu in v4.8 — letzte Phase-1-Batch
+## Was ist neu in v4.9 — Polishing & Reorganization
 
-15 substantielle Features in 6 Kategorien. Mit dieser Version ist Phase 1 fertig.
+Kein Feature-Add — Aufräumen, Bedienkonzept und A11y-Audit.
 
-### Anleitung und Bedienung (Schwerpunkt)
+### Settings-Modal komplett umstrukturiert
 
-- **📖 Eingebautes Handbuch** mit allen Funktionen, gegliedert in 10 Kategorien (Erste Schritte, Steuerung, Programme, Sicherheit, Accessibility, Audio, Wartung, Medizinisch, Power-User, Tipps). Such-Feld zum Filtern, ausklappbare Antworten. Hilfe-Knopf in der Topbar öffnet die Anleitung direkt.
-- **♿ Blinden-Modus**: ein-Toggle aktiviert alle a11y-Features auf einmal: Großschrift 150%, Hochkontrast, Voice-Readout alle 30s, Tooltips per TTS, Vibration. TTS-Willkommens-Ansage erklärt die Shortcuts.
-- **🗯 Tooltips überall**: jeder wichtige Knopf hat einen Hilfetext. Mobile Long-Press zeigt Tooltip-Popup. Bei aktivem „Tooltips per TTS"-Modus wird der Text beim Fokussieren mit Tab vorgelesen.
-- **A11y-Audit**: aria-Labels, title-Attribute, Reading-Order durchgegangen. WCAG-AAA Hochkontrast mit 3px-Fokus-Ring.
+Aus 11 Sektionen untereinander wurden **6 Sub-Tabs** mit klarer Gliederung:
 
-### Reise-Modi
+- **🎨 Stil** — Theme-Picker (Dark, Light, Lava, Forest, Cosmos, Paper)
+- **♿ Inklusion** — Blinden-Modus prominent in orangener Box, Schriftgröße, Hochkontrast, Voice-Readout, Tooltip-TTS, Haptik, Tastatur-Shortcuts-Übersicht
+- **🔒 Sicherheit** — Sicherheits-Timer, PIN, Auto-Lock, Tageslimit Ballons, Hotel-Modus, Akku-Spar-Modus
+- **🛠 Workflow** — Direkt-Zug-Sekunden, Auto-Cool-Down, Sound, Haptik, Ballon-Profile, Wartungs-Schwellen, Firmware
+- **🚀 Erweitert** — Sprachsteuerung (mit Sub-Befehlen als ausklappbares Details), Vape-Buddy, Sortennamen-Generator, Webhook, MQTT
+- **💾 Daten** — JSON-Backup, CSV-Export, Diagnose, Encryption, Forget-Me
 
-- **🏨 Hotel-Modus**: App versteckt sich hinter einem Wetter-Splash-Screen (zeigt aktuelles Wetter wenn Standort gesetzt). Entsperren per 5-Sekunden-Druck. Audio stoppt automatisch.
-- **🔋 Akku-Spar-Modus**: Wake-Lock aus, Temperatur-Graph aus, Vape-Buddy aus, Animationen reduziert. Schont Handy-Akku unterwegs.
-- **📡 Offline-Indikator**: Banner oben sichtbar wenn keine Internet-Verbindung. Alle App-Funktionen außer BLE-Discovery funktionieren weiter.
+Statt 600px langem Scrollen jetzt klare 6-Wege-Navigation. Tabs sind horizontal scrollbar auf schmalen Bildschirmen.
 
-### Power-User Tools
+### Setup-Tab strukturiert
 
-- **⚙️ Custom BLE-Profile**: User kann eigene Geräteprofile mit Custom-UUIDs anlegen. Erweiterbar für nicht-S&B-Geräte oder Forschungs-Setups. Erscheinen in der Geräte-Liste nach Anlage.
-- **📟 Raw BLE-Console**: Hex-Bytes pro Characteristic schreiben und lesen. Mit Decoding als Uint8/Uint16-LE/Uint32-LE. Für Reverse-Engineering und Forschung.
-- **📜 DSL-Editor**: Programm-Skript-Sprache als Alternative zum visuellen Editor. Syntax: `heat on; set 185; wait until 185; pump 25s; loop 3 ... end loop; heat off`. Parser mit Live-Prüfung und Direkt-Speichern als Programm.
-- **🏠 HA-YAML-Export**: jedes Programm kann als Home-Assistant-Script-YAML exportiert werden. Erzeugt Entity-IDs `switch.volcano_heater`, `switch.volcano_pump`, `number.volcano_target_temp`, `sensor.volcano_temp`. Brücke zu Phase 2.
+Section-Header gliedern jetzt den langen Tab in **5 visuelle Blöcke**:
 
-### Externe Integration
+- **📱 Gerät** — Aktives Gerät (Device-Picker)
+- **📊 Übersicht** — Heute-Kontext, T-Break, Statistik, Wartung
+- **🛠 Werkzeuge** — Tools-Karte, App-Einstellungen
+- **🔧 Erweitert** — Eigene Geräteprofile
+- **📡 Verbindung & Debugging** — Bluetooth, UUID-Mapping
 
-- **🔗 Webhook bei Events**: konfigurierbare URL die bei Events angerufen wird (Heizer-an, Heizer-aus, Bag-fertig, Fehler). POST mit JSON-Body. Einzeln pro Event togglebar.
-- **📡 MQTT-Publisher**: Verbindung zu MQTT-Broker über WebSocket (z.B. test.mosquitto.org). Published Events unter konfigurierbarem Topic-Prefix. MQTT 3.1.1 Raw-Encoding ohne externe Library.
+Section-Header sind mit Trennlinie und Großschrift-Mono-Text gestaltet — klare visuelle Trennung ohne extra Modals.
+
+### A11y-Audit Verbesserungen
+
+- **Focus-Trap in allen Modals**: Tab geht zyklisch durch alle fokussierbaren Elemente, Shift-Tab rückwärts. Erstes Element wird beim Öffnen automatisch fokussiert
+- **Focus-Wiederherstellung**: beim Modal-Schluss wird der Fokus zurück zum Trigger-Knopf gesetzt
+- **`aria-current="page"`** für aktiven Bottom-Nav-Tab — Screenreader sagt jetzt explizit „aktuelle Seite"
+- **Backdrop-Click schließt Modals**: einheitlich für alle Modals via MutationObserver
+- **`focus-visible` outline** konsistent für alle interaktiven Elemente (2px hot, 2px offset)
+- **ARIA-Labels** zusätzlich auf allen Form-Inputs in den Settings
+- **Voice-Sub-Befehle als `<details>`** statt versteckter Toggle-Liste — semantisch korrekter und screenreader-freundlich
 
 ### Polishing
 
-- **Wetter network-first**: CC's Hinweis aus v4.7 umgesetzt. Open-Meteo-API wird jetzt immer frisch geladen, nicht aus Cache.
-- **Manual als Topbar-Hilfe**: ? in der Topbar öffnet jetzt die Anleitung statt nur Wizard.
-- **Einstellungen aufgeräumt**: Inklusion an oberster Stelle, Blinden-Modus prominent in oranger Box hervorgehoben.
+- **HA-YAML-Button 🏠 auf jeder Programm-Karte** — direkter Export ohne DevTools-Trick (war v4.8 noch nicht im UI)
+- **Empty-State für Programme-Tab** — wenn keine eigenen Programme: schöne Karte mit Icon, Hinweis-Text und Tipp
+- **Settings-Tab-Wechsel mit Fade-Animation** — sanfte 200ms-Transition zwischen Tabs
+- **Card-Hover** mit border-color Transition
+- **Hover-States** konsistent für alle Buttons und Toggles
 
-## Vollständige Werkzeuge im Setup-Tab
+### Bedienkonzept-Änderungen
 
-| Werkzeug | Zweck |
-|---|---|
-| 📖 Anleitung | Vollständiges Handbuch mit Suche |
-| 🎵 Audio & Atmen | Soundscapes, Beats, Breathing |
-| 📚 Wissen & Quiz | Glossar, Verdampfungs-Wissenschaft, Quiz |
-| 📋 Symptom-Tracker | Vor/Nach-Session-Bewertung |
-| 📄 Konsum-Protokoll | PDF-Report für Arztgespräche |
-| 📥 Bibliothek | JSON-Programm-Import |
-| 👥 Profile | Multi-User-Profile |
-| 📜 DSL-Editor | Programm-Skript-Sprache |
-| 📟 BLE-Console | Raw BLE für Forscher |
+- Topbar-`?` öffnet das **Manual** (statt Wizard, der nur einmal beim Start nötig ist)
+- **Onboarding-Wizard erneut zeigen**-Knopf bleibt in Settings → Daten
+- Settings-Modal kann per **Backdrop-Tap** geschlossen werden (auch bei allen anderen Modals)
+- **Notaus per ESC** funktioniert global, auch wenn Modal offen ist (schließt zuerst Modal)
 
-## Tastatur-Shortcuts
+## Was war in v4.8
 
-| Taste | Aktion |
-|---|---|
-| 1 - 9 | Lieblings-Temperatur setzen |
-| Space | Heizer ein/aus |
-| B | Ballon füllen |
-| D | Direkt-Zug starten |
-| V | Status vorlesen |
-| ESC | Notaus (Heizer + Pumpe aus) bzw. Modal schließen |
+15 Features: Manual mit 10 Kategorien, Blinden-Modus, Tooltips überall, Hotel-Modus, Akku-Spar, Offline-Indikator, Custom BLE-Profile, Raw BLE-Console, DSL-Editor, HA-YAML-Export, Webhook, MQTT.
 
-## Was war vorher
+## Plattform-Kompatibilität (unverändert)
 
-- **v4.7** (18 Features): Audio (Soundscape, Binaural, Atmung), Lernen (Glossar 21 Begriffe, Vapor-Wissenschaft, Quiz), Kontext (Wetter, Mond, Saison), Medizinisch (Symptome, T-Break, Konsum-PDF), Soziales (Multi-User, Shared Session, Bibliothek)
-- **v4.6** (22 Features): Großschrift, Hochkontrast, Tastatur-Shortcuts, Voice-Readout, PIN, Auto-Lock, Bags-Limit, Forget-Me, AES-Encryption, Reinigungs-Reminder, Sieb-Counter, Service-Log, Loops, Variablen, Timeline, 12 Achievements, Streak, Sortennamen-Generator, Vape-Buddy, Easter Eggs
-- **v4.5** (25 Features): Umbenannt auf „Sessions", Geräte-Capabilities, Quick-Actions, Pre-Heat, Auto-Cool, Step-Templates, 57 Sorten, 6 Themes, Multi-Geräte, Replay, Favoriten, Smart-Defaults, PWA-Update, Heizkurven, Notfall-Diagnose
-
-## Phase 1 Abschluss
-
-Mit v4.8 ist die App **Feature-vollständig** für den Single-File-Browser-Ansatz. Was in dieser Architektur noch ginge: 3D-Volcano-Visualisierung (Three.js, ~600 KB extra) — auf v4.9 verschoben falls gewünscht.
-
-## Phase 2 (jetzt machbar)
-
-Mit dem HA-YAML-Export aus v4.8 ist die Brücke gebaut:
-
-- Raspberry Pi 4 (4 GB) ~75 €
-- Home Assistant OS
-- HACS → Chuffnugget volcano_integration (BLE-Native Bridge)
-- Lovelace-Dashboard mit Sessions-Programmen als Scripts
-- Nabu Casa Cloud (5,40 €/Monat) ODER eigene AWS Lambda für Alexa Smart Home Skill
-
-Sag Bescheid wenn Phase 2 als nächstes startet.
-
-## Plattform-Kompatibilität
-
-| Feature | Android Chrome | Desktop Chrome | Bluefy iOS | Safari iOS |
+| Plattform | Web Bluetooth | TTS | Web Crypto | MQTT |
 |---|---|---|---|---|
-| Bluetooth | ✅ | ✅ | ✅ | ❌ |
-| Sprachsteuerung | ✅ | ✅ | eingeschr. | ❌ |
-| Soundscapes | ✅ | ✅ | ✅ | ✅ |
-| Wetter / Geolokation | ✅ | ✅ | ✅ | ✅ |
-| Web Crypto / PIN | ✅ | ✅ | ✅ | ✅ |
-| MQTT (WebSocket) | ✅ | ✅ | ✅ | ✅ |
-| Webhook | ✅ | ✅ | ✅ | ✅ |
-| Speech Synthesis | ✅ | ✅ | eingeschr. | ✅ |
+| Android Chrome | ✅ | ✅ | ✅ | ✅ |
+| Desktop Chrome/Edge | ✅ | ✅ | ✅ | ✅ |
+| Bluefy iOS | ✅ | eingeschr. | ✅ | ✅ |
+| Safari iOS | ❌ | ✅ | ✅ | ✅ |
+
+## Was zu testen ist
+
+1. **Settings öffnen** → 6 Tabs oben sichtbar → durchklicken
+2. **Tab-Wechsel mit Tastatur** → Settings öffnen → Tab durch die Sub-Tabs
+3. **Backdrop-Click** in jedem Modal sollte schließen
+4. **Empty-Programme** → Programme-Tab → wenn keine eigenen: schöne Empty-State sichtbar
+5. **HA-YAML pro Programm** → Programme-Tab → 🏠 auf einer Programm-Karte → YAML-Datei
+6. **Section-Header im Setup** → Setup-Tab scrollen → 5 visuelle Abschnitte erkennbar
+7. **Focus-Trap** → Modal öffnen, Tab durchgehen, sollte zyklisch sein
+8. **aria-current** → Screenreader-Test: aktiver Bottom-Tab wird als „current page" angesagt
+
+## CC: detaillierte Funktionsprüfung nach Deploy
+
+Andre möchte nach v4.9 eine vollständige Funktionsprüfung von CC. Vorschlag-Liste für CC:
+
+### Verbindung
+- [ ] BLE-Connect zu Volcano via Bluefy (iPhone)
+- [ ] Device-Picker im Hero (Volcano/Crafty/Mighty/Venty Wechsel)
+- [ ] Auto-Mapping nach Connect
+- [ ] Reconnect nach Trennung
+
+### Steuerung
+- [ ] Temperatur per Stepper, Pills, Slider, Voice setzen
+- [ ] Heizer an/aus (per Knopf, Space, Voice)
+- [ ] Direkt-Zug (Quick-Action im Hero)
+- [ ] Ballon füllen mit Easy Valve groß/klein, Solid, Custom
+- [ ] Pre-Heat-Timer mit Live-Countdown
+
+### Programme
+- [ ] Vorlage starten, bearbeiten, zurücksetzen
+- [ ] Eigenes Programm erstellen, Schritte hinzufügen, sortieren, löschen
+- [ ] Template einfügen, Loop, Variable {temp}
+- [ ] Timeline-Ansicht im Editor
+- [ ] Programm per QR teilen
+- [ ] HA-YAML-Export pro Programm (🏠-Button)
+- [ ] DSL-Editor: Script schreiben, parsen, speichern
+- [ ] Session-Replay (letztes nochmal)
+
+### Sicherheit
+- [ ] Sicherheits-Timer auto-start
+- [ ] PIN setzen, App neu öffnen → PIN-Abfrage
+- [ ] Auto-Lock nach X Minuten
+- [ ] Tageslimit Ballons funktioniert
+- [ ] Forget-Me löscht wirklich alles
+
+### Accessibility
+- [ ] **Blinden-Modus** aktiviert alle Features
+- [ ] Tastatur-Shortcuts (1-9, Space, B, D, V, ESC)
+- [ ] Voice-Status-Readout (V drücken)
+- [ ] Tooltips per Long-Press (Mobile)
+- [ ] Tooltips per TTS bei Tab-Fokus
+- [ ] Großschrift 125%, 150%
+- [ ] Hochkontrast
+- [ ] **Focus-Trap in Modals** — Tab geht zyklisch
+- [ ] **aria-current** auf aktivem Bottom-Tab
+- [ ] **Backdrop-Click** schließt Modals
+
+### Audio
+- [ ] Soundscapes (5 Stimmungen)
+- [ ] Binaural Beats (5 Presets) mit Kopfhörern
+- [ ] 4-7-8 Atemübung
+
+### Wissen
+- [ ] Glossar mit 21 Einträgen
+- [ ] Verdampfungs-Diagramm
+- [ ] Quiz mit 5 zufälligen Fragen
+
+### Kontext
+- [ ] Wetter via Geolokation
+- [ ] Mondphase
+- [ ] Tageszeit-/Saison-Empfehlung
+
+### Medizinisch
+- [ ] Symptom-Tracker vor + nach Session
+- [ ] T-Break starten, Tagezähler, Bestätigung beim Bag-Fill
+- [ ] Konsum-Protokoll als PDF (öffnet im neuen Tab)
+
+### Soziales
+- [ ] Multi-User-Profile anlegen, wechseln
+- [ ] Programm-Bibliothek per URL importieren
+
+### Wartung
+- [ ] Reinigungs-Reminder feuert
+- [ ] Sieb-Wechsel-Counter
+- [ ] Service-Log
+
+### Engagement
+- [ ] Achievements (12 Stück)
+- [ ] Streak-Counter
+- [ ] Konami-Code freischaltet
+- [ ] Sortennamen-Generator
+- [ ] Vape-Buddy
+
+### Erweitert
+- [ ] Custom BLE-Profile anlegen
+- [ ] Raw BLE-Console: Hex schreiben/lesen
+- [ ] Webhook bei Heizer-an POST
+- [ ] MQTT-Connect zu Broker
+
+### Reise-Modi
+- [ ] Hotel-Modus, 5s-Entsperrung
+- [ ] Akku-Spar-Modus blendet Buddy/Graph aus
+- [ ] Offline-Banner wenn netz aus
+
+### Polishing
+- [ ] Settings-Sub-Tabs alle erreichbar
+- [ ] Setup-Tab-Sektionen sichtbar
+- [ ] Fade-Animation bei Tab-Wechsel
+- [ ] Backdrop-Click in allen Modals
+- [ ] Focus-Trap in allen Modals
+- [ ] Help-Knopf öffnet Manual
+- [ ] Empty-State bei leeren Programmen
+- [ ] HA-YAML-Button auf Programm-Karten
+- [ ] Wetter network-first (frische Daten)
+
+## Roadmap nach v4.9
+
+**Phase 2** kann jetzt starten:
+- Raspberry Pi 4 + Home Assistant
+- HACS → Chuffnugget volcano_integration
+- Lovelace-Dashboard
+- HA-YAML-Export aus Sessions als Programm-Brücke
+- Optional: Nabu Casa Cloud (5,40 €/M) für Alexa-Skill
+
+oder **v4.10** mit 3D-Volcano-Visualisierung (Three.js, optional dynamisch geladen).
 
 ## Hinweis zur Ballon-Füllung
 

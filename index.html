@@ -1598,6 +1598,121 @@ html.power-saver .card{animation:none !important}
 }
 .btn.danger:hover{background:rgba(248,113,113,.2)}
 
+/* ═══ v4.9: Settings Sub-Tabs + Section Headers ═════════════════ */
+.settings-tabs{
+  display:flex;gap:4px;
+  background:var(--bg);
+  padding:4px;border-radius:var(--r);
+  border:1px solid var(--line);
+  margin:8px 0 16px;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.settings-tabs button{
+  flex-shrink:0;
+  padding:8px 12px;font-size:12px;
+  background:transparent;color:var(--muted);
+  border:0;border-radius:var(--r-sm);cursor:pointer;
+  font-family:var(--font-mono);font-weight:600;
+  white-space:nowrap;
+  transition:all .15s;
+}
+.settings-tabs button:hover{color:var(--text)}
+.settings-tabs button.active{background:var(--bg-3);color:var(--text)}
+.settings-tabs button:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+
+.settings-pane{display:none}
+.settings-pane.active{display:block;animation:fadeIn .2s ease}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.set-section-h{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);
+  margin:18px 0 6px;
+  font-family:var(--font-mono);
+  font-weight:600;
+}
+.set-section-h:first-child{margin-top:4px}
+.set-section-desc{
+  font-size:12px;color:var(--muted);
+  margin:0 0 10px;line-height:1.5;
+}
+
+.sub-toggles-details{
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--bg-2);
+  margin-top:8px;
+}
+.sub-toggles-details > summary{
+  padding:10px 14px;cursor:pointer;
+  font-size:13px;font-weight:600;
+  color:var(--text);
+}
+.sub-toggles-details[open] > summary{
+  border-bottom:1px solid var(--line);
+}
+.sub-toggles-details .toggle-row{padding:10px 14px}
+
+/* ═══ v4.9: Section headers im Setup-Tab ════════════════════════ */
+.tab-section-header{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 4px;
+  margin:18px 0 8px;
+  font-family:var(--font-mono);
+  font-size:11px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);
+}
+.tab-section-header::before{
+  content:'';height:1px;width:14px;
+  background:var(--line);
+}
+.tab-section-header::after{
+  content:'';flex:1;height:1px;
+  background:var(--line);
+}
+.tab-section-header span.ico{margin-left:-4px;margin-right:4px}
+
+/* ═══ v4.9: Polishing - hover + focus consistency ═══════════════ */
+.card{transition:border-color .15s}
+.card:focus-within{border-color:#3d3225}
+
+.btn:focus-visible,
+.toggle:focus-visible,
+.pill:focus-visible,
+.input:focus-visible,
+.stepper input:focus-visible{
+  outline:2px solid var(--hot);
+  outline-offset:2px;
+}
+
+/* Active tab in bottom-nav stronger */
+.bottom-nav button[aria-current="page"]{
+  color:var(--hot);
+}
+
+/* Empty states */
+.empty-state{
+  text-align:center;
+  padding:30px 20px;
+  color:var(--muted);
+}
+.empty-state .ico{
+  font-size:42px;opacity:.6;margin-bottom:10px;
+}
+.empty-state .msg{
+  font-size:13px;line-height:1.5;margin-bottom:14px;
+}
+.empty-state .hint{
+  font-size:11px;font-family:var(--font-mono);
+  color:var(--dim);
+}
+
 </style>
 </head>
 <body>
@@ -1847,8 +1962,11 @@ html.power-saver .card{animation:none !important}
 <section class="tab" id="tab-setup" aria-labelledby="tab-setup-label">
   <h2 id="tab-setup-label" class="sr-only">Setup und Einstellungen</h2>
 
+  <!-- ═══ Gerät ═══════════════════════════════════ -->
+  <div class="tab-section-header"><span class="ico" aria-hidden="true">📱</span><span>Gerät</span></div>
+
   <div class="card">
-    <h3>Gerät <button class="help-ico" data-help="device">?</button></h3>
+    <h3>Aktives Gerät</h3>
     <button class="dev-pick" id="btnDevicePick">
       <span class="dev-icon" id="devIcon">🌋</span>
       <span class="lbl">
@@ -1858,6 +1976,15 @@ html.power-saver .card{animation:none !important}
       <span class="arrow">›</span>
     </button>
   </div>
+
+  <!-- ═══ Übersicht ═══════════════════════════════════ -->
+  <div class="tab-section-header"><span class="ico" aria-hidden="true">📊</span><span>Übersicht</span></div>
+
+  <!-- v4.7: Context (Wetter, Mond, Tageszeit, Saison) -->
+  <div class="card" id="contextCard"></div>
+
+  <!-- v4.7: T-Break Card -->
+  <div class="card" id="tbreakCard"></div>
 
   <!-- Statistics -->
   <div class="card">
@@ -1874,12 +2001,6 @@ html.power-saver .card{animation:none !important}
       <button class="btn sm ghost" id="btnResetStats" style="flex:1">Zurücksetzen</button>
     </div>
   </div>
-
-  <!-- v4.7: Context (Wetter, Mond, Tageszeit, Saison) -->
-  <div class="card" id="contextCard"></div>
-
-  <!-- v4.7: T-Break Card -->
-  <div class="card" id="tbreakCard"></div>
 
   <!-- v4.6: Wartung -->
   <div class="card" id="maintenanceCard">
@@ -1900,9 +2021,12 @@ html.power-saver .card{animation:none !important}
     </details>
   </div>
 
+  <!-- ═══ Werkzeuge ═══════════════════════════════════ -->
+  <div class="tab-section-header"><span class="ico" aria-hidden="true">🛠</span><span>Werkzeuge</span></div>
+
   <!-- v4.7+v4.8: Tools-Sammlung -->
   <div class="card">
-    <h3>Werkzeuge</h3>
+    <h3>Anwendungen</h3>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
       <button class="btn sm ghost" id="btnOpenManual">📖 Anleitung</button>
       <button class="btn sm ghost" id="btnOpenAudio">🎵 Audio & Atmen</button>
@@ -1916,6 +2040,15 @@ html.power-saver .card{animation:none !important}
     </div>
   </div>
 
+  <!-- App Settings -->
+  <div class="card">
+    <h3>App-Einstellungen</h3>
+    <button class="btn block" id="btnOpenSettings">⚙ Einstellungen öffnen</button>
+  </div>
+
+  <!-- ═══ Erweitert ═══════════════════════════════════ -->
+  <div class="tab-section-header"><span class="ico" aria-hidden="true">🔧</span><span>Erweitert</span></div>
+
   <!-- v4.8: Custom BLE Profiles -->
   <div class="card">
     <h3>Eigene Geräteprofile</h3>
@@ -1924,11 +2057,8 @@ html.power-saver .card{animation:none !important}
     <button class="btn sm ghost block" id="btnAddCustomProfile">+ Custom Profile</button>
   </div>
 
-  <!-- App Settings -->
-  <div class="card">
-    <h3>App-Einstellungen</h3>
-    <button class="btn block" id="btnOpenSettings">⚙ Einstellungen öffnen</button>
-  </div>
+  <!-- ═══ Verbindung ═══════════════════════════════════ -->
+  <div class="tab-section-header"><span class="ico" aria-hidden="true">📡</span><span>Verbindung & Debugging</span></div>
 
   <div class="card">
     <h3>Bluetooth</h3>
@@ -2232,182 +2362,232 @@ html.power-saver .card{animation:none !important}
     <div class="grab"></div>
     <h2>Einstellungen</h2>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Erscheinungsbild</h3>
-    <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
-
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Inklusion (v4.6)</h3>
-    <div class="toggle-row" style="background:rgba(255,87,34,.06);padding:12px;border-radius:var(--r);margin:0 -4px 8px;border:1px solid rgba(255,87,34,.2)">
-      <div class="info"><b>♿ Blinden-Modus</b><small>Aktiviert Großschrift 150%, Hochkontrast, Voice-Readout und Tooltip-TTS auf einmal</small></div>
-      <button class="toggle" id="togBlindMode" role="switch" aria-checked="false" aria-label="Blinden-Modus"></button>
+    <!-- Sub-Tabs für Settings (v4.9 Polishing) -->
+    <div class="settings-tabs" role="tablist" aria-label="Einstellungs-Kategorien">
+      <button data-set-tab="stil" class="active" role="tab" aria-selected="true">🎨 Stil</button>
+      <button data-set-tab="inklusion" role="tab" aria-selected="false">♿ Inklusion</button>
+      <button data-set-tab="sicherheit" role="tab" aria-selected="false">🔒 Sicherheit</button>
+      <button data-set-tab="workflow" role="tab" aria-selected="false">🛠 Workflow</button>
+      <button data-set-tab="erweitert" role="tab" aria-selected="false">🚀 Erweitert</button>
+      <button data-set-tab="daten" role="tab" aria-selected="false">💾 Daten</button>
     </div>
-    <div class="toggle-row">
-      <div class="info"><b>Schriftgröße</b><small>100% · 125% · 150%</small></div>
-      <div style="display:flex;gap:4px">
-        <button class="btn sm ghost" data-fs="100" style="padding:6px 10px;min-height:auto">A</button>
-        <button class="btn sm ghost" data-fs="125" style="padding:6px 10px;min-height:auto;font-size:15px">A</button>
-        <button class="btn sm ghost" data-fs="150" style="padding:6px 10px;min-height:auto;font-size:17px">A</button>
+
+    <!-- STIL: Erscheinungsbild + Theme -->
+    <div class="settings-pane active" data-set-pane="stil">
+      <h3 class="set-section-h">Theme</h3>
+      <p class="set-section-desc">Wähle das visuelle Erscheinungsbild der App.</p>
+      <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
+    </div>
+
+    <!-- INKLUSION: Accessibility-Features -->
+    <div class="settings-pane" data-set-pane="inklusion">
+      <div class="toggle-row" style="background:rgba(255,87,34,.06);padding:12px;border-radius:var(--r);margin:0 0 12px;border:1px solid rgba(255,87,34,.2)">
+        <div class="info"><b>♿ Blinden-Modus</b><small>Aktiviert Großschrift 150%, Hochkontrast, Voice-Readout und Tooltip-TTS auf einmal</small></div>
+        <button class="toggle" id="togBlindMode" role="switch" aria-checked="false" aria-label="Blinden-Modus"></button>
       </div>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Hochkontrast (WCAG AAA)</b><small>Schwarz/Weiß mit starkem Kontrast</small></div>
-      <button class="toggle" id="togHighContrast" role="switch" aria-checked="false" aria-label="Hochkontrast"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Voice-Status-Readout alle 30s</b><small>Automatische Statusansage per TTS</small></div>
-      <button class="toggle" id="togVoiceReadout" role="switch" aria-checked="false" aria-label="Auto Voice-Readout"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Differenzierte Vibration</b><small>Verschiedene Patterns für Touch / Ziel / Warnung / Fehler</small></div>
-      <button class="toggle" id="togHaptiCustom" role="switch" aria-checked="true" aria-label="Differenzierte Haptik"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Tooltips per TTS vorlesen</b><small>Beim Fokussieren eines Knopfes wird der Hilfetext gesprochen</small></div>
-      <button class="toggle" id="togTooltipsVoice" role="switch" aria-checked="false" aria-label="Tooltips per TTS"></button>
-    </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">
-      <b>Tastatur-Shortcuts:</b><br>
-      1–9 → Lieblings-Temperatur · Space → Heizer · B → Ballon · D → Direkt-Zug · V → Status vorlesen · ESC → Notaus
-    </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Reise-Modi (v4.8)</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Hotel-Modus</b><small>App hinter Wetter-Splash verstecken. 5 Sekunden Druck entsperrt.</small></div>
-      <button class="toggle" id="togHotelMode" role="switch" aria-checked="false" aria-label="Hotel-Modus"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Akku-Spar-Modus</b><small>Wake-Lock aus, Temperatur-Graph aus, Buddy aus</small></div>
-      <button class="toggle" id="togPowerSaver" role="switch" aria-checked="false" aria-label="Akku-Spar-Modus"></button>
-    </div>
-
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Externe Integration (v4.8)</h3>
-    <div class="toggle-row" style="flex-direction:column;align-items:stretch">
-      <div class="info" style="margin-bottom:6px"><b>Webhook URL</b><small>POST mit JSON bei Events</small></div>
-      <input class="input mono" id="webhookUrlInput" type="text" placeholder="https://webhook.example.com/hook" style="width:100%;font-size:11px">
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:6px;font-size:11px;color:var(--muted)">
-        <label><input type="checkbox" id="webhookEvHeatOn"> Heizer an</label>
-        <label><input type="checkbox" id="webhookEvHeatOff"> Heizer aus</label>
-        <label><input type="checkbox" id="webhookEvBagDone"> Bag fertig</label>
-        <label><input type="checkbox" id="webhookEvError"> Fehler</label>
+      <h3 class="set-section-h">Lesbarkeit</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Schriftgröße</b><small>100% · 125% · 150%</small></div>
+        <div style="display:flex;gap:4px">
+          <button class="btn sm ghost" data-fs="100" style="padding:6px 10px;min-height:auto">A</button>
+          <button class="btn sm ghost" data-fs="125" style="padding:6px 10px;min-height:auto;font-size:15px">A</button>
+          <button class="btn sm ghost" data-fs="150" style="padding:6px 10px;min-height:auto;font-size:17px">A</button>
+        </div>
       </div>
-    </div>
-    <div class="toggle-row" style="flex-direction:column;align-items:stretch;margin-top:8px">
-      <div class="info" style="margin-bottom:6px"><b>MQTT WebSocket-URL</b><small>z.B. wss://test.mosquitto.org:8081/mqtt</small></div>
-      <input class="input mono" id="mqttUrlInput" type="text" placeholder="wss://broker.example.com:8884/mqtt" style="width:100%;font-size:11px">
-      <input class="input mono" id="mqttTopicInput" type="text" placeholder="sessions/" style="width:100%;font-size:11px;margin-top:6px">
-      <div class="row" style="gap:6px;margin-top:6px">
-        <button class="btn sm ghost" id="btnMqttConnect" style="flex:1">Verbinden</button>
-        <button class="btn sm ghost" id="btnMqttDisconnect" style="flex:1">Trennen</button>
+      <div class="toggle-row">
+        <div class="info"><b>Hochkontrast (WCAG AAA)</b><small>Schwarz/Weiß mit starkem Kontrast</small></div>
+        <button class="toggle" id="togHighContrast" role="switch" aria-checked="false" aria-label="Hochkontrast"></button>
+      </div>
+
+      <h3 class="set-section-h">Audio-Feedback</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Voice-Status-Readout alle 30s</b><small>Automatische Statusansage per TTS</small></div>
+        <button class="toggle" id="togVoiceReadout" role="switch" aria-checked="false" aria-label="Auto Voice-Readout"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Tooltips per TTS vorlesen</b><small>Beim Fokussieren eines Knopfes wird der Hilfetext gesprochen</small></div>
+        <button class="toggle" id="togTooltipsVoice" role="switch" aria-checked="false" aria-label="Tooltips per TTS"></button>
+      </div>
+
+      <h3 class="set-section-h">Haptik</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Differenzierte Vibration</b><small>Verschiedene Patterns für Touch / Ziel / Warnung / Fehler</small></div>
+        <button class="toggle" id="togHaptiCustom" role="switch" aria-checked="true" aria-label="Differenzierte Haptik"></button>
+      </div>
+
+      <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6;padding:10px 12px;background:var(--bg-2);border-radius:var(--r-sm);border:1px solid var(--line)">
+        <b style="display:block;margin-bottom:4px;color:var(--text)">Tastatur-Shortcuts</b>
+        1-9 → Lieblings-Temperatur<br>
+        Space → Heizer<br>
+        B → Ballon, D → Direkt-Zug<br>
+        V → Status vorlesen<br>
+        ESC → Notaus / Modal schließen
       </div>
     </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sicherheit</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Sicherheits-Timer automatisch starten</b><small>Bei Heizer-an wird der Timer mit Default-Minuten gestartet</small></div>
-      <button class="toggle" id="togSafetyAuto" role="switch" aria-checked="true" aria-label="Sicherheits-Timer auto"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Sicherheits-Timer Default</b><small>Minuten bis Auto-Aus</small></div>
-      <input class="input mono" id="safetyMinInput" type="number" min="1" max="60" step="1" style="width:80px" inputmode="numeric">
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>PIN-Sperre</b><small id="pinStatus">Aus</small></div>
-      <button class="btn sm" id="btnPinSetup">PIN ändern</button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Auto-Lock</b><small>Inaktivität in Minuten (0 = aus)</small></div>
-      <input class="input mono" id="autoLockInput" type="number" min="0" max="60" step="1" style="width:80px" inputmode="numeric">
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Tageslimit Ballons</b><small>Warnt ab dieser Anzahl (0 = aus)</small></div>
-      <input class="input mono" id="bagsLimitInput" type="number" min="0" max="50" step="1" style="width:80px" inputmode="numeric">
-    </div>
+    <!-- SICHERHEIT: Safety, PIN, Auto-Lock, Bags-Limit, Reise-Modi -->
+    <div class="settings-pane" data-set-pane="sicherheit">
+      <h3 class="set-section-h">Sicherheits-Timer</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Automatisch starten</b><small>Bei Heizer-an wird der Timer mit Default-Minuten gestartet</small></div>
+        <button class="toggle" id="togSafetyAuto" role="switch" aria-checked="true" aria-label="Sicherheits-Timer auto"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Default-Minuten</b><small>Bis Auto-Aus</small></div>
+        <input class="input mono" id="safetyMinInput" type="number" min="1" max="60" step="1" style="width:80px" inputmode="numeric" aria-label="Sicherheits-Timer Minuten">
+      </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Direkt-Zug</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Sekunden pro Direkt-Zug</b><small>Pumpe X Sekunden, dann automatisch aus</small></div>
-      <div class="stepper" style="width:130px;flex-shrink:0">
-        <button id="dirSecMinus">−</button>
-        <input class="mono" type="number" min="1" max="60" step="1" id="dirSecInput" inputmode="numeric">
-        <button id="dirSecPlus">+</button>
+      <h3 class="set-section-h">Zugriffsschutz</h3>
+      <div class="toggle-row">
+        <div class="info"><b>PIN-Sperre</b><small id="pinStatus">Aus</small></div>
+        <button class="btn sm" id="btnPinSetup">PIN ändern</button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Auto-Lock</b><small>Inaktivität in Minuten (0 = aus)</small></div>
+        <input class="input mono" id="autoLockInput" type="number" min="0" max="60" step="1" style="width:80px" inputmode="numeric" aria-label="Auto-Lock Minuten">
+      </div>
+
+      <h3 class="set-section-h">Selbstkontrolle</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Tageslimit Ballons</b><small>Warnt ab dieser Anzahl (0 = aus)</small></div>
+        <input class="input mono" id="bagsLimitInput" type="number" min="0" max="50" step="1" style="width:80px" inputmode="numeric" aria-label="Tageslimit Ballons">
+      </div>
+
+      <h3 class="set-section-h">Reise-Modi</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Hotel-Modus</b><small>App hinter Wetter-Splash verstecken. 5 Sekunden Druck entsperrt.</small></div>
+        <button class="toggle" id="togHotelMode" role="switch" aria-checked="false" aria-label="Hotel-Modus"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Akku-Spar-Modus</b><small>Wake-Lock aus, Temperatur-Graph aus, Buddy aus</small></div>
+        <button class="toggle" id="togPowerSaver" role="switch" aria-checked="false" aria-label="Akku-Spar-Modus"></button>
       </div>
     </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Nach Ballon-Füllung</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Auto-Cool-Down</b><small>Heizer auf Standby-Temperatur runter</small></div>
-      <button class="toggle" id="togAutoCool" role="switch" aria-checked="false" aria-label="Auto-Cool-Down"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Cool-Down Temperatur</b><small>Worauf heruntergeregelt wird</small></div>
-      <input class="input mono" id="autoCoolTempInput" type="number" min="100" max="220" step="1" style="width:80px" inputmode="numeric">
+    <!-- WORKFLOW: Direkt-Zug, Cool-Down, Feedback, Bag-Profile, Wartung -->
+    <div class="settings-pane" data-set-pane="workflow">
+      <h3 class="set-section-h">Direkt-Zug</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Sekunden pro Direkt-Zug</b><small>Pumpe läuft so lange, dann automatisch aus</small></div>
+        <div class="stepper" style="width:130px;flex-shrink:0">
+          <button id="dirSecMinus" aria-label="Sekunden verringern">−</button>
+          <input class="mono" type="number" min="1" max="60" step="1" id="dirSecInput" inputmode="numeric" aria-label="Direkt-Zug Sekunden">
+          <button id="dirSecPlus" aria-label="Sekunden erhöhen">+</button>
+        </div>
+      </div>
+
+      <h3 class="set-section-h">Nach Ballon-Füllung</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Auto-Cool-Down</b><small>Heizer auf Standby-Temperatur runter</small></div>
+        <button class="toggle" id="togAutoCool" role="switch" aria-checked="false" aria-label="Auto-Cool-Down"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Cool-Down Temperatur</b><small>Worauf heruntergeregelt wird</small></div>
+        <input class="input mono" id="autoCoolTempInput" type="number" min="100" max="220" step="1" style="width:80px" inputmode="numeric" aria-label="Cool-Down Temperatur">
+      </div>
+
+      <h3 class="set-section-h">Allgemeines Feedback</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Sound</b><small>Töne bei Aktionen und Zielerreichen</small></div>
+        <button class="toggle" id="togSound" role="switch" aria-checked="true" aria-label="Sound"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Haptik (Vibration)</b><small>Vibrieren bei Aktionen</small></div>
+        <button class="toggle" id="togHaptic" role="switch" aria-checked="true" aria-label="Haptik"></button>
+      </div>
+
+      <h3 class="set-section-h">Ballon-Profile</h3>
+      <div id="bagProfileList"></div>
+
+      <h3 class="set-section-h">Wartung</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Reinigung alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
+        <input class="input mono" id="cleanSessionsInput" type="number" min="0" max="200" step="1" style="width:80px" inputmode="numeric" aria-label="Reinigung-Schwelle">
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Sieb-Wechsel alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
+        <input class="input mono" id="sieveSessionsInput" type="number" min="0" max="500" step="1" style="width:80px" inputmode="numeric" aria-label="Sieb-Wechsel-Schwelle">
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Firmware-Version</b><small>Manuell eintragen für Diagnose</small></div>
+        <input class="input mono" id="firmwareInput" type="text" placeholder="z.B. 1.0.2" style="width:90px" aria-label="Firmware-Version">
+      </div>
     </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Feedback</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Sound</b><small>Töne bei Aktionen und Zielerreichen</small></div>
-      <button class="toggle" id="togSound" role="switch" aria-checked="true" aria-label="Sound"></button>
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Haptik (Vibration)</b><small>Vibrieren bei Aktionen</small></div>
-      <button class="toggle" id="togHaptic" role="switch" aria-checked="true" aria-label="Haptik"></button>
+    <!-- ERWEITERT: Voice, Engagement, Externe Integration -->
+    <div class="settings-pane" data-set-pane="erweitert">
+      <h3 class="set-section-h">Sprachsteuerung</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw.</small></div>
+        <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
+      </div>
+      <details id="voiceCmdSub" class="sub-toggles-details">
+        <summary>Welche Befehle erlauben?</summary>
+        <div class="toggle-row"><div class="info"><b>Temperatur setzen</b></div><button class="toggle" data-vc="setTemp" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Heizer an</b></div><button class="toggle" data-vc="heatOn" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Heizer aus</b></div><button class="toggle" data-vc="heatOff" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Pumpe an</b></div><button class="toggle" data-vc="pumpOn" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Pumpe aus</b></div><button class="toggle" data-vc="pumpOff" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Pumpe X Sekunden</b></div><button class="toggle" data-vc="pumpFor" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Programm starten</b></div><button class="toggle" data-vc="runProgram" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Alles stoppen</b></div><button class="toggle" data-vc="stopAll" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
+      </details>
+
+      <h3 class="set-section-h">Engagement</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Vape-Buddy-Charakter</b><small>Kleiner Charakter unten links</small></div>
+        <button class="toggle" id="togBuddy" role="switch" aria-checked="false" aria-label="Vape-Buddy"></button>
+      </div>
+      <button class="btn sm ghost block" id="btnGenName" style="margin-top:8px">🎲 Sortennamen-Generator</button>
+
+      <h3 class="set-section-h">Externe Integration</h3>
+      <p class="set-section-desc">Webhook und MQTT für Smart-Home-Anbindung.</p>
+      <div class="toggle-row" style="flex-direction:column;align-items:stretch">
+        <div class="info" style="margin-bottom:6px"><b>Webhook URL</b><small>POST mit JSON bei Events</small></div>
+        <input class="input mono" id="webhookUrlInput" type="text" placeholder="https://webhook.example.com/hook" style="width:100%;font-size:11px" aria-label="Webhook URL">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:6px;font-size:11px;color:var(--muted)">
+          <label><input type="checkbox" id="webhookEvHeatOn"> Heizer an</label>
+          <label><input type="checkbox" id="webhookEvHeatOff"> Heizer aus</label>
+          <label><input type="checkbox" id="webhookEvBagDone"> Bag fertig</label>
+          <label><input type="checkbox" id="webhookEvError"> Fehler</label>
+        </div>
+      </div>
+      <div class="toggle-row" style="flex-direction:column;align-items:stretch;margin-top:8px">
+        <div class="info" style="margin-bottom:6px"><b>MQTT WebSocket-URL</b><small>z.B. wss://test.mosquitto.org:8081/mqtt</small></div>
+        <input class="input mono" id="mqttUrlInput" type="text" placeholder="wss://broker.example.com:8884/mqtt" style="width:100%;font-size:11px" aria-label="MQTT URL">
+        <input class="input mono" id="mqttTopicInput" type="text" placeholder="sessions/" style="width:100%;font-size:11px;margin-top:6px" aria-label="MQTT Topic Prefix">
+        <div class="row" style="gap:6px;margin-top:6px">
+          <button class="btn sm ghost" id="btnMqttConnect" style="flex:1">Verbinden</button>
+          <button class="btn sm ghost" id="btnMqttDisconnect" style="flex:1">Trennen</button>
+        </div>
+      </div>
     </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sprachsteuerung</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-Symbol unten rechts, „Heize auf 185 Grad" usw.</small></div>
-      <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
-    </div>
-    <div id="voiceCmdSub" class="sub-toggles" hidden>
-      <div class="toggle-row"><div class="info"><b>Temperatur setzen</b></div><button class="toggle" data-vc="setTemp" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Heizer an</b></div><button class="toggle" data-vc="heatOn" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Heizer aus</b></div><button class="toggle" data-vc="heatOff" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Pumpe an</b></div><button class="toggle" data-vc="pumpOn" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Pumpe aus</b></div><button class="toggle" data-vc="pumpOff" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Pumpe X Sekunden</b></div><button class="toggle" data-vc="pumpFor" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Programm starten</b></div><button class="toggle" data-vc="runProgram" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Alles stoppen</b></div><button class="toggle" data-vc="stopAll" role="switch"></button></div>
-      <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
-    </div>
+    <!-- DATEN: Backup, Export, Diagnose, Encryption, Forget Me -->
+    <div class="settings-pane" data-set-pane="daten">
+      <h3 class="set-section-h">Backup & Export</h3>
+      <div class="row" style="gap:8px">
+        <button class="btn sm ghost" id="btnExportAll" style="flex:1">JSON-Backup</button>
+        <button class="btn sm ghost" id="btnImportAll" style="flex:1">Restore</button>
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <button class="btn sm ghost" id="btnExportCsv" style="flex:1">Sessions CSV</button>
+        <button class="btn sm ghost" id="btnShowDiag" style="flex:1">Diagnose-TXT</button>
+      </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Ballon-Profil</h3>
-    <div id="bagProfileList"></div>
+      <h3 class="set-section-h">Verschlüsselung</h3>
+      <p class="set-section-desc">Sessions und Notizen mit PIN als Passphrase verschlüsseln.</p>
+      <div class="row" style="gap:8px">
+        <button class="btn sm ghost" id="btnEncrypt" style="flex:1">🔐 Verschlüsseln</button>
+        <button class="btn sm ghost" id="btnDecrypt" style="flex:1">🔓 Entschlüsseln</button>
+      </div>
 
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Wartung (v4.6)</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Reinigung alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
-      <input class="input mono" id="cleanSessionsInput" type="number" min="0" max="200" step="1" style="width:80px" inputmode="numeric">
+      <h3 class="set-section-h">App zurücksetzen</h3>
+      <button class="btn sm ghost block" id="btnResetOnboarding">Onboarding-Wizard neu zeigen</button>
+      <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
     </div>
-    <div class="toggle-row">
-      <div class="info"><b>Sieb-Wechsel alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
-      <input class="input mono" id="sieveSessionsInput" type="number" min="0" max="500" step="1" style="width:80px" inputmode="numeric">
-    </div>
-    <div class="toggle-row">
-      <div class="info"><b>Firmware-Version</b><small>Manuell eintragen für Diagnose</small></div>
-      <input class="input mono" id="firmwareInput" type="text" placeholder="z.B. 1.0.2" style="width:90px">
-    </div>
-
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Engagement (v4.6)</h3>
-    <div class="toggle-row">
-      <div class="info"><b>Vape-Buddy-Charakter</b><small>Kleiner Charakter unten links der mit dir kommuniziert</small></div>
-      <button class="toggle" id="togBuddy" role="switch" aria-checked="false" aria-label="Vape-Buddy"></button>
-    </div>
-    <button class="btn sm ghost block" id="btnGenName" style="margin-top:8px">🎲 Sortennamen-Generator</button>
-
-    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Daten</h3>
-    <div class="row" style="gap:8px">
-      <button class="btn sm ghost" id="btnExportAll" style="flex:1">JSON-Backup</button>
-      <button class="btn sm ghost" id="btnImportAll" style="flex:1">Restore</button>
-    </div>
-    <div class="row" style="gap:8px;margin-top:8px">
-      <button class="btn sm ghost" id="btnExportCsv" style="flex:1">Sessions CSV</button>
-      <button class="btn sm ghost" id="btnShowDiag" style="flex:1">Diagnose</button>
-    </div>
-    <div class="row" style="gap:8px;margin-top:8px">
-      <button class="btn sm ghost" id="btnEncrypt" style="flex:1">🔐 Verschlüsseln</button>
-      <button class="btn sm ghost" id="btnDecrypt" style="flex:1">🔓 Entschlüsseln</button>
-    </div>
-    <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px">Onboarding-Wizard neu zeigen</button>
-    <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
 
     <div class="row" style="margin-top:18px">
       <button class="btn ghost block" id="btnSettingsClose">Schließen</button>
@@ -3951,7 +4131,11 @@ function renderPrograms(){
   saved.innerHTML='';
   const userProgs = State.programs.filter(p=>!p.isPreset);
   if(!userProgs.length){
-    saved.innerHTML='<div style="font-size:13px;color:var(--muted)">Noch keine eigenen Programme. Tipp auf „+ Neues Programm" oder dupliziere eine Vorlage.</div>';
+    saved.innerHTML = `<div class="empty-state">
+      <div class="ico" aria-hidden="true">📋</div>
+      <div class="msg">Noch keine eigenen Programme.<br>Erstelle ein neues oder dupliziere eine Vorlage unten.</div>
+      <div class="hint">Tipp: 📊 Timeline-Ansicht im Editor schaltet zwischen Liste und Blöcken um.</div>
+    </div>`;
   }else{
     for(const p of userProgs){
       saved.appendChild(progCard(p,'saved'));
@@ -3984,9 +4168,10 @@ function progCard(p, kind){
     </div>
     <div class="prog-steps">${escapeHtml(stepSummary(p.steps))}</div>
     <div class="prog-actions">
-      <button class="btn sm hot" data-act="run" style="flex:1">▶ Starten</button>
-      <button class="btn sm ghost" data-act="edit">Bearbeiten</button>
-      <button class="btn sm ghost" data-act="share" aria-label="Programm teilen">🔗</button>
+      <button class="btn sm hot" data-act="run" style="flex:1" aria-label="Programm starten">▶ Starten</button>
+      <button class="btn sm ghost" data-act="edit" aria-label="Programm bearbeiten">Bearbeiten</button>
+      <button class="btn sm ghost" data-act="share" aria-label="Programm per QR teilen">🔗</button>
+      <button class="btn sm ghost" data-act="ha" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
       ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" aria-label="Programm löschen">🗑</button>` : ''}
     </div>
   `;
@@ -3996,6 +4181,7 @@ function progCard(p, kind){
       if(a==='run') runProgram(p);
       else if(a==='edit') openEditor(p.id);
       else if(a==='share') openQRShare(p);
+      else if(a==='ha') downloadHaYaml(p);
       else if(a==='del') deleteProgram(p.id);
     });
   });
@@ -4379,6 +4565,92 @@ function switchTab(name){
     const active = b.dataset.tab===name;
     b.classList.toggle('active', active);
     b.setAttribute('aria-selected', String(active));
+    b.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9: SETTINGS SUB-TABS
+═══════════════════════════════════════════════════════════════ */
+function switchSettingsTab(name){
+  document.querySelectorAll('[data-set-tab]').forEach(b=>{
+    const active = b.dataset.setTab === name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('[data-set-pane]').forEach(p=>{
+    p.classList.toggle('active', p.dataset.setPane === name);
+  });
+  // Focus the first focusable in the new pane for a11y
+  const pane = document.querySelector('[data-set-pane="'+name+'"]');
+  if(pane){
+    const focusable = pane.querySelector('button, [role="switch"], input:not([type="hidden"]), select, textarea');
+    if(focusable){ setTimeout(()=>focusable.focus(), 100); }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9: FOCUS TRAP for modals
+═══════════════════════════════════════════════════════════════ */
+const FOCUS_SELECTOR = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [role="switch"]:not([disabled])';
+
+let _focusBeforeModal = null;
+let _focusTrapHandler = null;
+let _activeModal = null;
+
+function installFocusTrap(modal){
+  if(!modal) return;
+  _activeModal = modal;
+  _focusBeforeModal = document.activeElement;
+  // Focus first focusable
+  const items = modal.querySelectorAll(FOCUS_SELECTOR);
+  if(items.length){
+    setTimeout(()=>items[0].focus(), 50);
+  }
+  _focusTrapHandler = (e)=>{
+    if(e.key !== 'Tab') return;
+    const focusables = Array.from(modal.querySelectorAll(FOCUS_SELECTOR)).filter(el=>{
+      return el.offsetParent !== null; // visible
+    });
+    if(!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length-1];
+    if(e.shiftKey){
+      if(document.activeElement === first){ e.preventDefault(); last.focus(); }
+    } else {
+      if(document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  };
+  modal.addEventListener('keydown', _focusTrapHandler);
+}
+function removeFocusTrap(){
+  if(_activeModal && _focusTrapHandler){
+    _activeModal.removeEventListener('keydown', _focusTrapHandler);
+  }
+  _activeModal = null;
+  _focusTrapHandler = null;
+  if(_focusBeforeModal && typeof _focusBeforeModal.focus === 'function'){
+    try{ _focusBeforeModal.focus(); }catch{}
+  }
+  _focusBeforeModal = null;
+}
+
+// Auto-attach focus trap when modals open via .open class
+function setupModalFocusObserver(){
+  const observer = new MutationObserver(muts=>{
+    for(const m of muts){
+      if(m.attributeName !== 'class') continue;
+      const target = m.target;
+      if(!target.classList || !target.classList.contains('modal')) continue;
+      if(target.classList.contains('open')){
+        installFocusTrap(target);
+      } else {
+        if(_activeModal === target){ removeFocusTrap(); }
+      }
+    }
+  });
+  document.querySelectorAll('.modal').forEach(m=>{
+    observer.observe(m, {attributes:true, attributeFilter:['class']});
   });
 }
 
@@ -4920,6 +5192,11 @@ function wire(){
   });
   $('#btnMqttConnect')?.addEventListener('click', mqttConnectStart);
   $('#btnMqttDisconnect')?.addEventListener('click', ()=>{ mqttDisconnect(); toast('MQTT getrennt'); });
+
+  // ═════ v4.9 wiring: Settings Sub-Tabs ═════
+  document.querySelectorAll('[data-set-tab]').forEach(b=>{
+    b.addEventListener('click', ()=>switchSettingsTab(b.dataset.setTab));
+  });
 
   // Migrate old v3 slots if present
   migrateFromV3();
@@ -8281,6 +8558,14 @@ const TOOLTIPS = {
   'btnOpenBleConsole':'Raw BLE-Console für Forscher und Bastler',
   'btnOpenDsl':'Programm-Skript-Sprache: heat 180; pump 25s',
   'btnAddCustomProfile':'Eigenes Geräteprofil mit Custom-UUIDs anlegen',
+  'btnReplayLast':'Zuletzt gelaufenes Programm nochmal starten',
+  'btnNewProg':'Neues eigenes Programm erstellen',
+  'btnAchievements':'Liste der freigeschalteten Achievements',
+  'btnResetStats':'Statistik zurücksetzen',
+  'btnCleanDone':'Reinigung als erledigt markieren',
+  'btnSieveDone':'Sieb-Wechsel als erledigt markieren',
+  'btnSettingsClose':'Einstellungen schließen',
+  'voiceFab':'Sprachsteuerung starten',
 };
 
 function installTooltips(){
@@ -8815,11 +9100,19 @@ async function init(){
   renderCustomProfiles();
   if(PREFS.hotelMode) enterHotelMode();
   if(PREFS.blindMode){
-    // Stelle a11y-States wieder her ohne Toggle-Effekt
     applyFontScale();
     applyHighContrast();
     setupVoiceReadoutInterval();
   }
+
+  // v4.9 init: Focus-Trap-Observer für alle Modals + Backdrop-Click
+  setupModalFocusObserver();
+  document.querySelectorAll('.modal .back').forEach(back=>{
+    back.addEventListener('click', ()=>{
+      const modal = back.closest('.modal');
+      if(modal) modal.classList.remove('open');
+    });
+  });
   // Routine suggestion check (one-shot per day)
   setTimeout(()=>{
     const lastShown = LS.get('vol_routine_shown', '');
@@ -8843,7 +9136,7 @@ async function init(){
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.8 bereit.','ok');
+  log('Sessions v4.9 bereit.','ok');
 
   setupPwaUpdate();
 
