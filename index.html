@@ -346,6 +346,103 @@ details summary:hover{color:var(--text)}
   .t-current .val{font-size:62px}
   .pills{grid-template-columns:repeat(3,1fr)}
 }
+
+/* ── Onboarding wizard ───────────────────────────────────────── */
+.wiz-page{display:none}
+.wiz-page.active{display:block;animation:fadeUp .25s ease}
+.wiz-art{
+  height:140px;display:flex;align-items:center;justify-content:center;
+  border-radius:var(--r);margin-bottom:14px;font-size:64px;
+  background:radial-gradient(60% 80% at 50% 60%, rgba(255,87,34,.2), transparent),linear-gradient(180deg,#1f1612,#15110e);
+  border:1px solid var(--line);
+}
+.wiz-title{font-size:22px;font-weight:800;letter-spacing:-.01em;margin:0 0 8px}
+.wiz-text{font-size:14px;color:var(--text);line-height:1.55;margin:0 0 12px}
+.wiz-text small{color:var(--muted);display:block;margin-top:4px;font-size:12px}
+.wiz-dots{display:flex;justify-content:center;gap:6px;margin:14px 0}
+.wiz-dot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:.2s}
+.wiz-dot.active{background:var(--hot);width:22px;border-radius:3px}
+.wiz-checklist{list-style:none;padding:0;margin:0 0 12px}
+.wiz-checklist li{
+  display:flex;align-items:start;gap:10px;padding:8px 10px;margin-bottom:6px;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;
+}
+.wiz-checklist li::before{
+  content:"";flex-shrink:0;width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--dim);margin-top:1px;transition:.2s;
+}
+.wiz-checklist li.done::before{background:var(--ok);border-color:var(--ok);
+  content:"✓";color:#0a0908;font-size:11px;font-weight:900;text-align:center;line-height:12px}
+.wiz-warn{
+  background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.3);
+  color:var(--warn);padding:10px 12px;border-radius:var(--r-sm);font-size:13px;
+  margin-bottom:12px;
+}
+.wiz-warn b{color:#fde047}
+.wiz-warn a{color:#fde047;font-weight:600}
+.wiz-ok-banner{
+  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);
+  color:var(--ok);padding:10px 12px;border-radius:var(--r-sm);font-size:13px;
+  margin-bottom:12px;
+}
+
+/* Device selector */
+.dev-pick{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);
+  cursor:pointer;
+}
+.dev-pick .lbl{flex:1;font-size:13px;font-weight:600}
+.dev-pick .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.dev-pick .arrow{color:var(--muted);font-size:18px}
+.dev-list{display:flex;flex-direction:column;gap:8px}
+.dev-card{
+  padding:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);
+  cursor:pointer;display:flex;align-items:center;gap:12px;
+}
+.dev-card.active{border-color:var(--hot);background:rgba(255,87,34,.06)}
+.dev-card.beta{opacity:.85}
+.dev-icon{font-size:32px;line-height:1}
+.dev-info{flex:1}
+.dev-info b{display:block;font-size:15px}
+.dev-info small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.dev-status{
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 7px;border-radius:6px;
+}
+.dev-status.ready{color:var(--ok);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3)}
+.dev-status.beta{color:var(--heat);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)}
+
+/* Help icon button */
+.help-ico{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--bg-3);border:1px solid var(--line);
+  color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;
+  margin-left:6px;
+}
+.help-ico:hover{color:var(--text);border-color:var(--muted)}
+
+/* iOS install banner */
+.ios-banner{
+  position:fixed;left:14px;right:14px;
+  top:calc(70px + var(--safe-top));
+  z-index:45;
+  background:linear-gradient(180deg,#2b1c0e,#1a1108);
+  border:1px solid rgba(245,158,11,.4);
+  border-radius:var(--r);
+  padding:12px 14px;
+  display:none;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);
+}
+.ios-banner.show{display:block;animation:slideUp .3s ease}
+.ios-banner .head{font-weight:700;color:#fde047;margin-bottom:4px;font-size:14px}
+.ios-banner .body{font-size:13px;color:var(--text);line-height:1.45}
+.ios-banner .body a{color:#fbbf24;font-weight:600}
+.ios-banner .close{
+  position:absolute;top:6px;right:8px;background:transparent;border:0;
+  color:var(--muted);font-size:18px;cursor:pointer;padding:4px;
+}
 </style>
 </head>
 <body>
@@ -359,8 +456,16 @@ details summary:hover{color:var(--text)}
   <div class="row tight">
     <span class="chip" id="connChip">Getrennt</span>
     <button class="btn sm ghost" id="btnConnect" aria-label="Verbinden">Verbinden</button>
+    <button class="help-ico" id="btnHelp" aria-label="Hilfe" title="Hilfe & Guide">?</button>
   </div>
 </header>
+
+<!-- iOS / Bluefy banner -->
+<div class="ios-banner" id="iosBanner" role="alert">
+  <button class="close" id="iosClose" aria-label="Schließen">×</button>
+  <div class="head">📱 iPhone/iPad erkannt</div>
+  <div class="body" id="iosBannerBody"></div>
+</div>
 
 <div class="wrap">
 
@@ -428,7 +533,7 @@ details summary:hover{color:var(--text)}
 
   <!-- Safety -->
   <div class="card">
-    <h3>Sicherheits-Timer</h3>
+    <h3>Sicherheits-Timer <button class="help-ico" data-help="safety">?</button></h3>
     <div class="row">
       <div class="field">
         <label>Auto-Aus nach (Minuten)</label>
@@ -450,7 +555,7 @@ details summary:hover{color:var(--text)}
 <section class="tab" id="tab-prog">
 
   <div class="card">
-    <h3>Eigene Programme</h3>
+    <h3>Eigene Programme <button class="help-ico" data-help="workflow">?</button></h3>
     <div class="prog-list" id="progSaved"></div>
     <button class="btn block primary" id="btnNewProg" style="margin-top:10px">+ Neues Programm</button>
   </div>
@@ -475,6 +580,18 @@ details summary:hover{color:var(--text)}
 <section class="tab" id="tab-setup">
 
   <div class="card">
+    <h3>Gerät <button class="help-ico" data-help="device">?</button></h3>
+    <button class="dev-pick" id="btnDevicePick">
+      <span class="dev-icon" id="devIcon">🌋</span>
+      <span class="lbl">
+        <span id="devName">Volcano Hybrid</span>
+        <span class="sub" id="devSub">S&B Bluetooth Vaporizer</span>
+      </span>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+
+  <div class="card">
     <h3>Bluetooth</h3>
     <div class="row">
       <button class="btn primary" id="btnConnect2" style="flex:1">Verbinden</button>
@@ -491,7 +608,7 @@ details summary:hover{color:var(--text)}
   </div>
 
   <div class="card">
-    <h3>UUID-Mapping</h3>
+    <h3>UUID-Mapping <button class="help-ico" data-help="uuid">?</button></h3>
     <div class="field">
       <label>Service</label>
       <input class="input mono" id="uuidService" value="10100000-5354-4f52-5a26-4249434b454c">
@@ -610,6 +727,138 @@ details summary:hover{color:var(--text)}
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn ghost" id="btnStepCancel" style="flex:1">Abbrechen</button>
       <button class="btn primary" id="btnStepSave" style="flex:2">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Onboarding Wizard ────────────────────────────────────── -->
+<div class="modal" id="modalWizard">
+  <div class="back"></div>
+  <div class="sheet" style="max-height:92vh">
+    <div class="grab"></div>
+
+    <div class="wiz-page active" data-page="1">
+      <div class="wiz-art">🌋</div>
+      <h2 class="wiz-title">Willkommen beim Volcano Controller</h2>
+      <p class="wiz-text">
+        Diese App steuert deinen Storz & Bickel Vaporizer per Bluetooth direkt aus dem Browser. Du kannst Temperatur und Pumpe regeln und eigene Programme bauen, die automatisch ablaufen.
+        <small>Dauer der Einrichtung: ca. 2 Minuten.</small>
+      </p>
+    </div>
+
+    <div class="wiz-page" data-page="2">
+      <div class="wiz-art" id="wizBrowserArt">🌐</div>
+      <h2 class="wiz-title">Browser-Check</h2>
+      <div id="wizBrowserMsg"></div>
+    </div>
+
+    <div class="wiz-page" data-page="3">
+      <div class="wiz-art">🌡️</div>
+      <h2 class="wiz-title">Welches Gerät?</h2>
+      <p class="wiz-text">Wähle dein S&B-Gerät. Für den Volcano Hybrid sind die Profile fertig kalibriert. Andere Geräte sind in Beta — die Verbindung läuft, einige Werte musst du eventuell selbst anpassen.</p>
+      <div class="dev-list" id="wizDevices"></div>
+    </div>
+
+    <div class="wiz-page" data-page="4">
+      <div class="wiz-art">⚡</div>
+      <h2 class="wiz-title">Gerät vorbereiten</h2>
+      <ul class="wiz-checklist" id="wizPrep">
+        <li>Volcano (oder Crafty/Mighty/Venty) <b>einschalten</b></li>
+        <li>Falls die <b>offizielle S&B-App</b> verbunden ist: dort trennen</li>
+        <li>Gerät in der Nähe des Handys/PCs lassen (max. 2–3 Meter)</li>
+        <li>Bluetooth am Handy/PC <b>aktivieren</b></li>
+      </ul>
+      <p class="wiz-text"><small>Tipp: Nur eine BLE-Verbindung pro Gerät gleichzeitig möglich.</small></p>
+    </div>
+
+    <div class="wiz-page" data-page="5">
+      <div class="wiz-art">🔗</div>
+      <h2 class="wiz-title">Verbinden</h2>
+      <p class="wiz-text">
+        Gleich öffnet sich ein Browser-Dialog mit allen sichtbaren Bluetooth-Geräten. Wähle deins (typisch <b>„VOLCANO …"</b>, „Crafty" usw.) und tippe <b>Verbinden</b>.
+        <small>Nach dem Verbinden geht es automatisch weiter zu Auto-Mapping.</small>
+      </p>
+      <button class="btn hot block lg" id="wizConnectBtn">📡 Jetzt verbinden</button>
+      <div id="wizConnState" style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center"></div>
+    </div>
+
+    <div class="wiz-page" data-page="6">
+      <div class="wiz-art">🎯</div>
+      <h2 class="wiz-title">Auto-Mapping</h2>
+      <p class="wiz-text">
+        Die App findet jetzt automatisch die richtigen Bluetooth-Kanäle für Temperatur, Heizer und Pumpe. Das dauert ein paar Sekunden.
+      </p>
+      <button class="btn primary block lg" id="wizAutoMapBtn">🔍 Auto-Mapping starten</button>
+      <div id="wizMapState" style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center"></div>
+    </div>
+
+    <div class="wiz-page" data-page="7">
+      <div class="wiz-art">▶️</div>
+      <h2 class="wiz-title">Probierlauf</h2>
+      <p class="wiz-text">Wir machen einen kurzen Test: Heizen auf 180 °C, dann wieder aus. So siehst du sofort, ob alles funktioniert.</p>
+      <button class="btn hot block lg" id="wizTestBtn">🧪 Test starten</button>
+      <div id="wizTestState" style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center"></div>
+    </div>
+
+    <div class="wiz-page" data-page="8">
+      <div class="wiz-art">⚠️</div>
+      <h2 class="wiz-title">Sicherheit</h2>
+      <p class="wiz-text">Bitte unbedingt beachten:</p>
+      <ul class="wiz-checklist">
+        <li><b>Niemals unbeaufsichtigt</b> heizen lassen</li>
+        <li>Im Tab <b>Steuerung</b> gibt es einen <b>Sicherheits-Timer</b>: nach X Minuten alles aus</li>
+        <li>Bei Programmfehlern schaltet die App Heizer und Pumpe automatisch ab</li>
+        <li>Bei langen Programmen: <b>Display nicht ausgehen lassen</b> (Bildschirm-Timeout am Handy höher stellen oder Display an lassen)</li>
+      </ul>
+    </div>
+
+    <div class="wiz-page" data-page="9">
+      <div class="wiz-art">🎉</div>
+      <h2 class="wiz-title">Fertig!</h2>
+      <p class="wiz-text">
+        Du bist startklar. Was du jetzt tun kannst:
+      </p>
+      <ul class="wiz-checklist">
+        <li>Im Tab <b>Steuerung</b> manuell Temperatur, Heizer und Pumpe regeln</li>
+        <li>Im Tab <b>Programme</b> eine Vorlage starten oder eigenes Programm bauen</li>
+        <li>Diesen Guide jederzeit erneut über das <b>?</b>-Symbol oben rechts öffnen</li>
+      </ul>
+      <p class="wiz-text"><small>💡 Pro-Tipp: Speicher die App auf dem Startbildschirm (Chrome-Menü → „Zum Startbildschirm hinzufügen"), dann startet sie wie eine echte App.</small></p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="wiz-dots" id="wizDots"></div>
+    <div class="row" style="gap:8px">
+      <button class="btn ghost" id="wizBack" style="flex:1">Zurück</button>
+      <button class="btn ghost" id="wizSkip" style="flex:1">Überspringen</button>
+      <button class="btn primary" id="wizNext" style="flex:2">Weiter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Device picker ────────────────────────────────────────── -->
+<div class="modal" id="modalDevice">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Gerät auswählen</h2>
+    <p class="wiz-text"><small>Bei Wechsel werden die UUIDs auf das Standardprofil des Geräts gesetzt.</small></p>
+    <div class="dev-list" id="deviceList"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnDeviceClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Contextual help ──────────────────────────────────────── -->
+<div class="modal" id="modalHelp">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="helpTitle">Hilfe</h2>
+    <div id="helpBody" class="wiz-text"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnHelpClose">Schließen</button>
     </div>
   </div>
 </div>
@@ -1501,6 +1750,37 @@ function wire(){
   });
   $('#btnClearLog').addEventListener('click', clearLog);
 
+  // ── Wizard wiring ──
+  $('#btnHelp').addEventListener('click', ()=>openWizard(true));
+  $('#wizNext').addEventListener('click', nextPage);
+  $('#wizBack').addEventListener('click', prevPage);
+  $('#wizSkip').addEventListener('click', closeWizard);
+  $('#wizConnectBtn').addEventListener('click', wizConnect);
+  $('#wizAutoMapBtn').addEventListener('click', wizAutoMap);
+  $('#wizTestBtn').addEventListener('click', wizTest);
+
+  // ── Device picker ──
+  $('#btnDevicePick').addEventListener('click', ()=>{
+    renderDeviceList('#deviceList');
+    $('#modalDevice').classList.add('open');
+  });
+  $('#btnDeviceClose').addEventListener('click', ()=>$('#modalDevice').classList.remove('open'));
+
+  // ── Help topics ──
+  document.querySelectorAll('[data-help]').forEach(el=>{
+    el.addEventListener('click', e=>{
+      e.stopPropagation();
+      openHelp(el.dataset.help);
+    });
+  });
+  $('#btnHelpClose').addEventListener('click', ()=>$('#modalHelp').classList.remove('open'));
+
+  // ── iOS banner ──
+  $('#iosClose').addEventListener('click', ()=>{
+    $('#iosBanner').classList.remove('show');
+    LS.set('vol_ios_banner_dismissed', true);
+  });
+
   // Migrate old v3 slots if present
   migrateFromV3();
 }
@@ -1527,22 +1807,402 @@ function migrateFromV3(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   INIT
+   DEVICE PROFILES (Volcano + Crafty/Mighty/Venty)
 ═══════════════════════════════════════════════════════════════ */
+const DEVICE_PROFILES = {
+  'volcano-hybrid': {
+    id:'volcano-hybrid',
+    name:'Volcano Hybrid',
+    sub:'S&B Desktop Vaporizer',
+    icon:'🌋',
+    status:'ready',
+    namePrefix:'VOLCANO',
+    tempRange:[40, 230],
+    uuids:{
+      uuidService:'10100000-5354-4f52-5a26-4249434b454c',
+      uuidSetTemp:'10100006-5354-4f52-5a26-4249434b454c',
+      uuidCurTemp:'10110001-5354-4f52-5a26-4249434b454c',
+      uuidTargetNotify:'1010000d-5354-4f52-5a26-4249434b454c',
+      uuidStatus:'1010000c-5354-4f52-5a26-4249434b454c',
+      uuidHeater:'10110003-5354-4f52-5a26-4249434b454c',
+      uuidPump:'10110004-5354-4f52-5a26-4249434b454c',
+    },
+    features:{ heat:true, pump:true, workflows:true },
+    notes:'Vollständig unterstützt. UUIDs aus Reverse Engineering, in der Praxis bewährt.',
+  },
+  'crafty-plus': {
+    id:'crafty-plus',
+    name:'Crafty / Crafty+',
+    sub:'S&B Portable Vaporizer',
+    icon:'🔥',
+    status:'beta',
+    namePrefix:'STORZ&BICKEL',
+    tempRange:[40, 210],
+    uuids:{
+      // Crafty+ verwendet andere UUIDs. Anwender bitte über Auto-Mapping kalibrieren.
+      uuidService:'00000001-4c45-4b43-4942-265523625a29',
+      uuidSetTemp:'00000021-4c45-4b43-4942-265523625a29',
+      uuidCurTemp:'00000011-4c45-4b43-4942-265523625a29',
+      uuidTargetNotify:'00000021-4c45-4b43-4942-265523625a29',
+      uuidStatus:'00000031-4c45-4b43-4942-265523625a29',
+      uuidHeater:'',  // Crafty: keine separate Heater-Char, Heizen wird via Power-Bit gesteuert
+      uuidPump:'',    // Crafty hat keine Pumpe
+    },
+    features:{ heat:true, pump:false, workflows:false },
+    notes:'BETA: Verbindung läuft, aber UUIDs müssen ggf. per Auto-Mapping korrigiert werden. Keine Pumpen-Funktion (Crafty zieht über Mundstück). Schick mir nach erstem Connect den Discovery-Output für volle Unterstützung.',
+  },
+  'mighty-plus': {
+    id:'mighty-plus',
+    name:'Mighty / Mighty+',
+    sub:'S&B Portable Vaporizer',
+    icon:'💨',
+    status:'beta',
+    namePrefix:'STORZ&BICKEL',
+    tempRange:[40, 210],
+    uuids:{
+      uuidService:'00000001-4c45-4b43-4942-265523625a29',
+      uuidSetTemp:'00000021-4c45-4b43-4942-265523625a29',
+      uuidCurTemp:'00000011-4c45-4b43-4942-265523625a29',
+      uuidTargetNotify:'00000021-4c45-4b43-4942-265523625a29',
+      uuidStatus:'00000031-4c45-4b43-4942-265523625a29',
+      uuidHeater:'',
+      uuidPump:'',
+    },
+    features:{ heat:true, pump:false, workflows:false },
+    notes:'BETA: Verbindung läuft, Profile ggf. via Auto-Mapping anpassen. Mighty teilt das BLE-Protokoll mit Crafty.',
+  },
+  'venty': {
+    id:'venty',
+    name:'Venty',
+    sub:'S&B Portable Vaporizer (mit Lüfter)',
+    icon:'🌪️',
+    status:'beta',
+    namePrefix:'Venty',
+    tempRange:[40, 210],
+    uuids:{
+      uuidService:'',
+      uuidSetTemp:'',
+      uuidCurTemp:'',
+      uuidTargetNotify:'',
+      uuidStatus:'',
+      uuidHeater:'',
+      uuidPump:'',
+    },
+    features:{ heat:true, pump:true, workflows:true },
+    notes:'BETA, weitgehend ungetestet: Bitte einmal verbinden + Setup → "Services scannen" und Discovery-Output schicken. Dann kalibriere ich das Profil exakt.',
+  }
+};
+
+function getCurrentDeviceId(){
+  return LS.get('vol_device','volcano-hybrid');
+}
+function setCurrentDevice(id){
+  const p = DEVICE_PROFILES[id]; if(!p) return;
+  LS.set('vol_device', id);
+  // Apply UUIDs
+  for(const [k,v] of Object.entries(p.uuids)){
+    const el=document.getElementById(k);
+    if(el) el.value = v || '';
+  }
+  saveUUIDs();
+  // Update UI labels
+  $('#devName').textContent = p.name;
+  $('#devSub').textContent = p.sub;
+  $('#devIcon').textContent = p.icon;
+  log(`Profil geladen: ${p.name}${p.status==='beta'?' (Beta)':''}`,'ok');
+  if(p.notes) toast(p.notes.slice(0,80));
+}
+
+function renderDeviceList(targetSel){
+  const root = $(targetSel); if(!root) return;
+  root.innerHTML='';
+  const cur = getCurrentDeviceId();
+  for(const id of Object.keys(DEVICE_PROFILES)){
+    const p = DEVICE_PROFILES[id];
+    const div=document.createElement('div');
+    div.className = `dev-card ${id===cur?'active':''} ${p.status==='beta'?'beta':''}`;
+    div.innerHTML=`
+      <span class="dev-icon">${p.icon}</span>
+      <div class="dev-info">
+        <b>${escapeHtml(p.name)}</b>
+        <small>${escapeHtml(p.sub)}</small>
+      </div>
+      <span class="dev-status ${p.status}">${p.status==='ready'?'Fertig':'Beta'}</span>
+    `;
+    div.addEventListener('click', ()=>{
+      setCurrentDevice(id);
+      renderDeviceList(targetSel);
+      // After picking, close the modal (only main picker)
+      if(targetSel==='#deviceList'){
+        $('#modalDevice').classList.remove('open');
+      }
+    });
+    root.appendChild(div);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BROWSER + iOS / BLUEFY DETECTION
+═══════════════════════════════════════════════════════════════ */
+function detectEnv(){
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const isBluefy = /Bluefy/i.test(ua) || /Bluefy/i.test(navigator.userAgent);
+  const hasBLE = 'bluetooth' in navigator;
+  const isAndroidChrome = /Android/.test(ua) && /Chrome/.test(ua) && !/EdgiOS|CriOS|FxiOS/.test(ua);
+  const isDesktopChrome = !isIOS && !/Android/.test(ua) && (/Chrome/.test(ua) || /Edg\//.test(ua));
+  return { ua, isIOS, isBluefy, hasBLE, isAndroidChrome, isDesktopChrome };
+}
+
+function maybeShowIosBanner(){
+  const env = detectEnv();
+  const dismissed = LS.get('vol_ios_banner_dismissed', false);
+  if(env.isIOS && !env.isBluefy && !dismissed){
+    $('#iosBannerBody').innerHTML = `
+      Web Bluetooth ist auf iOS nicht im normalen Browser möglich.<br>
+      Lösung: Lade die <b>Bluefy</b>-App aus dem App Store, öffne diese URL dort und installiere die App auf den Home-Bildschirm.<br><br>
+      <a href="https://apps.apple.com/app/bluefy/id1492822055" target="_blank" rel="noopener">→ Bluefy im App Store öffnen</a>
+    `;
+    $('#iosBanner').classList.add('show');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONBOARDING WIZARD
+═══════════════════════════════════════════════════════════════ */
+const WIZ_TOTAL = 9;
+let wizPage = 1;
+
+function openWizard(reset=false){
+  if(reset) wizPage = 1;
+  renderWizard();
+  $('#modalWizard').classList.add('open');
+}
+function closeWizard(){
+  $('#modalWizard').classList.remove('open');
+  LS.set('vol_onboarded', true);
+}
+function renderWizard(){
+  // Show only current page
+  document.querySelectorAll('.wiz-page').forEach(p=>{
+    p.classList.toggle('active', Number(p.dataset.page)===wizPage);
+  });
+  // Dots
+  const dots = $('#wizDots'); dots.innerHTML='';
+  for(let i=1;i<=WIZ_TOTAL;i++){
+    const d=document.createElement('span');
+    d.className='wiz-dot'+(i===wizPage?' active':'');
+    dots.appendChild(d);
+  }
+  // Buttons
+  $('#wizBack').style.visibility = wizPage===1?'hidden':'visible';
+  $('#wizSkip').style.display = (wizPage===WIZ_TOTAL?'none':'');
+  $('#wizNext').textContent = wizPage===WIZ_TOTAL?'Loslegen':'Weiter';
+
+  // Per-page hooks
+  if(wizPage===2) renderBrowserCheck();
+  if(wizPage===3) renderDeviceList('#wizDevices');
+  if(wizPage===5) updateWizConnState();
+  if(wizPage===6) updateWizMapState();
+}
+function nextPage(){
+  if(wizPage<WIZ_TOTAL){ wizPage++; renderWizard(); }
+  else closeWizard();
+}
+function prevPage(){
+  if(wizPage>1){ wizPage--; renderWizard(); }
+}
+function renderBrowserCheck(){
+  const env=detectEnv();
+  const art=$('#wizBrowserArt');
+  const msg=$('#wizBrowserMsg');
+  if(env.isIOS && !env.isBluefy){
+    art.textContent='🍎';
+    msg.innerHTML=`
+      <div class="wiz-warn">
+        <b>iPhone/iPad ohne Bluefy</b><br>
+        Apple lässt Web Bluetooth im normalen Safari nicht zu. Du brauchst die <b>Bluefy</b>-App, dann öffnest du diese URL dort.
+      </div>
+      <p class="wiz-text">
+        <b>Was tun:</b><br>
+        1. <a href="https://apps.apple.com/app/bluefy/id1492822055" target="_blank" rel="noopener">Bluefy im App Store</a> laden (kostenlos).<br>
+        2. Bluefy öffnen, in der Adresszeile diese Seite eingeben.<br>
+        3. „Zum Home-Bildschirm" hinzufügen.<br>
+        4. Diesen Guide erneut starten.
+        <small>Bluefy ist die App, die auch die offizielle S&B Web-App auf iOS nutzt.</small>
+      </p>
+    `;
+  } else if(env.isIOS && env.isBluefy){
+    art.textContent='✅';
+    msg.innerHTML=`
+      <div class="wiz-ok-banner"><b>Bluefy erkannt.</b> Web Bluetooth verfügbar, du kannst loslegen.</div>
+      <p class="wiz-text">
+        Tipp: Speicher die App auf den Home-Bildschirm. Bluefy-Menü → Teilen → „Zum Home-Bildschirm".
+      </p>
+    `;
+  } else if(env.hasBLE){
+    art.textContent='✅';
+    msg.innerHTML=`
+      <div class="wiz-ok-banner"><b>Browser ok.</b> Web Bluetooth verfügbar.</div>
+      <p class="wiz-text">
+        ${env.isAndroidChrome?'Chrome auf Android erkannt — beste Wahl für mobile Nutzung.':env.isDesktopChrome?'Chrome/Edge Desktop erkannt — voll unterstützt.':'Dein Browser unterstützt Web Bluetooth.'}
+      </p>
+    `;
+  } else {
+    art.textContent='⚠️';
+    msg.innerHTML=`
+      <div class="wiz-warn">
+        <b>Web Bluetooth nicht verfügbar.</b><br>
+        Dieser Browser unterstützt die nötige Funktion nicht. Bitte nutze <b>Chrome</b> oder <b>Edge</b> (Desktop oder Android), oder auf iOS die App <b>Bluefy</b>.
+      </div>
+    `;
+  }
+}
+async function updateWizConnState(){
+  const s = $('#wizConnState');
+  s.textContent = State.connected?'✓ Verbunden':'Noch nicht verbunden';
+  $('#wizConnectBtn').textContent = State.connected?'✓ Verbunden':'📡 Jetzt verbinden';
+  $('#wizConnectBtn').disabled = State.connected;
+}
+async function updateWizMapState(){
+  const s = $('#wizMapState');
+  const hasChars = State.chars.setTemp && State.chars.curTemp;
+  s.textContent = hasChars?'✓ Mapping fertig':(State.connected?'Klicke „Auto-Mapping starten"':'Erst Schritt zurück und verbinden');
+  $('#wizAutoMapBtn').disabled = !State.connected;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTEXTUAL HELP
+═══════════════════════════════════════════════════════════════ */
+const HELP_TOPICS = {
+  device: {
+    title:'Geräte-Profile',
+    body:`
+      <p>Hier wählst du, welches S&B-Gerät du steuern willst. Jedes hat eigene BLE-Profile (Bluetooth-Kanäle).</p>
+      <p><b>Fertig (ready):</b> Profil ist getestet und kalibriert, sollte ohne Konfiguration funktionieren.</p>
+      <p><b>Beta:</b> Verbindung läuft, aber einige Werte stimmen evtl. nicht. Lösung: einmal verbinden, dann „Auto-Mapping" im Setup-Tab.</p>
+      <p>Wenn du ein Beta-Profil benutzt: Bitte einmal im Setup-Tab "Services scannen" laufen lassen und mir den Output schicken, dann werte ich es aus und kalibriere das Profil offiziell.</p>
+    `
+  },
+  uuid: {
+    title:'UUID-Mapping',
+    body:`
+      <p>UUIDs identifizieren die einzelnen Bluetooth-Kanäle (Characteristics). Pro Gerät gibt es separate Kanäle für:</p>
+      <ul style="padding-left:18px;line-height:1.6">
+        <li><b>Set Temp (write):</b> Zieltemperatur setzen</li>
+        <li><b>Current Temp (notify):</b> Aktuelle Temperatur live empfangen</li>
+        <li><b>Target Temp (notify):</b> Ziel-Temp-Updates empfangen</li>
+        <li><b>Status (notify):</b> Bits für Heizer/Pumpe-Zustand</li>
+        <li><b>Heater (write):</b> Heizer an/aus</li>
+        <li><b>Pump (write):</b> Pumpe an/aus</li>
+      </ul>
+      <p>„Auto-Mapping" füllt diese automatisch nach dem Verbinden. Falls Werte nicht stimmen: „Services scannen" zeigt alle vorhandenen UUIDs.</p>
+    `
+  },
+  workflow: {
+    title:'Programme & Workflows',
+    body:`
+      <p>Ein Programm ist eine Abfolge von Schritten, die automatisch nacheinander ablaufen. Beispiel: Heizer an → 180°C setzen → bis erreicht warten → Ballon 25s füllen → Heizer aus.</p>
+      <p>Verfügbare Schritte:</p>
+      <ul style="padding-left:18px;line-height:1.6">
+        <li><b>Heizer an/aus, Pumpe an/aus</b></li>
+        <li><b>Temp setzen:</b> bestimmte Zieltemperatur (40–230°C)</li>
+        <li><b>Warten bis Ziel:</b> blockiert bis Temperatur erreicht (oder Timeout 240s)</li>
+        <li><b>Pause:</b> einfach X Sekunden warten</li>
+        <li><b>Pumpe für X Sek.:</b> Ballon füllen, dann aus</li>
+      </ul>
+      <p>Tipp: Duplizier eine Vorlage und passe sie an deine Bedürfnisse an.</p>
+    `
+  },
+  safety: {
+    title:'Sicherheit',
+    body:`
+      <p><b>Wichtigste Regel:</b> Den Vaporizer niemals unbeaufsichtigt heizen lassen.</p>
+      <p>Eingebaute Schutzmechanismen:</p>
+      <ul style="padding-left:18px;line-height:1.6">
+        <li><b>Sicherheits-Timer:</b> automatischer Komplett-Abschalt nach X Minuten</li>
+        <li><b>Auto-Off bei Fehler:</b> Stürzt ein Programm ab, schaltet die App Heizer und Pumpe ab</li>
+        <li><b>Stop-Button:</b> jederzeit Programm abbrechen</li>
+      </ul>
+      <p>Trotzdem: Display nicht ausgehen lassen, wenn ein Programm läuft. Bei vielen Handys legt sich das Display nach 30s schlafen, was die App pausiert.</p>
+    `
+  }
+};
+function openHelp(topic){
+  const h = HELP_TOPICS[topic];
+  if(!h){ openWizard(true); return; }
+  $('#helpTitle').textContent = h.title;
+  $('#helpBody').innerHTML = h.body;
+  $('#modalHelp').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WIZARD HOOKS - connect/automap/test buttons inside wizard
+═══════════════════════════════════════════════════════════════ */
+async function wizConnect(){
+  await connectBLE();
+  updateWizConnState();
+  if(State.connected){
+    // auto-advance to next page
+    setTimeout(()=>{ if(wizPage===5){ nextPage(); } }, 600);
+  }
+}
+async function wizAutoMap(){
+  await autoMap();
+  updateWizMapState();
+  if(State.chars.setTemp){
+    setTimeout(()=>{ if(wizPage===6){ nextPage(); } }, 600);
+  }
+}
+async function wizTest(){
+  if(!State.connected){ toast('Erst verbinden'); return; }
+  const s = $('#wizTestState');
+  s.textContent = 'Heize auf 180°C …';
+  try{
+    await cmdSetTemp(180);
+    s.textContent = '✓ Temperatur gesetzt. Heizer an …';
+    await cmdHeater(true);
+    await sleep(2000);
+    s.textContent = '✓ Heizer war an. Schalte ab …';
+    await cmdHeater(false);
+    s.textContent = '✓ Test erfolgreich!';
+    log('Wizard-Test bestanden.','ok');
+  }catch(e){
+    s.textContent = '✗ Fehler: '+e.message+'. Bitte UUIDs prüfen.';
+  }
+}
+
 function init(){
   loadUUIDs();
+  // Apply current device profile labels
+  const devId = getCurrentDeviceId();
+  const dev = DEVICE_PROFILES[devId] || DEVICE_PROFILES['volcano-hybrid'];
+  $('#devName').textContent = dev.name;
+  $('#devSub').textContent = dev.sub;
+  $('#devIcon').textContent = dev.icon;
+
   wire();
   renderStatus();
   renderPrograms();
-  if(!('bluetooth' in navigator)){
+
+  // Environment check
+  const env = detectEnv();
+  if(!env.hasBLE){
     log('Web Bluetooth nicht verfügbar in diesem Browser.','warn');
-    toast('Browser ohne Web Bluetooth');
   }
-  log('App bereit. Tippe „Verbinden".','ok');
+  maybeShowIosBanner();
+
+  log('App bereit (v4.1).','ok');
 
   // PWA install hint
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline disabled silently */ });
+  }
+
+  // First-time onboarding
+  const onboarded = LS.get('vol_onboarded', false);
+  if(!onboarded){
+    setTimeout(()=>openWizard(true), 400);
   }
 }
 document.addEventListener('DOMContentLoaded', init);
