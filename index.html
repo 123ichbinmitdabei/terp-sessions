@@ -17,7 +17,7 @@
 <title>Sessions — S&B Vape Controller</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous">
 <style>
 :root{
   /* Mineralische Erd-Tones */
@@ -1723,6 +1723,29 @@ html.power-saver .card{animation:none !important}
   color:var(--dim);
 }
 
+/* ═══ v4.9.4: Platform-Compatibility Banner ════════════════════ */
+.platform-banner{
+  position:fixed;top:0;left:0;right:0;z-index:131;
+  background:linear-gradient(180deg, #2a1f15, #1a140e);
+  color:var(--text);
+  padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  border-bottom:1px solid rgba(255,87,34,.3);
+  transform:translateY(-100%);
+  transition:transform .3s ease;
+  font-size:13px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+.platform-banner.show{transform:translateY(0)}
+.platform-banner > div{flex:1}
+.platform-banner b{color:var(--hot);font-size:13px}
+.platform-banner small{display:block;margin-top:4px;color:var(--muted);line-height:1.5;font-size:11px}
+.platform-banner button{
+  background:transparent;border:0;color:var(--muted);
+  font-size:24px;cursor:pointer;padding:0 6px;line-height:1;
+}
+.platform-banner button:hover{color:var(--text)}
+
 </style>
 </head>
 <body>
@@ -2047,6 +2070,7 @@ html.power-saver .card{animation:none !important}
       <button class="btn sm ghost" id="btnOpenUsers">👥 Profile</button>
       <button class="btn sm ghost" id="btnOpenDsl">📜 DSL-Editor</button>
       <button class="btn sm ghost" id="btnOpenBleConsole">📟 BLE-Console</button>
+      <button class="btn sm ghost" id="btnOpenShortcuts">🎙 Sprach-Shortcuts</button>
     </div>
   </div>
 
@@ -2545,6 +2569,10 @@ html.power-saver .card{animation:none !important}
         <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
       </details>
 
+      <h3 class="set-section-h">Siri / Google Assistant</h3>
+      <p class="set-section-desc">Befehle per Sprache über Siri-Kurzbefehle oder Google-Routinen. URL-basiert.</p>
+      <button class="btn sm ghost block" id="btnOpenShortcutsFromSettings">🎙 Anleitung & Befehl-URLs</button>
+
       <h3 class="set-section-h">Engagement</h3>
       <div class="toggle-row">
         <div class="info"><b>Vape-Buddy-Charakter</b><small>Kleiner Charakter unten links</small></div>
@@ -2890,6 +2918,140 @@ html.power-saver .card{animation:none !important}
   </div>
 </div>
 
+<!-- ─── v4.9.3: Ballon-Profil-Editor ───────────────────────────── -->
+<div class="modal" id="modalBagEditor" role="dialog" aria-modal="true" aria-label="Ballon-Profil bearbeiten">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="bagEditorTitle">Ballon-Profil</h2>
+    <p class="wiz-text"><small>Miss die Länge deines Ballons (entlang der Folie) und den Durchmesser im gefüllten Zustand. Die App berechnet Volumen und passende Pumpzeit.</small></p>
+
+    <div class="field" style="margin-top:10px">
+      <label>Name</label>
+      <input class="input" id="bagEdName" type="text" placeholder="Mein Ballon" maxlength="40">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>Typ</label>
+      <select class="input" id="bagEdType">
+        <option value="easy">Easy Valve</option>
+        <option value="solid">Solid Valve</option>
+        <option value="custom">Eigenbau / Andere</option>
+      </select>
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>Länge (cm) — ungefüllte Folie vom Mundstück bis zum Ventil</label>
+      <div class="stepper">
+        <button id="bagEdLenMinus" aria-label="Länge verringern">−</button>
+        <input class="mono" type="number" min="10" max="200" step="1" id="bagEdLen" inputmode="numeric">
+        <button id="bagEdLenPlus" aria-label="Länge erhöhen">+</button>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>Durchmesser (cm) — gefüllter Ballon, ca. 10cm Easy Valve, 12cm Solid</label>
+      <div class="stepper">
+        <button id="bagEdDiaMinus" aria-label="Durchmesser verringern">−</button>
+        <input class="mono" type="number" min="4" max="20" step="0.5" id="bagEdDia" inputmode="decimal">
+        <button id="bagEdDiaPlus" aria-label="Durchmesser erhöhen">+</button>
+      </div>
+    </div>
+
+    <!-- Calculated results -->
+    <div style="background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Volumen</span>
+        <span id="bagEdVolumeOut" style="font-family:var(--font-display);font-size:28px;font-weight:300">– L</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Empfohlene Pumpzeit</span>
+        <span id="bagEdSecOut" style="font-family:var(--font-display);font-size:28px;font-weight:300">– s</span>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:8px;line-height:1.5">
+        Basierend auf <span id="bagEdLpmOut">4.5</span> L/min effektiver Pumpleistung. Stelle das in Settings → Workflow ein wenn dein Gerät anders pumpt.
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:14px">
+      <label>Pumpzeit (Sekunden) — kann manuell überschrieben werden</label>
+      <div class="stepper">
+        <button id="bagEdSecMinus" aria-label="Sekunden verringern">−</button>
+        <input class="mono" type="number" min="5" max="180" step="1" id="bagEdSec" inputmode="numeric">
+        <button id="bagEdSecPlus" aria-label="Sekunden erhöhen">+</button>
+      </div>
+      <button class="btn sm ghost block" id="btnBagEdAutoSec" style="margin-top:6px">↻ Auto-Vorschlag übernehmen</button>
+    </div>
+
+    <button class="btn sm ghost block" id="btnBagEdCalibrate" style="margin-top:14px;font-size:12px">📐 Kalibrieren: Tatsächliche Pumpleistung aus dieser Zeit ableiten</button>
+
+    <div class="row" style="gap:8px;margin-top:18px">
+      <button class="btn ghost" id="btnBagEdDelete" style="flex:1;color:var(--err)">Löschen</button>
+      <button class="btn primary" id="btnBagEdSave" style="flex:2">Speichern</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost block" id="btnBagEdClose">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── v4.9.4: Siri/Google-Shortcuts Anleitung ────────────────── -->
+<div class="modal" id="modalShortcuts" role="dialog" aria-modal="true" aria-label="Sprachsteuerung über Siri und Google">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:520px">
+    <div class="grab"></div>
+    <h2>🎙 Sprachsteuerung</h2>
+    <p class="wiz-text"><small>Sessions kann über URL-Befehle gesteuert werden. Lege in der Kurzbefehle-App (iOS) oder Google-Routinen die folgenden URLs an mit einer Sprach-Phrase deiner Wahl.</small></p>
+
+    <details style="margin-top:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0" open>
+      <summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px"><span aria-hidden="true">🍎</span> Einrichtung iOS (Siri)</summary>
+      <div style="padding:0 14px 14px;font-size:12px;color:var(--text);line-height:1.6">
+        <ol style="margin:0;padding-left:18px">
+          <li>Öffne die App <b>Kurzbefehle</b> auf dem iPhone</li>
+          <li>+ → Aktion hinzufügen → „URL"</li>
+          <li>URL aus der Liste unten einfügen</li>
+          <li>+ Aktion hinzufügen → „URLs öffnen"</li>
+          <li>Oben Namen vergeben: z.B. „Volcano anheizen"</li>
+          <li>Optional: bei „Zu Siri hinzufügen" eine Phrase festlegen</li>
+        </ol>
+        <p style="margin-top:8px;color:var(--muted)">Danach: „Hey Siri, Volcano anheizen" → URL wird geöffnet, App führt den Befehl aus.</p>
+      </div>
+    </details>
+
+    <details style="margin-top:8px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0">
+      <summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px"><span aria-hidden="true">🤖</span> Einrichtung Android (Google Assistant)</summary>
+      <div style="padding:0 14px 14px;font-size:12px;color:var(--text);line-height:1.6">
+        <ol style="margin:0;padding-left:18px">
+          <li>Google-App öffnen → Konto → Einstellungen → Google Assistant</li>
+          <li>Routinen → + (neue Routine)</li>
+          <li>Starter: Sprach-Phrase festlegen</li>
+          <li>Aktion: „App öffnen" oder „URL öffnen" → URL einfügen</li>
+        </ol>
+        <p style="margin-top:8px;color:var(--muted)">Alternative: <b>Tasker</b> oder <b>HTTP Shortcuts</b> aus dem Play Store, beide können URLs per Voice-Trigger öffnen.</p>
+      </div>
+    </details>
+
+    <details style="margin-top:8px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0">
+      <summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px"><span aria-hidden="true">⚠️</span> Voraussetzungen</summary>
+      <div style="padding:0 14px 14px;font-size:12px;color:var(--text);line-height:1.6">
+        <ul style="margin:0;padding-left:18px">
+          <li>App muss bereits einmal in diesem Browser mit dem Volcano gepairt sein</li>
+          <li>Bei iOS: <b>Bluefy</b> als Standard-Browser für die App nutzen (oder mit Shortcut „URL in Bluefy öffnen")</li>
+          <li>Bei Android: Chrome als Standard-Browser</li>
+          <li>Browser muss schon geöffnet sein oder Auto-Connect funktioniert nur eingeschränkt</li>
+        </ul>
+      </div>
+    </details>
+
+    <h3 style="margin-top:18px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono)">Befehl-URLs zum Kopieren</h3>
+    <div id="shortcutsList" style="margin-top:10px"></div>
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnShortcutsClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2987,6 +3149,16 @@ const PREFS_DEFAULTS = {
   mqttTopicPrefix:'sessions/',
   mqttConnected:false,     // runtime
   customBleProfiles:[],    // user-defined device profiles
+  // v4.9.3: Eigene Ballon-Profile mit Geometrie für Volumen/Sekunden-Berechnung
+  // Defaults sind kalibriert auf pumpLpm 4.5 L/min — User kann anpassen/kalibrieren
+  bagProfilesV2:[
+    {id:'easy-small', name:'Easy Valve klein', type:'easy',   length:30, diameter:8,  seconds:20, calibrated:false},
+    {id:'easy-large', name:'Easy Valve groß',  type:'easy',   length:60, diameter:8,  seconds:40, calibrated:false},
+    {id:'solid',      name:'Solid Valve',      type:'solid',  length:40, diameter:10, seconds:42, calibrated:false},
+    {id:'custom',     name:'Eigene Zeit',      type:'custom', length:50, diameter:8,  seconds:33, calibrated:false},
+  ],
+  pumpLpm:4.5,             // v4.9.3: effektive Pumpleistung in Liter/Min für Auto-Berechnung
+  selectedBagId:'easy-large',  // v4.9.3: aktuell ausgewählter Ballon
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -2999,7 +3171,41 @@ const PREFS = Object.assign({}, PREFS_DEFAULTS, LS.get('vol_prefs',{}));
 PREFS.voiceCmds = Object.assign({}, PREFS_DEFAULTS.voiceCmds, PREFS.voiceCmds||{});
 PREFS.bagTimes  = Object.assign({}, PREFS_DEFAULTS.bagTimes, PREFS.bagTimes||{});
 PREFS.stats     = Object.assign({}, PREFS_DEFAULTS.stats, PREFS.stats||{});
+// v4.9.3: bagProfilesV2 + Migration aus alter bagTimes-Struktur
+if(!Array.isArray(PREFS.bagProfilesV2) || !PREFS.bagProfilesV2.length){
+  PREFS.bagProfilesV2 = PREFS_DEFAULTS.bagProfilesV2.map(p=>({
+    ...p,
+    seconds: (PREFS.bagTimes && PREFS.bagTimes[p.id]) || p.seconds,
+  }));
+}
 function savePrefs(){ LS.set('vol_prefs', PREFS); }
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.3: BALLON VOLUMEN + PUMPZEIT BERECHNUNG
+═══════════════════════════════════════════════════════════════ */
+function calcBagVolume(lengthCm, diameterCm){
+  // Zylinder-Volumen: V = π × r² × L; r und L in cm → mm³ → Liter
+  const r = (diameterCm || 10) / 2;
+  const L = lengthCm || 0;
+  const cm3 = Math.PI * r * r * L;
+  return cm3 / 1000; // Liter
+}
+function calcBagSeconds(volumeL, pumpLpm){
+  const lpm = pumpLpm || PREFS.pumpLpm || 4.5;
+  // Sekunden = Volumen / (Liter pro Sekunde)
+  const lps = lpm / 60;
+  return Math.round(volumeL / lps);
+}
+function recalcBagSeconds(profile){
+  const v = calcBagVolume(profile.length, profile.diameter);
+  return calcBagSeconds(v, PREFS.pumpLpm);
+}
+function getBagProfileById(id){
+  return PREFS.bagProfilesV2.find(p=>p.id===id) || PREFS.bagProfilesV2[0];
+}
+function getCurrentBag(){
+  return getBagProfileById(PREFS.selectedBagId);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    AROMA / SORTEN-DATENBANK (v4.5 - massiv erweitert)
@@ -5211,6 +5417,54 @@ function wire(){
   $('#btnMqttConnect')?.addEventListener('click', mqttConnectStart);
   $('#btnMqttDisconnect')?.addEventListener('click', ()=>{ mqttDisconnect(); toast('MQTT getrennt'); });
 
+  // ═════ v4.9.4 wiring: Siri/Google Shortcuts ═════
+  $('#btnOpenShortcuts')?.addEventListener('click', openShortcutsModal);
+  $('#btnOpenShortcutsFromSettings')?.addEventListener('click', ()=>{
+    $('#modalSettings').classList.remove('open');
+    setTimeout(openShortcutsModal, 250);
+  });
+  $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalShortcuts').classList.remove('open'));
+
+  // ═════ v4.9.3 wiring: Bag Profile Editor ═════
+  $('#btnBagEdClose')?.addEventListener('click', ()=>$('#modalBagEditor').classList.remove('open'));
+  $('#btnBagEdSave')?.addEventListener('click', saveBagEditor);
+  $('#btnBagEdDelete')?.addEventListener('click', deleteBagEditor);
+  $('#btnBagEdAutoSec')?.addEventListener('click', applyAutoBagSec);
+  $('#btnBagEdCalibrate')?.addEventListener('click', calibrateBagPumpLpm);
+  // Steppers
+  $('#bagEdLenMinus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdLen'); el.value = Math.max(10, (parseInt(el.value)||30)-1);
+    updateBagEditorCalc();
+  });
+  $('#bagEdLenPlus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdLen'); el.value = Math.min(200, (parseInt(el.value)||30)+1);
+    updateBagEditorCalc();
+  });
+  $('#bagEdDiaMinus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdDia'); el.value = (Math.max(4, (parseFloat(el.value)||10)-0.5)).toFixed(1);
+    updateBagEditorCalc();
+  });
+  $('#bagEdDiaPlus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdDia'); el.value = (Math.min(20, (parseFloat(el.value)||10)+0.5)).toFixed(1);
+    updateBagEditorCalc();
+  });
+  $('#bagEdSecMinus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdSec'); el.value = Math.max(5, (parseInt(el.value)||30)-1);
+  });
+  $('#bagEdSecPlus')?.addEventListener('click', ()=>{
+    const el = $('#bagEdSec'); el.value = Math.min(180, (parseInt(el.value)||30)+1);
+  });
+  // Live-Update on type input
+  $('#bagEdLen')?.addEventListener('input', updateBagEditorCalc);
+  $('#bagEdDia')?.addEventListener('input', updateBagEditorCalc);
+  // Type-Default beim Wechsel
+  $('#bagEdType')?.addEventListener('change', ()=>{
+    const type = $('#bagEdType').value;
+    if(type === 'easy') $('#bagEdDia').value = 8;
+    else if(type === 'solid') $('#bagEdDia').value = 10;
+    updateBagEditorCalc();
+  });
+
   // ═════ v4.9 wiring: Settings Sub-Tabs ═════
   document.querySelectorAll('[data-set-tab]').forEach(b=>{
     b.addEventListener('click', ()=>switchSettingsTab(b.dataset.setTab));
@@ -5766,35 +6020,53 @@ function openBagModal(){
 function renderBagPicker(){
   const root = $('#bagTypePicker'); if(!root) return;
   root.innerHTML='';
-  for(const [id, p] of Object.entries(BAG_PROFILES)){
+  // v4.9.3: bagProfilesV2 mit echten Volumen-Werten
+  for(const p of (PREFS.bagProfilesV2||[])){
     const div=document.createElement('div');
-    const active = PREFS.bagType===id;
+    const active = PREFS.selectedBagId===p.id;
+    const vol = calcBagVolume(p.length, p.diameter);
     div.className = 'dev-card '+(active?'active':'');
     div.innerHTML = `
       <span class="dev-icon">💨</span>
       <div class="dev-info">
-        <b>${escapeHtml(p.label)}</b>
-        <small>${p.volume} · ${PREFS.bagTimes[id]} Sek.</small>
+        <b>${escapeHtml(p.name)}</b>
+        <small>${vol.toFixed(2)} L · ${p.seconds} Sek. · ${p.length}cm × ⌀${p.diameter}cm</small>
       </div>
       ${active?'<span class="dev-status ready">aktiv</span>':''}
     `;
     div.addEventListener('click', ()=>{
-      PREFS.bagType = id;
+      PREFS.selectedBagId = p.id;
       savePrefs();
       renderBagPicker();
-      $('#bagCustomTime').style.display = (id==='custom')?'flex':'none';
-      $('#bagCustInput').value = PREFS.bagTimes[id];
       renderBagCurrent();
     });
     root.appendChild(div);
   }
-  $('#bagCustomTime').style.display = (PREFS.bagType==='custom')?'flex':'none';
-  $('#bagCustInput').value = PREFS.bagTimes[PREFS.bagType];
+  // "Neues Profil" Button im Bag-Modal
+  const addBtn = document.createElement('div');
+  addBtn.className = 'dev-card';
+  addBtn.style.cssText = 'border-style:dashed;opacity:.7';
+  addBtn.innerHTML = `
+    <span class="dev-icon">+</span>
+    <div class="dev-info">
+      <b>Neues Profil</b>
+      <small>Länge/Durchmesser eingeben</small>
+    </div>
+  `;
+  addBtn.addEventListener('click', ()=>{
+    $('#modalBag').classList.remove('open');
+    openBagEditor(null);
+  });
+  root.appendChild(addBtn);
+  // Hide alte custom-time Stepper (jetzt im Editor)
+  const ct = $('#bagCustomTime');
+  if(ct) ct.style.display = 'none';
 }
 function renderBagCurrent(){
   const el = $('#bagCurrent'); if(!el) return;
-  const p = BAG_PROFILES[PREFS.bagType];
-  el.textContent = `Aktueller Typ: ${p.label} · ${PREFS.bagTimes[PREFS.bagType]} Sek.`;
+  const p = getCurrentBag();
+  const vol = calcBagVolume(p.length, p.diameter);
+  el.textContent = `Aktueller Typ: ${p.name} · ${vol.toFixed(2)} L · ${p.seconds} Sek.`;
 }
 
 async function startBagFill(){
@@ -5810,12 +6082,9 @@ async function startBagFill(){
   }
   // v4.6: Bags-Limit prüfen
   if(!checkBagsLimit()){ return; }
-  // Save custom time if changed
-  if(PREFS.bagType==='custom'){
-    PREFS.bagTimes.custom = clamp(parseInt($('#bagCustInput').value)||30, 5, 120);
-    savePrefs();
-  }
-  const total = PREFS.bagTimes[PREFS.bagType];
+  // v4.9.3: Total aus selektiertem Profil
+  const currentBag = getCurrentBag();
+  const total = currentBag.seconds;
   bagRunState = { stop:false, total, elapsed:0 };
   $('#bagSelectBox').hidden = true;
   $('#bagRunBox').hidden = false;
@@ -6454,43 +6723,164 @@ function openSettings(){
 function renderBagProfileSettings(){
   const root = $('#bagProfileList'); if(!root) return;
   root.innerHTML='';
-  for(const [id, p] of Object.entries(BAG_PROFILES)){
+  // v4.9.3: bagProfilesV2 als Array, Volumen + Sekunden berechnet
+  for(const p of (PREFS.bagProfilesV2||[])){
+    const vol = calcBagVolume(p.length, p.diameter);
     const row = document.createElement('div');
-    row.className='toggle-row';
+    row.className = 'toggle-row';
+    row.style.cursor = 'pointer';
     row.innerHTML = `
-      <div class="info">
-        <b>${escapeHtml(p.label)}</b>
-        <small>${p.volume} · aktuell ${PREFS.bagTimes[id]} Sek.</small>
+      <div class="info" style="flex:1">
+        <b>${escapeHtml(p.name)} ${p.calibrated?'<span style="font-size:10px;color:var(--ok);font-family:var(--font-mono)">KALIBRIERT</span>':''}</b>
+        <small>${vol.toFixed(2)} L · ${p.seconds} s · ⌀${p.diameter} cm · ${p.length} cm lang</small>
       </div>
-      <div class="stepper" style="width:130px;flex-shrink:0">
-        <button data-bagminus="${id}">−</button>
-        <input class="mono" type="number" min="5" max="120" step="1" value="${PREFS.bagTimes[id]}" data-bagval="${id}" inputmode="numeric">
-        <button data-bagplus="${id}">+</button>
-      </div>
+      <button class="btn sm ghost" data-bagedit="${p.id}" aria-label="Bearbeiten" style="padding:6px 10px;min-height:auto">✎</button>
     `;
+    row.querySelector('[data-bagedit]').addEventListener('click', e=>{
+      e.stopPropagation();
+      openBagEditor(p.id);
+    });
     root.appendChild(row);
   }
-  root.querySelectorAll('[data-bagminus]').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const id = b.dataset.bagminus;
-      PREFS.bagTimes[id] = Math.max(5, PREFS.bagTimes[id]-1);
-      savePrefs(); renderBagProfileSettings(); renderBagCurrent();
-    });
+  // Neues Profil hinzufügen
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn sm ghost block';
+  addBtn.textContent = '+ Neues Ballon-Profil';
+  addBtn.style.marginTop = '8px';
+  addBtn.addEventListener('click', ()=>openBagEditor(null));
+  root.appendChild(addBtn);
+  // Pumpleistung
+  const lpmRow = document.createElement('div');
+  lpmRow.className = 'toggle-row';
+  lpmRow.style.marginTop = '14px';
+  lpmRow.innerHTML = `
+    <div class="info">
+      <b>Pumpleistung (L/min)</b>
+      <small>Effektiv mit Folien-Widerstand. Standard: 4.5 L/min (Volcano Hybrid)</small>
+    </div>
+    <input class="input mono" id="pumpLpmInput" type="number" min="1" max="20" step="0.1" value="${PREFS.pumpLpm||4.5}" style="width:90px" aria-label="Pumpleistung L pro min">
+  `;
+  lpmRow.querySelector('#pumpLpmInput').addEventListener('change', e=>{
+    PREFS.pumpLpm = Math.max(1, Math.min(20, parseFloat(e.target.value)||4.5));
+    savePrefs();
+    renderBagProfileSettings();
   });
-  root.querySelectorAll('[data-bagplus]').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const id = b.dataset.bagplus;
-      PREFS.bagTimes[id] = Math.min(120, PREFS.bagTimes[id]+1);
-      savePrefs(); renderBagProfileSettings(); renderBagCurrent();
-    });
-  });
-  root.querySelectorAll('[data-bagval]').forEach(inp=>{
-    inp.addEventListener('change', ()=>{
-      const id = inp.dataset.bagval;
-      PREFS.bagTimes[id] = clamp(parseInt(inp.value)||30,5,120);
-      savePrefs(); renderBagCurrent();
-    });
-  });
+  root.appendChild(lpmRow);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.3: BAG PROFILE EDITOR
+═══════════════════════════════════════════════════════════════ */
+let _bagEditingId = null;
+
+function openBagEditor(id){
+  _bagEditingId = id;
+  let p;
+  if(id){
+    p = getBagProfileById(id);
+    $('#bagEditorTitle').textContent = 'Ballon: '+p.name;
+    $('#btnBagEdDelete').style.display = (PREFS.bagProfilesV2.length > 1) ? '' : 'none';
+  } else {
+    p = {name:'Mein Ballon', type:'easy', length:50, diameter:10, seconds:30, calibrated:false};
+    $('#bagEditorTitle').textContent = 'Neues Ballon-Profil';
+    $('#btnBagEdDelete').style.display = 'none';
+  }
+  $('#bagEdName').value = p.name;
+  $('#bagEdType').value = p.type;
+  $('#bagEdLen').value = p.length;
+  $('#bagEdDia').value = p.diameter;
+  $('#bagEdSec').value = p.seconds;
+  $('#bagEdLpmOut').textContent = (PREFS.pumpLpm||4.5).toFixed(1);
+  updateBagEditorCalc();
+  $('#modalBagEditor').classList.add('open');
+}
+function updateBagEditorCalc(){
+  const len = parseFloat($('#bagEdLen').value) || 0;
+  const dia = parseFloat($('#bagEdDia').value) || 10;
+  const vol = calcBagVolume(len, dia);
+  const sec = calcBagSeconds(vol, PREFS.pumpLpm);
+  $('#bagEdVolumeOut').textContent = vol.toFixed(2) + ' L';
+  $('#bagEdSecOut').textContent = sec + ' s';
+}
+function applyAutoBagSec(){
+  const len = parseFloat($('#bagEdLen').value) || 0;
+  const dia = parseFloat($('#bagEdDia').value) || 10;
+  const vol = calcBagVolume(len, dia);
+  const sec = calcBagSeconds(vol, PREFS.pumpLpm);
+  $('#bagEdSec').value = sec;
+}
+function calibrateBagPumpLpm(){
+  // Aus aktueller Länge + Durchmesser + manuelle Sekunden die Pumpleistung ableiten
+  const len = parseFloat($('#bagEdLen').value) || 0;
+  const dia = parseFloat($('#bagEdDia').value) || 10;
+  const sec = parseFloat($('#bagEdSec').value) || 0;
+  const vol = calcBagVolume(len, dia);
+  if(!sec || sec < 5){
+    toast('Sekunden mindestens 5');
+    return;
+  }
+  if(!vol || vol < 0.1){
+    toast('Volumen zu klein');
+    return;
+  }
+  // L/min = (Volumen / Sek) × 60
+  const newLpm = (vol / sec) * 60;
+  if(newLpm < 1 || newLpm > 20){
+    toast('Ergebnis unrealistisch: '+newLpm.toFixed(1)+' L/min');
+    return;
+  }
+  if(!confirm(`Neue Pumpleistung: ${newLpm.toFixed(2)} L/min (war ${(PREFS.pumpLpm||4.5).toFixed(2)}).\n\nÜbernehmen? Dann werden alle anderen Profile mit dieser Annahme neu berechnet.`)) return;
+  PREFS.pumpLpm = parseFloat(newLpm.toFixed(2));
+  $('#bagEdLpmOut').textContent = PREFS.pumpLpm.toFixed(1);
+  updateBagEditorCalc();
+  // Mark this profile as calibrated
+  if(_bagEditingId){
+    const prof = getBagProfileById(_bagEditingId);
+    if(prof) prof.calibrated = true;
+  }
+  savePrefs();
+  toast('Pumpleistung kalibriert');
+}
+function saveBagEditor(){
+  const name = $('#bagEdName').value.trim() || 'Ballon';
+  const type = $('#bagEdType').value;
+  const length = Math.max(10, Math.min(200, parseInt($('#bagEdLen').value)||30));
+  const diameter = Math.max(4, Math.min(20, parseFloat($('#bagEdDia').value)||10));
+  const seconds = Math.max(5, Math.min(180, parseInt($('#bagEdSec').value)||30));
+  // Detect manual override (User hat anders gesetzt als Auto-Vorschlag)
+  const autoSec = calcBagSeconds(calcBagVolume(length, diameter), PREFS.pumpLpm);
+  const calibrated = Math.abs(seconds - autoSec) > 2;
+  if(_bagEditingId){
+    const p = getBagProfileById(_bagEditingId);
+    p.name = name; p.type = type; p.length = length; p.diameter = diameter; p.seconds = seconds;
+    if(calibrated) p.calibrated = true;
+  } else {
+    const newId = 'bag_'+Date.now();
+    PREFS.bagProfilesV2.push({id:newId, name, type, length, diameter, seconds, calibrated});
+    PREFS.selectedBagId = newId;
+  }
+  savePrefs();
+  renderBagProfileSettings();
+  renderBagCurrent();
+  $('#modalBagEditor').classList.remove('open');
+  toast('Profil gespeichert');
+}
+function deleteBagEditor(){
+  if(!_bagEditingId) return;
+  if(PREFS.bagProfilesV2.length <= 1){
+    toast('Mindestens ein Profil muss bleiben');
+    return;
+  }
+  if(!confirm('Profil löschen?')) return;
+  PREFS.bagProfilesV2 = PREFS.bagProfilesV2.filter(p=>p.id!==_bagEditingId);
+  if(PREFS.selectedBagId === _bagEditingId){
+    PREFS.selectedBagId = PREFS.bagProfilesV2[0].id;
+  }
+  savePrefs();
+  renderBagProfileSettings();
+  renderBagCurrent();
+  $('#modalBagEditor').classList.remove('open');
+  toast('Profil gelöscht');
 }
 function exportAllData(){
   const blob = new Blob([JSON.stringify({
@@ -6566,7 +6956,10 @@ function applyCapabilitiesUI(){
   const dmeta = $('#qaDirectMeta');
   if(dmeta) dmeta.textContent = (PREFS.directDrawSec||5)+' Sek.';
   const bmeta = $('#qaBagMeta');
-  if(bmeta) bmeta.textContent = (PREFS.bagTimes[PREFS.bagType]||38)+' Sek.';
+  if(bmeta){
+    const cb = getCurrentBag();
+    bmeta.textContent = cb.seconds+' Sek.';
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -8466,6 +8859,8 @@ const MANUAL = [
     {q:'Raw BLE-Console', a:'Setup → Werkzeuge → 📟 Console: Hex-Bytes pro Char schreiben/lesen.'},
     {q:'Webhook bei Events', a:'Einstellungen → Externe Integration → URL eingeben. POST mit JSON bei Heizer-an / Bag-Done / Fehler.'},
     {q:'MQTT-Publisher', a:'Einstellungen → Externe Integration → WSS-URL und Topic-Prefix. Verbindet sich mit MQTT-Broker und published Events.'},
+    {q:'Siri / Google Assistant', a:'Setup → Werkzeuge → 🎙 Sprach-Shortcuts. App reagiert auf URLs wie ?cmd=heat-on. Lege in Siri-Kurzbefehlen einen Befehl an: „URL öffnen" mit der gewünschten URL, Phrase festlegen, fertig.'},
+    {q:'URL-Commands', a:'Beispiele: ?cmd=heat-on, ?cmd=heat-off, ?cmd=set&temp=185, ?cmd=fill, ?cmd=direct, ?cmd=stop, ?cmd=status, ?cmd=program&name=Sativa, ?cmd=preheat&temp=185&min=10.'},
     {q:'DevTools-Console', a:'F12 → `sessions.about()` zeigt App-Info. `sessions.state` zeigt State, `sessions.prefs` zeigt Einstellungen.'},
   ]},
   {cat:'Tipps', icon:'💡', items:[
@@ -8575,6 +8970,7 @@ const TOOLTIPS = {
   'btnOpenManual':'Vollständige Anleitung mit allen Funktionen',
   'btnOpenBleConsole':'Raw BLE-Console für Forscher und Bastler',
   'btnOpenDsl':'Programm-Skript-Sprache: heat 180; pump 25s',
+  'btnOpenShortcuts':'Siri-Kurzbefehle und Google-Routinen einrichten',
   'btnAddCustomProfile':'Eigenes Geräteprofil mit Custom-UUIDs anlegen',
   'btnReplayLast':'Zuletzt gelaufenes Programm nochmal starten',
   'btnNewProg':'Neues eigenes Programm erstellen',
@@ -9053,6 +9449,179 @@ function mqttPublish(subTopic, value){
   }catch{}
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.4: URL COMMAND HANDLER (Siri Shortcuts, Google Routinen, etc.)
+   Beispiele:
+     ?cmd=heat-on
+     ?cmd=set&temp=185
+     ?cmd=fill
+     ?cmd=program&name=Sativa
+═══════════════════════════════════════════════════════════════ */
+const URL_COMMANDS = {
+  'heat-on':       {label:'Heizer an',         needsBle:true,  fn:async()=>{ await cmdHeaterOn(); ttsSay('Heizer an'); }},
+  'heat-off':      {label:'Heizer aus',        needsBle:true,  fn:async()=>{ await cmdHeaterOff(); ttsSay('Heizer aus'); }},
+  'pump-on':       {label:'Pumpe an',          needsBle:true,  fn:async()=>{ await cmdPumpOn(); ttsSay('Pumpe an'); }},
+  'pump-off':      {label:'Pumpe aus',         needsBle:true,  fn:async()=>{ await cmdPumpOff(); ttsSay('Pumpe aus'); }},
+  'set':           {label:'Temperatur setzen', needsBle:true,  fn:async(params)=>{ const t = parseInt(params.temp)||185; await cmdSetTemp(t); ttsSay(`Temperatur ${t} Grad`); }},
+  'temp-up':       {label:'+1 Grad',           needsBle:true,  fn:async()=>{ const t=Math.min(230, (State.target||180)+1); await cmdSetTemp(t); ttsSay(`${t} Grad`); }},
+  'temp-down':     {label:'-1 Grad',           needsBle:true,  fn:async()=>{ const t=Math.max(40,  (State.target||180)-1); await cmdSetTemp(t); ttsSay(`${t} Grad`); }},
+  'fill':          {label:'Ballon füllen',     needsBle:true,  fn:async()=>{ openBagModal(); setTimeout(()=>startBagFill(), 500); }},
+  'direct':        {label:'Direkt-Zug',        needsBle:true,  fn:async()=>{ await doDirectDraw(); ttsSay('Direktzug läuft'); }},
+  'stop':          {label:'Notaus',            needsBle:false, fn:async()=>{ try{ await emergencyStop(); }catch{} ttsSay('Alles gestoppt'); }},
+  'status':        {label:'Status vorlesen',   needsBle:false, fn:async()=>{ speakStatus(); }},
+  'program':       {label:'Programm starten',  needsBle:true,  fn:async(params)=>{
+    const name = (params.name || params.n || '').toLowerCase();
+    if(!name){ ttsSay('Programmname fehlt'); return; }
+    const prog = State.programs.find(p => p.name.toLowerCase().includes(name));
+    if(!prog){ ttsSay('Programm nicht gefunden'); return; }
+    ttsSay(`Starte ${prog.name}`); runProgram(prog);
+  }},
+  'preheat':       {label:'Pre-Heat',          needsBle:true,  fn:async(params)=>{
+    const temp = parseInt(params.temp) || 185;
+    const min = parseInt(params.min) || 10;
+    schedulePreheat(min, temp);
+    ttsSay(`Vorheizen in ${min} Minuten auf ${temp} Grad`);
+  }},
+};
+
+function ttsSay(text){
+  if(!('speechSynthesis' in window)) return;
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'de-DE'; u.rate = 1.05;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+
+async function handleUrlCommand(){
+  const params = new URLSearchParams(location.search);
+  const cmd = params.get('cmd');
+  if(!cmd) return;
+  const handler = URL_COMMANDS[cmd];
+  if(!handler){
+    ttsSay('Unbekannter Befehl');
+    toast('Unbekannter URL-Command: '+cmd);
+    return;
+  }
+  // Cleanup URL damit bei Reload nichts neu ausgeführt wird
+  try{ history.replaceState(null, '', location.pathname); }catch{}
+  // BLE-Status prüfen
+  if(handler.needsBle && !State.connected){
+    // Auto-Reconnect-Versuch
+    toast('Benötigt Bluetooth-Verbindung — versuche zu verbinden…');
+    try{
+      // Schaue ob bereits gepaired Devices da sind
+      if(navigator.bluetooth && navigator.bluetooth.getDevices){
+        const devices = await navigator.bluetooth.getDevices();
+        if(devices && devices.length){
+          // Versuche erstes verfügbares Device
+          State.device = devices[0];
+          // Trigger pair → bekannte BLE-Connect-Logik nutzen
+        }
+      }
+    }catch(e){}
+    // Wenn nach 2s nicht verbunden: nur Toast, kein BLE-Auto
+    setTimeout(()=>{
+      if(!State.connected){
+        toast('„'+handler.label+'" wartet auf Verbindung. Tippe Verbinden.');
+        ttsSay('Erst verbinden');
+      } else {
+        handler.fn(Object.fromEntries(params));
+      }
+    }, 2500);
+    return;
+  }
+  // Direkter Aufruf
+  toast('🎤 '+handler.label);
+  try{ await handler.fn(Object.fromEntries(params)); }
+  catch(e){ toast('Fehler: '+e.message); ttsSay('Fehler'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.4: SIRI/GOOGLE-SHORTCUT ANLEITUNG
+═══════════════════════════════════════════════════════════════ */
+function getShortcutBaseUrl(){
+  return location.origin + location.pathname;
+}
+function generateShortcutExamples(){
+  const base = getShortcutBaseUrl();
+  return [
+    {label:'Heizer an',           url:base+'?cmd=heat-on'},
+    {label:'Heizer aus',          url:base+'?cmd=heat-off'},
+    {label:'Auf 185°C aufheizen', url:base+'?cmd=set&temp=185'},
+    {label:'Auf 200°C aufheizen', url:base+'?cmd=set&temp=200'},
+    {label:'Ballon füllen',       url:base+'?cmd=fill'},
+    {label:'Direkt-Zug',          url:base+'?cmd=direct'},
+    {label:'Notaus',              url:base+'?cmd=stop'},
+    {label:'Status vorlesen',     url:base+'?cmd=status'},
+    {label:'Pre-Heat 10 Min/185°',url:base+'?cmd=preheat&temp=185&min=10'},
+  ];
+}
+function openShortcutsModal(){
+  renderShortcutExamples();
+  $('#modalShortcuts').classList.add('open');
+}
+function renderShortcutExamples(){
+  const root = $('#shortcutsList');
+  if(!root) return;
+  root.innerHTML = '';
+  const examples = generateShortcutExamples();
+  for(const ex of examples){
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:6px';
+    div.innerHTML = `
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${escapeHtml(ex.label)}</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);word-break:break-all;margin-bottom:6px">${escapeHtml(ex.url)}</div>
+      <button class="btn sm ghost" data-copy="${escapeHtml(ex.url)}" style="font-size:11px;padding:4px 8px">📋 URL kopieren</button>
+    `;
+    div.querySelector('[data-copy]').addEventListener('click', async (e)=>{
+      const url = e.currentTarget.dataset.copy;
+      try{
+        await navigator.clipboard.writeText(url);
+        toast('URL kopiert');
+      }catch{
+        toast('Kopieren fehlgeschlagen — manuell auswählen');
+      }
+    });
+    root.appendChild(div);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.4: PLATTFORM-ERKENNUNG + COMPATIBILITY BANNER
+═══════════════════════════════════════════════════════════════ */
+function detectPlatform(){
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+  const isBluefy = /Bluefy/i.test(ua);
+  const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/OPR/i.test(ua);
+  const isEdge = /Edg/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isMobile = /Mobi|Android|iPhone/i.test(ua);
+  const hasBluetooth = 'bluetooth' in navigator;
+  return {isIOS, isSafari, isBluefy, isChrome, isEdge, isAndroid, isMobile, hasBluetooth};
+}
+
+function showPlatformBanner(){
+  const p = detectPlatform();
+  // Wenn iOS Safari ohne Bluefy: Banner anzeigen
+  if(p.isIOS && !p.isBluefy && !p.hasBluetooth){
+    const banner = document.createElement('div');
+    banner.className = 'platform-banner';
+    banner.innerHTML = `
+      <div>
+        <b>📱 iOS Safari</b><br>
+        <small>Für Bluetooth-Steuerung brauchst du die kostenlose App „Bluefy" aus dem App Store. Damit kannst du den Volcano per BLE steuern. Die App selbst funktioniert auch hier — nur ohne BLE.</small>
+      </div>
+      <button aria-label="Banner schließen">×</button>
+    `;
+    banner.querySelector('button').addEventListener('click', ()=>banner.remove());
+    document.body.appendChild(banner);
+    setTimeout(()=>banner.classList.add('show'), 100);
+  }
+}
+
 
 async function init(){
   // v4.5: apply theme first to avoid flash
@@ -9148,7 +9717,12 @@ async function init(){
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.9.2 bereit.','ok');
+  // v4.9.4: Platform-Banner + URL-Command
+  showPlatformBanner();
+  // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
+  setTimeout(handleUrlCommand, 800);
+
+  log('Sessions v4.9.4 bereit.','ok');
 
   setupPwaUpdate();
 

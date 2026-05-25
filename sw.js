@@ -1,5 +1,5 @@
 // Sessions (formerly Volcano Controller) — app-shell SW
-const VERSION = 'v4.9.2';
+const VERSION = 'v4.9.4';
 const CACHE = `sessions-${VERSION}`;
 const SHELL = [
   './',
@@ -30,6 +30,11 @@ self.addEventListener('fetch', e=>{
   if(req.method!=='GET') return;
   const url=new URL(req.url);
 
+  // v4.9.4: Google Fonts NICHT intercepten (vermeidet ORB-Blocking durch opaque Responses)
+  if(url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com'){
+    return; // Browser lädt direkt
+  }
+
   // v4.8: Wetter API immer network-first (Daten sollen frisch sein)
   if(url.hostname === 'api.open-meteo.com' || url.hostname === 'geocoding-api.open-meteo.com'){
     e.respondWith(fetch(req).catch(()=>caches.match(req)));
@@ -46,7 +51,7 @@ self.addEventListener('fetch', e=>{
       }).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html')))
     );
   }else{
-    // Cross-origin (fonts etc.): cache-first
+    // Cross-origin (other CDNs etc.): cache-first
     e.respondWith(
       caches.match(req).then(r=>r || fetch(req).then(res=>{
         const copy=res.clone();
