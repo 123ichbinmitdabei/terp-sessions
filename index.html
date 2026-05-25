@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0908">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Volcano">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Volcano Controller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0908;
+  --bg-1:#15120f;
+  --bg-2:#1c1a17;
+  --bg-3:#252220;
+  --line:#2e2a27;
+  --text:#f5f3ee;
+  --muted:#8a8378;
+  --dim:#5a544c;
+  --hot:#ff5722;
+  --hot-soft:#ff8a65;
+  --heat:#f59e0b;
+  --cool:#38bdf8;
+  --ok:#10b981;
+  --warn:#facc15;
+  --err:#ef4444;
+  --shadow:0 8px 30px rgba(0,0,0,.4);
+  --r:14px;
+  --r-sm:10px;
+  --r-lg:20px;
+  --safe-top:env(safe-area-inset-top);
+  --safe-bot:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior-y:none}
+body{
+  margin:0;
+  font-family:'Bricolage Grotesque',ui-sans-serif,system-ui;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.45;
+  padding-top:var(--safe-top);
+  padding-bottom:calc(76px + var(--safe-bot));
+  background-image:
+    radial-gradient(1200px 600px at 50% -200px, rgba(255,87,34,.08), transparent),
+    radial-gradient(800px 400px at 100% 100%, rgba(56,189,248,.04), transparent);
+}
+.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-feature-settings:"tnum" 1}
+button{font:inherit;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+
+/* ── Top bar ─────────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  padding:14px 18px 12px;
+  background:linear-gradient(180deg, rgba(10,9,8,.97), rgba(10,9,8,.85));
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--dim);transition:.3s}
+.brand-dot.on{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.brand-dot.warn{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--line);
+  font-size:12px;color:var(--muted);
+}
+.chip.on{color:var(--ok);border-color:rgba(16,185,129,.35)}
+.chip.run{color:var(--hot);border-color:rgba(255,87,34,.4);background:rgba(255,87,34,.07)}
+
+/* ── Container & cards ───────────────────────────────────────── */
+.wrap{padding:16px 14px 24px;max-width:560px;margin:0 auto}
+.card{
+  background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+.card h3{margin:0 0 10px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row.tight{gap:6px}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 16px;min-height:48px;
+  background:var(--bg-3);color:var(--text);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  font-weight:600;
+  cursor:pointer;
+  transition:transform .12s, background .15s, border-color .15s;
+  user-select:none;-webkit-user-select:none;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.lg{padding:16px 20px;min-height:56px;font-size:16px}
+.btn.sm{padding:9px 12px;min-height:36px;font-size:13px}
+.btn.block{width:100%}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn.hot{background:var(--hot);color:#fff;border-color:var(--hot);box-shadow:0 6px 20px rgba(255,87,34,.35)}
+.btn.hot:hover{background:#ff6f44}
+.btn.ghost{background:transparent}
+.btn.danger{background:transparent;color:var(--err);border-color:rgba(239,68,68,.4)}
+.btn.cool{background:rgba(56,189,248,.12);color:var(--cool);border-color:rgba(56,189,248,.35)}
+
+/* ── Hero: temperature display ──────────────────────────────── */
+.hero{
+  position:relative;
+  border-radius:var(--r-lg);
+  padding:22px 18px 18px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(255,87,34,.18), transparent 60%),
+    linear-gradient(180deg,#1f1612,#15110e);
+  border:1px solid var(--line);
+  overflow:hidden;
+  margin-bottom:14px;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(60% 80% at 50% 100%, rgba(255,87,34,calc(var(--heat-level, 0)*.45)), transparent 70%);
+  transition:opacity .6s;
+}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;position:relative;z-index:1}
+.t-current{display:flex;align-items:baseline;gap:6px}
+.t-current .val{font-size:72px;font-weight:800;line-height:.95;letter-spacing:-.04em;font-family:'JetBrains Mono'}
+.t-current .unit{font-size:22px;color:var(--muted);font-weight:600}
+.t-meta{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.t-target{font-size:18px;color:var(--muted);font-family:'JetBrains Mono'}
+.t-target b{color:var(--text)}
+.indicators{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.ind{
+  flex:1;padding:10px 12px;border-radius:var(--r);
+  background:rgba(255,255,255,.03);border:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;font-size:13px;
+}
+.ind .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.ind.on .dot{background:var(--hot);box-shadow:0 0 10px var(--hot)}
+.ind.on-cool .dot{background:var(--cool);box-shadow:0 0 10px var(--cool)}
+.ind.on{color:var(--hot-soft);border-color:rgba(255,87,34,.3)}
+.ind.on-cool{color:var(--cool);border-color:rgba(56,189,248,.3)}
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+.input,.select,textarea.input{
+  width:100%;padding:12px 14px;min-height:48px;
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  outline:none;
+  transition:border-color .15s;
+}
+.input:focus,.select:focus,textarea.input:focus{border-color:var(--hot)}
+.field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+
+/* Quick temp pills */
+.pills{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.pill{
+  padding:10px 6px;border-radius:var(--r-sm);
+  background:var(--bg-3);border:1px solid var(--line);
+  font-size:13px;font-weight:600;text-align:center;cursor:pointer;
+  font-family:'JetBrains Mono';
+}
+.pill:active{transform:scale(.96)}
+.pill.active{background:rgba(255,87,34,.15);color:var(--hot);border-color:var(--hot)}
+
+/* Number stepper */
+.stepper{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stepper button{
+  background:var(--bg-3);border:0;padding:0 18px;min-width:48px;
+  font-size:20px;font-weight:600;color:var(--text);cursor:pointer;
+}
+.stepper button:active{background:var(--bg-2)}
+.stepper input{
+  flex:1;border:0;background:var(--bg);text-align:center;
+  font-family:'JetBrains Mono';font-size:18px;font-weight:600;
+  min-width:0;padding:0 6px;
+}
+
+/* ── Bottom nav ──────────────────────────────────────────────── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;
+  background:rgba(10,9,8,.94);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  display:flex;justify-content:space-around;
+  padding:8px 8px calc(8px + var(--safe-bot));
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 4px;border:0;background:transparent;
+  color:var(--dim);font-size:11px;font-weight:600;
+  border-radius:var(--r);transition:color .15s;
+  cursor:pointer;
+}
+.nav-btn .ico{font-size:22px;line-height:1}
+.nav-btn.active{color:var(--hot)}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+.tab{display:none}
+.tab.active{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── Programs ────────────────────────────────────────────────── */
+.prog-list{display:flex;flex-direction:column;gap:10px}
+.prog{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.prog-head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.prog-name{font-weight:700;font-size:16px}
+.prog-name small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:2px}
+.prog-tag{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);background:var(--bg);padding:3px 7px;border-radius:6px;
+  border:1px solid var(--line);white-space:nowrap;
+}
+.prog-tag.preset{color:var(--cool);border-color:rgba(56,189,248,.3)}
+.prog-tag.saved{color:var(--heat);border-color:rgba(245,158,11,.3)}
+.prog-steps{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);line-height:1.5}
+.prog-actions{display:flex;gap:6px;margin-top:4px}
+
+/* ── Workflow builder ───────────────────────────────────────── */
+.builder{display:flex;flex-direction:column;gap:8px}
+.step{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg-3);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:10px 12px;
+}
+.step .num{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono';font-size:12px;color:var(--muted);
+  flex-shrink:0;
+}
+.step .label{flex:1;font-size:14px}
+.step .label b{font-family:'JetBrains Mono';color:var(--hot-soft)}
+.step .move{
+  display:flex;flex-direction:column;gap:1px;
+}
+.step .move button{
+  background:transparent;border:0;color:var(--muted);
+  padding:0 4px;cursor:pointer;font-size:11px;
+}
+.step .move button:active{color:var(--text)}
+.step.running{border-color:var(--hot);background:rgba(255,87,34,.08)}
+.step.done{opacity:.45}
+
+/* Run progress */
+.run-card{
+  position:fixed;left:14px;right:14px;
+  bottom:calc(80px + var(--safe-bot));
+  z-index:35;
+  background:linear-gradient(180deg,#1f1612,#15110e);
+  border:1px solid rgba(255,87,34,.4);
+  border-radius:var(--r);
+  padding:12px 14px;
+  display:none;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
+.run-card.show{display:block;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.run-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.run-card .title{font-weight:700;font-size:14px}
+.run-card .meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono'}
+.bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.bar > div{height:100%;background:linear-gradient(90deg,var(--heat),var(--hot));transition:width .3s;width:0%}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:50;display:none}
+.modal.open{display:block}
+.modal .back{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
+.modal .sheet{
+  position:absolute;left:0;right:0;bottom:0;
+  background:var(--bg-1);border-top-left-radius:24px;border-top-right-radius:24px;
+  padding:20px 18px calc(20px + var(--safe-bot));
+  max-height:88vh;overflow:auto;
+  animation:slideUp .3s ease;
+}
+.modal .sheet .grab{
+  width:40px;height:4px;background:var(--line);border-radius:2px;
+  margin:-8px auto 14px;
+}
+.modal h2{margin:0 0 14px;font-size:20px;font-weight:800;letter-spacing:-.01em}
+
+/* Add step picker */
+.actions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.act{
+  padding:14px;text-align:left;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);
+  cursor:pointer;
+}
+.act:active{transform:scale(.98)}
+.act b{display:block;font-size:14px;margin-bottom:2px}
+.act small{color:var(--muted);font-size:11px}
+
+/* Log */
+.log{
+  font-family:'JetBrains Mono';font-size:11px;
+  background:#080706;border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:10px;
+  max-height:200px;overflow:auto;
+  color:#cfc9bf;line-height:1.5;
+  white-space:pre-wrap;
+}
+.log .err{color:var(--err)}
+.log .ok{color:var(--ok)}
+.log .warn{color:var(--warn)}
+
+/* Discovery output */
+details summary{cursor:pointer;color:var(--muted);font-size:13px;padding:6px 0}
+details summary:hover{color:var(--text)}
+
+/* Toast */
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(90px + var(--safe-bot));z-index:60;
+  background:var(--bg-3);color:var(--text);
+  padding:10px 16px;border-radius:999px;
+  border:1px solid var(--line);box-shadow:var(--shadow);
+  font-size:13px;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s, transform .2s;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+/* Footer note */
+.foot{font-size:11px;color:var(--dim);text-align:center;margin:18px 0}
+
+/* Small screens tweaks */
+@media (max-width:380px){
+  .t-current .val{font-size:62px}
+  .pills{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ───────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot" id="dot"></span>
+    <span>Volcano</span>
+  </div>
+  <div class="row tight">
+    <span class="chip" id="connChip">Getrennt</span>
+    <button class="btn sm ghost" id="btnConnect" aria-label="Verbinden">Verbinden</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ─── TAB: STEUERUNG ──────────────────────────────────────── -->
+<section class="tab active" id="tab-ctl">
+
+  <!-- Hero: live temperature -->
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="t-meta">Aktuelle Temperatur</div>
+        <div class="t-current">
+          <span class="val mono" id="tCurrent">––</span>
+          <span class="unit">°C</span>
+        </div>
+        <div class="t-target">Ziel: <b id="tTarget">––</b> °C</div>
+      </div>
+    </div>
+    <div class="indicators">
+      <div class="ind" id="indHeat"><span class="dot"></span><span>Heizer</span></div>
+      <div class="ind" id="indPump"><span class="dot"></span><span>Pumpe</span></div>
+    </div>
+  </div>
+
+  <!-- Manual temp control -->
+  <div class="card">
+    <h3>Manuelle Steuerung</h3>
+    <div class="field">
+      <label>Zieltemperatur (40–230 °C)</label>
+      <div class="stepper">
+        <button id="tMinus" aria-label="minus">−</button>
+        <input class="mono" id="tInput" type="number" min="40" max="230" step="1" value="185" inputmode="numeric">
+        <button id="tPlus" aria-label="plus">+</button>
+      </div>
+    </div>
+    <div class="pills">
+      <button class="pill" data-temp="170">170°</button>
+      <button class="pill" data-temp="180">180°</button>
+      <button class="pill" data-temp="185">185°</button>
+      <button class="pill" data-temp="190">190°</button>
+      <button class="pill" data-temp="195">195°</button>
+      <button class="pill" data-temp="200">200°</button>
+      <button class="pill" data-temp="210">210°</button>
+      <button class="pill" data-temp="220">220°</button>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary" id="btnSetTemp" style="flex:1">Temp setzen</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn hot" id="btnHeat" style="flex:1">Heizer aus</button>
+      <button class="btn cool" id="btnPump" style="flex:1">Pumpe aus</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label>Pumpe für (Sek.)</label>
+        <div class="stepper">
+          <button id="pMinus">−</button>
+          <input class="mono" id="pInput" type="number" min="1" max="120" step="1" value="15" inputmode="numeric">
+          <button id="pPlus">+</button>
+        </div>
+      </div>
+      <button class="btn lg" id="btnPumpFor" style="align-self:flex-end">Start</button>
+    </div>
+  </div>
+
+  <!-- Safety -->
+  <div class="card">
+    <h3>Sicherheits-Timer</h3>
+    <div class="row">
+      <div class="field">
+        <label>Auto-Aus nach (Minuten)</label>
+        <div class="stepper">
+          <button id="sMinus">−</button>
+          <input class="mono" id="sInput" type="number" min="1" max="60" step="1" value="20" inputmode="numeric">
+          <button id="sPlus">+</button>
+        </div>
+      </div>
+      <button class="btn" id="btnSafetyStart" style="align-self:flex-end">Start</button>
+      <button class="btn ghost" id="btnSafetyStop" style="align-self:flex-end">Stop</button>
+    </div>
+    <div class="mono" id="safetyState" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+
+</section>
+
+<!-- ─── TAB: PROGRAMME ──────────────────────────────────────── -->
+<section class="tab" id="tab-prog">
+
+  <div class="card">
+    <h3>Eigene Programme</h3>
+    <div class="prog-list" id="progSaved"></div>
+    <button class="btn block primary" id="btnNewProg" style="margin-top:10px">+ Neues Programm</button>
+  </div>
+
+  <div class="card">
+    <h3>Vorlagen</h3>
+    <div class="prog-list" id="progPresets"></div>
+  </div>
+
+  <div class="card">
+    <h3>Import / Export</h3>
+    <div class="row">
+      <button class="btn ghost" id="btnExportAll" style="flex:1">Export JSON</button>
+      <button class="btn ghost" id="btnImport" style="flex:1">Import JSON</button>
+      <input type="file" id="fileImport" accept="application/json" hidden>
+    </div>
+  </div>
+
+</section>
+
+<!-- ─── TAB: SETUP ──────────────────────────────────────────── -->
+<section class="tab" id="tab-setup">
+
+  <div class="card">
+    <h3>Bluetooth</h3>
+    <div class="row">
+      <button class="btn primary" id="btnConnect2" style="flex:1">Verbinden</button>
+      <button class="btn ghost" id="btnDisconnect" disabled>Trennen</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnDiscover" style="flex:1">Services scannen</button>
+      <button class="btn" id="btnAutoMap" style="flex:1">Auto-Mapping</button>
+    </div>
+    <details style="margin-top:10px">
+      <summary>Erkannte Services & Characteristics</summary>
+      <pre class="log" id="discoveryOut" style="margin-top:8px"></pre>
+    </details>
+  </div>
+
+  <div class="card">
+    <h3>UUID-Mapping</h3>
+    <div class="field">
+      <label>Service</label>
+      <input class="input mono" id="uuidService" value="10100000-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Set Temp (write)</label>
+      <input class="input mono" id="uuidSetTemp" value="10100006-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Current Temp (notify)</label>
+      <input class="input mono" id="uuidCurTemp" value="10110001-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Target Temp (notify, optional)</label>
+      <input class="input mono" id="uuidTargetNotify" value="1010000d-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Status (notify, Bits für Heizer/Pumpe)</label>
+      <input class="input mono" id="uuidStatus" value="1010000c-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Heater (write)</label>
+      <input class="input mono" id="uuidHeater" value="10110003-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Pump (write)</label>
+      <input class="input mono" id="uuidPump" value="10110004-5354-4f52-5a26-4249434b454c">
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn sm" id="btnSaveUUIDs">Speichern</button>
+      <button class="btn sm ghost" id="btnResetUUIDs">Standard</button>
+      <button class="btn sm" id="btnTestUUIDs">Test</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Protokoll</h3>
+    <pre class="log" id="log"></pre>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm ghost" id="btnClearLog">Log leeren</button>
+    </div>
+  </div>
+
+  <div class="foot">⚠️ Lass den Volcano niemals unbeaufsichtigt. Nutzung auf eigenes Risiko.</div>
+</section>
+
+</div>
+
+<!-- ── Run progress bar ─────────────────────────────────────── -->
+<div class="run-card" id="runCard">
+  <div class="head">
+    <div>
+      <div class="title" id="runTitle">Programm läuft</div>
+      <div class="meta" id="runMeta">Schritt 0 / 0</div>
+    </div>
+    <button class="btn sm danger" id="btnRunStop">Stop</button>
+  </div>
+  <div class="bar"><div id="runBar"></div></div>
+</div>
+
+<!-- ── Bottom nav ───────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="ctl"><span class="ico">🎛</span><span>Steuerung</span></button>
+  <button class="nav-btn" data-tab="prog"><span class="ico">⚙️</span><span>Programme</span></button>
+  <button class="nav-btn" data-tab="setup"><span class="ico">🔧</span><span>Setup</span></button>
+</nav>
+
+<!-- ── Modals ───────────────────────────────────────────────── -->
+<div class="modal" id="modalEditor">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="editorTitle">Programm bearbeiten</h2>
+    <div class="field" style="margin-bottom:12px">
+      <label>Name</label>
+      <input class="input" id="editorName" placeholder="z. B. Mein Aroma-Run">
+    </div>
+    <h3 style="margin:14px 0 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Schritte</h3>
+    <div class="builder" id="builder"></div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn block primary" id="btnAddStep">+ Schritt</button>
+    </div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn ghost" id="btnEditorCancel" style="flex:1">Abbrechen</button>
+      <button class="btn danger" id="btnEditorDelete" style="flex:1">Löschen</button>
+      <button class="btn primary" id="btnEditorSave" style="flex:2">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalAddStep">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Schritt hinzufügen</h2>
+    <div class="actions-grid">
+      <button class="act" data-action="heat_on"><b>🔥 Heizer an</b><small>Heizung einschalten</small></button>
+      <button class="act" data-action="heat_off"><b>❄️ Heizer aus</b><small>Heizung ausschalten</small></button>
+      <button class="act" data-action="set_temperature"><b>🌡 Temp setzen</b><small>Zieltemperatur</small></button>
+      <button class="act" data-action="wait_until"><b>⏳ Warten bis Ziel</b><small>Bis Temperatur erreicht</small></button>
+      <button class="act" data-action="wait"><b>⏱ Pause</b><small>X Sekunden warten</small></button>
+      <button class="act" data-action="pump_for"><b>💨 Pumpe X Sek.</b><small>Ballon füllen</small></button>
+      <button class="act" data-action="pump_on"><b>💨 Pumpe an</b><small>Dauerhaft</small></button>
+      <button class="act" data-action="pump_off"><b>⭘ Pumpe aus</b><small>Dauerhaft</small></button>
+    </div>
+    <button class="btn ghost block" id="btnAddStepCancel">Abbrechen</button>
+  </div>
+</div>
+
+<div class="modal" id="modalStepEdit">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="stepEditTitle">Schritt</h2>
+    <div id="stepEditBody"></div>
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button class="btn ghost" id="btnStepCancel" style="flex:1">Abbrechen</button>
+      <button class="btn primary" id="btnStepSave" style="flex:2">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE & UTILITIES
+═══════════════════════════════════════════════════════════════ */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const LS={
+  get:(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}},
+  del:k=>localStorage.removeItem(k)
+};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+const State={
+  connected:false,
+  device:null, server:null,
+  chars:{setTemp:null, curTemp:null, targetNotify:null, status:null, heater:null, pump:null},
+  allServices:[],
+  cur:NaN, target:NaN, heater:false, pump:false,
+  programs:LS.get('vol_programs',[]),
+  editingId:null,
+  running:null, // {programId, idx, stopFlag, total}
+  safetyTimer:null, safetyEndAt:null,
+};
+
+const DEFAULTS={
+  uuidService:'10100000-5354-4f52-5a26-4249434b454c',
+  uuidSetTemp:'10100006-5354-4f52-5a26-4249434b454c',
+  uuidCurTemp:'10110001-5354-4f52-5a26-4249434b454c',
+  uuidTargetNotify:'1010000d-5354-4f52-5a26-4249434b454c',
+  uuidStatus:'1010000c-5354-4f52-5a26-4249434b454c',
+  uuidHeater:'10110003-5354-4f52-5a26-4249434b454c',
+  uuidPump:'10110004-5354-4f52-5a26-4249434b454c',
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   LOGGING & UI HELPERS
+═══════════════════════════════════════════════════════════════ */
+function log(msg, kind=''){
+  const el=$('#log'); if(!el) return;
+  const t=new Date().toLocaleTimeString();
+  const line=document.createElement('div');
+  if(kind) line.className=kind;
+  line.textContent=`[${t}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop=el.scrollHeight;
+  // also surface errors as toast
+  if(kind==='err') toast(msg);
+}
+function clearLog(){ $('#log').innerHTML='' }
+
+let toastTimer=null;
+function toast(msg){
+  const t=$('#toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function setConn(connected){
+  State.connected=connected;
+  $('#dot').classList.toggle('on', connected);
+  $('#connChip').textContent = connected?'Verbunden':'Getrennt';
+  $('#connChip').classList.toggle('on', connected);
+  $('#btnConnect').textContent = connected?'Verbunden':'Verbinden';
+  $('#btnConnect').disabled=connected;
+  $('#btnConnect2').disabled=connected;
+  $('#btnDisconnect').disabled=!connected;
+}
+
+function setHeatGlow(){
+  // heat-level 0..1 based on current temp 40..230
+  const t=Number(State.cur);
+  const lvl = isFinite(t) ? clamp((t-40)/(230-40),0,1) : 0;
+  document.querySelector('.hero').style.setProperty('--heat-level', lvl.toFixed(2));
+}
+
+function renderStatus(){
+  $('#tCurrent').textContent = isFinite(State.cur)?Math.round(State.cur):'––';
+  $('#tTarget').textContent = isFinite(State.target)?Math.round(State.target):'––';
+  $('#indHeat').classList.toggle('on', !!State.heater);
+  $('#indPump').classList.toggle('on-cool', !!State.pump);
+  $('#btnHeat').textContent = State.heater?'Heizer aus':'Heizer an';
+  $('#btnHeat').classList.toggle('hot', State.heater);
+  $('#btnPump').textContent = State.pump?'Pumpe aus':'Pumpe an';
+  setHeatGlow();
+
+  // sync pills with current target
+  $$('.pill').forEach(p=>{
+    const t=Number(p.dataset.temp);
+    p.classList.toggle('active', isFinite(State.target) && Math.round(State.target)===t);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BLUETOOTH
+═══════════════════════════════════════════════════════════════ */
+function getUUIDs(){
+  return {
+    service:  $('#uuidService').value.trim().toLowerCase(),
+    setTemp:  $('#uuidSetTemp').value.trim().toLowerCase(),
+    curTemp:  $('#uuidCurTemp').value.trim().toLowerCase(),
+    targetNotify: $('#uuidTargetNotify').value.trim().toLowerCase(),
+    status:   $('#uuidStatus').value.trim().toLowerCase(),
+    heater:   $('#uuidHeater').value.trim().toLowerCase(),
+    pump:     $('#uuidPump').value.trim().toLowerCase(),
+  };
+}
+function loadUUIDs(){
+  const saved=LS.get('vol_uuids',{});
+  for(const k of Object.keys(DEFAULTS)){
+    const el=document.getElementById(k);
+    if(el){ el.value = saved[k] ?? DEFAULTS[k]; }
+  }
+}
+function saveUUIDs(){
+  const obj={};
+  for(const k of Object.keys(DEFAULTS)){
+    obj[k]=document.getElementById(k).value.trim();
+  }
+  LS.set('vol_uuids',obj);
+  toast('Mapping gespeichert');
+  log('UUID-Mapping gespeichert.','ok');
+}
+function resetUUIDs(){
+  for(const k of Object.keys(DEFAULTS)){
+    document.getElementById(k).value=DEFAULTS[k];
+  }
+  saveUUIDs();
+}
+
+async function connectBLE(){
+  if(!('bluetooth' in navigator)){
+    toast('Web Bluetooth nicht verfügbar');
+    log('Web Bluetooth fehlt. Nutze Chrome auf Android oder Desktop.','err');
+    return;
+  }
+  try{
+    const u=getUUIDs();
+    const services = [...new Set([u.service,
+      '10100000-5354-4f52-5a26-4249434b454c',
+      '10110000-5354-4f52-5a26-4249434b454c',
+      '10130000-5354-4f52-5a26-4249434b454c'].filter(Boolean))];
+    log('Gerätedialog öffnen…');
+    State.device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices:true,
+      optionalServices:services,
+    });
+    State.device.addEventListener('gattserverdisconnected', ()=>{
+      log('BLE getrennt.','warn');
+      setConn(false);
+    });
+    State.server = await State.device.gatt.connect();
+    State.allServices = await State.server.getPrimaryServices();
+    log(`Verbunden mit ${State.device.name||'Gerät'}.`,'ok');
+    await bindAllChars();
+    await startAllNotifications();
+    setConn(true);
+  }catch(e){
+    log('Verbindungsfehler: '+e.message,'err');
+    setConn(false);
+  }
+}
+
+async function disconnectBLE(){
+  try{
+    if(State.device?.gatt?.connected) State.device.gatt.disconnect();
+  }catch{}
+  setConn(false);
+}
+
+async function getCharByUUID(uuid){
+  if(!uuid) return null;
+  for(const s of State.allServices){
+    try{
+      const c=await s.getCharacteristic(uuid);
+      if(c) return c;
+    }catch{ /* not in this service */ }
+  }
+  return null;
+}
+
+async function bindAllChars(){
+  const u=getUUIDs();
+  State.chars.setTemp     = await getCharByUUID(u.setTemp);
+  State.chars.curTemp     = await getCharByUUID(u.curTemp);
+  State.chars.targetNotify= await getCharByUUID(u.targetNotify);
+  State.chars.status      = await getCharByUUID(u.status);
+  State.chars.heater      = await getCharByUUID(u.heater);
+  State.chars.pump        = await getCharByUUID(u.pump);
+  const missing=[];
+  for(const [k,v] of Object.entries(State.chars)){ if(!v) missing.push(k); }
+  if(missing.length) log('Nicht gefunden: '+missing.join(', '),'warn');
+}
+
+/* ── Notify parsing ─────────────────────────────────────────────
+   Annahme (Volcano Hybrid): Temperaturen werden als Uint16 LE ×10
+   ausgesendet (also 1850 == 185.0 °C). Status-Bits in eigenem Char.
+   Wir nehmen je nach Char-Größe automatisch das richtige Layout.
+*/
+function parseTempU16LE(dv){
+  if(dv.byteLength<2) return NaN;
+  const raw = dv.getUint16(0, true);
+  // Heuristik: wenn 400..2400 → /10 (×10 codiert), wenn 40..230 → direkt
+  if(raw>=400 && raw<=2400) return raw/10;
+  if(raw>=40 && raw<=230) return raw;
+  return raw/10; // fallback
+}
+
+async function startAllNotifications(){
+  const wire = async (ch, handler, name)=>{
+    if(!ch) return;
+    if(!ch.properties.notify){ log(`${name}: kein Notify-Property`,'warn'); return; }
+    try{
+      await ch.startNotifications();
+      ch.addEventListener('characteristicvaluechanged', e=>handler(e.target.value));
+      log(`Notify aktiv: ${name}`,'ok');
+    }catch(e){
+      log(`Notify ${name} fehlgeschlagen: ${e.message}`,'warn');
+    }
+  };
+  await wire(State.chars.curTemp,    v=>{ State.cur=parseTempU16LE(v); renderStatus(); }, 'CurTemp');
+  await wire(State.chars.targetNotify,v=>{ State.target=parseTempU16LE(v); renderStatus(); }, 'TargetTemp');
+  await wire(State.chars.status, v=>{
+    // Volcano-Status: Bitfeld. Wir testen die häufigsten Layouts.
+    const b=new Uint8Array(v.buffer);
+    if(b.length>=2){
+      // Versuch: status word als Uint16 LE, dann Bit-Mapping
+      const w = v.getUint16(0,true);
+      State.heater = !!(w & 0x0020);  // bit 5
+      State.pump   = !!(w & 0x2000);  // bit 13  (häufig bei Hybrid)
+    }
+    renderStatus();
+  }, 'Status');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BLE COMMANDS
+═══════════════════════════════════════════════════════════════ */
+async function cmdSetTemp(celsius){
+  if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt.');
+  const c=clamp(Math.round(celsius),40,230);
+  const buf=new ArrayBuffer(2);
+  new DataView(buf).setUint16(0, c*10, true);
+  await State.chars.setTemp.writeValueWithoutResponse(buf);
+  State.target=c; renderStatus();
+  log(`Temp gesetzt: ${c} °C`,'ok');
+}
+async function cmdHeater(on){
+  if(!State.chars.heater) throw new Error('Heater-Char fehlt.');
+  await State.chars.heater.writeValueWithoutResponse(new Uint8Array([on?1:0]));
+  State.heater=!!on; renderStatus();
+  log(`Heizer ${on?'EIN':'AUS'}`,'ok');
+}
+async function cmdPump(on){
+  if(!State.chars.pump) throw new Error('Pump-Char fehlt.');
+  await State.chars.pump.writeValueWithoutResponse(new Uint8Array([on?1:0]));
+  State.pump=!!on; renderStatus();
+  log(`Pumpe ${on?'EIN':'AUS'}`,'ok');
+}
+async function cmdPumpFor(seconds){
+  await cmdPump(true);
+  await sleep(seconds*1000);
+  await cmdPump(false);
+}
+async function waitUntilReached(targetC, timeoutSec=180){
+  const t0=Date.now();
+  while(Date.now()-t0 < timeoutSec*1000){
+    if(isFinite(State.cur) && State.cur >= targetC-0.5) return true;
+    await sleep(500);
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DISCOVERY & AUTO-MAPPING
+═══════════════════════════════════════════════════════════════ */
+async function discover(){
+  if(!State.server){ toast('Erst verbinden'); return; }
+  const out=[];
+  for(const s of State.allServices){
+    out.push(`Service: ${s.uuid}`);
+    try{
+      const chs=await s.getCharacteristics();
+      for(const c of chs){
+        const props=Object.entries(c.properties).filter(([,v])=>v).map(([k])=>k).join(',');
+        out.push(`  ${c.uuid} [${props}]`);
+      }
+    }catch(e){ out.push('  (Fehler: '+e.message+')'); }
+  }
+  $('#discoveryOut').textContent=out.join('\n');
+  log('Discovery abgeschlossen.','ok');
+}
+
+async function autoMap(){
+  if(!State.server){ toast('Erst verbinden'); return; }
+  const services=State.allServices;
+  const svcMap={};
+  for(const s of services){
+    svcMap[s.uuid.toLowerCase()] = await s.getCharacteristics();
+  }
+  const svc1010=Object.keys(svcMap).find(u=>u.startsWith('10100000-'));
+  const svc1011=Object.keys(svcMap).find(u=>u.startsWith('10110000-'));
+  const has=(c,p)=>c?.properties?.[p];
+  const pick=(chars,pred)=>chars?.find(c=>pred((c.uuid||'').toLowerCase(), c)) || null;
+
+  const setTemp = svc1010 && pick(svcMap[svc1010],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10100006'));
+  // current temp is typically in 10110001
+  const curTemp = svc1011 && pick(svcMap[svc1011],(u,c)=>has(c,'notify') && u.includes('10110001'));
+  // target temp notify
+  const targetN = svc1010 && pick(svcMap[svc1010],(u,c)=>has(c,'notify') && (u.includes('1010000d')||u.includes('10100003')));
+  // status bits
+  const status  = svc1010 && pick(svcMap[svc1010],(u,c)=>has(c,'notify') && (u.includes('1010000c')||u.includes('10110015')||u.includes('10110016')));
+  const heater  = svc1011 && pick(svcMap[svc1011],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10110003'));
+  const pump    = svc1011 && pick(svcMap[svc1011],(u,c)=>(has(c,'write')||has(c,'writeWithoutResponse')) && u.includes('10110004'));
+
+  if(svc1010) $('#uuidService').value=svc1010;
+  if(setTemp) $('#uuidSetTemp').value=setTemp.uuid;
+  if(curTemp) $('#uuidCurTemp').value=curTemp.uuid;
+  if(targetN) $('#uuidTargetNotify').value=targetN.uuid;
+  if(status)  $('#uuidStatus').value=status.uuid;
+  if(heater)  $('#uuidHeater').value=heater.uuid;
+  if(pump)    $('#uuidPump').value=pump.uuid;
+  saveUUIDs();
+  await bindAllChars();
+  await startAllNotifications();
+  log('Auto-Mapping fertig. Falls Werte falsch, prüfe Discovery-Liste.','ok');
+}
+
+async function testUUIDs(){
+  if(!State.connected){ toast('Erst verbinden'); return; }
+  const results=[];
+  const T = isFinite(State.target) ? State.target : 185;
+  const target = clamp(T+5, 40, 230);
+  try{ await cmdSetTemp(target); results.push('✓ set_temp'); }catch(e){ results.push('✗ set_temp: '+e.message); }
+  await sleep(400);
+  try{ await cmdHeater(true); results.push('✓ heater_on'); }catch(e){ results.push('✗ heater_on: '+e.message); }
+  await sleep(800);
+  try{ await cmdPump(true); results.push('✓ pump_on'); }catch(e){ results.push('✗ pump_on: '+e.message); }
+  await sleep(800);
+  try{ await cmdPump(false); results.push('✓ pump_off'); }catch(e){ results.push('✗ pump_off: '+e.message); }
+  try{ await cmdHeater(false); results.push('✓ heater_off'); }catch(e){ results.push('✗ heater_off: '+e.message); }
+  log('Test: '+results.join(' | '),'ok');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRAMS (workflows)
+═══════════════════════════════════════════════════════════════ */
+const PRESETS = [
+  {
+    name:'Aroma-Tour', desc:'Sanfter Start, 5°-Stufen, viele kleine Züge',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:170},
+      {action:'wait_until', value:170},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:20},
+      {action:'set_temperature', value:180},
+      {action:'wait_until', value:180},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:20},
+      {action:'set_temperature', value:190},
+      {action:'wait_until', value:190},
+      {action:'pump_for', seconds:25},
+      {action:'wait', seconds:20},
+      {action:'set_temperature', value:200},
+      {action:'wait_until', value:200},
+      {action:'pump_for', seconds:30},
+      {action:'heat_off'},
+    ]
+  },
+  {
+    name:'Schnellsession', desc:'Direkt auf 190°, ein voller Ballon',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:190},
+      {action:'wait_until', value:190},
+      {action:'pump_for', seconds:40},
+      {action:'heat_off'},
+    ]
+  },
+  {
+    name:'Mikro-Dose', desc:'Kurze sanfte Session bei 165°',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:165},
+      {action:'wait_until', value:165},
+      {action:'pump_for', seconds:15},
+      {action:'heat_off'},
+    ]
+  },
+  {
+    name:'Slow Burn', desc:'180° halten, 3 lange Ballons',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:180},
+      {action:'wait_until', value:180},
+      {action:'pump_for', seconds:35},
+      {action:'wait', seconds:60},
+      {action:'pump_for', seconds:35},
+      {action:'wait', seconds:60},
+      {action:'pump_for', seconds:35},
+      {action:'heat_off'},
+    ]
+  },
+  {
+    name:'Ramp 150→210', desc:'5°-Rampe von 150 bis 210°',
+    steps:[
+      {action:'heat_on'},
+      ...rampSteps(150,210,5,5,15),
+      {action:'pump_off'},
+      {action:'heat_off'},
+    ]
+  },
+  {
+    name:'End-Extraktion', desc:'Letzter Zug bei hoher Temperatur',
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:210},
+      {action:'wait_until', value:210},
+      {action:'pump_for', seconds:30},
+      {action:'set_temperature', value:220},
+      {action:'wait_until', value:220},
+      {action:'pump_for', seconds:40},
+      {action:'heat_off'},
+    ]
+  }
+];
+
+function rampSteps(start,end,step,waitSec,pumpSec){
+  const a=[];
+  for(let t=start;t<=end;t+=step){
+    a.push({action:'set_temperature', value:t});
+    a.push({action:'wait_until', value:t});
+    a.push({action:'wait', seconds:waitSec});
+    a.push({action:'pump_for', seconds:pumpSec});
+  }
+  return a;
+}
+
+function stepLabel(s){
+  switch(s.action){
+    case 'heat_on':  return '🔥 Heizer an';
+    case 'heat_off': return '❄️ Heizer aus';
+    case 'set_temperature': return `🌡 Setze <b>${s.value}°C</b>`;
+    case 'wait_until':      return `⏳ Warte bis <b>${s.value}°C</b>`;
+    case 'wait':            return `⏱ Pause <b>${s.seconds}s</b>`;
+    case 'pump_for':        return `💨 Pumpe <b>${s.seconds}s</b>`;
+    case 'pump_on':  return '💨 Pumpe an';
+    case 'pump_off': return '⭘ Pumpe aus';
+    default: return s.action;
+  }
+}
+function stepSummary(steps){
+  return steps.slice(0,4).map(s=>{
+    switch(s.action){
+      case 'set_temperature': return `${s.value}°`;
+      case 'wait_until': return `→${s.value}°`;
+      case 'wait': return `${s.seconds}s pause`;
+      case 'pump_for': return `pump ${s.seconds}s`;
+      case 'heat_on': return 'heat';
+      case 'heat_off': return '/heat';
+      case 'pump_on': return 'pump';
+      case 'pump_off': return '/pump';
+      default: return s.action;
+    }
+  }).join(' · ') + (steps.length>4?' · …':'');
+}
+
+function renderPrograms(){
+  // Saved
+  const saved=$('#progSaved');
+  saved.innerHTML='';
+  if(!State.programs.length){
+    saved.innerHTML='<div style="font-size:13px;color:var(--muted)">Noch keine eigenen Programme. Tipp auf „+ Neues Programm" oder dupliziere eine Vorlage.</div>';
+  }else{
+    for(const p of State.programs){
+      saved.appendChild(progCard(p,'saved'));
+    }
+  }
+  // Presets
+  const pre=$('#progPresets');
+  pre.innerHTML='';
+  for(let i=0;i<PRESETS.length;i++){
+    pre.appendChild(progCard({...PRESETS[i], id:'preset-'+i}, 'preset'));
+  }
+}
+function progCard(p, kind){
+  const div=document.createElement('div');
+  div.className='prog';
+  div.innerHTML=`
+    <div class="prog-head">
+      <div class="prog-name">${escapeHtml(p.name)}<small>${escapeHtml(p.desc||'')||(p.steps.length+' Schritte')}</small></div>
+      <div class="prog-tag ${kind}">${kind==='preset'?'Vorlage':'Eigen'}</div>
+    </div>
+    <div class="prog-steps">${escapeHtml(stepSummary(p.steps))}</div>
+    <div class="prog-actions">
+      <button class="btn sm hot" data-act="run" style="flex:1">▶ Starten</button>
+      ${kind==='saved'
+        ? `<button class="btn sm ghost" data-act="edit">Bearbeiten</button>`
+        : `<button class="btn sm ghost" data-act="dup">Duplizieren</button>`}
+    </div>
+  `;
+  div.querySelectorAll('button[data-act]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const a=b.dataset.act;
+      if(a==='run') runProgram(p);
+      else if(a==='edit') openEditor(p.id);
+      else if(a==='dup') duplicatePreset(p);
+    });
+  });
+  return div;
+}
+
+function duplicatePreset(p){
+  const id='wf-'+Date.now();
+  const copy={id, name:p.name+' (Kopie)', desc:p.desc, steps:JSON.parse(JSON.stringify(p.steps))};
+  State.programs.unshift(copy);
+  LS.set('vol_programs', State.programs);
+  renderPrograms();
+  toast('Kopiert');
+  openEditor(id);
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* ── Editor ────────────────────────────────────────────────── */
+let editorState=null;
+function openEditor(id){
+  let p;
+  if(id){
+    p=State.programs.find(x=>x.id===id);
+    if(!p) return;
+  }else{
+    p={id:'wf-'+Date.now(), name:'Neues Programm', desc:'', steps:[{action:'heat_on'}]};
+  }
+  editorState = JSON.parse(JSON.stringify(p));
+  State.editingId = id;
+  $('#editorTitle').textContent = id?'Programm bearbeiten':'Neues Programm';
+  $('#editorName').value = editorState.name;
+  $('#btnEditorDelete').style.display = id ? '' : 'none';
+  renderBuilder();
+  $('#modalEditor').classList.add('open');
+}
+
+function closeEditor(){
+  $('#modalEditor').classList.remove('open');
+  editorState=null; State.editingId=null;
+}
+
+function renderBuilder(){
+  const root=$('#builder'); root.innerHTML='';
+  editorState.steps.forEach((s,i)=>{
+    const el=document.createElement('div');
+    el.className='step';
+    el.innerHTML=`
+      <span class="num">${i+1}</span>
+      <span class="label">${stepLabel(s)}</span>
+      <div class="move">
+        <button data-act="up" aria-label="hoch">▲</button>
+        <button data-act="down" aria-label="runter">▼</button>
+      </div>
+      <button class="btn sm ghost" data-act="edit" style="padding:4px 10px;min-height:32px">✎</button>
+      <button class="btn sm ghost" data-act="del" style="padding:4px 10px;min-height:32px;color:var(--err)">✕</button>
+    `;
+    el.querySelectorAll('button[data-act]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const a=b.dataset.act;
+        if(a==='up' && i>0){[editorState.steps[i-1],editorState.steps[i]]=[editorState.steps[i],editorState.steps[i-1]];renderBuilder();}
+        else if(a==='down' && i<editorState.steps.length-1){[editorState.steps[i+1],editorState.steps[i]]=[editorState.steps[i],editorState.steps[i+1]];renderBuilder();}
+        else if(a==='del'){editorState.steps.splice(i,1);renderBuilder();}
+        else if(a==='edit'){editStepAt(i);}
+      });
+    });
+    root.appendChild(el);
+  });
+}
+
+function openAddStep(){
+  $('#modalAddStep').classList.add('open');
+}
+function closeAddStep(){
+  $('#modalAddStep').classList.remove('open');
+}
+
+function addStepWithAction(action){
+  let step={action};
+  // sensible defaults
+  if(action==='set_temperature'||action==='wait_until') step.value=185;
+  if(action==='wait') step.seconds=10;
+  if(action==='pump_for') step.seconds=20;
+  editorState.steps.push(step);
+  closeAddStep();
+  renderBuilder();
+  // open edit on configurable step
+  if(['set_temperature','wait_until','wait','pump_for'].includes(action)){
+    editStepAt(editorState.steps.length-1);
+  }
+}
+
+let stepEditIdx=-1;
+function editStepAt(i){
+  stepEditIdx=i;
+  const s=editorState.steps[i];
+  const body=$('#stepEditBody');
+  $('#stepEditTitle').textContent = stepLabel(s).replace(/<[^>]+>/g,'');
+  if(s.action==='set_temperature'||s.action==='wait_until'){
+    body.innerHTML=`
+      <div class="field">
+        <label>Temperatur (40–230 °C)</label>
+        <div class="stepper">
+          <button id="seMinus">−</button>
+          <input class="mono" id="seInput" type="number" min="40" max="230" step="1" value="${s.value||185}" inputmode="numeric">
+          <button id="sePlus">+</button>
+        </div>
+      </div>`;
+    $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-1,40,230)};
+    $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+1,40,230)};
+  } else if(s.action==='wait'){
+    body.innerHTML=`
+      <div class="field">
+        <label>Pause (Sekunden, 1–600)</label>
+        <div class="stepper">
+          <button id="seMinus">−</button>
+          <input class="mono" id="seInput" type="number" min="1" max="600" step="1" value="${s.seconds||10}" inputmode="numeric">
+          <button id="sePlus">+</button>
+        </div>
+      </div>`;
+    $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-5,1,600)};
+    $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+5,1,600)};
+  } else if(s.action==='pump_for'){
+    body.innerHTML=`
+      <div class="field">
+        <label>Pumpdauer (Sekunden, 1–120)</label>
+        <div class="stepper">
+          <button id="seMinus">−</button>
+          <input class="mono" id="seInput" type="number" min="1" max="120" step="1" value="${s.seconds||20}" inputmode="numeric">
+          <button id="sePlus">+</button>
+        </div>
+      </div>`;
+    $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-1,1,120)};
+    $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+1,1,120)};
+  } else {
+    body.innerHTML='<p style="color:var(--muted)">Dieser Schritt hat keine Parameter.</p>';
+  }
+  $('#modalStepEdit').classList.add('open');
+}
+function closeStepEdit(){ $('#modalStepEdit').classList.remove('open'); }
+function saveStepEdit(){
+  const s=editorState.steps[stepEditIdx]; if(!s){closeStepEdit();return;}
+  const v=Number($('#seInput')?.value);
+  if(s.action==='set_temperature'||s.action==='wait_until') s.value=clamp(v,40,230);
+  else if(s.action==='wait') s.seconds=clamp(v,1,600);
+  else if(s.action==='pump_for') s.seconds=clamp(v,1,120);
+  closeStepEdit();
+  renderBuilder();
+}
+
+function saveEditor(){
+  editorState.name = $('#editorName').value.trim() || 'Programm';
+  if(State.editingId){
+    const idx=State.programs.findIndex(p=>p.id===State.editingId);
+    if(idx>=0) State.programs[idx]=editorState;
+    else State.programs.unshift(editorState);
+  }else{
+    State.programs.unshift(editorState);
+  }
+  LS.set('vol_programs', State.programs);
+  closeEditor();
+  renderPrograms();
+  toast('Gespeichert');
+}
+function deleteEditor(){
+  if(!State.editingId) return;
+  if(!confirm('Programm wirklich löschen?')) return;
+  State.programs = State.programs.filter(p=>p.id!==State.editingId);
+  LS.set('vol_programs', State.programs);
+  closeEditor();
+  renderPrograms();
+  toast('Gelöscht');
+}
+
+/* ── Run engine ─────────────────────────────────────────────── */
+async function runProgram(p){
+  if(!State.connected){
+    toast('Erst verbinden');
+    return;
+  }
+  if(State.running){
+    toast('Es läuft schon ein Programm');
+    return;
+  }
+  State.running = {programName:p.name, idx:0, total:p.steps.length, stopFlag:false};
+  $('#runTitle').textContent = p.name;
+  $('#runCard').classList.add('show');
+  $('#connChip').classList.add('run');
+  log(`▶ Start: ${p.name}`,'ok');
+  try{
+    for(let i=0;i<p.steps.length;i++){
+      if(State.running.stopFlag) throw new Error('Abgebrochen');
+      State.running.idx=i;
+      updateRunUI(p.steps[i]);
+      await runStep(p.steps[i]);
+    }
+    log(`✓ Fertig: ${p.name}`,'ok');
+    toast('Programm fertig');
+  }catch(e){
+    log('Programmfehler: '+e.message,'err');
+    // Safety: heater + pump off
+    try{ await cmdPump(false); }catch{}
+    try{ await cmdHeater(false); }catch{}
+  }finally{
+    State.running=null;
+    $('#runCard').classList.remove('show');
+    $('#connChip').classList.remove('run');
+  }
+}
+
+function updateRunUI(currentStep){
+  const r=State.running; if(!r) return;
+  $('#runMeta').textContent = `Schritt ${r.idx+1} / ${r.total} — ${stepLabel(currentStep).replace(/<[^>]+>/g,'')}`;
+  $('#runBar').style.width = `${((r.idx)/r.total)*100}%`;
+}
+
+async function runStep(s){
+  switch(s.action){
+    case 'heat_on':  return cmdHeater(true);
+    case 'heat_off': return cmdHeater(false);
+    case 'pump_on':  return cmdPump(true);
+    case 'pump_off': return cmdPump(false);
+    case 'set_temperature': return cmdSetTemp(s.value);
+    case 'wait': await sleep((s.seconds||0)*1000); return;
+    case 'wait_until': {
+      const ok = await waitUntilReached(s.value, 240);
+      if(!ok) log(`Timeout: ${s.value}°C nicht erreicht`,'warn');
+      return;
+    }
+    case 'pump_for': return cmdPumpFor(s.seconds||20);
+    default: log('Unbekannter Schritt: '+s.action,'warn');
+  }
+}
+
+function stopRun(){
+  if(State.running){ State.running.stopFlag=true; log('Stop angefordert…','warn'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAFETY TIMER
+═══════════════════════════════════════════════════════════════ */
+function startSafety(min){
+  stopSafety();
+  const ms=clamp(Number(min)||0,1,60)*60000;
+  State.safetyEndAt = Date.now()+ms;
+  State.safetyTimer = setTimeout(async()=>{
+    try{ await cmdPump(false); }catch{}
+    try{ await cmdHeater(false); }catch{}
+    log('Sicherheits-Timer abgelaufen, alles AUS.','warn');
+    State.safetyTimer=null; State.safetyEndAt=null; updateSafety();
+  }, ms);
+  log(`Sicherheits-Timer: ${min} min`,'ok');
+  updateSafety();
+}
+function stopSafety(){
+  if(State.safetyTimer){ clearTimeout(State.safetyTimer); State.safetyTimer=null; State.safetyEndAt=null; log('Timer gestoppt.','warn'); }
+  updateSafety();
+}
+function updateSafety(){
+  if(!State.safetyEndAt){ $('#safetyState').textContent=''; return; }
+  const s=Math.max(0,Math.round((State.safetyEndAt-Date.now())/1000));
+  const mm=Math.floor(s/60), ss=String(s%60).padStart(2,'0');
+  $('#safetyState').textContent = `⏰ Auto-Aus in ${mm}:${ss}`;
+}
+setInterval(updateSafety, 1000);
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPORT / IMPORT
+═══════════════════════════════════════════════════════════════ */
+function exportPrograms(){
+  const blob=new Blob([JSON.stringify({programs:State.programs}, null, 2)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='volcano-programme.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function importPrograms(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      const list = Array.isArray(data.programs)?data.programs:(Array.isArray(data)?data:[]);
+      let n=0;
+      for(const p of list){
+        if(p && Array.isArray(p.steps) && p.name){
+          p.id = p.id || ('wf-'+Date.now()+'-'+Math.random().toString(36).slice(2,7));
+          State.programs.unshift(p); n++;
+        }
+      }
+      LS.set('vol_programs', State.programs);
+      renderPrograms();
+      toast(`${n} Programme importiert`);
+    }catch(e){ log('Importfehler: '+e.message,'err'); }
+  };
+  r.readAsText(file);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════════════ */
+function switchTab(name){
+  $$('.tab').forEach(t=>t.classList.toggle('active', t.id==='tab-'+name));
+  $$('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WIRING
+═══════════════════════════════════════════════════════════════ */
+function wire(){
+  // Tabs
+  $$('.nav-btn').forEach(b=>b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+
+  // Connect
+  $('#btnConnect').addEventListener('click', connectBLE);
+  $('#btnConnect2').addEventListener('click', connectBLE);
+  $('#btnDisconnect').addEventListener('click', disconnectBLE);
+  $('#btnDiscover').addEventListener('click', discover);
+  $('#btnAutoMap').addEventListener('click', autoMap);
+  $('#btnTestUUIDs').addEventListener('click', testUUIDs);
+
+  // UUIDs
+  $('#btnSaveUUIDs').addEventListener('click', saveUUIDs);
+  $('#btnResetUUIDs').addEventListener('click', ()=>{ if(confirm('Auf Standardwerte zurücksetzen?')) resetUUIDs(); });
+
+  // Manual control
+  const stepperWire=(minus,plus,input,lo,hi,delta=1)=>{
+    $(minus).addEventListener('click',()=>{ $(input).value=clamp(Number($(input).value)-delta,lo,hi) });
+    $(plus).addEventListener('click',()=>{ $(input).value=clamp(Number($(input).value)+delta,lo,hi) });
+  };
+  stepperWire('#tMinus','#tPlus','#tInput',40,230);
+  stepperWire('#pMinus','#pPlus','#pInput',1,120);
+  stepperWire('#sMinus','#sPlus','#sInput',1,60);
+
+  $$('.pill').forEach(p=>p.addEventListener('click', async()=>{
+    const t=Number(p.dataset.temp);
+    $('#tInput').value=t;
+    if(State.connected){ try{ await cmdSetTemp(t); }catch(e){ log(e.message,'err'); } }
+  }));
+  $('#btnSetTemp').addEventListener('click', async()=>{ try{ await cmdSetTemp(Number($('#tInput').value)); }catch(e){ log(e.message,'err'); } });
+  $('#btnHeat').addEventListener('click', async()=>{ try{ await cmdHeater(!State.heater); }catch(e){ log(e.message,'err'); } });
+  $('#btnPump').addEventListener('click', async()=>{ try{ await cmdPump(!State.pump); }catch(e){ log(e.message,'err'); } });
+  $('#btnPumpFor').addEventListener('click', async()=>{
+    try{ const s=Number($('#pInput').value); await cmdPumpFor(s); }catch(e){ log(e.message,'err'); }
+  });
+  $('#btnSafetyStart').addEventListener('click', ()=>startSafety($('#sInput').value));
+  $('#btnSafetyStop').addEventListener('click', stopSafety);
+
+  // Programs
+  $('#btnNewProg').addEventListener('click', ()=>openEditor(null));
+  $('#btnEditorCancel').addEventListener('click', closeEditor);
+  $('#btnEditorSave').addEventListener('click', saveEditor);
+  $('#btnEditorDelete').addEventListener('click', deleteEditor);
+  $('#btnAddStep').addEventListener('click', openAddStep);
+  $('#btnAddStepCancel').addEventListener('click', closeAddStep);
+  $$('#modalAddStep .act').forEach(a=>a.addEventListener('click',()=>addStepWithAction(a.dataset.action)));
+  $('#btnStepCancel').addEventListener('click', closeStepEdit);
+  $('#btnStepSave').addEventListener('click', saveStepEdit);
+
+  // close modals on backdrop
+  $$('.modal .back').forEach(b=>b.addEventListener('click', e=>{ e.target.closest('.modal').classList.remove('open') }));
+
+  // Run engine
+  $('#btnRunStop').addEventListener('click', stopRun);
+
+  // Export/Import
+  $('#btnExportAll').addEventListener('click', exportPrograms);
+  $('#btnImport').addEventListener('click', ()=>$('#fileImport').click());
+  $('#fileImport').addEventListener('change', e=>{
+    const f=e.target.files[0]; if(f) importPrograms(f); e.target.value='';
+  });
+  $('#btnClearLog').addEventListener('click', clearLog);
+
+  // Migrate old v3 slots if present
+  migrateFromV3();
+}
+
+function migrateFromV3(){
+  if(State.programs.length) return;
+  let migrated=0;
+  for(let i=1;i<=5;i++){
+    const raw=localStorage.getItem(`volcanoWF${i}`);
+    const name=localStorage.getItem(`volcanoWF${i}Name`) || `Slot ${i}`;
+    if(!raw) continue;
+    try{
+      const steps=JSON.parse(raw);
+      if(Array.isArray(steps) && steps.length){
+        State.programs.push({id:'wf-mig-'+i, name, desc:'Migriert aus v3-Slot', steps});
+        migrated++;
+      }
+    }catch{}
+  }
+  if(migrated){
+    LS.set('vol_programs', State.programs);
+    log(`${migrated} Programme aus alter Version migriert.`,'ok');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+function init(){
+  loadUUIDs();
+  wire();
+  renderStatus();
+  renderPrograms();
+  if(!('bluetooth' in navigator)){
+    log('Web Bluetooth nicht verfügbar in diesem Browser.','warn');
+    toast('Browser ohne Web Bluetooth');
+  }
+  log('App bereit. Tippe „Verbinden".','ok');
+
+  // PWA install hint
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline disabled silently */ });
+  }
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
