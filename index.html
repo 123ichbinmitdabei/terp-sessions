@@ -1190,11 +1190,191 @@ html[data-theme="cosmos"] .hero{
 .preheat-running .info{flex:1}
 .preheat-running .info b{display:block;font-size:13px;color:var(--heat)}
 .preheat-running .info small{font-size:11px;color:var(--muted);font-family:var(--font-mono)}
+
+/* ═══ v4.6: High Contrast (WCAG AAA) ═══════════════════════════ */
+html.hc-mode{
+  --bg:#000;
+  --bg-1:#0a0a0a;
+  --bg-2:#141414;
+  --bg-3:#1f1f1f;
+  --line:#666;
+  --line-soft:#444;
+  --text:#fff;
+  --muted:#ccc;
+  --dim:#888;
+  --hot:#ff8c52;
+  --hot-soft:#ffb088;
+  --hot-deep:#ff6020;
+  --heat:#ffcc44;
+  --ember:#ffe066;
+  --cool:#88dcff;
+  --ok:#6affa0;
+  --warn:#ffd84d;
+  --err:#ff7070;
+}
+html.hc-mode body::before{ display:none }
+html.hc-mode .btn, html.hc-mode .pill, html.hc-mode .card, html.hc-mode .input{
+  border-width:2px !important;
+}
+html.hc-mode :focus-visible{
+  outline:3px solid #ffe066 !important;
+  outline-offset:3px !important;
+}
+
+/* ═══ v4.6: PIN overlay ════════════════════════════════════════ */
+.pin-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:var(--bg);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;
+  gap:18px;
+}
+.pin-overlay .lock-ico{font-size:48px;color:var(--hot)}
+.pin-overlay h2{
+  margin:0;font-family:var(--font-display);
+  font-size:24px;font-weight:600;letter-spacing:-.01em;
+}
+.pin-overlay .sub{color:var(--muted);font-size:13px;text-align:center}
+.pin-overlay input{
+  width:200px;font-size:24px;text-align:center;letter-spacing:.4em;
+  padding:14px;background:var(--bg-2);
+  border:2px solid var(--line);border-radius:var(--r);
+  color:var(--text);
+  font-family:var(--font-mono);outline:none;
+}
+.pin-overlay input:focus{border-color:var(--hot)}
+
+/* ═══ v4.6: Vape-Buddy ════════════════════════════════════════ */
+.vape-buddy{
+  position:fixed;bottom:calc(108px + var(--safe-bot-padding));left:14px;
+  z-index:35;
+  width:64px;
+  padding:8px;
+  display:none;
+  text-align:center;
+}
+.vape-buddy .face{
+  width:48px;height:48px;border-radius:50%;
+  margin:0 auto;
+  background:linear-gradient(180deg, var(--hot), var(--hot-deep));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:#fff;
+  box-shadow:0 4px 14px rgba(255,87,34,.45);
+  cursor:pointer;
+  transition:transform .2s;
+}
+.vape-buddy[data-mood="heating"] .face{
+  animation:buddyBreathe 1.6s ease-in-out infinite;
+}
+.vape-buddy[data-mood="ready"] .face{
+  background:linear-gradient(180deg, var(--ok), #1d9d6b);
+  animation:buddyBounce 1s ease-in-out infinite;
+}
+.vape-buddy[data-mood="sleep"] .face{
+  filter:grayscale(.8);opacity:.7;
+}
+@keyframes buddyBreathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
+@keyframes buddyBounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
+}
+.vape-buddy .msg{
+  font-size:9px;color:var(--text);
+  font-family:var(--font-mono);
+  margin-top:4px;line-height:1.3;
+  max-width:64px;word-wrap:break-word;
+}
+
+/* ═══ v4.6: Maintenance card ═══════════════════════════════════ */
+.maint-row{margin-bottom:12px}
+.maint-row:last-child{margin-bottom:0}
+.maint-row .head{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;font-weight:600;margin-bottom:4px;
+}
+.maint-row .head .counter{
+  font-family:var(--font-mono);color:var(--muted);font-weight:500;
+}
+.maint-bar{
+  height:8px;background:var(--bg);border-radius:4px;overflow:hidden;
+  margin-bottom:6px;
+}
+.maint-bar > div{
+  height:100%;border-radius:4px;
+  transition:width .3s;
+  background:linear-gradient(90deg, var(--heat), var(--hot));
+}
+
+/* ═══ v4.6: Timeline view ══════════════════════════════════════ */
+.timeline-view{
+  display:flex;align-items:stretch;gap:0;
+  background:var(--bg-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:8px;
+  overflow-x:auto;
+  min-height:60px;
+  margin-bottom:8px;
+}
+.tl-block{
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 10px;border-radius:6px;
+  font-family:var(--font-mono);font-size:10px;font-weight:600;
+  color:#fff;min-width:50px;
+  border:1px solid transparent;
+}
+.tl-block.heat-on{background:linear-gradient(180deg, var(--hot), var(--hot-deep))}
+.tl-block.heat-off{background:#444;color:#bbb}
+.tl-block.set-temp{background:var(--heat);color:#1a1208}
+.tl-block.wait-until{background:#5a3010;border-color:var(--hot)}
+.tl-block.wait{background:#222;color:#aaa}
+.tl-block.pump-for{background:var(--cool);color:#0a1a26}
+.tl-block.pump-on, .tl-block.pump-off{background:#286080;color:#fff}
+.tl-block.loop-start, .tl-block.loop-end{background:#5a2a8a;color:#fff}
+.tl-block .val{font-size:13px;line-height:1}
+.tl-block .lbl{font-size:8px;opacity:.85;margin-top:2px}
+
+.editor-mode-toggle{
+  display:flex;gap:4px;margin-bottom:10px;
+}
+.editor-mode-toggle button{
+  flex:1;padding:8px;font-size:11px;
+  background:var(--bg-3);color:var(--muted);
+  border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;
+  font-family:var(--font-mono);font-weight:600;
+}
+.editor-mode-toggle button.active{
+  background:var(--hot);color:#fff;border-color:var(--hot);
+}
+
+/* ═══ v4.6: Achievement card ═══════════════════════════════════ */
+.ach-grid{
+  display:grid;grid-template-columns:1fr;gap:6px;
+  max-height:50vh;overflow-y:auto;
+}
 </style>
 </head>
 <body>
 
 <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
+
+<!-- v4.6: PIN overlay -->
+<div class="pin-overlay" id="pinOverlay" role="dialog" aria-modal="true" aria-label="PIN-Sperre">
+  <div class="lock-ico" aria-hidden="true">🔒</div>
+  <h2>Sessions gesperrt</h2>
+  <div class="sub">PIN eingeben um fortzufahren</div>
+  <input type="password" inputmode="numeric" pattern="[0-9]*" id="pinInput" maxlength="8" autocomplete="off" aria-label="PIN-Eingabe">
+  <button class="btn primary" id="pinSubmit">Entsperren</button>
+</div>
+
+<!-- v4.6: Vape Buddy -->
+<div class="vape-buddy" id="vapeBuddy" data-mood="idle" role="status" aria-live="polite">
+  <div class="face" aria-hidden="true">🌋</div>
+  <div class="msg" id="buddyMsg">Bereit</div>
+</div>
 
 <!-- Screenreader-only live region for status announcements -->
 <div class="sr-only" aria-live="polite" aria-atomic="true" id="srLive"></div>
@@ -1424,15 +1604,36 @@ html[data-theme="cosmos"] .hero{
   <!-- Statistics -->
   <div class="card">
     <h3>Statistik</h3>
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="stat"><div class="num" id="statBags">0</div><div class="lbl">Ballons</div></div>
       <div class="stat"><div class="num" id="statHeat">0m</div><div class="lbl">Heizzeit</div></div>
       <div class="stat"><div class="num" id="statSess">0</div><div class="lbl">Sessions</div></div>
+      <div class="stat"><div class="num" id="statStreak">–</div><div class="lbl">Streak</div></div>
     </div>
     <div class="stats-viz" id="statsViz" aria-label="Sessions der letzten 7 Tage"></div>
     <div class="row" style="gap:8px;margin-top:10px">
-      <button class="btn sm ghost" id="btnResetStats" style="flex:1">Statistik zurücksetzen</button>
+      <button class="btn sm ghost" id="btnAchievements" style="flex:1">🏆 Achievements</button>
+      <button class="btn sm ghost" id="btnResetStats" style="flex:1">Zurücksetzen</button>
     </div>
+  </div>
+
+  <!-- v4.6: Wartung -->
+  <div class="card" id="maintenanceCard">
+    <h3>Wartung & Pflege</h3>
+    <div class="maint-row">
+      <div class="head"><span>🧽 Reinigung</span><span class="counter" id="cleanCounter">0 / 20</span></div>
+      <div class="maint-bar"><div id="cleanBar" style="width:0%"></div></div>
+      <button class="btn sm ghost block" id="btnCleanDone" style="font-size:11px">Reinigung erledigt</button>
+    </div>
+    <div class="maint-row">
+      <div class="head"><span>🔄 Sieb-Wechsel</span><span class="counter" id="sieveCounter">0 / 50</span></div>
+      <div class="maint-bar"><div id="sieveBar" style="width:0%"></div></div>
+      <button class="btn sm ghost block" id="btnSieveDone" style="font-size:11px">Sieb gewechselt</button>
+    </div>
+    <details style="margin-top:10px">
+      <summary>Service-Historie</summary>
+      <div id="serviceLog" style="margin-top:8px"></div>
+    </details>
   </div>
 
   <!-- App Settings -->
@@ -1552,11 +1753,17 @@ html[data-theme="cosmos"] .hero{
       <input class="input" id="editorName" placeholder="z. B. Mein Aroma-Run">
     </div>
     <h3 style="margin:14px 0 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Schritte</h3>
+    <div class="editor-mode-toggle" role="tablist" aria-label="Ansicht wählen">
+      <button data-edit-mode="list" class="active" role="tab" aria-selected="true">📋 Liste</button>
+      <button data-edit-mode="timeline" role="tab" aria-selected="false">📊 Timeline</button>
+    </div>
     <div class="builder" id="builder"></div>
+    <div class="timeline-view" id="builderTimeline" hidden></div>
     <div id="builderDuration" class="mono" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:right" aria-live="polite"></div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn block primary" id="btnAddStep">+ Schritt</button>
       <button class="btn ghost" id="btnAddStepTpl" aria-label="Template einfügen">+ Template</button>
+      <button class="btn ghost" id="btnAddLoop" aria-label="Loop einfügen">+ Loop</button>
     </div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn ghost" id="btnEditorCancel" style="flex:1">Abbrechen</button>
@@ -1740,6 +1947,32 @@ html[data-theme="cosmos"] .hero{
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Erscheinungsbild</h3>
     <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
 
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Inklusion (v4.6)</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Schriftgröße</b><small>100% · 125% · 150%</small></div>
+      <div style="display:flex;gap:4px">
+        <button class="btn sm ghost" data-fs="100" style="padding:6px 10px;min-height:auto">A</button>
+        <button class="btn sm ghost" data-fs="125" style="padding:6px 10px;min-height:auto;font-size:15px">A</button>
+        <button class="btn sm ghost" data-fs="150" style="padding:6px 10px;min-height:auto;font-size:17px">A</button>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Hochkontrast (WCAG AAA)</b><small>Schwarz/Weiß mit starkem Kontrast</small></div>
+      <button class="toggle" id="togHighContrast" role="switch" aria-checked="false" aria-label="Hochkontrast"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Voice-Status-Readout alle 30s</b><small>Automatische Statusansage per TTS</small></div>
+      <button class="toggle" id="togVoiceReadout" role="switch" aria-checked="false" aria-label="Auto Voice-Readout"></button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Differenzierte Vibration</b><small>Verschiedene Patterns für Touch / Ziel / Warnung / Fehler</small></div>
+      <button class="toggle" id="togHaptiCustom" role="switch" aria-checked="true" aria-label="Differenzierte Haptik"></button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">
+      <b>Tastatur-Shortcuts:</b><br>
+      1–9 → Lieblings-Temperatur · Space → Heizer · B → Ballon · D → Direkt-Zug · V → Status vorlesen · ESC → Notaus
+    </div>
+
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Sicherheit</h3>
     <div class="toggle-row">
       <div class="info"><b>Sicherheits-Timer automatisch starten</b><small>Bei Heizer-an wird der Timer mit Default-Minuten gestartet</small></div>
@@ -1748,6 +1981,18 @@ html[data-theme="cosmos"] .hero{
     <div class="toggle-row">
       <div class="info"><b>Sicherheits-Timer Default</b><small>Minuten bis Auto-Aus</small></div>
       <input class="input mono" id="safetyMinInput" type="number" min="1" max="60" step="1" style="width:80px" inputmode="numeric">
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>PIN-Sperre</b><small id="pinStatus">Aus</small></div>
+      <button class="btn sm" id="btnPinSetup">PIN ändern</button>
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Auto-Lock</b><small>Inaktivität in Minuten (0 = aus)</small></div>
+      <input class="input mono" id="autoLockInput" type="number" min="0" max="60" step="1" style="width:80px" inputmode="numeric">
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Tageslimit Ballons</b><small>Warnt ab dieser Anzahl (0 = aus)</small></div>
+      <input class="input mono" id="bagsLimitInput" type="number" min="0" max="50" step="1" style="width:80px" inputmode="numeric">
     </div>
 
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Direkt-Zug</h3>
@@ -1800,6 +2045,27 @@ html[data-theme="cosmos"] .hero{
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Ballon-Profil</h3>
     <div id="bagProfileList"></div>
 
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Wartung (v4.6)</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Reinigung alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
+      <input class="input mono" id="cleanSessionsInput" type="number" min="0" max="200" step="1" style="width:80px" inputmode="numeric">
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Sieb-Wechsel alle X Sessions</b><small>Erinnerung nach so vielen Sessions</small></div>
+      <input class="input mono" id="sieveSessionsInput" type="number" min="0" max="500" step="1" style="width:80px" inputmode="numeric">
+    </div>
+    <div class="toggle-row">
+      <div class="info"><b>Firmware-Version</b><small>Manuell eintragen für Diagnose</small></div>
+      <input class="input mono" id="firmwareInput" type="text" placeholder="z.B. 1.0.2" style="width:90px">
+    </div>
+
+    <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Engagement (v4.6)</h3>
+    <div class="toggle-row">
+      <div class="info"><b>Vape-Buddy-Charakter</b><small>Kleiner Charakter unten links der mit dir kommuniziert</small></div>
+      <button class="toggle" id="togBuddy" role="switch" aria-checked="false" aria-label="Vape-Buddy"></button>
+    </div>
+    <button class="btn sm ghost block" id="btnGenName" style="margin-top:8px">🎲 Sortennamen-Generator</button>
+
     <h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-family:var(--font-mono)">Daten</h3>
     <div class="row" style="gap:8px">
       <button class="btn sm ghost" id="btnExportAll" style="flex:1">JSON-Backup</button>
@@ -1809,7 +2075,12 @@ html[data-theme="cosmos"] .hero{
       <button class="btn sm ghost" id="btnExportCsv" style="flex:1">Sessions CSV</button>
       <button class="btn sm ghost" id="btnShowDiag" style="flex:1">Diagnose</button>
     </div>
+    <div class="row" style="gap:8px;margin-top:8px">
+      <button class="btn sm ghost" id="btnEncrypt" style="flex:1">🔐 Verschlüsseln</button>
+      <button class="btn sm ghost" id="btnDecrypt" style="flex:1">🔓 Entschlüsseln</button>
+    </div>
     <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px">Onboarding-Wizard neu zeigen</button>
+    <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
 
     <div class="row" style="margin-top:18px">
       <button class="btn ghost block" id="btnSettingsClose">Schließen</button>
@@ -1899,6 +2170,20 @@ html[data-theme="cosmos"] .hero{
   </div>
 </div>
 
+<!-- ─── Achievements Modal (v4.6) ────────────────────────────── -->
+<div class="modal" id="modalAch" role="dialog" aria-modal="true" aria-label="Achievements">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>🏆 Achievements</h2>
+    <p class="wiz-text"><small>Deine freigeschalteten Meilensteine.</small></p>
+    <div id="achList" class="ach-grid"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnAchClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1944,12 +2229,36 @@ const PREFS_DEFAULTS = {
     'custom':30,
   },
   // v4.5 additions
-  safetyAutoStart:true,    // Sicherheits-Timer automatisch starten wenn Heizer angeht
-  safetyMinutes:25,        // Default Sicherheits-Timer
-  directDrawSec:5,         // Default-Sekunden für Direkt-Zug-Knopf
-  autoCoolDown:false,      // nach Bag-Fill auf coolDownTemp runter
-  autoCoolDownTemp:160,    // Temperatur fürs Cool-Down
-  preferredTemp:185,       // Lieblings-Temperatur (wird gelernt)
+  safetyAutoStart:true,
+  safetyMinutes:25,
+  directDrawSec:5,
+  autoCoolDown:false,
+  autoCoolDownTemp:160,
+  preferredTemp:185,
+  // v4.6 additions
+  fontScale:100,          // 100=normal, 125=mittel, 150=groß
+  highContrast:false,     // WCAG AAA Hochkontrast-Modus
+  voiceReadout:false,     // automatischer TTS jede 30s
+  haptiCustom:true,       // differenzierte Patterns
+  pinEnabled:false,
+  pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
+  pinSalt:'',
+  autoLockMin:0,          // 0 = aus, sonst Minuten Inaktivität
+  bagsLimitPerDay:0,      // 0 = aus
+  // Wartung
+  cleanReminderSessions:20, // alle X Sessions Reinigungs-Reminder
+  cleanReminderHours:8,     // ODER nach Y Heizstunden
+  cleanLastDoneSessions:0,
+  cleanLastDoneHeatSec:0,
+  sieveReminderSessions:50,
+  sieveLastDoneSessions:0,
+  firmware:'',              // manuell eingetragen
+  // Streak
+  streakDays:0,
+  streakLastDate:'',
+  // Engagement
+  vapeBuddy:false,          // Charakter ein/aus
+  achievementsUnlocked:[],  // Liste der unlocked Achievement-IDs
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -2364,7 +2673,7 @@ function flashReach(temp){
   f.classList.add('show');
   setTimeout(()=>f.classList.remove('show'), 1700);
   playSuccess();
-  haptic([60, 50, 100]);
+  haptiPattern('reach');
   srAnnounce(`Zieltemperatur ${temp} Grad erreicht`, true);
 }
 
@@ -2558,6 +2867,9 @@ function renderStatus(){
   } else if(!State.heater && !State.running && State.wakeLock){
     releaseWakeLock();
   }
+
+  // v4.6: Buddy aktualisieren
+  if(PREFS.vapeBuddy) renderVapeBuddy();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3065,6 +3377,8 @@ function stepLabel(s){
     case 'pump_for':        return `💨 Pumpe <b>${s.seconds}s</b>`;
     case 'pump_on':  return '💨 Pumpe an';
     case 'pump_off': return '⭘ Pumpe aus';
+    case 'loop_start': return `🔁 Wiederhole <b>${s.repeat||2}x</b>`;
+    case 'loop_end':   return '⤴ Loop-Ende';
     default: return s.action;
   }
 }
@@ -3079,6 +3393,8 @@ function stepSummary(steps){
       case 'heat_off': return '/heat';
       case 'pump_on': return 'pump';
       case 'pump_off': return '/pump';
+      case 'loop_start': return `loop ${s.repeat||2}x`;
+      case 'loop_end': return '/loop';
       default: return s.action;
     }
   }).join(' · ') + (steps.length>4?' · …':'');
@@ -3187,6 +3503,8 @@ function closeEditor(){
   editorState=null; State.editingId=null;
 }
 
+let editorMode = 'list';
+
 function renderBuilder(){
   const root=$('#builder'); root.innerHTML='';
   editorState.steps.forEach((s,i)=>{
@@ -3208,15 +3526,54 @@ function renderBuilder(){
     });
     root.appendChild(el);
   });
-  // Activate drag-reorder
   enableStepDragReorder(root, (newOrder)=>{
     editorState.steps = newOrder.map(idx => editorState.steps[idx]);
     renderBuilder();
   });
-  // Show duration estimate
-  const est = estimateDuration(editorState.steps);
+  const est = estimateDuration(expandLoops(editorState.steps));
   const dEl = $('#builderDuration');
   if(dEl) dEl.textContent = '~'+fmtDuration(est)+' Gesamtdauer';
+  // Render timeline view
+  renderTimelineView();
+}
+
+function renderTimelineView(){
+  const tl = $('#builderTimeline');
+  if(!tl) return;
+  tl.innerHTML='';
+  const expanded = expandLoops(editorState.steps);
+  for(const s of expanded){
+    const block = document.createElement('div');
+    const cls = s.action.replace(/_/g,'-');
+    block.className = 'tl-block '+cls;
+    let val = '', lbl = '';
+    switch(s.action){
+      case 'heat_on':  val='ON'; lbl='Heizer'; break;
+      case 'heat_off': val='OFF'; lbl='Heizer'; break;
+      case 'set_temperature': val=s.value+'°'; lbl='Set'; break;
+      case 'wait_until': val=s.value+'°'; lbl='Warte'; break;
+      case 'wait': val=s.seconds+'s'; lbl='Pause'; break;
+      case 'pump_for': val=s.seconds+'s'; lbl='Pumpe'; break;
+      case 'pump_on': val='ON'; lbl='Pumpe'; break;
+      case 'pump_off': val='OFF'; lbl='Pumpe'; break;
+      default: val=s.action; lbl='';
+    }
+    block.innerHTML = `<span class="val">${val}</span><span class="lbl">${lbl}</span>`;
+    tl.appendChild(block);
+  }
+}
+
+function setEditorMode(mode){
+  editorMode = mode;
+  const builder = $('#builder');
+  const tl = $('#builderTimeline');
+  if(builder) builder.hidden = (mode==='timeline');
+  if(tl) tl.hidden = (mode==='list');
+  document.querySelectorAll('[data-edit-mode]').forEach(b=>{
+    const active = b.dataset.editMode === mode;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
 }
 
 function openAddStep(){
@@ -3333,20 +3690,34 @@ async function runProgram(p){
     toast('Es läuft schon ein Programm');
     return;
   }
-  State.running = {programName:p.name, idx:0, total:p.steps.length, stopFlag:false};
+  // v4.6: Variable-Resolution (Platzhalter abfragen)
+  let runSteps = p.steps;
+  if(programHasVars(p)){
+    const vars = {};
+    for(const name of collectVarNames(p)){
+      const v = prompt(`Wert für {${name}}:`, '');
+      if(v === null){ toast('Abgebrochen'); return; }
+      vars[name] = isNaN(v) ? v : Number(v);
+    }
+    runSteps = resolveVarsInSteps(runSteps, vars);
+  }
+  // v4.6: Loops expandieren
+  const expanded = expandLoops(runSteps);
+
+  State.running = {programName:p.name, idx:0, total:expanded.length, stopFlag:false};
   $('#runTitle').textContent = p.name;
   $('#runCard').classList.add('show');
   $('#connChip').classList.add('run');
-  log(`▶ Start: ${p.name}`,'ok');
+  log(`▶ Start: ${p.name} (${expanded.length} Schritte expandiert)`,'ok');
   await requestWakeLock();
   srAnnounce(`Programm gestartet: ${p.name}`);
   rememberLastProgram(p);
   try{
-    for(let i=0;i<p.steps.length;i++){
+    for(let i=0;i<expanded.length;i++){
       if(State.running.stopFlag) throw new Error('Abgebrochen');
       State.running.idx=i;
-      updateRunUI(p.steps[i]);
-      await runStep(p.steps[i]);
+      updateRunUI(expanded[i]);
+      await runStep(expanded[i]);
     }
     log(`✓ Fertig: ${p.name}`,'ok');
     toast('Programm fertig');
@@ -3711,6 +4082,115 @@ function wire(){
   // Step templates from editor
   $('#btnAddStepTpl')?.addEventListener('click', openStepTemplates);
   $('#btnStepTplClose')?.addEventListener('click', ()=>$('#modalStepTpl').classList.remove('open'));
+
+  // ═════ v4.6 wiring ═════
+
+  // Inklusion: Font scale buttons
+  document.querySelectorAll('[data-fs]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      PREFS.fontScale = parseInt(b.dataset.fs);
+      savePrefs();
+      applyFontScale();
+    });
+  });
+  wireToggle('#togHighContrast', ()=>PREFS.highContrast, v=>{
+    PREFS.highContrast = v; savePrefs(); applyHighContrast();
+  });
+  wireToggle('#togVoiceReadout', ()=>PREFS.voiceReadout, v=>{
+    PREFS.voiceReadout = v; savePrefs(); setupVoiceReadoutInterval();
+  });
+  wireToggle('#togHaptiCustom', ()=>PREFS.haptiCustom, v=>{
+    PREFS.haptiCustom = v; savePrefs();
+    if(v) haptiPattern('success');
+  });
+
+  // Sicherheit
+  $('#btnPinSetup')?.addEventListener('click', async ()=>{
+    if(PREFS.pinEnabled){
+      if(confirm('PIN entfernen?')) await removePin();
+      else await setupPin();
+    } else {
+      await setupPin();
+    }
+    const ps = $('#pinStatus'); if(ps) ps.textContent = PREFS.pinEnabled?'Aktiv':'Aus';
+  });
+  $('#autoLockInput')?.addEventListener('change', ()=>{
+    PREFS.autoLockMin = clamp(parseInt($('#autoLockInput').value)||0, 0, 60);
+    savePrefs();
+    setupAutoLock();
+  });
+  $('#bagsLimitInput')?.addEventListener('change', ()=>{
+    PREFS.bagsLimitPerDay = clamp(parseInt($('#bagsLimitInput').value)||0, 0, 50);
+    savePrefs();
+  });
+  $('#pinSubmit')?.addEventListener('click', ()=>{}); // wired via requirePin handler
+
+  // Wartung
+  $('#cleanSessionsInput')?.addEventListener('change', ()=>{
+    PREFS.cleanReminderSessions = clamp(parseInt($('#cleanSessionsInput').value)||0, 0, 200);
+    savePrefs();
+    renderMaintenance();
+  });
+  $('#sieveSessionsInput')?.addEventListener('change', ()=>{
+    PREFS.sieveReminderSessions = clamp(parseInt($('#sieveSessionsInput').value)||0, 0, 500);
+    savePrefs();
+    renderMaintenance();
+  });
+  $('#firmwareInput')?.addEventListener('change', ()=>{
+    PREFS.firmware = $('#firmwareInput').value.trim().slice(0,40);
+    savePrefs();
+  });
+  $('#btnCleanDone')?.addEventListener('click', markCleaningDone);
+  $('#btnSieveDone')?.addEventListener('click', markSieveDone);
+
+  // Engagement
+  wireToggle('#togBuddy', ()=>PREFS.vapeBuddy, v=>{
+    PREFS.vapeBuddy = v; savePrefs(); renderVapeBuddy();
+  });
+  $('#btnGenName')?.addEventListener('click', ()=>{
+    const n = generateStrainName();
+    if(confirm(`Generiert: „${n}"\n\nAls eigene Sorte in die Aroma-DB übernehmen?`)){
+      addCustomAroma({name:n, temps:[180,190,200], desc:'Generiert · Eigenes Aroma', kind:'custom', terps:''});
+      toast('Sorte „'+n+'" hinzugefügt');
+    }
+  });
+  $('#btnAchievements')?.addEventListener('click', ()=>{
+    renderAchievements();
+    $('#modalAch').classList.add('open');
+  });
+  $('#btnAchClose')?.addEventListener('click', ()=>$('#modalAch').classList.remove('open'));
+
+  // Datenschutz
+  $('#btnEncrypt')?.addEventListener('click', encryptSensitive);
+  $('#btnDecrypt')?.addEventListener('click', decryptSensitive);
+  $('#btnForgetMe')?.addEventListener('click', forgetMe);
+
+  // Editor: Mode toggle + Loop
+  document.querySelectorAll('[data-edit-mode]').forEach(b=>{
+    b.addEventListener('click', ()=>setEditorMode(b.dataset.editMode));
+  });
+  $('#btnAddLoop')?.addEventListener('click', ()=>{
+    const r = prompt('Wie oft wiederholen? (2-20)', '2');
+    if(!r) return;
+    const repeat = clamp(parseInt(r)||2, 2, 20);
+    editorState.steps.push({action:'loop_start', repeat});
+    editorState.steps.push({action:'loop_end'});
+    renderBuilder();
+    toast('Loop eingefügt — Schritte dazwischen werden '+repeat+'x wiederholt');
+  });
+
+  // Themes-seen tracking für Achievement
+  const seenObserver = new MutationObserver(()=>{
+    const t = document.documentElement.getAttribute('data-theme');
+    if(!t) return;
+    const seen = LS.get('vol_themes_seen', []);
+    if(!seen.includes(t)){
+      seen.push(t);
+      LS.set('vol_themes_seen', seen);
+      checkAchievements();
+    }
+  });
+  seenObserver.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
   // Migrate old v3 slots if present
   migrateFromV3();
@@ -4225,6 +4705,8 @@ async function startBagFill(){
   if(!State.heater){
     if(!confirm('Heizer ist aus. Erst aufheizen und dann starten?')) return;
   }
+  // v4.6: Bags-Limit prüfen
+  if(!checkBagsLimit()){ return; }
   // Save custom time if changed
   if(PREFS.bagType==='custom'){
     PREFS.bagTimes.custom = clamp(parseInt($('#bagCustInput').value)||30, 5, 120);
@@ -4250,7 +4732,7 @@ async function startBagFill(){
       if(remain <= 3){
         $('#bagStatus').textContent = 'Achtung — fast voll!';
         $('#bagStatus').classList.add('warn');
-        haptic(20);
+        haptiPattern('countdown');
       } else {
         $('#bagStatus').textContent = 'Pumpe läuft …';
       }
@@ -4258,15 +4740,15 @@ async function startBagFill(){
     }
     await cmdPumpOff();
     if(!bagRunState.stop){
-      // completed
       statsAddBag();
       $('#bagCountdown').textContent = '✓';
       $('#bagStatus').textContent = 'Ballon gefüllt!';
       $('#bagBar').style.width = '100%';
       playSuccess();
-      haptic([60,50,80]);
+      haptiPattern('success');
       srAnnounce('Ballon gefüllt', true);
-      // v4.5: Auto-Cool-Down
+      // v4.6: Achievements check
+      checkAchievements();
       maybeAutoCoolDown();
     } else {
       $('#bagStatus').textContent = 'Gestoppt';
@@ -4377,6 +4859,13 @@ function renderAromaList(query){
           if(!State.connected){ toast('Erst verbinden'); return; }
           try{
             await cmdSetTemp(t);
+            // v4.6: track aroma usage
+            const used = LS.get('vol_aromas_used', []);
+            if(!used.includes(a.name)){
+              used.push(a.name);
+              LS.set('vol_aromas_used', used);
+              checkAchievements();
+            }
             $('#modalAroma').classList.remove('open');
           }catch(e){
             log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err');
@@ -4492,6 +4981,8 @@ function toggleVoiceListening(){
 async function handleVoiceCommand(txt){
   const t = txt.toLowerCase().trim();
   log('🎤 Befehl: "'+txt+'"','ok');
+  LS.set('vol_voice_used', true);
+  checkAchievements();
 
   // Stop everything
   if(PREFS.voiceCmds.stopAll && /(stopp|alles aus|alles stoppen|abbrechen|notaus)/.test(t)){
@@ -4775,7 +5266,6 @@ function finishSession(){
   const ta = $('#sessionNotes');
   const notes = ta?.value||'';
   if(notes.trim()){
-    // Save to archive
     const history = LS.get('vol_sessions',[]);
     history.unshift({
       at: Date.now(),
@@ -4783,12 +5273,18 @@ function finishSession(){
       bagsFilled: PREFS.stats.bagsFilled,
       heatSec: PREFS.stats.totalHeatSec,
     });
-    LS.set('vol_sessions', history.slice(0,50)); // keep last 50
+    LS.set('vol_sessions', history.slice(0,50));
   }
-  // Reset notes
   if(ta) ta.value='';
   LS.set('vol_current_notes','');
   statsAddSession();
+  // v4.6: Streak + Achievements + Maintenance Check
+  noteSessionDay();
+  renderStreak();
+  checkAchievements();
+  checkMaintenanceReminders();
+  renderMaintenance();
+  renderStatsViz();
   toast('Session abgeschlossen ✓');
   $('#notesStatus').textContent='Session archiviert';
 }
@@ -4803,9 +5299,19 @@ function openSettings(){
   $('#togVoice').setAttribute('aria-checked', String(!!PREFS.voice));
   $('#togSafetyAuto')?.setAttribute('aria-checked', String(!!PREFS.safetyAutoStart));
   $('#togAutoCool')?.setAttribute('aria-checked', String(!!PREFS.autoCoolDown));
+  $('#togHighContrast')?.setAttribute('aria-checked', String(!!PREFS.highContrast));
+  $('#togVoiceReadout')?.setAttribute('aria-checked', String(!!PREFS.voiceReadout));
+  $('#togHaptiCustom')?.setAttribute('aria-checked', String(!!PREFS.haptiCustom));
+  $('#togBuddy')?.setAttribute('aria-checked', String(!!PREFS.vapeBuddy));
   const safIn = $('#safetyMinInput'); if(safIn) safIn.value = PREFS.safetyMinutes||25;
   const dirIn = $('#dirSecInput'); if(dirIn) dirIn.value = PREFS.directDrawSec||5;
   const cIn = $('#autoCoolTempInput'); if(cIn) cIn.value = PREFS.autoCoolDownTemp||160;
+  const lockIn = $('#autoLockInput'); if(lockIn) lockIn.value = PREFS.autoLockMin||0;
+  const blIn = $('#bagsLimitInput'); if(blIn) blIn.value = PREFS.bagsLimitPerDay||0;
+  const csIn = $('#cleanSessionsInput'); if(csIn) csIn.value = PREFS.cleanReminderSessions||20;
+  const ssIn = $('#sieveSessionsInput'); if(ssIn) ssIn.value = PREFS.sieveReminderSessions||50;
+  const fwIn = $('#firmwareInput'); if(fwIn) fwIn.value = PREFS.firmware||'';
+  const ps = $('#pinStatus'); if(ps) ps.textContent = PREFS.pinEnabled?'Aktiv':'Aus';
   $('#voiceCmdSub').hidden = !PREFS.voice;
   document.querySelectorAll('[data-vc]').forEach(b=>{
     const k = b.dataset.vc;
@@ -5379,10 +5885,672 @@ function showDiagnostics(){
   toast('Diagnose heruntergeladen');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: FONT SCALE / HIGH CONTRAST
+═══════════════════════════════════════════════════════════════ */
+function applyFontScale(){
+  const scale = PREFS.fontScale||100;
+  document.documentElement.style.setProperty('--font-scale', (scale/100).toFixed(2));
+  document.documentElement.style.fontSize = (scale/100 * 16) + 'px';
+}
+function applyHighContrast(){
+  document.documentElement.classList.toggle('hc-mode', !!PREFS.highContrast);
+}
 
-function init(){
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════════════════ */
+function installKeyboardShortcuts(){
+  document.addEventListener('keydown', async (e)=>{
+    // Ignore when typing in inputs/textareas
+    const t = e.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    // Ignore if modal open with focused input
+    if(e.ctrlKey || e.altKey || e.metaKey) return;
+
+    // 1-9: Quick-Favs / pills
+    if(/^[1-9]$/.test(e.key)){
+      const idx = parseInt(e.key)-1;
+      const pill = $$('.pill')[idx];
+      if(pill){ e.preventDefault(); pill.click(); }
+      return;
+    }
+    // Space: Heater toggle
+    if(e.key === ' '){
+      const btn = $('#btnHeat');
+      if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
+      return;
+    }
+    // B: Bag fill
+    if(e.key === 'b' || e.key === 'B'){
+      const btn = $('#qaBagFill');
+      if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
+      return;
+    }
+    // D: Direct draw
+    if(e.key === 'd' || e.key === 'D'){
+      const btn = $('#qaDirectDraw');
+      if(btn && !btn.disabled){ e.preventDefault(); btn.click(); }
+      return;
+    }
+    // ESC: Notaus (alles stoppen)
+    if(e.key === 'Escape'){
+      // Close any open modal first
+      const openModal = document.querySelector('.modal.open');
+      if(openModal){ openModal.classList.remove('open'); return; }
+      // Otherwise: emergency stop
+      e.preventDefault();
+      if(State.connected){
+        try{
+          if(State.running){ State.running.stopFlag=true; }
+          if(State.heater) await cmdHeaterOff();
+          if(State.pump) await cmdPumpOff();
+          toast('🛑 Notaus ausgeführt');
+          haptiPattern('error');
+        }catch(err){ log('Notaus Fehler: '+err.message, 'err'); }
+      }
+      return;
+    }
+    // V: Voice-Status
+    if(e.key === 'v' || e.key === 'V'){
+      e.preventDefault();
+      speakStatus();
+      return;
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: VOICE STATUS READOUT (TTS)
+═══════════════════════════════════════════════════════════════ */
+function speakStatus(){
+  if(!('speechSynthesis' in window)){
+    toast('TTS nicht verfügbar');
+    return;
+  }
+  let parts = [];
+  if(!State.connected){ parts.push('Nicht verbunden.'); }
+  else {
+    if(isFinite(State.cur)) parts.push(`Aktuell ${Math.round(State.cur)} Grad.`);
+    if(isFinite(State.target)) parts.push(`Ziel ${Math.round(State.target)} Grad.`);
+    parts.push(State.heater ? 'Heizer aktiv.' : 'Heizer aus.');
+    if(State.pump) parts.push('Pumpe läuft.');
+    // ETA
+    const etaEl = $('#tEta');
+    if(etaEl && etaEl.textContent){
+      const eta = etaEl.textContent.replace(/[·]/g, '').trim();
+      if(eta) parts.push(eta + '.');
+    }
+  }
+  const txt = parts.join(' ');
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'de-DE';
+    u.rate = 1.05;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+let voiceReadoutTimer = null;
+function setupVoiceReadoutInterval(){
+  if(voiceReadoutTimer){ clearInterval(voiceReadoutTimer); voiceReadoutTimer=null; }
+  if(PREFS.voiceReadout && State.connected){
+    voiceReadoutTimer = setInterval(speakStatus, 30000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: HAPTIC PATTERNS (differenziert)
+═══════════════════════════════════════════════════════════════ */
+function haptiPattern(kind){
+  if(!PREFS.haptic) return;
+  if(!navigator.vibrate) return;
+  if(!PREFS.haptiCustom){ try{ navigator.vibrate(20); }catch{} return; }
+  const patterns = {
+    touch:[15],
+    success:[60, 50, 80],
+    reach:[100, 80, 100],     // Ziel erreicht
+    warning:[200, 100, 200],  // Warnung
+    error:[300, 100, 300, 100, 300], // Fehler
+    countdown:[20],
+    achievement:[80, 60, 80, 60, 160], // Achievement freigeschaltet
+  };
+  try{ navigator.vibrate(patterns[kind] || [20]); }catch{}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: PIN-LOCK & AUTO-LOCK
+═══════════════════════════════════════════════════════════════ */
+async function sha256(str){
+  if(!crypto?.subtle) return null;
+  const buf = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function setupPin(){
+  const pin1 = prompt('Neue PIN (4-8 Ziffern):');
+  if(!pin1 || !/^\d{4,8}$/.test(pin1)){ alert('PIN muss 4-8 Ziffern haben'); return; }
+  const pin2 = prompt('PIN bestätigen:');
+  if(pin1 !== pin2){ alert('PINs stimmen nicht überein'); return; }
+  const salt = Math.random().toString(36).slice(2,18);
+  const hash = await sha256(salt + pin1);
+  PREFS.pinSalt = salt;
+  PREFS.pinHash = hash;
+  PREFS.pinEnabled = true;
+  savePrefs();
+  toast('PIN aktiv. Wird beim nächsten Start abgefragt.');
+}
+async function removePin(){
+  const pin = prompt('Aktuelle PIN zum Entfernen:');
+  if(!pin) return;
+  const hash = await sha256(PREFS.pinSalt + pin);
+  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  PREFS.pinSalt = ''; PREFS.pinHash = ''; PREFS.pinEnabled = false;
+  savePrefs();
+  toast('PIN entfernt');
+}
+async function requirePin(){
+  if(!PREFS.pinEnabled || !PREFS.pinHash) return true;
+  // Show overlay
+  const overlay = $('#pinOverlay');
+  if(overlay){ overlay.style.display='flex'; }
+  return new Promise(resolve=>{
+    const inp = $('#pinInput');
+    const btn = $('#pinSubmit');
+    if(!inp || !btn){ resolve(true); return; }
+    inp.value=''; inp.focus();
+    const handler = async ()=>{
+      const v = inp.value.trim();
+      if(!v) return;
+      const hash = await sha256(PREFS.pinSalt + v);
+      if(hash === PREFS.pinHash){
+        overlay.style.display='none';
+        btn.removeEventListener('click', handler);
+        inp.removeEventListener('keydown', enterHandler);
+        resolve(true);
+      } else {
+        haptiPattern('error');
+        inp.value=''; inp.placeholder='PIN falsch — nochmal';
+      }
+    };
+    const enterHandler = (e)=>{ if(e.key==='Enter') handler(); };
+    btn.addEventListener('click', handler);
+    inp.addEventListener('keydown', enterHandler);
+  });
+}
+
+let lockTimer = null;
+let lastActivity = Date.now();
+function noteActivity(){ lastActivity = Date.now(); }
+function setupAutoLock(){
+  if(lockTimer){ clearInterval(lockTimer); lockTimer=null; }
+  if(!PREFS.autoLockMin || PREFS.autoLockMin<1) return;
+  ['click','keydown','touchstart','pointerdown'].forEach(ev=>{
+    document.addEventListener(ev, noteActivity, {passive:true});
+  });
+  lockTimer = setInterval(()=>{
+    if(!PREFS.pinEnabled) return;
+    const idleMs = Date.now() - lastActivity;
+    if(idleMs > PREFS.autoLockMin*60000){
+      lastActivity = Date.now();
+      requirePin();
+    }
+  }, 10000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: BAGS-LIMIT (Selbstkontrolle)
+═══════════════════════════════════════════════════════════════ */
+function bagsTodayCount(){
+  const sessions = LS.get('vol_sessions', []);
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const t0 = todayStart.getTime();
+  let count = sessions.filter(s=>s.at>=t0).reduce((sum,s)=>sum+(s.bagsFilled||0), 0);
+  // Plus die aktuelle Session (noch nicht archiviert)
+  count += PREFS.stats.bagsFilled || 0;
+  return count;
+}
+function checkBagsLimit(){
+  if(!PREFS.bagsLimitPerDay || PREFS.bagsLimitPerDay<1) return true;
+  const count = bagsTodayCount();
+  if(count >= PREFS.bagsLimitPerDay){
+    const ok = confirm(`Tageslimit erreicht (${count}/${PREFS.bagsLimitPerDay}). Trotzdem fortsetzen?`);
+    return ok;
+  }
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: FORGET-ME (alles löschen)
+═══════════════════════════════════════════════════════════════ */
+async function forgetMe(){
+  if(!confirm('Wirklich ALLE Daten dauerhaft löschen?\n\nEinstellungen, Programme, Sessions, Notizen, PIN, History — alles weg.\nDie App wird sich danach neu starten.')) return;
+  if(!confirm('LETZTE BESTÄTIGUNG: Daten weg, kein Zurück. Fortfahren?')) return;
+  // Clear all LS keys
+  try{
+    const keys = Object.keys(localStorage);
+    for(const k of keys){ localStorage.removeItem(k); }
+  }catch{}
+  // Unregister SW
+  if('serviceWorker' in navigator){
+    try{
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){ await r.unregister(); }
+    }catch{}
+  }
+  // Clear caches
+  if('caches' in window){
+    try{
+      const names = await caches.keys();
+      for(const n of names){ await caches.delete(n); }
+    }catch{}
+  }
+  toast('Alle Daten gelöscht. Lade neu …');
+  setTimeout(()=>window.location.reload(), 1200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: ENCRYPTION AT REST (PIN-basiert)
+═══════════════════════════════════════════════════════════════ */
+// Vereinfacht: nutzt PIN als Passphrase für AES-GCM von vol_sessions + vol_current_notes
+async function deriveKey(pin, salt){
+  if(!crypto?.subtle) return null;
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:enc.encode(salt), iterations:100000, hash:'SHA-256'},
+    km,
+    {name:'AES-GCM', length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+}
+async function encryptSensitive(){
+  if(!PREFS.pinEnabled){ toast('Erst PIN setzen'); return; }
+  const pin = prompt('PIN zum Verschlüsseln:');
+  if(!pin) return;
+  const hash = await sha256(PREFS.pinSalt + pin);
+  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  try{
+    const key = await deriveKey(pin, PREFS.pinSalt);
+    const enc = new TextEncoder();
+    const payload = JSON.stringify({
+      sessions: LS.get('vol_sessions', []),
+      notes: LS.get('vol_current_notes', ''),
+    });
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(payload));
+    const blob = {
+      iv: Array.from(iv),
+      ct: Array.from(new Uint8Array(ct)),
+    };
+    LS.set('vol_encrypted', blob);
+    // Remove plaintext
+    localStorage.removeItem('vol_sessions');
+    localStorage.removeItem('vol_current_notes');
+    toast('Daten verschlüsselt');
+  }catch(e){ toast('Verschlüsselung fehlgeschlagen: '+e.message); }
+}
+async function decryptSensitive(){
+  const blob = LS.get('vol_encrypted', null);
+  if(!blob){ toast('Keine verschlüsselten Daten'); return; }
+  const pin = prompt('PIN zum Entschlüsseln:');
+  if(!pin) return;
+  const hash = await sha256(PREFS.pinSalt + pin);
+  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  try{
+    const key = await deriveKey(pin, PREFS.pinSalt);
+    const iv = new Uint8Array(blob.iv);
+    const ct = new Uint8Array(blob.ct);
+    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+    const json = new TextDecoder().decode(pt);
+    const data = JSON.parse(json);
+    LS.set('vol_sessions', data.sessions||[]);
+    LS.set('vol_current_notes', data.notes||'');
+    localStorage.removeItem('vol_encrypted');
+    loadNotes();
+    renderStats();
+    renderStatsViz();
+    toast('Daten entschlüsselt');
+  }catch(e){ toast('Entschlüsselung fehlgeschlagen: '+e.message); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: MAINTENANCE / WARTUNG
+═══════════════════════════════════════════════════════════════ */
+function checkMaintenanceReminders(){
+  const sessions = PREFS.stats.sessionsCount||0;
+  const heatSec = PREFS.stats.totalHeatSec||0;
+  const heatHours = heatSec / 3600;
+  // Cleaning
+  if(PREFS.cleanReminderSessions > 0){
+    const since = sessions - (PREFS.cleanLastDoneSessions||0);
+    const heatSince = heatHours - ((PREFS.cleanLastDoneHeatSec||0)/3600);
+    if(since >= PREFS.cleanReminderSessions || heatSince >= PREFS.cleanReminderHours){
+      const last = LS.get('vol_clean_last_shown', 0);
+      if(Date.now() - last > 3600000){ // nicht öfter als 1x/Std
+        setTimeout(()=>{
+          if(confirm(`Reinigung empfohlen!\n${since} Sessions / ${heatSince.toFixed(1)} h seit letzter Reinigung.\n\nJetzt als erledigt markieren?`)){
+            markCleaningDone();
+          }
+        }, 800);
+        LS.set('vol_clean_last_shown', Date.now());
+      }
+    }
+  }
+  // Sieve
+  if(PREFS.sieveReminderSessions > 0){
+    const since = sessions - (PREFS.sieveLastDoneSessions||0);
+    if(since >= PREFS.sieveReminderSessions){
+      const last = LS.get('vol_sieve_last_shown', 0);
+      if(Date.now() - last > 24*3600000){
+        setTimeout(()=>{
+          if(confirm(`Sieb-Wechsel empfohlen!\n${since} Sessions seit letztem Wechsel.\n\nJetzt als erledigt markieren?`)){
+            markSieveDone();
+          }
+        }, 1200);
+        LS.set('vol_sieve_last_shown', Date.now());
+      }
+    }
+  }
+}
+function markCleaningDone(){
+  PREFS.cleanLastDoneSessions = PREFS.stats.sessionsCount||0;
+  PREFS.cleanLastDoneHeatSec = PREFS.stats.totalHeatSec||0;
+  savePrefs();
+  addServiceEntry('clean', 'Reinigung durchgeführt');
+  toast('Reinigung notiert');
+  renderMaintenance();
+}
+function markSieveDone(){
+  PREFS.sieveLastDoneSessions = PREFS.stats.sessionsCount||0;
+  savePrefs();
+  addServiceEntry('sieve', 'Sieb gewechselt');
+  toast('Sieb-Wechsel notiert');
+  renderMaintenance();
+}
+function addServiceEntry(kind, label){
+  const log = LS.get('vol_service_log', []);
+  log.unshift({at:Date.now(), kind, label, sessionsAt:PREFS.stats.sessionsCount||0});
+  LS.set('vol_service_log', log.slice(0,40));
+}
+function renderMaintenance(){
+  const root = $('#maintenanceCard'); if(!root) return;
+  const sessions = PREFS.stats.sessionsCount||0;
+  const heatSec = PREFS.stats.totalHeatSec||0;
+  const cleanSince = sessions - (PREFS.cleanLastDoneSessions||0);
+  const sieveSince = sessions - (PREFS.sieveLastDoneSessions||0);
+  const cleanPct = Math.min(100, (cleanSince / (PREFS.cleanReminderSessions||20)) * 100);
+  const sievePct = Math.min(100, (sieveSince / (PREFS.sieveReminderSessions||50)) * 100);
+  $('#cleanCounter').textContent = `${cleanSince} / ${PREFS.cleanReminderSessions}`;
+  $('#cleanBar').style.width = cleanPct.toFixed(1)+'%';
+  $('#cleanBar').style.background = cleanPct >= 100 ? 'var(--err)' : (cleanPct >= 80 ? 'var(--warn)' : 'linear-gradient(90deg,var(--heat),var(--hot))');
+  $('#sieveCounter').textContent = `${sieveSince} / ${PREFS.sieveReminderSessions}`;
+  $('#sieveBar').style.width = sievePct.toFixed(1)+'%';
+  $('#sieveBar').style.background = sievePct >= 100 ? 'var(--err)' : (sievePct >= 80 ? 'var(--warn)' : 'linear-gradient(90deg,var(--heat),var(--hot))');
+  // Service log
+  const logEl = $('#serviceLog');
+  if(logEl){
+    const log = LS.get('vol_service_log', []);
+    logEl.innerHTML = log.slice(0,8).map(e=>{
+      const d = new Date(e.at).toLocaleDateString('de-DE') + ' ' + new Date(e.at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--line-soft)"><span>${escapeHtml(e.label)}</span><span class="mono" style="color:var(--muted)">${d}</span></div>`;
+    }).join('') || '<div style="font-size:11px;color:var(--muted)">Noch keine Einträge</div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: PROGRAM EDITOR — LOOP + VARIABLES + TIMELINE
+═══════════════════════════════════════════════════════════════ */
+// Loop step: { action:'loop_start', repeat:3 }  ...  { action:'loop_end' }
+// Variable placeholder: value can be a string like '{temp}' or '{seconds}'
+function programHasVars(p){
+  return JSON.stringify(p.steps||[]).includes('{');
+}
+function collectVarNames(p){
+  const re = /\{(\w+)\}/g;
+  const names = new Set();
+  const s = JSON.stringify(p.steps||[]);
+  let m;
+  while((m=re.exec(s))!==null){ names.add(m[1]); }
+  return Array.from(names);
+}
+function resolveVarsInSteps(steps, vars){
+  return JSON.parse(JSON.stringify(steps).replace(/\{(\w+)\}/g, (full, name)=>{
+    const v = vars[name];
+    return (v===undefined||v===null) ? full : String(v);
+  }));
+}
+// Expand loop_start/loop_end into flat steps
+function expandLoops(steps){
+  const out = [];
+  let i = 0;
+  while(i < steps.length){
+    const s = steps[i];
+    if(s.action === 'loop_start'){
+      const repeat = clamp(parseInt(s.repeat)||1, 1, 20);
+      const inner = [];
+      i++;
+      let depth = 1;
+      while(i < steps.length && depth > 0){
+        if(steps[i].action === 'loop_start') depth++;
+        else if(steps[i].action === 'loop_end'){ depth--; if(depth===0){ i++; break; } }
+        inner.push(steps[i]);
+        i++;
+      }
+      const expanded = expandLoops(inner);
+      for(let r=0; r<repeat; r++){
+        out.push(...expanded);
+      }
+    } else if(s.action === 'loop_end'){
+      i++;
+    } else {
+      out.push(s);
+      i++;
+    }
+  }
+  return out;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: ACHIEVEMENTS
+═══════════════════════════════════════════════════════════════ */
+const ACHIEVEMENTS = [
+  {id:'first_bag', name:'Erster Ballon', desc:'Den ersten Ballon gefüllt', icon:'🎈',
+    check:()=>PREFS.stats.bagsFilled >= 1},
+  {id:'ten_bags', name:'10 Ballons', desc:'10 Ballons gefüllt', icon:'🎈',
+    check:()=>PREFS.stats.bagsFilled >= 10},
+  {id:'hundred_bags', name:'Veteran', desc:'100 Ballons gefüllt', icon:'🏆',
+    check:()=>PREFS.stats.bagsFilled >= 100},
+  {id:'first_program', name:'Programmierer', desc:'Eigenes Programm erstellt', icon:'⚙️',
+    check:()=>State.programs.filter(p=>!p.isPreset).length >= 1},
+  {id:'ten_sessions', name:'Stammgast', desc:'10 Sessions abgeschlossen', icon:'📓',
+    check:()=>PREFS.stats.sessionsCount >= 10},
+  {id:'week_streak', name:'7-Tage-Streak', desc:'7 Tage in Folge', icon:'🔥',
+    check:()=>PREFS.streakDays >= 7},
+  {id:'month_streak', name:'30-Tage-Streak', desc:'30 Tage in Folge', icon:'🌟',
+    check:()=>PREFS.streakDays >= 30},
+  {id:'all_themes', name:'Stil-Liebhaber', desc:'Alle 6 Themes ausprobiert', icon:'🎨',
+    check:()=>{ const seen = LS.get('vol_themes_seen', []); return seen.length >= 6; }},
+  {id:'aroma_explorer', name:'Aroma-Forscher', desc:'5 Sorten ausprobiert', icon:'🌿',
+    check:()=>(LS.get('vol_aromas_used', [])).length >= 5},
+  {id:'custom_aroma', name:'Eigene Note', desc:'Eigene Sorte hinzugefügt', icon:'✍️',
+    check:()=>(LS.get('vol_custom_aromas', [])).length >= 1},
+  {id:'cleaner', name:'Sauberkeit', desc:'Erste Reinigung notiert', icon:'🧽',
+    check:()=>(LS.get('vol_service_log', [])).some(e=>e.kind==='clean')},
+  {id:'voice_user', name:'Stimme zählt', desc:'Sprachsteuerung erfolgreich genutzt', icon:'🎤',
+    check:()=>LS.get('vol_voice_used', false)},
+];
+function checkAchievements(){
+  const unlocked = PREFS.achievementsUnlocked || [];
+  let changed = false;
+  for(const a of ACHIEVEMENTS){
+    if(unlocked.includes(a.id)) continue;
+    try{
+      if(a.check()){
+        unlocked.push(a.id);
+        changed = true;
+        showAchievementToast(a);
+      }
+    }catch{}
+  }
+  if(changed){
+    PREFS.achievementsUnlocked = unlocked;
+    savePrefs();
+  }
+}
+function showAchievementToast(a){
+  const t = document.createElement('div');
+  t.className='toast show';
+  t.style.cssText = 'background:linear-gradient(180deg, var(--hot), var(--hot-deep));color:#fff;padding:14px 22px;border-radius:14px;border:none;text-align:center';
+  t.innerHTML = `<div style="font-size:28px;line-height:1">${a.icon}</div><div style="font-weight:700;font-size:14px;margin-top:4px">${escapeHtml(a.name)}</div><div style="font-size:11px;opacity:.85;margin-top:2px">${escapeHtml(a.desc)}</div>`;
+  document.body.appendChild(t);
+  haptiPattern('achievement');
+  playSuccess();
+  setTimeout(()=>t.remove(), 4000);
+}
+function renderAchievements(){
+  const root = $('#achList'); if(!root) return;
+  const unlocked = PREFS.achievementsUnlocked || [];
+  root.innerHTML = ACHIEVEMENTS.map(a=>{
+    const u = unlocked.includes(a.id);
+    return `<div class="aroma-card" style="opacity:${u?'1':'.45'};display:flex;align-items:center;gap:12px;padding:10px 12px">
+      <div style="font-size:28px">${a.icon}</div>
+      <div style="flex:1">
+        <div class="name" style="margin-bottom:2px">${escapeHtml(a.name)}</div>
+        <div class="desc" style="margin-bottom:0">${escapeHtml(a.desc)}</div>
+      </div>
+      ${u ? '<div style="color:var(--ok);font-weight:700">✓</div>' : '<div style="color:var(--dim);font-size:11px">Locked</div>'}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: STREAK COUNTER
+═══════════════════════════════════════════════════════════════ */
+function noteSessionDay(){
+  const today = new Date().toISOString().slice(0,10);
+  if(PREFS.streakLastDate === today) return; // bereits heute gezählt
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  if(PREFS.streakLastDate === yesterday){
+    PREFS.streakDays = (PREFS.streakDays||0) + 1;
+  } else {
+    PREFS.streakDays = 1;
+  }
+  PREFS.streakLastDate = today;
+  savePrefs();
+}
+function renderStreak(){
+  const el = $('#statStreak');
+  if(el){
+    const d = PREFS.streakDays||0;
+    el.textContent = d > 0 ? `🔥 ${d}` : '–';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: SORTENNAMEN-GENERATOR
+═══════════════════════════════════════════════════════════════ */
+const STRAIN_ADJ = ['Crystal','Lava','Velvet','Misty','Royal','Cosmic','Holy','Phantom','Atomic','Ancient','Mystic','Galactic','Silver','Golden','Emerald','Black','Purple','White','Sour','Sweet','Frosted','Wild','Sacred','Forgotten'];
+const STRAIN_NOUN = ['Kush','Haze','Diesel','Skunk','Cookies','Lightning','Reaper','Storm','Sunset','Dream','Mist','Wave','Crown','Forest','Comet','Glow','Bliss','Garden','Vapor','Tundra','Sphere','Echo','Tower','Spirit'];
+function generateStrainName(){
+  const a = STRAIN_ADJ[Math.floor(Math.random()*STRAIN_ADJ.length)];
+  const n = STRAIN_NOUN[Math.floor(Math.random()*STRAIN_NOUN.length)];
+  const num = Math.floor(Math.random()*99)+1;
+  return `${a} ${n} #${num}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: ASCII-VOLCANO + EASTER EGGS
+═══════════════════════════════════════════════════════════════ */
+function printAsciiVolcano(){
+  const art = `
+      Sessions — S&B Vape Controller
+      ═══════════════════════════════════
+              ___
+            /\\___\\
+           /  ${'\u00B0'}  \\
+          /   ~   \\
+         /  Heat   \\
+        /__________\\
+       /            \\
+      /  V O L C A   \\
+     /     N O       \\
+    /__________________\\
+
+      [ Built for Mariana Cannabis ]
+      [ Web Bluetooth · PWA ]
+      [ Type sessions.about() for credits ]
+  `;
+  console.log('%c'+art, 'color:#ff5722;font-family:monospace');
+}
+// Easter eggs via Konami code
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx = 0;
+function setupEasterEggs(){
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === KONAMI[konamiIdx]){
+      konamiIdx++;
+      if(konamiIdx === KONAMI.length){
+        konamiIdx = 0;
+        toast('🌋 Cheat-Mode aktiv: alle Themes freigeschaltet');
+        PREFS.achievementsUnlocked = ACHIEVEMENTS.map(a=>a.id);
+        const seen = ['dark','light','lava','forest','cosmos','paper'];
+        LS.set('vol_themes_seen', seen);
+        savePrefs();
+        playSuccess();
+        haptiPattern('achievement');
+      }
+    } else {
+      konamiIdx = 0;
+    }
+  });
+  // sessions.about() console command
+  window.sessions = {
+    about: ()=>{
+      console.log('%cSessions — by Mariana Cannabis', 'font-size:18px;color:#ff5722;font-weight:bold');
+      console.log('Single-file PWA · Web Bluetooth · CC BY-NC 4.0');
+      console.log('UUIDs verified against firsttris/reactive-volcano-app');
+      console.log('Try the Konami code: ↑↑↓↓←→←→ba');
+    },
+    devices: ()=>console.table(DEVICE_PROFILES),
+    state: ()=>console.log(State),
+    prefs: ()=>console.log(PREFS),
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.6: VAPE-BUDDY-CHARAKTER
+═══════════════════════════════════════════════════════════════ */
+function renderVapeBuddy(){
+  const el = $('#vapeBuddy');
+  if(!el) return;
+  if(!PREFS.vapeBuddy){ el.style.display='none'; return; }
+  el.style.display='block';
+  // Update mood based on State
+  let mood = 'idle', msg = 'Bereit wenn du bist.';
+  if(!State.connected){ mood='sleep'; msg='Verbinde mich!'; }
+  else if(State.heater && isFinite(State.cur) && isFinite(State.target)){
+    if(State.cur < State.target - 5){ mood='heating'; msg='Heize auf… '+Math.round(State.cur)+'°'; }
+    else if(State.cur >= State.target - 1){ mood='ready'; msg='Ich bin warm. Zieh los!'; }
+    else { mood='heating'; msg='Fast bereit…'; }
+  } else if(!State.heater){ mood='idle'; msg='Heizer ist aus.'; }
+  el.dataset.mood = mood;
+  $('#buddyMsg').textContent = msg;
+}
+
+
+async function init(){
   // v4.5: apply theme first to avoid flash
   applyTheme();
+  // v4.6: apply font scale + high contrast early
+  applyFontScale();
+  applyHighContrast();
+
+  // v4.6: PIN-Lock beim Start
+  if(PREFS.pinEnabled && PREFS.pinHash){
+    await requirePin();
+  }
 
   loadUUIDs();
   // Apply current device profile labels
@@ -5392,41 +6560,45 @@ function init(){
   $('#devSub').textContent = dev.sub;
   $('#devIcon').textContent = dev.icon;
 
-  // v4.4: migrate hard-coded presets into storage so they become editable
   ensurePresetsInStorage();
 
   wire();
   renderStatus();
   renderPrograms();
 
-  // v4.4: hydrate stats/notes/voice/bag UI
   renderStats();
   loadNotes();
   renderBagCurrent();
   initVoice();
-  // Check URL hash for incoming QR-shared program
   checkImportFromUrl();
 
-  // v4.5: device badge, capabilities-driven UI, favorites, stats viz
   renderDeviceBadge();
   applyCapabilitiesUI();
   renderQuickFavs();
   setupFavLongPress();
   renderStatsViz();
 
-  // Environment check
+  // v4.6 init
+  renderStreak();
+  renderMaintenance();
+  renderVapeBuddy();
+  installKeyboardShortcuts();
+  setupAutoLock();
+  setupEasterEggs();
+  printAsciiVolcano();
+  checkAchievements();
+  checkMaintenanceReminders();
+
   const env = detectEnv();
   if(!env.hasBLE){
     log('Web Bluetooth nicht verfügbar in diesem Browser.','warn');
   }
   maybeShowIosBanner();
 
-  log('Sessions v4.5 bereit.','ok');
+  log('Sessions v4.6 bereit.','ok');
 
-  // v4.5: PWA update prompt (replaces simple register)
   setupPwaUpdate();
 
-  // First-time onboarding
   const onboarded = LS.get('vol_onboarded', false);
   if(!onboarded){
     setTimeout(()=>openWizard(true), 400);
