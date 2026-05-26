@@ -4218,6 +4218,30 @@ function resetUUIDs(){
   saveUUIDs();
 }
 
+// v5.0.2.1 FIX0: Diagnose-Dump in den sichtbaren App-Log (fuer Screenshot)
+async function dumpDiagnostics(){
+  log('═══ DIAGNOSE-DUMP (v5.0.2.1) ═══','warn');
+  log('Device-Name: "'+(State.device?.name||'(leer)')+'"','warn');
+  log('Device-ID: '+(State.device?.id||'(keine)'),'warn');
+  log('Services discovered: '+(State.allServices?.length||0),'warn');
+  for(const svc of (State.allServices||[])){
+    log('  Service: '+svc.uuid,'warn');
+    try{
+      const chars = await svc.getCharacteristics();
+      for(const c of chars){
+        const props=[];
+        if(c.properties.read) props.push('read');
+        if(c.properties.write) props.push('write');
+        if(c.properties.writeWithoutResponse) props.push('writeNoResp');
+        if(c.properties.notify) props.push('notify');
+        if(c.properties.indicate) props.push('indicate');
+        log('    Char: '+c.uuid+' ['+props.join(',')+']','warn');
+      }
+    }catch(e){ log('    (Chars nicht lesbar: '+e.message+')','err'); }
+  }
+  log('═══ ENDE DIAGNOSE ═══','warn');
+}
+
 async function connectBLE(){
   if(!('bluetooth' in navigator)){
     toast('Web Bluetooth nicht verfügbar');
@@ -4252,6 +4276,8 @@ async function connectBLE(){
     });
     State.device.addEventListener('gattserverdisconnected', ()=>{
       log('BLE getrennt.','warn');
+      // v5.0.2.1 FIX6: kein Reconnect-Loop wenn Geraet nie korrekt erkannt wurde
+      if(!State.adapter){ log('Reconnect ausgesetzt: Geraet wurde nie korrekt erkannt.','warn'); setConn(false); return; }
       // v5.0.1 K3: Verbindungsverlust robust behandeln
       State.connectionLost = true;
       State.lastKnownHeating = !!State.heater;
@@ -4265,15 +4291,22 @@ async function connectBLE(){
     State.server = await State.device.gatt.connect();
     State.allServices = await State.server.getPrimaryServices();
     log(`Verbunden mit ${State.device.name||'Gerät'}.`,'ok');
+    // v5.0.2.1 FIX0: Diagnose-Dump (sichtbar im App-Log, kein Console-Paste noetig)
+    await dumpDiagnostics();
     renderLastAction('Suche Characteristics…','busy');
-    // v5.0.0: Adapter bestimmen (Auto-Detection). Fallback Volcano damit
-    // bestehende Generic-Profile nicht regredieren.
+    // v5.0.2.1 FIX2: Service-Probe-basierte Erkennung
     const AdapterClass = await detectDevice(State.device, State.server);
+    // v5.0.2.1 FIX1: KEIN stiller Volcano-Fallback bei unbekanntem Geraet
     if(!AdapterClass){
-      toast('Geraet noch nicht voll unterstuetzt (kommt in v5.0.1+), nutze Volcano-Modus');
-      log('Kein spezifischer Adapter erkannt, Fallback VolcanoAdapter.','warn');
+      log('FEHLER: Geraet "'+(State.device.name||'?')+'" nicht erkannt.','err');
+      log('Bitte den DIAGNOSE-DUMP oben screenshotten und an Andre schicken.','err');
+      toast('Geraet nicht erkannt - Diagnose-Log oeffnen und Screenshot an Andre');
+      try{ State.server?.disconnect(); }catch(_){}
+      State.adapter = null;
+      setConn(false);
+      return;
     }
-    State.adapter = new (AdapterClass || VolcanoAdapter)(State.device);
+    State.adapter = new AdapterClass(State.device);
     // v5.0.1 A3: flexible Datenfelder (nullable, nur gefuellt wenn Adapter sie liefert)
     State.device.type = State.adapter.constructor.deviceType;
     State.device.subtype = State.device.subtype || null;       // venty|veazy|...
@@ -6519,6 +6552,12 @@ class VentyVeazyAdapter extends DeviceAdapter {
   }
   // Defensiver Parser: nur plausible Werte uebernehmen, sonst Roh-Bytes loggen
   parseNotification(dv){
+    // v5.0.2.1 FIX5: erste 5 Notifications IMMER als Hex loggen (Parser-Kalibrierung)
+    this._notifyCount = (this._notifyCount||0) + 1;
+    if(this._notifyCount <= 5){
+      const hb=[]; for(let i=0;i<dv.byteLength;i++) hb.push(dv.getUint8(i).toString(16).padStart(2,'0'));
+      log('Notify #'+this._notifyCount+' ('+dv.byteLength+'B): '+hb.join(' '),'warn');
+    }
     try{
       if(dv.byteLength < 6){ this._logRaw(dv); return; }
       const status=dv.getUint8(0);
@@ -6556,19 +6595,31 @@ class VentyVeazyAdapter extends DeviceAdapter {
   async disconnect(){ if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
 }
 
-/* Bestimmt den passenden Adapter nach GATT-Connect (Spec Kapitel 2.2). */
+/* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
+   die je Geraete-Generation variieren). Danach toleranter Name-Fallback. */
 async function detectDevice(bleDevice, gattServer){
   const name = (bleDevice && bleDevice.name) || '';
-  if(/^S&B VOLCANO/i.test(name) || /^VOLCANO/i.test(name)) return VolcanoAdapter;
-  // v5.0.2 (E1): Venty "S&B VY...", Veazy "S&B VZ..." -> ein VentyVeazyAdapter
-  if(/S&B VY/i.test(name) || /S&B VZ/i.test(name)) return VentyVeazyAdapter;
-  if(CraftyMightyAdapter.namePatterns.some(re=>re.test(name))) return CraftyMightyAdapter;
-  // Service-UUID-Probe als Fallback
+  log('detectDevice: name="'+name+'"','warn');
+
   if(gattServer){
-    try{ await gattServer.getPrimaryService('10100000-5354-4f52-5a26-4249434b454c'); return VolcanoAdapter; }catch(_){}
-    try{ await gattServer.getPrimaryService('00000001-4c45-4b43-4942-265a524f5453'); return CraftyMightyAdapter; }catch(_){}
-    try{ await gattServer.getPrimaryService('00000000-5354-4f52-5a26-4249434b454c'); return VentyVeazyAdapter; }catch(_){}
+    let services=[];
+    try{ services = await gattServer.getPrimaryServices(); }
+    catch(e){ log('detectDevice: getPrimaryServices fail: '+e.message,'err'); }
+    const uuids = services.map(s=>s.uuid.toLowerCase());
+    log('detectDevice: '+uuids.length+' Services gefunden','warn');
+    if(uuids.includes('00000000-5354-4f52-5a26-4249434b454c')){ log('detectDevice: ✓ Venty/Veazy-Service → VentyVeazyAdapter','ok'); return VentyVeazyAdapter; }
+    if(uuids.includes('10100000-5354-4f52-5a26-4249434b454c') || uuids.includes('10110000-5354-4f52-5a26-4249434b454c')){ log('detectDevice: ✓ Volcano-Service → VolcanoAdapter','ok'); return VolcanoAdapter; }
+    if(uuids.includes('00000001-4c45-4b43-4942-265a524f5453')){ log('detectDevice: ✓ Crafty/Mighty-Service → CraftyMightyAdapter','ok'); return CraftyMightyAdapter; }
+    log('detectDevice: kein bekannter Service gefunden','warn');
   }
+
+  // Name-Fallback (tolerant)
+  if(/VOLCANO/i.test(name)){ log('detectDevice: ✓ Volcano via Name','ok'); return VolcanoAdapter; }
+  if(/\bVY[\d_]/i.test(name) || /VENTY/i.test(name)){ log('detectDevice: ✓ Venty via Name','ok'); return VentyVeazyAdapter; }
+  if(/\bVZ[\d_]/i.test(name) || /VEAZY/i.test(name)){ log('detectDevice: ✓ Veazy via Name','ok'); return VentyVeazyAdapter; }
+  if(/STORZ.?&?.?BICKEL/i.test(name) || /MIGHTY/i.test(name) || /CRAFTY/i.test(name)){ log('detectDevice: ✓ Crafty/Mighty via Name','ok'); return CraftyMightyAdapter; }
+
+  log('detectDevice: NICHTS gematcht. Name="'+name+'", siehe DIAGNOSE-DUMP','err');
   return null;
 }
 
@@ -7856,14 +7907,30 @@ function importAllData(){
 /* ═══════════════════════════════════════════════════════════════
    v4.5: QUICK ACTIONS — DEVICE BADGE — CAPABILITIES UI
 ═══════════════════════════════════════════════════════════════ */
+// v5.0.2.1 FIX3: Anzeigename kommt vom AKTIVEN Adapter (nicht vom Legacy-Picker)
+function getDisplayDeviceName(){
+  if(State.device?.subtype==='venty') return 'Venty';
+  if(State.device?.subtype==='veazy') return 'Veazy (Beta)';
+  if(State.adapter && State.adapter.constructor.displayName) return State.adapter.constructor.displayName;
+  return null;
+}
 function renderDeviceBadge(){
+  const nameEl = $('#devBadgeName'); const ico = $('#devBadgeIco');
+  const adapterName = getDisplayDeviceName();
+  if(adapterName){
+    if(nameEl) nameEl.textContent = adapterName;
+    if(ico){ const map={volcano:'🌋', crafty_mighty:'🔥', venty_veazy:'🌪️'}; ico.textContent = map[State.adapter.constructor.deviceType]||'🔥'; }
+    return;
+  }
+  // Nicht verbunden: Legacy-Picker-Anzeige
   const id = getCurrentDeviceId();
   const dev = DEVICE_PROFILES[id] || DEVICE_PROFILES['volcano-hybrid'];
-  const ico = $('#devBadgeIco'); if(ico) ico.textContent = dev.icon;
-  const nameEl = $('#devBadgeName'); if(nameEl) nameEl.textContent = dev.name;
+  if(ico) ico.textContent = dev.icon;
+  if(nameEl) nameEl.textContent = dev.name;
 }
 function applyCapabilitiesUI(){
   const caps = currentCapabilities();
+  renderDeviceBadge(); // v5.0.2.1 FIX3: Badge an aktiven Adapter angleichen
   // Pumpe-Buttons im manuellen Steuerung
   const btnPump = $('#btnPump');
   const btnPumpFor = $('#btnPumpFor');
@@ -11447,7 +11514,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.2 bereit.','ok');
+  log('Sessions v5.0.2.1 bereit.','ok');
 
   setupPwaUpdate();
 
