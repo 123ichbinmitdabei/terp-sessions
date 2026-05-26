@@ -1817,6 +1817,57 @@ button[data-fs].active{
   color:var(--hot)!important;
 }
 
+/* ═══ v4.9.6: Onboarding Tour Overlay ═════════════════════════ */
+.tour-overlay{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  animation:fadeIn .25s ease;
+}
+.tour-spotlight{
+  position:absolute;
+  border:3px solid var(--hot);
+  border-radius:16px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.4), 0 0 30px var(--hot);
+  pointer-events:none;
+  animation:tourPulse 1.5s ease-in-out infinite;
+}
+@keyframes tourPulse{
+  0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,.4), 0 0 30px var(--hot)}
+  50%{box-shadow:0 0 0 9999px rgba(0,0,0,.4), 0 0 50px var(--hot)}
+}
+.tour-bubble{
+  position:absolute;
+  background:linear-gradient(180deg, #1f1812, #16110b);
+  border:1px solid var(--hot);
+  border-radius:14px;
+  padding:18px 20px;
+  width:min(340px, calc(100vw - 32px));
+  box-shadow:0 14px 50px rgba(0,0,0,.7);
+  color:var(--text);
+}
+.tour-bubble.center{
+  top:50%;left:50%;transform:translate(-50%, -50%);
+}
+.tour-bubble .tour-step-num{
+  font-family:var(--font-mono);font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--hot);
+  margin-bottom:8px;
+}
+.tour-bubble h3{
+  font-family:var(--font-display);font-size:20px;font-weight:600;
+  margin:0 0 8px;color:var(--text);letter-spacing:-.01em;
+}
+.tour-bubble p{
+  margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--text);
+}
+.tour-actions{
+  display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;
+}
+.tour-actions button{font-size:13px;padding:8px 14px}
+
 </style>
 </head>
 <body>
@@ -1885,7 +1936,7 @@ button[data-fs].active{
   <h2 id="tab-ctl-label" class="sr-only">Steuerung</h2>
 
   <!-- Hero: live temperature -->
-  <div class="hero" id="hero" role="region" aria-label="Aktuelle Geräte-Werte">
+  <div class="hero hero-card" id="hero" role="region" aria-label="Aktuelle Geräte-Werte">
     <div class="hero-grid">
       <div>
         <div class="t-meta">Aktuelle Temperatur · <button class="dev-badge" id="devBadge" aria-label="Gerät wechseln"><span class="ico" id="devBadgeIco">🌋</span><span id="devBadgeName">Volcano</span><span class="arrow">›</span></button> <span id="battBadge"></span></div>
@@ -1982,7 +2033,7 @@ button[data-fs].active{
       <button class="btn primary" id="btnSetTemp" style="flex:1">Temp setzen</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <button class="btn hot" id="btnHeat" style="flex:1">Heizer aus</button>
+      <button class="btn hot" id="btnHeat" data-tip="Heizer ein- oder ausschalten (Tastatur: Leertaste). Sicherheits-Timer startet automatisch." style="flex:1">Heizer aus</button>
       <button class="btn cool" id="btnPump" style="flex:1">Pumpe aus</button>
     </div>
     <div class="row" style="margin-top:10px">
@@ -2037,13 +2088,13 @@ button[data-fs].active{
 
   <div class="card">
     <h3>Schnell</h3>
-    <button class="btn block hot" id="btnReplayLast" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
+    <button class="btn block hot" id="btnReplayLast" data-tip="Wiederholt das zuletzt komplett gelaufene Programm — schneller Re-Start ohne erneut auswählen" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
   </div>
 
   <div class="card">
     <h3>Eigene Programme <button class="help-ico" data-help="workflow">?</button></h3>
     <div class="prog-list" id="progSaved"></div>
-    <button class="btn block primary" id="btnNewProg" style="margin-top:10px">+ Neues Programm</button>
+    <button class="btn block primary" id="btnNewProg" data-tip="Erstellt ein neues eigenes Programm mit eigenen Schritten — Temperatur-Rampen, Pumpen, Pausen" style="margin-top:10px">+ Neues Programm</button>
   </div>
 
   <div class="card">
@@ -2260,9 +2311,9 @@ button[data-fs].active{
 
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
-  <button class="nav-btn active" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
-  <button class="nav-btn" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
-  <button class="nav-btn" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
+  <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" data-tip="Steuerung — Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
+  <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" data-tip="Programme — Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
+  <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" data-tip="Setup — Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
 </nav>
 
 <!-- ── Modals ───────────────────────────────────────────────── -->
@@ -2694,7 +2745,7 @@ button[data-fs].active{
       </div>
 
       <h3 class="set-section-h">App zurücksetzen</h3>
-      <button class="btn sm ghost block" id="btnResetOnboarding">Onboarding-Wizard neu zeigen</button>
+      <button class="btn sm ghost block" id="btnResetOnboarding" data-tip="Startet die geführte Tour neu — zeigt dir Schritt für Schritt die wichtigsten Funktionen">🎓 Tour neu starten</button>
       <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
     </div>
 
@@ -4448,6 +4499,10 @@ function progCard(p, kind){
   div.className='prog';
   const est = estimateDuration(p.steps);
   const tagLabel = (kind==='preset')?'Vorlage':'Eigen';
+  // v4.9.6: Programm-Beschreibung als Tooltip auf der Karte selbst
+  const cardTip = (p.desc || stepSummary(p.steps)) + ` (Geschätzte Dauer: ${fmtDuration(est)})`;
+  div.setAttribute('data-tip', cardTip);
+  div.setAttribute('aria-label', `Programm: ${p.name}. ${cardTip}`);
   div.innerHTML=`
     <div class="prog-head">
       <div class="prog-name">${escapeHtml(p.name)}<small>${escapeHtml(p.desc||'')||(p.steps.length+' Schritte')} <span class="duration-est">~${fmtDuration(est)}</span></small></div>
@@ -4455,15 +4510,16 @@ function progCard(p, kind){
     </div>
     <div class="prog-steps">${escapeHtml(stepSummary(p.steps))}</div>
     <div class="prog-actions">
-      <button class="btn sm hot" data-act="run" style="flex:1" aria-label="Programm starten">▶ Starten</button>
-      <button class="btn sm ghost" data-act="edit" aria-label="Programm bearbeiten">Bearbeiten</button>
-      <button class="btn sm ghost" data-act="share" aria-label="Programm per QR teilen">🔗</button>
-      <button class="btn sm ghost" data-act="ha" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
-      ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" aria-label="Programm löschen">🗑</button>` : ''}
+      <button class="btn sm hot" data-act="run" data-tip="Programm jetzt starten — automatischer Ablauf der Schritte" style="flex:1" aria-label="Programm starten">▶ Starten</button>
+      <button class="btn sm ghost" data-act="edit" data-tip="Schritte und Einstellungen bearbeiten" aria-label="Programm bearbeiten">Bearbeiten</button>
+      <button class="btn sm ghost" data-act="share" data-tip="QR-Code erzeugen zum Teilen per Handy-Scan" aria-label="Programm per QR teilen">🔗</button>
+      <button class="btn sm ghost" data-act="ha" data-tip="Als Home-Assistant-Script-YAML herunterladen (Phase 2)" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
+      ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" data-tip="Programm dauerhaft löschen" aria-label="Programm löschen">🗑</button>` : ''}
     </div>
   `;
   div.querySelectorAll('button[data-act]').forEach(b=>{
-    b.addEventListener('click', ()=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
       const a=b.dataset.act;
       if(a==='run') runProgram(p);
       else if(a==='edit') openEditor(p.id);
@@ -5093,9 +5149,9 @@ function wire(){
   $('#btnExportAll').addEventListener('click', exportAllData);
   $('#btnImportAll').addEventListener('click', importAllData);
   $('#btnResetOnboarding').addEventListener('click', ()=>{
-    LS.set('vol_onboarded', false);
+    LS.set('vol_tour_completed', false);
     $('#modalSettings').classList.remove('open');
-    openWizard(true);
+    setTimeout(()=>startOnboardingTour(true), 350);
   });
 
   // Bag fill
@@ -7102,7 +7158,10 @@ function schedulePreheat(){
 function startPreheatCountdown(){
   if(preheatTimer) clearInterval(preheatTimer);
   const box = $('#preheatRunning');
-  if(box) box.hidden = false;
+  if(box){
+    box.hidden = false;
+    box.style.display = '';
+  }
   const updateInfo = ()=>{
     const remain = preheatEndAt - Date.now();
     if(remain <= 0){
@@ -7142,8 +7201,14 @@ async function executePreheat(){
 function cancelPreheat(){
   if(preheatTimer){ clearInterval(preheatTimer); preheatTimer=null; }
   preheatEndAt = null;
+  // v4.9.6: robuster cleanup — alle UI-Reste entfernen
   const box = $('#preheatRunning');
-  if(box) box.hidden = true;
+  if(box){
+    box.hidden = true;
+    box.style.display = 'none';
+  }
+  const info = $('#preheatInfo');
+  if(info) info.textContent = '';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -9088,15 +9153,27 @@ const TOOLTIPS = {
 };
 
 function installTooltips(){
-  // v4.9.5: robusteres Mobile-Verhalten — kein title-Attribut (verhindert Browser-Default-Tooltip auf Long-Press),
-  // touch-action sicherstellen, Move während Press cancelt
+  // v4.9.5: TOOLTIPS-Dict (IDs)
   for(const [id, txt] of Object.entries(TOOLTIPS)){
     const el = document.getElementById(id);
     if(!el) continue;
-    // ARIA-Label statt title (title funktioniert auf Touch nicht und kann Browser-Long-Press triggern)
-    if(!el.getAttribute('aria-label')){ el.setAttribute('aria-label', txt); }
-    // Auf Desktop trotzdem title für Hover
-    el.setAttribute('title', txt);
+    el.setAttribute('data-tip', txt);
+  }
+  // v4.9.6: Scanne ALLE Elemente mit data-tip oder aria-label und mache sie tooltip-fähig
+  installTooltipBehavior();
+}
+
+// v4.9.6: Universelle Tooltip-Behandlung — auch für dynamisch erzeugte Elemente
+function installTooltipBehavior(root){
+  root = root || document.body;
+  // Alle Elemente mit data-tip oder aria-label (wenn sie Buttons/Interactive sind)
+  const selector = '[data-tip], [aria-label]:is(button, a, [role="button"], [role="switch"], [role="tab"], summary)';
+  root.querySelectorAll(selector).forEach(el=>{
+    if(el.dataset.tipBound) return;
+    el.dataset.tipBound = '1';
+    const txt = el.getAttribute('data-tip') || el.getAttribute('aria-label') || '';
+    if(!txt) return;
+    if(!el.getAttribute('title')) el.setAttribute('title', txt);
     el.style.touchAction = el.style.touchAction || 'manipulation';
 
     let pressTimer = null;
@@ -9104,22 +9181,19 @@ function installTooltips(){
     const cancel = ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} };
 
     el.addEventListener('pointerdown', (e)=>{
-      if(e.pointerType === 'mouse') return; // Nur für Touch
+      if(e.pointerType === 'mouse') return;
       startX = e.clientX; startY = e.clientY;
       cancel();
       pressTimer = setTimeout(()=>{
-        // Versuche Browser-Default-Kontextmenü/Selektion zu unterdrücken
         try{ e.preventDefault(); }catch{}
         showTooltipPopup(txt);
         if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
           try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.05; speechSynthesis.speak(u); }catch{}
         }
-        // Vibration falls verfügbar
         try{ if(PREFS.haptic && navigator.vibrate) navigator.vibrate(20); }catch{}
       }, 550);
     });
     el.addEventListener('pointermove', (e)=>{
-      // Bewegung > 8px → kein Long-Press (Scroll-Intent)
       if(pressTimer && (Math.abs(e.clientX-startX) > 8 || Math.abs(e.clientY-startY) > 8)){
         cancel();
       }
@@ -9128,17 +9202,29 @@ function installTooltips(){
     el.addEventListener('pointerleave', cancel);
     el.addEventListener('pointercancel', cancel);
     el.addEventListener('contextmenu', (e)=>{
-      // Wenn Tooltip gerade angezeigt: Kontextmenü unterdrücken
       const tp = document.getElementById('tooltipPopup');
       if(tp && tp.classList.contains('show')){ e.preventDefault(); }
     });
-
     el.addEventListener('focus', ()=>{
       if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
         try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.1; speechSynthesis.speak(u); }catch{}
       }
     });
-  }
+  });
+}
+
+// v4.9.6: MutationObserver — neu erzeugte Elemente automatisch tooltip-fähig machen
+function setupDynamicTooltips(){
+  const observer = new MutationObserver(muts=>{
+    for(const m of muts){
+      for(const node of m.addedNodes){
+        if(node.nodeType === 1){ // Element
+          installTooltipBehavior(node);
+        }
+      }
+    }
+  });
+  observer.observe(document.body, {childList:true, subtree:true});
 }
 
 function showTooltipPopup(txt){
@@ -9720,6 +9806,221 @@ function renderShortcutExamples(){
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.6: ONBOARDING-WALKTHROUGH (Assistent-Modus)
+   Führt User Schritt-für-Schritt durch die App mit Spotlight + Bubbles
+═══════════════════════════════════════════════════════════════ */
+const TOUR_STEPS = [
+  {
+    target:null,
+    title:'👋 Willkommen bei Sessions',
+    text:'Ich zeige dir in wenigen Schritten die wichtigsten Funktionen. Du kannst die Tour jederzeit überspringen oder später wiederholen (Einstellungen → Daten → „Onboarding neu zeigen").',
+    placement:'center',
+  },
+  {
+    target:'#btnConnect',
+    title:'1. Bluetooth verbinden',
+    text:'Tippe hier um deinen Volcano (oder Crafty / Mighty / Venty) zu verbinden. Beim ersten Mal erscheint der BLE-Picker — wähle dein Gerät aus.',
+    placement:'bottom',
+  },
+  {
+    target:'.hero-card',
+    title:'2. Status auf einen Blick',
+    text:'Aktuelle Temperatur, Zielwert, Heizer-Status. Das Geräte-Badge unten erlaubt schnellen Wechsel zwischen den S&B-Modellen.',
+    placement:'bottom',
+  },
+  {
+    target:'#qaDirectDraw',
+    title:'3. Quick-Actions',
+    text:'Vier Schnellzugriffe: Direkt-Zug, Ballon, Pre-Heat-Timer und Aroma-Datenbank. Lange tippen zeigt Erklärung.',
+    placement:'bottom',
+  },
+  {
+    target:'#nav-prog',
+    title:'4. Programme-Tab',
+    text:'Hier findest du Vorlagen und kannst eigene Programme bauen — mit Schritten, Loops und Variablen. Lange auf eine Programm-Karte tippen zeigt die Beschreibung.',
+    placement:'top',
+  },
+  {
+    target:'#nav-setup',
+    title:'5. Setup-Tab',
+    text:'Hier sind: Statistik, Wartung, Werkzeuge (Audio, Wissen, Anleitung, DSL-Editor, Sprach-Shortcuts) und die App-Einstellungen.',
+    placement:'top',
+  },
+  {
+    target:'#btnHelp',
+    title:'6. ? = Anleitung',
+    text:'Das Fragezeichen oben rechts öffnet das vollständige Handbuch mit Suche. 10 Kategorien, alle Funktionen erklärt.',
+    placement:'bottom',
+  },
+  {
+    target:null,
+    title:'🎉 Bereit!',
+    text:'Tipps zum Schluss:\n\n• Lange auf JEDEN Knopf tippen zeigt einen Tooltip\n• ESC = Notaus überall\n• V auf Tastatur = Status vorlesen\n• Programme können auch per Siri-Shortcut gestartet werden (Setup → 🎙 Sprach-Shortcuts)\n\nViel Spaß!',
+    placement:'center',
+  },
+];
+
+let _tourIdx = 0;
+let _tourActive = false;
+
+function startOnboardingTour(force){
+  if(!force && LS.get('vol_tour_completed', false)) return;
+  _tourIdx = 0;
+  _tourActive = true;
+  showTourStep();
+}
+
+function showTourStep(){
+  closeTourOverlay();
+  const step = TOUR_STEPS[_tourIdx];
+  if(!step){ endOnboardingTour(); return; }
+
+  // Overlay-Backdrop
+  const ov = document.createElement('div');
+  ov.id = 'tourOverlay';
+  ov.className = 'tour-overlay';
+
+  // Spotlight (Loch um Target)
+  let spotlight = null;
+  let bubblePos = null;
+  if(step.target){
+    const target = document.querySelector(step.target);
+    if(target){
+      const rect = target.getBoundingClientRect();
+      // Make sure target is visible (scroll into view if not)
+      if(rect.top < 80 || rect.bottom > window.innerHeight - 100){
+        target.scrollIntoView({behavior:'smooth', block:'center'});
+        setTimeout(showTourStep, 350); // re-render after scroll
+        return;
+      }
+      spotlight = document.createElement('div');
+      spotlight.className = 'tour-spotlight';
+      spotlight.style.cssText = `top:${rect.top - 6}px;left:${rect.left - 6}px;width:${rect.width + 12}px;height:${rect.height + 12}px`;
+      bubblePos = {
+        top: step.placement === 'top' ? rect.top - 20 : rect.bottom + 14,
+        left: rect.left + rect.width / 2,
+        place: step.placement || 'bottom',
+      };
+    }
+  }
+
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.className = 'tour-bubble' + (step.placement === 'center' ? ' center' : '');
+  bubble.innerHTML = `
+    <div class="tour-step-num">Schritt ${_tourIdx+1} / ${TOUR_STEPS.length}</div>
+    <h3>${escapeHtml(step.title)}</h3>
+    <p style="white-space:pre-line">${escapeHtml(step.text)}</p>
+    <div class="tour-actions">
+      <button class="btn sm ghost" data-tour="skip">Überspringen</button>
+      ${_tourIdx > 0 ? '<button class="btn sm ghost" data-tour="prev">← Zurück</button>' : ''}
+      ${_tourIdx < TOUR_STEPS.length - 1 ?
+        '<button class="btn sm primary" data-tour="next">Weiter →</button>' :
+        '<button class="btn sm hot" data-tour="finish">Los geht\'s!</button>'}
+    </div>
+  `;
+  if(bubblePos && step.placement !== 'center'){
+    const place = bubblePos.place;
+    if(place === 'top'){
+      bubble.style.cssText = `top:${bubblePos.top}px;left:${bubblePos.left}px;transform:translate(-50%, -100%)`;
+    } else {
+      bubble.style.cssText = `top:${bubblePos.top}px;left:${bubblePos.left}px;transform:translateX(-50%)`;
+    }
+  }
+
+  if(spotlight) ov.appendChild(spotlight);
+  ov.appendChild(bubble);
+  document.body.appendChild(ov);
+
+  bubble.querySelectorAll('[data-tour]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const a = b.dataset.tour;
+      if(a === 'skip' || a === 'finish'){
+        if(a === 'finish') LS.set('vol_tour_completed', true);
+        endOnboardingTour();
+      } else if(a === 'next'){
+        _tourIdx++;
+        showTourStep();
+      } else if(a === 'prev'){
+        _tourIdx = Math.max(0, _tourIdx - 1);
+        showTourStep();
+      }
+    });
+  });
+
+  // ESC to skip
+  ov.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') endOnboardingTour();
+  });
+  // Focus first button
+  setTimeout(()=>bubble.querySelector('[data-tour="next"], [data-tour="finish"]')?.focus(), 100);
+}
+
+function closeTourOverlay(){
+  document.getElementById('tourOverlay')?.remove();
+}
+function endOnboardingTour(){
+  closeTourOverlay();
+  _tourActive = false;
+  LS.set('vol_tour_completed', true);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.6: MOBILE GESTEN — Tastatur-Shortcuts Equivalent
+═══════════════════════════════════════════════════════════════ */
+function setupMobileGestures(){
+  // Swipe nach links/rechts wechselt Tabs (auf body, ignoriert wenn in Modal oder Inputs)
+  let touchStartX = 0, touchStartY = 0, touchTime = 0;
+  const SWIPE_MIN = 80;
+  const SWIPE_MAX_TIME = 500;
+  document.body.addEventListener('touchstart', (e)=>{
+    if(e.target.closest('.modal.open, input, textarea, .stepper, .pill, button')) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchTime = Date.now();
+  }, {passive:true});
+
+  document.body.addEventListener('touchend', (e)=>{
+    if(!touchStartX) return;
+    const dt = Date.now() - touchTime;
+    if(dt > SWIPE_MAX_TIME){ touchStartX = 0; return; }
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) < SWIPE_MIN) return;
+    if(Math.abs(dy) > Math.abs(dx)) return; // vertikal: ignorieren
+
+    const tabs = ['ctl', 'prog', 'setup'];
+    const current = document.querySelector('.nav-btn.active')?.dataset.tab;
+    const idx = tabs.indexOf(current);
+    if(idx < 0) return;
+    if(dx < 0 && idx < tabs.length - 1){
+      switchTab(tabs[idx + 1]);
+      try{ if(PREFS.haptic && navigator.vibrate) navigator.vibrate(20); }catch{}
+    } else if(dx > 0 && idx > 0){
+      switchTab(tabs[idx - 1]);
+      try{ if(PREFS.haptic && navigator.vibrate) navigator.vibrate(20); }catch{}
+    }
+    touchStartX = 0;
+  }, {passive:true});
+
+  // Long-press auf Hero-Status → Status vorlesen (V-Taste-Equivalent)
+  const heroStatus = document.querySelector('.hero-card');
+  if(heroStatus){
+    let pressT = null;
+    heroStatus.addEventListener('pointerdown', (e)=>{
+      if(e.target.closest('button')) return;
+      pressT = setTimeout(()=>{
+        speakStatus();
+        try{ if(PREFS.haptic && navigator.vibrate) navigator.vibrate([30,30,30]); }catch{}
+      }, 1000);
+    });
+    heroStatus.addEventListener('pointerup', ()=>{ if(pressT){clearTimeout(pressT); pressT=null;} });
+    heroStatus.addEventListener('pointerleave', ()=>{ if(pressT){clearTimeout(pressT); pressT=null;} });
+    heroStatus.addEventListener('pointercancel', ()=>{ if(pressT){clearTimeout(pressT); pressT=null;} });
+  }
+}
+
 function detectPlatform(){
   const ua = navigator.userAgent || '';
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -9867,6 +10168,7 @@ async function init(){
   // v4.8 init
   loadCustomProfilesIntoDeviceList();
   installTooltips();
+  setupDynamicTooltips();
   setupOfflineIndicator();
   setupHotelExitGesture();
   applyPowerSaver();
@@ -9907,16 +10209,18 @@ async function init(){
   showPlatformBanner();
   // v4.9.5: Einklappbare Cards aktivieren
   setupCollapsibleCards();
+  // v4.9.6: Mobile-Gesten (Swipe für Tab-Wechsel, Long-Press Hero für Status)
+  setupMobileGestures();
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v4.9.5 bereit.','ok');
+  log('Sessions v4.9.6 bereit.','ok');
 
   setupPwaUpdate();
 
-  const onboarded = LS.get('vol_onboarded', false);
-  if(!onboarded){
-    setTimeout(()=>openWizard(true), 400);
+  // v4.9.6: Onboarding-Tour beim ersten Mal (1.2s nach Init damit alles gerendert ist)
+  if(!LS.get('vol_tour_completed', false)){
+    setTimeout(()=>startOnboardingTour(false), 1200);
   }
 }
 document.addEventListener('DOMContentLoaded', init);

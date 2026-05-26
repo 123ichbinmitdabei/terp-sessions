@@ -1,135 +1,122 @@
-# Sessions — S&B Vape Controller (v4.9.5)
+# Sessions — S&B Vape Controller (v4.9.6)
 
-Web-App zur Steuerung von Storz & Bickel Vaporizern (Volcano Hybrid, Crafty, Mighty, Venty) über Web Bluetooth.
-Single-File HTML PWA, ~392 KB, mobile-first, accessibility-zentriert.
+Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~404 KB.
 
-## Was ist neu in v4.9.5 — UX-Reparatur-Patch
+## Was ist neu in v4.9.6 — Tutorial-Assistent + universelle Tooltips + Mobile-Gesten
 
-Andre's Real-World-Test ergab mehrere ernsthafte UX-Probleme. Dieser Patch repariert sie.
+Andre's Real-World-Feedback:
+- „Wenn Pre-Heat abgebrochen, sollte die Anzeige verschwinden" — Bug ✅
+- „Nicht alle Knöpfe haben einen [Tooltip]" — ✅
+- „Es wäre gut wenn es auch zu den Programmen einen gäbe, so dass auch diese kurz erläutert werden" — ✅
+- „Eine genaue Anleitung wie man ein Programm zum ersten Mal durchführt, mit Tipps wie ein Assistent" — ✅
+- „Bedienung über Tastatur funktioniert, brauchen aber was fürs Handy/Tablet" — ✅
 
-### Bug-Fixes
+### 🐛 Bug-Fix: Pre-Heat-Abbrechen
 
-#### Schriftgröße funktionierte nicht — JETZT GEFIXED
+`cancelPreheat()` setzt jetzt zusätzlich `style.display = 'none'` und cleart den Info-Text. Auch `startPreheatCountdown()` resettet explizit das `display`. Verhindert Geister-Anzeige nach Abbruch.
 
-**Ursache:** 184 hardcodierte `font-size: Npx` im CSS. Das alte `applyFontScale()` setzte `html.style.fontSize`, was nur rem/em-Werte ändert. Hardcoded px-Werte blieben unverändert → optisch keine Wirkung.
+### 🆕 Onboarding-Tour wie ein Assistent
 
-**Fix:** Umstellung auf CSS `zoom` Property statt font-size. `main.wrap { zoom: var(--app-zoom) }` skaliert tatsächlich alle Pixel-Werte linear — auch die hardcoded px. Funktioniert auch in den Modal-Sheets. Die fixed Bottom-Nav und Voice-FAB bleiben unverändert (sind direkte body-Kinder, nicht im `main`).
+Beim ersten App-Start zeigt sich automatisch ein **8-Schritte-Walkthrough mit Spotlight**:
 
-**Tests:** Settings → Inklusion → Schriftgröße: A / A / A drücken. Jetzt sichtbar 100% / 125% / 150% Skalierung der gesamten App. Aktiver Button orange markiert. Toast bestätigt.
+1. Willkommen + Tour-Erklärung
+2. Bluetooth verbinden (Highlight: Verbinden-Knopf in der Topbar)
+3. Status auf einen Blick (Highlight: Hero-Card)
+4. Quick-Actions (Highlight: Direkt-Zug)
+5. Programme-Tab (Highlight: Programme-Knopf in Bottom-Nav)
+6. Setup-Tab (Highlight: Setup-Knopf)
+7. ? = Anleitung (Highlight: Hilfe-Knopf)
+8. Tipps zum Schluss (Long-Press-Hinweis, ESC, V-Taste, Siri)
 
-#### Blindenmodus aktivierte nur Sprache — JETZT GEFIXED
+**Features:**
+- Spotlight mit Puls-Animation um das aktuelle Element
+- Scroll-into-View automatisch wenn Element nicht sichtbar
+- Bubble mit Schritt-Zähler („Schritt 3 / 8")
+- Buttons: Überspringen / Zurück / Weiter / Los geht's
+- ESC zum Abbrechen
+- LocalStorage merkt sich ob Tour gelaufen ist (`vol_tour_completed`)
+- Settings → Daten → „🎓 Tour neu starten" jederzeit re-startbar
 
-**Ursache:** toggleBlindMode rief zwar applyFontScale + applyHighContrast, aber wegen dem Schrift-Bug oben war der Effekt visuell nicht da. Außerdem wurden die anderen Toggle-UI-States in Settings nicht synchronisiert.
+### 🆕 Universelle Tooltips für ALLE Knöpfe (auch dynamische)
 
-**Fix:** 
-1. Mit dem zoom-System wirkt jetzt fontScale=150 tatsächlich
-2. Neue `syncToggle()`-Helper synchronisiert ALLE UI-Toggles in Settings sobald Blindenmodus toggle wird: togBlindMode, togHighContrast, togVoiceReadout, togTooltipsVoice, togHaptiCustom, togSound, togHaptic
+**Vorher:** Tooltips nur für die ~50 IDs im TOOLTIPS-Dict. Dynamisch erzeugte Knöpfe (Programme, Aroma-Karten, Devices) bekamen nichts.
 
-**Tests:** Settings → Inklusion → ♿ Blinden-Modus aktivieren → Sofort: Schrift 150%, Hochkontrast an, Voice-Readout an, alle Toggles sind UI-seitig richtig. TTS-Ansage spricht Shortcuts vor.
+**Jetzt:**
+1. **`data-tip` Attribut** überall: jeder Button kann einen Tip mitbringen
+2. **`installTooltipBehavior(root)`** scannt alle Elemente mit `data-tip` ODER `aria-label` (auf Buttons/Links/Toggles/Tabs)
+3. **MutationObserver `setupDynamicTooltips()`** beobachtet neue DOM-Knoten und installiert Tooltips automatisch
+4. **`data-tipBound` Flag** verhindert Doppel-Bindung
 
-#### Mikrofon „service-not-allowed" — JETZT KLARE FEHLERMELDUNG
+**Programme-Tooltips:**
+- Jede Karte hat einen Tip mit Programmbeschreibung + geschätzte Dauer (Long-Press auf die Karte)
+- Jeder Aktions-Button hat eigenen Tip:
+  - „Programm jetzt starten — automatischer Ablauf der Schritte"
+  - „Schritte und Einstellungen bearbeiten"
+  - „QR-Code erzeugen zum Teilen per Handy-Scan"
+  - „Als Home-Assistant-Script-YAML herunterladen (Phase 2)"
+  - „Programm dauerhaft löschen"
 
-**Ursache:** Web Speech API (SpeechRecognition) wird von Bluefy iOS und vielen Mobile-Browsern nicht unterstützt. Generischer Fehler „Fehler: service-not-allowed" war unhilfreich.
+**Mehr Tooltips:**
+- Heizer-Hauptknopf, „Letztes Programm nochmal", „+ Neues Programm"
+- Bottom-Nav-Tabs erklären sich selbst
+- Tour-Reset-Knopf erklärt sich selbst
 
-**Fix:** Spezifische Fehler-Erkennung mit verständlichem Toast:
-- `service-not-allowed` / `not-allowed`: „Browser erlaubt Spracherkennung nicht. iOS Safari/Bluefy unterstützen das leider nicht. Nutze Chrome auf Android oder Desktop, oder die URL-Commands für Siri."
-- `no-speech`: „Nichts gehört. Erneut versuchen."
-- `audio-capture`: „Kein Mikrofon-Zugriff. Bitte Berechtigung erteilen."
-- `network`: „Netzwerk-Fehler. Spracherkennung braucht Internet."
+### 🆕 Mobile-Gesten als Tastatur-Equivalent
 
-Plus: Hinweis auf URL-Commands aus v4.9.4 als Alternative bei nicht-unterstütztem Browser.
+**Swipe links / rechts** im Body wechselt zwischen den Tabs (Steuerung → Programme → Setup):
+- Swipe-Mindeststrecke: 80px horizontal
+- Max-Zeit: 500ms (sonst kein Swipe)
+- Vertikal-Verschiebung > Horizontal: ignoriert (sonst würde Scrollen Tab wechseln)
+- Ignoriert Inputs, Buttons, Modals, Stepper, Pills (nur "freie" Areas)
+- Haptisches Feedback bei erfolgreichem Wechsel
 
-#### Tooltips funktionierten auf Touch nicht — VERBESSERT
+**Long-Press (1 Sek) auf die Hero-Card** = V-Taste-Equivalent → Status wird per TTS vorgelesen:
+- „Aktuelle Temperatur 185 Grad, Heizer an, Ziel 185 Grad"
+- Funktioniert ohne Tastatur — wichtig für Mobile-User mit Blinden-Modus
+- Dreifach-Vibration als Bestätigung
 
-**Ursache:** `title`-Attribut zeigt auf Touch keinen Tooltip. Long-Press wurde manchmal vom Browser mit Kontextmenü überschrieben.
+**Was bleibt für Tastatur-Nutzer:**
+- 1-9 → Lieblings-Temperatur
+- Space → Heizer
+- B / D / V / ESC → Ballon / Direkt-Zug / Status / Notaus
+- Tastatur-Shortcut-Liste weiter in Settings → Inklusion
 
-**Fix:**
-- aria-label statt nur title (Screenreader-Support)
-- `touch-action: manipulation` auf den Elementen
-- Pointer-Move während Long-Press (>8px) bricht den Press ab (Scroll-Intent)
-- pointerleave + pointercancel werden gehandelt
-- Beim Trigger: `e.preventDefault()` für Browser-Default-Unterdrückung
-- contextmenu-Listener verhindert Kontextmenü während Tooltip sichtbar
-- Vibrations-Feedback (kurze 20ms-Pulse) wenn Tooltip erscheint
+### Was war in v4.9.5 (zur Erinnerung)
 
-### Layout-Fixes
+UX-Reparatur: Schriftgröße via `zoom` (statt fontSize), Blindenmodus mit UI-Sync, Mikrofon graceful Error, Bottom-Padding 220+safe, einklappbare Karten, echtes Responsive.
 
-#### Bottom nicht vollständig sichtbar — NOCH MEHR PADDING
+### Was bleibt offen
 
-| | Vorher (v4.9.2) | Jetzt (v4.9.5) |
-|---|---|---|
-| Body padding-bottom | 170+safe | **220+safe** |
-| Letzte Card margin-bottom | 30px | **60px** |
-| Body :has(.run-card.show) | 250+safe | **300+safe** |
+1. **Crafty / Mighty / Venty BLE-Implementierung** — UUIDs sind im Code, aber die echte BLE-Kommunikation ist nur für Volcano implementiert. Diese Geräte haben anderen Char-Sets. **Größerer Bau, v5.0.** Andre wünscht alle Geräte funktional.
+2. **App-Erweiterungen** — Andre hat gesagt „alles nochmal anschauen und erweitern, professionalisieren". Vage; ich brauche pro App konkrete Wünsche. Vorschlag: nach Tour-Lauf am echten Gerät zeigt sich was wirklich noch fehlt.
 
-Plus `scroll-padding-bottom: 180+safe` damit Anker/Focus nicht hinter der Bottom-Nav landen.
+## Was zu testen ist
 
-#### Responsive war nicht — JETZT WIRKLICH
+### Sofort beim Reload (PWA-Update)
+1. **Erster Start** → Tour startet nach 1.2s automatisch
+2. **Tour „Weiter"** durchklicken bis zum Ende → speichert `vol_tour_completed=true`
 
-| Bildschirmbreite | Verhalten |
-|---|---|
-| <760px (Handy) | wrap padding 14/12/20, max-width 580px |
-| 760-1100px (Tablet) | wrap padding 24/20/30, max-width 720px, größere Card-Padding |
-| >1100px (Desktop) | max-width 880px |
+### Pre-Heat Bug
+3. Quick-Action „Pre-Heat" → 1 Min eingeben → Anzeige erscheint im Hero
+4. ×-Knopf in der Pre-Heat-Anzeige drücken → **Anzeige muss verschwinden**
 
-Plus **defensive word-wrap überall**:
-- `overflow-wrap: anywhere` auf .card, .toggle-row, .info, .prog-name etc.
-- `flex-wrap: wrap` auf .toggle-row (lange Texte umbrechen statt zu pushen)
-- `max-width: 100%` auf alle .input und .stepper-Inputs
+### Tooltips
+5. **Lange auf JEDEN Knopf tippen** (>0.5s) → Popup mit Erklärung
+6. **Lange auf eine Programm-Karte tippen** → Programm-Beschreibung + Dauer
 
-#### Lange Wörter brachen Layout — GEFIXED
+### Mobile-Gesten
+7. **Swipe nach links** in der Mitte vom Steuerung-Tab → wechselt zu Programme
+8. **Swipe nach rechts** in Setup → zurück zu Programme
+9. **Lange auf Hero-Card drücken** (1 Sek) → TTS spricht aktuellen Status
 
-`word-break: break-all` für .mono, code, pre (UUIDs, lange URLs).
-
-### Neues Feature: Einklappbare Karten
-
-User-Wunsch: „Kacheln sollen einklappbar sein, damit ich mir aussuchen kann was ich nutzen will".
-
-**Implementierung:**
-- Jede Card mit `<h3>`-Header ist jetzt klappbar
-- Pfeil ▾ rechts am Header zeigt State (▾ ausgeklappt, ◂ eingeklappt)
-- Tap/Click auf den H3-Text klappt die Card zu oder auf
-- State pro Card wird im LocalStorage gespeichert (`vol_card_collapse`) → bleibt nach Reload
-- Tastatur: Enter oder Space auf fokussiertem H3 klappt um (aria-expanded korrekt)
-- Klick auf interne Buttons (Help-Icon, andere Knöpfe in H3) klappt NICHT
-
-So kann jeder seine Setup-Seite auf die Karten reduzieren die er wirklich nutzt.
-
-### Was bleibt offen (für nächste Versionen)
-
-1. **Crafty / Mighty / Venty BLE-Implementierung** — UUIDs sind im Code, aber die echte BLE-Kommunikation wurde nur für Volcano implementiert. Diese Geräte haben anderen Char-Sets. Größerer Bau, v4.10 oder v5.0.
-2. **App-Erweiterungen** — Andre wünschte „alle Anwendungen erweitern". Vage; ich brauche pro App konkrete Wünsche.
-
-## Was war in v4.9.4
-
-URL-Sprachsteuerung (Siri Shortcuts, Google Routinen), Plattform-Erkennung mit Banner, Google-Fonts ORB-Fix.
-
-## Testliste v4.9.5
-
-### Bug-Fixes
-1. **Settings → Inklusion → A / A / A** drücken → App skaliert wirklich, aktiver Button orange
-2. **♿ Blinden-Modus**: Schriftgröße 150%, alle Toggles in UI synchron, TTS spricht
-3. **Mikrofon-FAB** auf iOS/Bluefy: klare Toast-Meldung mit Workaround-Hinweis
-4. **Tooltip auf Knopf lange tippen**: Popup erscheint, Browser-Kontextmenü unterdrückt, Scroll-Move bricht ab
-
-### Layout
-5. **Setup-Tab scrollen bis ganz unten**: letzte Card mit allen Buttons sichtbar
-6. **Programm starten** (Run-Card aktiv): Padding springt auf 300px, Run-Card überdeckt nichts
-7. **Auf Desktop / breitem Tablet öffnen**: App nutzt mehr Platz, max-width 720/880px
-8. **Lange Geräte-UUIDs in BLE-Console**: brechen jetzt sauber um statt Layout zu sprengen
-
-### Einklappbare Cards
-9. **Setup → eine Card-Überschrift tippen** (z.B. „Wartung & Pflege") → klappt zu, Pfeil rotiert
-10. **App neu laden** → Cards bleiben im gleichen Zustand (LocalStorage)
-11. **Help-Icon-Knopf in einer Card-Überschrift**: klappt nicht zu
+### Tour re-startbar
+10. Settings → Daten → „🎓 Tour neu starten" → Tour läuft erneut
 
 ## Roadmap
 
-**v4.10 (auf Andre's Go)**: 3D-Volcano-Vorschau mit Three.js (dynamic load)
-
-**v5.0 (größerer Bau)**: BLE-Implementierung für Crafty / Mighty / Venty mit deren spezifischem Char-Set
-
-**Phase 2 (Andre sagt Bescheid)**: Pi 4 + HA + HACS + Alexa-Skill
+**v5.0**: Crafty / Mighty / Venty BLE-Implementierung (eigenes Char-Set, größerer Bau)
+**v4.10**: 3D-Volcano-Vorschau (Three.js dynamic, optional)
+**Phase 2**: Pi 4 + HA + HACS + Alexa-Skill
 
 ## Hinweis zur Ballon-Füllung
 
