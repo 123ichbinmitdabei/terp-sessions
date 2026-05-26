@@ -1,5 +1,5 @@
 // Sessions (formerly Volcano Controller) — app-shell SW
-const VERSION = 'v4.9.7';
+const VERSION = 'v4.9.8';
 const CACHE = `sessions-${VERSION}`;
 const SHELL = [
   './',

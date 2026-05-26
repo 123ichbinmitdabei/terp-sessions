@@ -1862,6 +1862,50 @@ button[data-fs].active{
   color:var(--hot)!important;
 }
 
+/* ═══ v4.9.8: Session-Scheduler ═════════════════════════════════ */
+.schedule-safety{
+  background:rgba(255,193,7,.08);
+  border:1px solid rgba(255,193,7,.3);
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:11px;line-height:1.5;color:var(--muted);
+  margin:10px 0;
+}
+.schedule-safety b{color:var(--text)}
+.schedule-item{
+  background:var(--bg-2);
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  padding:12px 14px;
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:10px;
+}
+.schedule-item.disabled{opacity:.5}
+.schedule-item.next-up{border-color:var(--hot);box-shadow:0 0 0 1px rgba(255,87,34,.2)}
+.schedule-item .info{flex:1;min-width:0}
+.schedule-item .info b{
+  display:block;font-size:14px;color:var(--text);margin-bottom:3px;
+}
+.schedule-item .info small{
+  display:block;font-size:11px;color:var(--muted);font-family:var(--font-mono);
+}
+.schedule-item .info .next-run{
+  color:var(--hot);font-weight:600;margin-top:3px;font-size:11px;
+}
+.schedule-item .toggle{flex-shrink:0}
+.schedule-item .acts{display:flex;gap:4px;flex-shrink:0}
+.schedule-item .acts button{
+  padding:6px 8px;font-size:11px;min-height:30px;
+}
+
+button[data-sch-action].active,
+button[data-sch-trigger].active,
+button[data-sch-repeat].active,
+button[data-sch-day].active{
+  background:var(--hot)!important;color:#fff!important;border-color:var(--hot)!important;
+}
+
 /* ═══ v4.9.6: Onboarding Tour Overlay ═════════════════════════ */
 .tour-overlay{
   position:fixed;inset:0;z-index:300;
@@ -2003,10 +2047,10 @@ button[data-fs].active{
     <div class="preheat-running" id="preheatRunning" hidden role="status" aria-live="polite">
       <span class="ico">⏱</span>
       <div class="info">
-        <b>Pre-Heat geplant</b>
+        <b id="preheatLabel">Schedule aktiv</b>
         <small id="preheatInfo">in 10 Min auf 185°C</small>
       </div>
-      <button class="btn sm ghost" id="btnPreheatCancel" style="padding:6px 10px;min-height:32px" aria-label="Pre-Heat abbrechen">×</button>
+      <button class="btn sm ghost" id="btnPreheatCancel" data-tip="Schedule abbrechen" style="padding:6px 10px;min-height:32px" aria-label="Schedule abbrechen">×</button>
     </div>
     <div class="temp-graph" id="tempGraph" aria-hidden="true">
       <svg viewBox="0 0 300 46" preserveAspectRatio="none">
@@ -2040,10 +2084,10 @@ button[data-fs].active{
         <span class="lbl">Ballon füllen</span>
         <span class="meta" id="qaBagMeta">38 Sek.</span>
       </button>
-      <button class="quick-action" id="qaPreheat" aria-label="Pre-Heat Timer setzen">
+      <button class="quick-action" id="qaTimer" data-tip="Session-Planer: Heizen oder Programme zeitgesteuert starten (einmalig, täglich, Wochenplan)" aria-label="Session-Planer öffnen">
         <span class="ico">⏱</span>
-        <span class="lbl">Pre-Heat</span>
-        <span class="meta">geplant</span>
+        <span class="lbl">Timer</span>
+        <span class="meta" id="qaTimerMeta">geplant</span>
       </button>
       <button class="quick-action cool" id="qaAroma" aria-label="Aroma- und Sortendatenbank öffnen">
         <span class="ico">🌿</span>
@@ -3218,6 +3262,103 @@ button[data-fs].active{
 
     <div class="row" style="margin-top:14px">
       <button class="btn ghost block" id="btnShortcutsClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── v4.9.8: Session-Scheduler ────────────────────────────── -->
+<div class="modal" id="modalSchedule" role="dialog" aria-modal="true" aria-label="Session-Planer">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:520px">
+    <div class="grab"></div>
+    <h2>⏱ Session-Planer</h2>
+    <p class="wiz-text"><small>Plane Sessions automatisch: einmalig, täglich oder im Wochenrhythmus. Heizt auf eine Temperatur vor oder startet ein Programm.</small></p>
+
+    <div class="schedule-safety">
+      <span style="font-size:14px">⚠️</span>
+      <div>
+        <b>Sicherheit:</b> Geplante Sessions werden nur ausgeführt wenn die App geöffnet und mit dem Volcano verbunden ist. Auto-Cool-Down empfohlen (Einstellungen → Sicherheit).
+      </div>
+    </div>
+
+    <div id="scheduleList" style="margin:14px 0"></div>
+
+    <div class="row" style="gap:8px;margin-bottom:8px">
+      <button class="btn block primary" id="btnAddSchedule" data-tip="Neuen Schedule erstellen">+ Neuer Schedule</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost block" id="btnScheduleClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Editor -->
+<div class="modal" id="modalScheduleEditor" role="dialog" aria-modal="true" aria-label="Schedule bearbeiten">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:480px">
+    <div class="grab"></div>
+    <h2 id="schEditorTitle">Schedule erstellen</h2>
+
+    <label class="set-section-h">Name</label>
+    <input class="input" id="schName" type="text" placeholder="z. B. Abend-Session" maxlength="40">
+
+    <label class="set-section-h">Was?</label>
+    <div class="row" style="gap:6px;margin-bottom:8px">
+      <button class="btn sm ghost" data-sch-action="heat" id="schActionHeat" style="flex:1">🔥 Heizen auf</button>
+      <button class="btn sm ghost" data-sch-action="program" id="schActionProgram" style="flex:1">⚙️ Programm</button>
+    </div>
+    <div id="schActionHeatPane">
+      <div class="stepper">
+        <button data-step="-5">−</button>
+        <input class="input" id="schTemp" type="number" min="40" max="230" value="185">
+        <button data-step="+5">+</button>
+        <span style="margin-left:6px;color:var(--muted)">°C</span>
+      </div>
+    </div>
+    <div id="schActionProgramPane" hidden>
+      <select class="input" id="schProgSelect"></select>
+    </div>
+
+    <label class="set-section-h">Wann?</label>
+    <div class="row" style="gap:6px;margin-bottom:8px">
+      <button class="btn sm ghost" data-sch-trigger="in" id="schTriggerIn" style="flex:1">In X Minuten</button>
+      <button class="btn sm ghost" data-sch-trigger="at" id="schTriggerAt" style="flex:1">Zu Uhrzeit</button>
+    </div>
+    <div id="schTriggerInPane">
+      <div class="stepper">
+        <button data-step="-5">−</button>
+        <input class="input" id="schMins" type="number" min="1" max="1440" value="10">
+        <button data-step="+5">+</button>
+        <span style="margin-left:6px;color:var(--muted)">Min</span>
+      </div>
+    </div>
+    <div id="schTriggerAtPane" hidden>
+      <input class="input" id="schTime" type="time" value="20:00">
+    </div>
+
+    <label class="set-section-h">Wiederholung</label>
+    <div class="row" id="schRepeatRow" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn sm ghost" data-sch-repeat="once">Einmalig</button>
+      <button class="btn sm ghost" data-sch-repeat="daily">Täglich</button>
+      <button class="btn sm ghost" data-sch-repeat="weekdays">Mo–Fr</button>
+      <button class="btn sm ghost" data-sch-repeat="weekends">Sa+So</button>
+      <button class="btn sm ghost" data-sch-repeat="custom">Eigene Tage</button>
+    </div>
+    <div id="schCustomDays" hidden>
+      <div class="row" style="gap:4px;flex-wrap:wrap">
+        <button class="btn sm ghost" data-sch-day="1">Mo</button>
+        <button class="btn sm ghost" data-sch-day="2">Di</button>
+        <button class="btn sm ghost" data-sch-day="3">Mi</button>
+        <button class="btn sm ghost" data-sch-day="4">Do</button>
+        <button class="btn sm ghost" data-sch-day="5">Fr</button>
+        <button class="btn sm ghost" data-sch-day="6">Sa</button>
+        <button class="btn sm ghost" data-sch-day="0">So</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px;gap:8px">
+      <button class="btn ghost" id="btnSchEditorCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnSchEditorSave" style="flex:1">Speichern</button>
     </div>
   </div>
 </div>
@@ -5256,7 +5397,7 @@ function wire(){
   // Quick Actions im Hero
   $('#qaDirectDraw').addEventListener('click', quickDirectDraw);
   $('#qaBagFill').addEventListener('click', openBagModal);
-  $('#qaPreheat').addEventListener('click', schedulePreheat);
+  $('#qaTimer').addEventListener('click', openScheduleModal);
   $('#qaAroma').addEventListener('click', openAroma);
   // Device-Badge zum Geräte-Switch
   $('#devBadge').addEventListener('click', ()=>{
@@ -5265,8 +5406,18 @@ function wire(){
   });
   // Pre-Heat cancel
   $('#btnPreheatCancel')?.addEventListener('click', ()=>{
-    cancelPreheat();
-    toast('Pre-Heat abgebrochen');
+    // v4.9.8: Wenn ein Schedule aktiv ist, diesen disablen; sonst legacy Pre-Heat
+    const next = findNextSchedule();
+    if(next){
+      next.enabled = false;
+      next.nextRun = null;
+      saveSchedules();
+      updateScheduleHero();
+      toast(`Schedule „${next.name}" abgebrochen`);
+    } else {
+      cancelPreheat();
+      toast('Pre-Heat abgebrochen');
+    }
   });
   // Theme picker (in Settings)
   // Wird beim Öffnen der Settings gerendert
@@ -5621,6 +5772,85 @@ function wire(){
     setTimeout(openShortcutsModal, 250);
   });
   $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalShortcuts').classList.remove('open'));
+
+  // ═════ v4.9.8 wiring: Session-Scheduler ═════
+  $('#btnScheduleClose')?.addEventListener('click', ()=>$('#modalSchedule').classList.remove('open'));
+  $('#btnAddSchedule')?.addEventListener('click', ()=>openScheduleEditor(null));
+  $('#btnSchEditorCancel')?.addEventListener('click', ()=>{
+    _schEditing = null;
+    $('#modalScheduleEditor').classList.remove('open');
+  });
+  $('#btnSchEditorSave')?.addEventListener('click', saveScheduleFromEditor);
+  // Action-Wahl
+  document.querySelectorAll('[data-sch-action]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(!_schEditing) return;
+      const t = b.dataset.schAction;
+      if(t === 'heat'){
+        _schEditing.action = {type:'heat', temp: parseInt($('#schTemp').value)||185};
+      } else if(t === 'program'){
+        const progId = $('#schProgSelect').value || State.programs[0]?.id;
+        _schEditing.action = {type:'program', progId};
+      }
+      syncSchEditorUI();
+    });
+  });
+  // Trigger-Wahl
+  document.querySelectorAll('[data-sch-trigger]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(!_schEditing) return;
+      const t = b.dataset.schTrigger;
+      if(t === 'in'){
+        _schEditing.trigger = {type:'in', mins: parseInt($('#schMins').value)||10};
+        _schEditing.repeat = 'once'; // "in X Min" geht nur einmalig
+      } else if(t === 'at'){
+        const [h, m] = ($('#schTime').value || '20:00').split(':').map(Number);
+        _schEditing.trigger = {type:'at', hour:h, minute:m};
+      }
+      syncSchEditorUI();
+    });
+  });
+  // Repeat-Wahl
+  document.querySelectorAll('[data-sch-repeat]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(!_schEditing) return;
+      _schEditing.repeat = b.dataset.schRepeat;
+      // "in X Min" + repeat → wechsle Trigger auf "at"
+      if(_schEditing.repeat !== 'once' && _schEditing.trigger?.type === 'in'){
+        const [h, m] = ($('#schTime').value || '20:00').split(':').map(Number);
+        _schEditing.trigger = {type:'at', hour:h, minute:m};
+      }
+      syncSchEditorUI();
+    });
+  });
+  // Wochentag-Wahl
+  document.querySelectorAll('[data-sch-day]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(!_schEditing) return;
+      const d = parseInt(b.dataset.schDay);
+      _schEditing.customDays = _schEditing.customDays || [];
+      const idx = _schEditing.customDays.indexOf(d);
+      if(idx >= 0) _schEditing.customDays.splice(idx, 1);
+      else _schEditing.customDays.push(d);
+      _schEditing.customDays.sort();
+      syncSchEditorUI();
+    });
+  });
+  // Stepper-Buttons im Editor
+  document.querySelectorAll('#schActionHeatPane button[data-step]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const inp = $('#schTemp');
+      const v = parseInt(inp.value) + parseInt(b.dataset.step);
+      inp.value = clamp(v, 40, 230);
+    });
+  });
+  document.querySelectorAll('#schTriggerInPane button[data-step]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const inp = $('#schMins');
+      const v = parseInt(inp.value) + parseInt(b.dataset.step);
+      inp.value = clamp(v, 1, 1440);
+    });
+  });
 
   // ═════ v4.9.3 wiring: Bag Profile Editor ═════
   $('#btnBagEdClose')?.addEventListener('click', ()=>$('#modalBagEditor').classList.remove('open'));
@@ -7278,6 +7508,404 @@ function cancelPreheat(){
   }
   const info = $('#preheatInfo');
   if(info) info.textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.8: SESSION-SCHEDULER (Timer-Erweiterung)
+   Generischer Planer: Heizen oder Programme zeitgesteuert,
+   einmalig oder wiederkehrend bis hin zum Wochenplan.
+═══════════════════════════════════════════════════════════════ */
+let SCHEDULES = LS.get('vol_schedules', []);
+let scheduleTickTimer = null;
+let _schEditing = null; // {id, action, trigger, repeat, customDays, name}
+
+const DAY_LABELS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+function saveSchedules(){
+  LS.set('vol_schedules', SCHEDULES);
+  updateTimerMeta();
+}
+
+// Berechnet nächste Trigger-Zeit basierend auf Trigger-Definition und Wiederholung
+function computeNextRun(sch){
+  const now = Date.now();
+  const t = sch.trigger;
+  if(!t) return null;
+
+  if(t.type === 'in'){
+    // Relative Zeit ab jetzt — nur sinnvoll bei "once"
+    if(sch.lastRun){
+      // Bereits einmal getriggered → nicht nochmal (bei "once")
+      return sch.repeat === 'once' ? null : now + (t.mins||10)*60000;
+    }
+    return (sch.createdAt || now) + (t.mins||10)*60000;
+  }
+
+  if(t.type === 'at'){
+    // Absolute Uhrzeit
+    const buildAt = (dayOffset)=>{
+      const d = new Date();
+      d.setDate(d.getDate() + dayOffset);
+      d.setHours(t.hour||8, t.minute||0, 0, 0);
+      return d.getTime();
+    };
+    const isDayMatch = (ts, repeat, customDays)=>{
+      const wd = new Date(ts).getDay();
+      if(repeat === 'daily') return true;
+      if(repeat === 'weekdays') return wd >= 1 && wd <= 5;
+      if(repeat === 'weekends') return wd === 0 || wd === 6;
+      if(repeat === 'custom') return (customDays||[]).includes(wd);
+      return true; // 'once': irgendein Tag
+    };
+    // Suche nächsten passenden Tag (heute oder später)
+    for(let offset = 0; offset < 14; offset++){
+      const candidate = buildAt(offset);
+      if(candidate <= now) continue;
+      if(sch.repeat === 'once'){
+        return candidate;
+      }
+      if(isDayMatch(candidate, sch.repeat, sch.customDays)){
+        return candidate;
+      }
+    }
+    return null;
+  }
+  return null;
+}
+
+// Engine-Tick: alle 30 Sekunden alle Schedules prüfen
+function startScheduleEngine(){
+  if(scheduleTickTimer) clearInterval(scheduleTickTimer);
+  // Recompute alle nextRun-Werte beim Start
+  for(const sch of SCHEDULES){
+    if(sch.enabled !== false){
+      sch.nextRun = computeNextRun(sch);
+    }
+  }
+  saveSchedules();
+  scheduleTick();
+  scheduleTickTimer = setInterval(scheduleTick, 30000);
+  updateTimerMeta();
+}
+
+function scheduleTick(){
+  const now = Date.now();
+  let changed = false;
+  for(const sch of SCHEDULES){
+    if(!sch.enabled || sch.enabled === false) continue;
+    if(!sch.nextRun) continue;
+    if(sch.nextRun > now) continue;
+    if(sch.nextRun < now - 5*60000){
+      // Verpasst (App war zu) — überspringen, recompute
+      sch.nextRun = computeNextRun(sch);
+      changed = true;
+      continue;
+    }
+    // Trigger jetzt
+    executeSchedule(sch);
+    sch.lastRun = now;
+    if(sch.repeat === 'once'){
+      sch.enabled = false;
+      sch.nextRun = null;
+    } else {
+      // Re-compute nächste Iteration
+      sch.nextRun = computeNextRun(sch);
+    }
+    changed = true;
+  }
+  if(changed) saveSchedules();
+  updateScheduleHero();
+  updateTimerMeta();
+}
+
+async function executeSchedule(sch){
+  toast(`⏱ Schedule: ${sch.name||'Unbenannt'}`);
+  try{ if(navigator.vibrate) navigator.vibrate([80,60,80]); }catch{}
+  if(sch.action?.type === 'heat'){
+    if(!State.connected){
+      toast('Schedule: Nicht verbunden — manuell starten');
+      ttsSay('Schedule Zeit erreicht. Bitte verbinden.');
+      playSuccess();
+      return;
+    }
+    try{
+      await cmdSetTemp(sch.action.temp || 185);
+      await cmdHeaterOn();
+      ttsSay(`Schedule ${sch.name||''} aktiv. Heizer an, ${sch.action.temp} Grad`);
+      playSuccess();
+    }catch(e){ toast('Schedule-Fehler: '+e.message); }
+  } else if(sch.action?.type === 'program'){
+    const p = State.programs.find(x=>x.id === sch.action.progId);
+    if(!p){ toast('Programm nicht gefunden'); return; }
+    if(!State.connected){
+      toast('Schedule: Nicht verbunden — Programm '+p.name+' wartet');
+      return;
+    }
+    ttsSay(`Schedule startet ${p.name}`);
+    runProgram(p);
+  }
+}
+
+function findNextSchedule(){
+  let best = null;
+  for(const sch of SCHEDULES){
+    if(!sch.enabled || !sch.nextRun) continue;
+    if(!best || sch.nextRun < best.nextRun) best = sch;
+  }
+  return best;
+}
+
+function updateScheduleHero(){
+  const next = findNextSchedule();
+  const box = $('#preheatRunning');
+  if(!box) return;
+  if(!next){
+    box.hidden = true;
+    box.style.display = 'none';
+    return;
+  }
+  box.hidden = false;
+  box.style.display = '';
+  const lbl = $('#preheatLabel');
+  const info = $('#preheatInfo');
+  if(lbl) lbl.textContent = `⏱ ${next.name||'Schedule'}`;
+  if(info){
+    const remain = next.nextRun - Date.now();
+    if(remain > 0){
+      const desc = next.action?.type === 'heat'
+        ? `auf ${next.action.temp}°C`
+        : `Programm: ${State.programs.find(p=>p.id===next.action?.progId)?.name||'?'}`;
+      if(remain < 3600000){
+        const min = Math.floor(remain/60000);
+        const sec = Math.floor((remain%60000)/1000);
+        info.textContent = `in ${min}m ${String(sec).padStart(2,'0')}s — ${desc}`;
+      } else {
+        const d = new Date(next.nextRun);
+        info.textContent = `${d.toLocaleString('de-DE', {weekday:'short', hour:'2-digit', minute:'2-digit'})} — ${desc}`;
+      }
+    }
+  }
+}
+
+// Quick-Action Knopf-Meta updaten
+function updateTimerMeta(){
+  const meta = $('#qaTimerMeta');
+  if(!meta) return;
+  const next = findNextSchedule();
+  if(!next){
+    meta.textContent = SCHEDULES.length ? `${SCHEDULES.length} gespeichert` : 'planen';
+    return;
+  }
+  const remain = next.nextRun - Date.now();
+  if(remain < 0){ meta.textContent = 'jetzt'; return; }
+  if(remain < 3600000){
+    const min = Math.ceil(remain/60000);
+    meta.textContent = `in ${min} Min`;
+  } else if(remain < 86400000){
+    const h = Math.floor(remain/3600000);
+    meta.textContent = `in ${h} Std`;
+  } else {
+    const d = new Date(next.nextRun);
+    meta.textContent = d.toLocaleString('de-DE', {weekday:'short', hour:'2-digit', minute:'2-digit'});
+  }
+}
+
+// ═══ Schedule-Modal UI ════════════════════════════════════════
+function openScheduleModal(){
+  renderScheduleList();
+  $('#modalSchedule').classList.add('open');
+}
+
+function renderScheduleList(){
+  const root = $('#scheduleList');
+  if(!root) return;
+  root.innerHTML = '';
+  if(!SCHEDULES.length){
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = `
+      <div style="text-align:center;padding:24px 12px;color:var(--muted);font-size:13px">
+        Noch keine Schedules angelegt.<br>
+        <small>Tippe „+ Neuer Schedule" um zu planen.</small>
+      </div>
+    `;
+    root.appendChild(empty);
+    return;
+  }
+  // Sortierung: enabled mit nextRun zuerst, dann nach nextRun
+  const sorted = [...SCHEDULES].sort((a,b)=>{
+    if(a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+    return (a.nextRun||Infinity) - (b.nextRun||Infinity);
+  });
+  const nextUp = findNextSchedule();
+  for(const sch of sorted){
+    const div = document.createElement('div');
+    div.className = 'schedule-item' + (sch.enabled ? '' : ' disabled') + (sch === nextUp ? ' next-up' : '');
+    const repeatLabel = scheduleRepeatLabel(sch);
+    const actionLabel = sch.action?.type === 'heat'
+      ? `🔥 Heizen auf ${sch.action.temp}°C`
+      : `⚙️ ${State.programs.find(p=>p.id===sch.action?.progId)?.name || 'Programm gelöscht'}`;
+    const triggerLabel = scheduleTriggerLabel(sch);
+    const nextLabel = sch.enabled && sch.nextRun
+      ? `Nächste Ausführung: ${new Date(sch.nextRun).toLocaleString('de-DE', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}`
+      : '';
+    div.innerHTML = `
+      <div class="info">
+        <b>${escapeHtml(sch.name||'Unbenannt')}</b>
+        <small>${escapeHtml(actionLabel)} · ${escapeHtml(triggerLabel)} · ${escapeHtml(repeatLabel)}</small>
+        ${nextLabel ? `<div class="next-run">${escapeHtml(nextLabel)}</div>` : ''}
+      </div>
+      <button class="toggle" role="switch" aria-checked="${sch.enabled?'true':'false'}" data-toggle-sch="${sch.id}" data-tip="Schedule ein/aus"></button>
+      <div class="acts">
+        <button class="btn sm ghost" data-edit-sch="${sch.id}" data-tip="Bearbeiten" aria-label="Bearbeiten">✎</button>
+        <button class="btn sm ghost" data-del-sch="${sch.id}" data-tip="Löschen" aria-label="Löschen">🗑</button>
+      </div>
+    `;
+    div.querySelector('[data-toggle-sch]').addEventListener('click', ()=>{
+      sch.enabled = !sch.enabled;
+      if(sch.enabled) sch.nextRun = computeNextRun(sch);
+      else sch.nextRun = null;
+      saveSchedules();
+      renderScheduleList();
+      updateScheduleHero();
+    });
+    div.querySelector('[data-edit-sch]').addEventListener('click', ()=>openScheduleEditor(sch.id));
+    div.querySelector('[data-del-sch]').addEventListener('click', ()=>{
+      if(!confirm(`Schedule „${sch.name}" wirklich löschen?`)) return;
+      SCHEDULES = SCHEDULES.filter(s=>s.id !== sch.id);
+      saveSchedules();
+      renderScheduleList();
+      updateScheduleHero();
+    });
+    root.appendChild(div);
+  }
+}
+
+function scheduleRepeatLabel(sch){
+  if(sch.repeat === 'once') return 'einmalig';
+  if(sch.repeat === 'daily') return 'täglich';
+  if(sch.repeat === 'weekdays') return 'Mo–Fr';
+  if(sch.repeat === 'weekends') return 'Sa+So';
+  if(sch.repeat === 'custom' && Array.isArray(sch.customDays)){
+    return sch.customDays.map(d=>DAY_LABELS[d]).join('+');
+  }
+  return '';
+}
+function scheduleTriggerLabel(sch){
+  const t = sch.trigger;
+  if(!t) return '';
+  if(t.type === 'in') return `in ${t.mins} Min`;
+  if(t.type === 'at') return `um ${String(t.hour).padStart(2,'0')}:${String(t.minute||0).padStart(2,'0')}`;
+  return '';
+}
+
+function openScheduleEditor(id){
+  const existing = id ? SCHEDULES.find(s=>s.id === id) : null;
+  _schEditing = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: 'sch_'+Date.now().toString(36),
+    name: '',
+    action: {type:'heat', temp: PREFS.preferredTemp || 185},
+    trigger: {type:'in', mins: 10},
+    repeat: 'once',
+    customDays: [],
+    enabled: true,
+    createdAt: Date.now(),
+  };
+  // Fülle Editor-Felder
+  $('#schEditorTitle').textContent = existing ? 'Schedule bearbeiten' : 'Schedule erstellen';
+  $('#schName').value = _schEditing.name || '';
+  $('#schTemp').value = _schEditing.action?.temp || 185;
+  $('#schMins').value = _schEditing.trigger?.mins || 10;
+  $('#schTime').value = _schEditing.trigger?.type === 'at'
+    ? `${String(_schEditing.trigger.hour||8).padStart(2,'0')}:${String(_schEditing.trigger.minute||0).padStart(2,'0')}`
+    : '20:00';
+
+  // Programm-Select befüllen
+  const sel = $('#schProgSelect');
+  sel.innerHTML = '';
+  for(const p of State.programs){
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if(_schEditing.action?.progId === p.id) opt.selected = true;
+    sel.appendChild(opt);
+  }
+
+  // Visuelle States setzen
+  syncSchEditorUI();
+  // Modal öffnen
+  $('#modalScheduleEditor').classList.add('open');
+}
+
+function syncSchEditorUI(){
+  // Action-Buttons
+  document.querySelectorAll('[data-sch-action]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.schAction === _schEditing.action?.type);
+  });
+  $('#schActionHeatPane').hidden = _schEditing.action?.type !== 'heat';
+  $('#schActionProgramPane').hidden = _schEditing.action?.type !== 'program';
+
+  // Trigger-Buttons
+  document.querySelectorAll('[data-sch-trigger]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.schTrigger === _schEditing.trigger?.type);
+  });
+  $('#schTriggerInPane').hidden = _schEditing.trigger?.type !== 'in';
+  $('#schTriggerAtPane').hidden = _schEditing.trigger?.type !== 'at';
+
+  // Repeat-Buttons
+  document.querySelectorAll('[data-sch-repeat]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.schRepeat === _schEditing.repeat);
+  });
+  $('#schCustomDays').hidden = _schEditing.repeat !== 'custom';
+
+  // Custom-Day-Buttons
+  document.querySelectorAll('[data-sch-day]').forEach(b=>{
+    const d = parseInt(b.dataset.schDay);
+    b.classList.toggle('active', (_schEditing.customDays||[]).includes(d));
+  });
+}
+
+function saveScheduleFromEditor(){
+  if(!_schEditing) return;
+  // Aus Editor-Feldern lesen
+  _schEditing.name = $('#schName').value.trim() || 'Schedule '+(SCHEDULES.length+1);
+
+  if(_schEditing.action?.type === 'heat'){
+    _schEditing.action.temp = clamp(parseInt($('#schTemp').value)||185, 40, 230);
+  } else if(_schEditing.action?.type === 'program'){
+    _schEditing.action.progId = $('#schProgSelect').value;
+  }
+
+  if(_schEditing.trigger?.type === 'in'){
+    _schEditing.trigger.mins = clamp(parseInt($('#schMins').value)||10, 1, 1440);
+  } else if(_schEditing.trigger?.type === 'at'){
+    const [h, m] = ($('#schTime').value || '20:00').split(':').map(Number);
+    _schEditing.trigger.hour = h;
+    _schEditing.trigger.minute = m;
+  }
+
+  // Validierung: custom days mind. 1
+  if(_schEditing.repeat === 'custom' && (!_schEditing.customDays || !_schEditing.customDays.length)){
+    toast('Wähle mindestens einen Wochentag');
+    return;
+  }
+  // "in X Min" + repeating macht keinen Sinn → fixen
+  if(_schEditing.trigger?.type === 'in' && _schEditing.repeat !== 'once'){
+    toast('„In X Min" geht nur einmalig — Wiederholung auf „Einmalig" gesetzt');
+    _schEditing.repeat = 'once';
+  }
+
+  _schEditing.nextRun = computeNextRun(_schEditing);
+  _schEditing.enabled = true;
+
+  const existingIdx = SCHEDULES.findIndex(s=>s.id === _schEditing.id);
+  if(existingIdx >= 0) SCHEDULES[existingIdx] = _schEditing;
+  else SCHEDULES.push(_schEditing);
+  saveSchedules();
+  _schEditing = null;
+  $('#modalScheduleEditor').classList.remove('open');
+  renderScheduleList();
+  updateScheduleHero();
+  toast('Schedule gespeichert');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -9034,7 +9662,8 @@ const MANUAL = [
     {q:'Heizer an/aus', a:'Großer Knopf in der Steuerung-Karte. Tastatur-Shortcut: Space. Sicherheits-Timer startet automatisch.'},
     {q:'Direkt-Zug', a:'Quick-Action im Hero. Pumpe läuft X Sekunden (Default 5) und stoppt automatisch. Für Crafty/Mighty: aus dem Mundstück ziehen.'},
     {q:'Ballon füllen', a:'Quick-Action im Hero oder per Voice. Wähle Ballontyp (Easy Valve groß/klein, Solid, Custom). Live-Countdown.'},
-    {q:'Pre-Heat-Timer', a:'„In X Minuten auf Y°C aufheizen". Bei offener App: Auto-Aktivierung. Sonst Erinnerung beim Öffnen.'},
+    {q:'Session-Planer (Timer)', a:'Quick-Action „⏱ Timer" oder Hero-Tap: plane Sessions zeitgesteuert. Aktion: Heizen auf X°C oder ganzes Programm starten. Trigger: in X Min oder zu Uhrzeit. Wiederholung: einmalig, täglich, Mo–Fr, Sa+So, oder eigene Wochentage. Mehrere Schedules parallel möglich.'},
+    {q:'Schedule abbrechen', a:'Im Hero-Bereich erscheint der nächste anstehende Schedule mit ×-Knopf zum sofortigen Deaktivieren. Oder Quick-Action „⏱ Timer" → Toggle aus oder löschen.'},
   ]},
   {cat:'Programme', icon:'⚙️', items:[
     {q:'Vorlagen nutzen', a:'Programme-Tab → Vorlagen sind editierbar. „▶ Starten" oder „Bearbeiten". „↻ Werkseinstellungen" stellt Originale her.'},
@@ -9183,9 +9812,9 @@ const TOOLTIPS = {
   'devBadge':'Gerätetyp wechseln (Volcano, Crafty, Mighty, Venty)',
   'qaDirectDraw':'Pumpe für eingestellte Sekunden, dann automatisch aus',
   'qaBagFill':'Ballon füllen mit gewähltem Typ und Zeit',
-  'qaPreheat':'In X Minuten automatisch auf Y Grad aufheizen',
+  'qaTimer':'Session-Planer — Heizen oder Programme zeitgesteuert starten (einmalig, täglich, Wochenplan)',
   'qaAroma':'Aroma- und Sortendatenbank mit Empfehlungen',
-  'btnPreheatCancel':'Geplante Pre-Heat-Aktion abbrechen',
+  'btnPreheatCancel':'Aktiven Schedule abbrechen',
   'btnHeat':'Heizer einschalten oder ausschalten (Tastatur: Space)',
   'btnPump':'Pumpe an oder aus',
   'btnSetTemp':'Eingestellte Temperatur an Gerät senden',
@@ -9764,12 +10393,27 @@ const URL_COMMANDS = {
     if(!prog){ ttsSay('Programm nicht gefunden'); return; }
     ttsSay(`Starte ${prog.name}`); runProgram(prog);
   }},
-  'preheat':       {label:'Pre-Heat',          needsBle:true,  fn:async(params)=>{
-    const temp = parseInt(params.temp) || 185;
-    const min = parseInt(params.min) || 10;
-    schedulePreheat(min, temp);
+  'preheat':       {label:'Pre-Heat',          needsBle:false, fn:async(params)=>{
+    const temp = clamp(parseInt(params.temp) || 185, 40, 230);
+    const min = clamp(parseInt(params.min) || 10, 1, 1440);
+    // v4.9.8: Erstelle einen einmaligen Schedule
+    const sch = {
+      id: 'sch_url_'+Date.now().toString(36),
+      name: `Pre-Heat ${temp}°C`,
+      action: {type:'heat', temp},
+      trigger: {type:'in', mins: min},
+      repeat: 'once',
+      customDays: [],
+      enabled: true,
+      createdAt: Date.now(),
+    };
+    sch.nextRun = computeNextRun(sch);
+    SCHEDULES.push(sch);
+    saveSchedules();
+    updateScheduleHero();
     ttsSay(`Vorheizen in ${min} Minuten auf ${temp} Grad`);
   }},
+  'schedule':      {label:'Schedule öffnen',   needsBle:false, fn:async()=>{ openScheduleModal(); ttsSay('Session-Planer'); }},
 };
 
 function ttsSay(text){
@@ -9901,7 +10545,13 @@ const TOUR_STEPS = [
   {
     target:'#qaDirectDraw',
     title:'3. Quick-Actions',
-    text:'Vier Schnellzugriffe: Direkt-Zug, Ballon, Pre-Heat-Timer und Aroma-Datenbank. Lange tippen zeigt Erklärung.',
+    text:'Vier Schnellzugriffe: Direkt-Zug, Ballon, Timer-Planer und Aroma-Datenbank. Lange tippen zeigt Erklärung.',
+    placement:'bottom',
+  },
+  {
+    target:'#qaTimer',
+    title:'4. Session-Planer (Timer)',
+    text:'Plane Sessions zeitgesteuert: einmalig in X Minuten, zu einer Uhrzeit oder als Wochenrhythmus. Heizt vor oder startet ein ganzes Programm — auch wiederkehrend.',
     placement:'bottom',
   },
   {
@@ -10302,10 +10952,12 @@ async function init(){
   setupCollapsibleCards();
   // v4.9.6: Mobile-Gesten (Swipe für Tab-Wechsel, Long-Press Hero für Status)
   setupMobileGestures();
+  // v4.9.8: Session-Scheduler Engine starten
+  startScheduleEngine();
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v4.9.7 bereit.','ok');
+  log('Sessions v4.9.8 bereit.','ok');
 
   setupPwaUpdate();
 

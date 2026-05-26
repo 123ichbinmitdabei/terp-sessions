@@ -1,79 +1,114 @@
-# Sessions — S&B Vape Controller (v4.9.7)
+# Sessions — S&B Vape Controller (v4.9.8)
 
-Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~408 KB.
+Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~432 KB.
 
-## Was ist neu in v4.9.7 — Tour-Bug-Fix + Settings-Tabs deutlich sichtbar
+## Was ist neu in v4.9.8 — Session-Scheduler (Pre-Heat-Erweiterung)
 
-### 🔴 Bug-Fix: Onboarding-Tour starb nach Schritt 1
+Andre's Wunsch: „Pre-Heat umbenennen und als Timer nutzen. Start einer Session in X Stunden/Minuten mit Temperatur oder Programm, mit Möglichkeit der Wiederholung bis hin zum Wochenplan."
 
-CC fand einen echten Bug in v4.9.6: Die Tour stieg bei Schritt 2 (Spotlight auf "Verbinden"-Knopf in der Topbar) in eine Endlosschleife ein.
+### Umbenennung: Pre-Heat → ⏱ Timer
 
-**Ursache:** `showTourStep()` prüfte mit `rect.top < 80` ob das Element zentriert werden soll. Der Verbinden-Knopf sitzt aber bei `top=14px` ganz oben — die Seite kann ihn nicht „zentrieren" wenn `scrollY` schon bei 0 ist. Die Funktion plante sich endlos selbst neu, das Overlay verschwand dauerhaft.
+Die Quick-Action „Pre-Heat" heißt jetzt **„Timer"** und öffnet einen vollwertigen Session-Planer statt zwei prompt-Dialoge. Der Meta-Text zeigt:
+- „planen" wenn nichts geplant
+- „in 10 Min" / „in 2 Std" wenn ein Schedule bald läuft
+- „Mo. 20:00" für längerfristige
 
-**Fix:**
-1. Bedingung verschärft auf `rect.bottom < 0 || rect.top > vh` — nur scrollen wenn Element WIRKLICH außerhalb des Viewports ist
-2. **`_tourScrollRetried`-Flag** verhindert mehrfaches Scroll-Retry pro Schritt (max 1 Versuch)
-3. Flag wird bei Next/Prev/Start zurückgesetzt
-4. Spotlight + Bubble bekommen jetzt **Clamp** damit sie auch bei Rand-Elementen sichtbar bleiben
+### Session-Scheduler — Datenmodell
 
-Die Tour läuft jetzt alle 8 Schritte durch.
+| Feld | Optionen |
+|---|---|
+| **Name** | freier Text, max 40 Zeichen |
+| **Aktion** | 🔥 Heizen auf X°C **oder** ⚙️ Programm starten |
+| **Trigger** | In X Min (1–1440) **oder** zu Uhrzeit HH:MM |
+| **Wiederholung** | Einmalig / Täglich / Mo–Fr / Sa+So / Eigene Wochentage |
 
-### 🆕 Settings-Tabs deutlich sichtbar
+Mehrere Schedules parallel möglich. Jeder hat einen Toggle-Switch zum Aktivieren/Deaktivieren ohne Löschen.
 
-Andre's Feedback: „Es ist nicht auf Anhieb ersichtlich dass es noch mehr Registerkarten gibt als die die man sofort sieht. Das muss deutlicher werden."
+### Scheduler-Engine
 
-**Vorher:** Subtiler dunkler Tab-Strip, aktiver Tab nur leicht abgesetzt. Bei kleinem Bildschirm waren Tab 5 + 6 unsichtbar.
+- **Tick alle 30 Sek**: prüft alle aktiven Schedules
+- **Re-Compute nach Trigger**: einmalige Schedules werden disabled, wiederkehrende bekommen neue nextRun-Zeit
+- **Verpasste Schedules** (> 5 Min vorbei): werden übersprungen mit Recompute (kein Trigger Stunden später)
+- **Sortierung**: aktive zuerst, nach nextRun
+- **Persistenz**: LocalStorage `vol_schedules`
 
-**Jetzt:**
+### Hero-Anzeige
 
-1. **Hinweis-Text** über den Tabs: „─── 6 KATEGORIEN — WISCHEN FÜR MEHR ───" mit Trennlinien
-2. **Orangener Border** um den ganzen Tab-Strip plus zarte Schimmer-Aura
-3. **Aktiver Tab** mit oranger Background-Farbe + Schatten + weißer Schrift — visuell unmissverständlich
-4. **Größere Tabs** (44px hoch, 13px Schrift statt 12px, 11px Padding statt 8px)
-5. **Scroll-Gradient links/rechts:** wenn weitere Tabs links oder rechts verborgen sind, erscheint ein zarter Fade-Schatten am Rand → „hier geht noch was"
-6. **Scroll-Snap** auf jeden Tab beim Wischen
-7. **Aktiver Tab scrollt sich selbst in Sicht** beim Wechsel
-8. **Sichtbare Scrollbar** (3px hoch, orange) am unteren Tab-Strip-Rand
+Der bisherige Pre-Heat-Bereich im Hero zeigt jetzt den **nächsten anstehenden Schedule**:
+- Name als großer Text
+- Aktion + Restzeit / Uhrzeit als kleiner Text
+- ×-Knopf deaktiviert den Schedule sofort (statt löschen)
 
-**Resultat:** Bei jedem Bildschirm sieht man sofort dass es 6 Kategorien gibt und kann horizontal scrollen.
+### Sicherheits-Warnung im Modal
 
-## Test-Status v4.9.6 (zur Erinnerung)
+Da geplante Heiz-Aktionen ein Brandrisiko sind:
 
-CC's letzter Test:
-- ✅ Universelle Tooltips: 75/75 Elemente
-- ✅ Programme: Karten 6/6, Aktions-Knöpfe 24/24
-- ✅ Swipe Tab-Wechsel
-- ✅ Pre-Heat-Cancel-Fix
-- ✅ Long-Press Hero → TTS
-- ✅ Regression 24/24
-- 🔴 Tour starb nach Schritt 1 → **JETZT IN v4.9.7 GEFIXT**
+> ⚠️ **Sicherheit:** Geplante Sessions werden nur ausgeführt wenn die App geöffnet und mit dem Volcano verbunden ist. Auto-Cool-Down empfohlen.
 
-## Was zu testen ist in v4.9.7
+App-Schließen = Schedule pausiert. Web Bluetooth kann nicht aus dem Hintergrund triggern, daher ist das physisch durch den Browser begrenzt.
 
-### Tour-Bug-Fix
-1. LocalStorage in DevTools `vol_tour_completed` löschen → Reload → **Tour läuft alle 8 Schritte durch**
-2. Settings → Daten → 🎓 Tour neu starten → genauso alle 8 Schritte
-3. Spotlight bleibt bei Rand-Elementen sichtbar (Verbinden-Knopf oben links)
+### URL-Command Erweiterungen
 
-### Settings-Tabs
-4. Settings öffnen → **Hinweis „6 Kategorien — Wischen für mehr"** über den Tabs sichtbar
-5. **Aktiver Tab** in orange mit weißer Schrift unmissverständlich
-6. Auf schmalem Bildschirm: **Fade-Schatten rechts** zeigt dass weitere Tabs hidden sind
-7. Wischen scrollt mit Snap-Points
-8. Klick auf einen Tab scrollt diesen automatisch in Sicht
+- `?cmd=preheat&temp=185&min=10` erzeugt jetzt einen einmaligen Schedule (sauberer als alte prompt-Dialoge)
+- `?cmd=schedule` öffnet das Scheduler-Modal direkt
 
-## Roadmap
+Damit kann via Siri ein Schedule eingerichtet werden: „Hey Siri, Volcano in einer halben Stunde anheizen" → URL → Schedule angelegt + nextRun gesetzt.
 
-**v5.0 (nach Andre's Go):** Crafty / Mighty / Venty BLE-Implementierung mit deren spezifischem Char-Set. Das wird ein größerer Bau:
-- Service-UUID `00000001-4c45-4b43-4942-265a524f5453` (Crafty/Mighty)
-- Andere Encoding-Varianten
-- Akku-Status statt nur Heizer
-- Venty hat Boost-Mode
-- Vermutlich 1-2 Iterationen nötig wegen Trial-and-Error
+### Tour-Erweiterung
 
-**v4.10:** 3D-Volcano-Vorschau (Three.js dynamic, optional)
-**Phase 2:** Pi 4 + HA + HACS + Alexa-Skill
+Der Onboarding-Walkthrough hat jetzt einen Schritt für den Session-Planer: „4. Session-Planer (Timer) — plane Sessions zeitgesteuert..." Damit lernen neue User die Funktion automatisch kennen.
+
+### Manual-Updates
+
+Im Setup → Anleitung gibt es jetzt:
+- „Session-Planer (Timer)" — komplette Erklärung
+- „Schedule abbrechen" — wo und wie
+- Pre-Heat-Eintrag entfernt (ist im Scheduler aufgegangen)
+
+### Backward-Kompatibilität
+
+- Alte `schedulePreheat()`-Funktion + `cancelPreheat()` bleiben für Legacy-Code da
+- Bei Klick auf ×-Cancel im Hero: prüft erst ob ein Schedule next-up ist, sonst alter Pre-Heat-Cancel-Pfad
+- Bestehende User ohne Schedules sehen den Quick-Button mit „planen"-Meta
+
+## Beispiele
+
+**Morgenroutine:**
+- Name: „Morgen-Sativa"
+- Aktion: Programm starten → „Sativa-Sweet-Spot"
+- Trigger: Zu Uhrzeit → 08:00
+- Wiederholung: Mo–Fr
+
+**Abend einmalig:**
+- Name: „Heute Abend"
+- Aktion: Heizen auf 195°C
+- Trigger: Zu Uhrzeit → 21:30
+- Wiederholung: Einmalig
+
+**Schnell vorheizen:**
+- Name: „Jetzt vorheizen"
+- Aktion: Heizen auf 185°C
+- Trigger: In 5 Min
+- Wiederholung: Einmalig (automatisch)
+
+**Sonntags entspannt:**
+- Name: „Sonntag-Indica"
+- Aktion: Programm „Indica-Vollblüte"
+- Trigger: 19:00
+- Wiederholung: Eigene Wochentage → So
+
+## Was bleibt offen
+
+**v5.0 (nach Andre's Go):** Crafty / Mighty / Venty BLE-Implementierung — der Scheduler funktioniert dann automatisch für alle Geräte über das DeviceAdapter-Interface.
+
+## Was war in v4.9.7
+
+Tour-Endlosschleife gefixt (Spotlight bei Rand-Elementen), Settings-Tabs deutlich sichtbar gemacht (Hinweis-Text, oranger Active-Tab, Fade-Gradient, Scroll-Snap).
 
 ## Hinweis zur Ballon-Füllung
 
-Volcano hat keinen Drucksensor — zeitbasiert gefüllt. **Niemals unbeaufsichtigt füllen.**
+Volcano hat keinen Drucksensor — zeitbasiert gefüllt. **Niemals unbeaufsichtigt füllen — auch nicht via Schedule.**
+
+## Hinweis zu Auto-Heat-Schedules
+
+Geplantes Heizen ohne Anwesenheit ist ein Brandrisiko. **Lass die Auto-Cool-Down-Sicherheit immer aktiv** (Einstellungen → Sicherheit). Standard: nach 30 Min ohne Pumpaktivität schaltet sich der Heizer automatisch aus.
