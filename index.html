@@ -4116,7 +4116,8 @@ function renderStatus(){
   const battEl = $('#battBadge');
   if(battEl){
     const bat = State.device && State.device.battery;
-    battEl.textContent = (bat!=null && currentCapabilities().battery) ? `🔋 ${bat}%` : '';
+    // v5.0.2.2: bei Battery-Capability aber unbekanntem Wert "--" statt falscher Zahl
+    battEl.textContent = currentCapabilities().battery ? (bat!=null ? `🔋 ${bat}%` : '🔋 --') : '';
   }
   // v5.0.2: Boost-Button-Status (Venty/Veazy)
   const bb=$('#btnBoost'), sb=$('#btnSuperBoost');
@@ -4568,8 +4569,22 @@ async function waitUntilReached(targetC, timeoutSec=180){
 /* ═══════════════════════════════════════════════════════════════
    DISCOVERY & AUTO-MAPPING
 ═══════════════════════════════════════════════════════════════ */
+// v5.0.2.2 Problem3: Service-Objekte werden nach Disconnect ungueltig.
+// Vor jedem Scan/Mapping ggf. neu verbinden und Services frisch holen.
+async function ensureFreshServices(){
+  if(!State.device) return false;
+  try{
+    if(!State.server || !State.server.connected){
+      State.server = await State.device.gatt.connect();
+    }
+    State.allServices = await State.server.getPrimaryServices();
+    return true;
+  }catch(e){ log('Service-Refresh fehlgeschlagen: '+e.message,'err'); return false; }
+}
+
 async function discover(){
-  if(!State.server){ toast('Erst verbinden'); return; }
+  if(!State.device){ toast('Erst verbinden'); return; }
+  if(!await ensureFreshServices()){ toast('Verbindung nicht bereit, bitte neu verbinden'); return; }
   const out=[];
   for(const s of State.allServices){
     out.push(`Service: ${s.uuid}`);
@@ -4586,7 +4601,8 @@ async function discover(){
 }
 
 async function autoMap(){
-  if(!State.server){ toast('Erst verbinden'); return; }
+  if(!State.device){ toast('Erst verbinden'); return; }
+  if(!await ensureFreshServices()){ toast('Verbindung nicht bereit, bitte neu verbinden'); return; }
   renderLastAction('Auto-Mapping läuft…','busy');
   const services=State.allServices;
   const svcMap={};
@@ -6550,33 +6566,57 @@ class VentyVeazyAdapter extends DeviceAdapter {
     if(on) bits|=VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION; else bits&=~VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION;
     await this.writeSettings(bits); this._lastSettingsBits=bits;
   }
-  // Defensiver Parser: nur plausible Werte uebernehmen, sonst Roh-Bytes loggen
+  // v5.0.2.2: Frame-Typ-bewusster Parser (1B Settings-Echo, 5B Command-Echo,
+  // >=6B Status). Hypothese A (Andres Hex-Dump): Bytes 2-3 = Current-Temp Uint16 LE /10.
+  // Battery-Position noch unbekannt -> NICHT setzen (lieber "--" als falsch).
   parseNotification(dv){
-    // v5.0.2.1 FIX5: erste 5 Notifications IMMER als Hex loggen (Parser-Kalibrierung)
     this._notifyCount = (this._notifyCount||0) + 1;
-    if(this._notifyCount <= 5){
+    if(this._notifyCount <= 10){
       const hb=[]; for(let i=0;i<dv.byteLength;i++) hb.push(dv.getUint8(i).toString(16).padStart(2,'0'));
       log('Notify #'+this._notifyCount+' ('+dv.byteLength+'B): '+hb.join(' '),'warn');
     }
     try{
-      if(dv.byteLength < 6){ this._logRaw(dv); return; }
-      const status=dv.getUint8(0);
-      const bat=dv.getUint8(1);
-      const cur=dv.getUint16(2,true)/10;
-      const tgt=dv.getUint16(4,true)/10;
-      let plausible=false;
-      if(bat>=0 && bat<=100){ State.device.battery=bat; plausible=true; }
-      if(cur>=20 && cur<=260){ State.cur=cur; plausible=true; }
-      if(tgt>=40 && tgt<=260){ State.target=tgt; plausible=true; }
-      State.heater=!!(status & 0x01);
-      State.device.boost=!!(status & 0x02);
-      State.device.superBoost=!!(status & 0x04);
-      if(!plausible) this._logRaw(dv);
+      if(dv.byteLength === 1){
+        log('  → 1B Frame (Settings-Echo): 0x'+dv.getUint8(0).toString(16),'warn');
+        return;
+      }
+      if(dv.byteLength === 5){
+        const mask=dv.getUint8(0);
+        log('  → 5B Frame (Command-Echo): mask=0x'+mask.toString(16),'warn');
+        if(mask===0x04) State.device.boost = !!dv.getUint8(1);
+        if(mask===0x08) State.device.superBoost = !!dv.getUint8(1);
+        return;
+      }
+      if(dv.byteLength >= 6){
+        const status=dv.getUint8(0);
+        // v5.0.2.2 kalibriert an Andres Hex (04 ce 06 00...): Current-Temp = Bytes 1-2 Uint16 LE /10
+        // (0x06ce=1742 -> 174.2°C). Byte 0 = Status (Bit 2 = heating, da byte0=0x04 bei Heizer-an).
+        const curA=dv.getUint16(1,true)/10;
+        let plausible=false;
+        if(curA>=20 && curA<=260){ State.cur=curA; plausible=true; }
+        // Target-Temp-Position noch unbekannt (Bytes 3-5 ergaben keine plausible Temp) -> nicht setzen
+        State.heater = !!(status & 0x04);  // Bit 2 = heating (an Andres Daten bestaetigt)
+        // Battery-Byte unbekannt -> bewusst nicht gesetzt (State.device.battery bleibt null)
+        if(plausible) log('  → STATUS: cur='+State.cur+'°C target='+State.target+'°C heater='+State.heater,'ok');
+        else { log('  → STATUS-Frame unklar, Felder verworfen','warn'); this._logRaw(dv); }
+        return;
+      }
+      this._logRaw(dv);
     }catch(e){ this._logRaw(dv); }
   }
   _logRaw(dv){
     const b=[]; for(let i=0;i<dv.byteLength;i++) b.push(dv.getUint8(i).toString(16).padStart(2,'0'));
     log('VentyVeazy: Notification unklar, Roh-Bytes: '+b.join(' ')+' (bitte an Andre fuer Parser-Kalibrierung)','warn');
+  }
+  // v5.0.2.2 Problem2: BLE_PERMANENT-Setting (Hypothese) gegen 30s-Auto-Disconnect
+  async enableBlePermanent(){
+    try{
+      const buf=new ArrayBuffer(2); const dv=new DataView(buf);
+      dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SETTINGS);
+      dv.setUint8(1, VentyVeazyAdapter.SETTINGS2_BIT.BLE_PERMANENT);
+      await this.control.writeValue(buf);
+      log('BLE_PERMANENT-Setting versucht (Settings-Mask, Hypothese)','warn');
+    }catch(e){ log('BLE_PERMANENT failed: '+e.message,'warn'); }
   }
   async subscribeStatus(cb){
     if(!this.control) return;
@@ -6587,12 +6627,19 @@ class VentyVeazyAdapter extends DeviceAdapter {
       cb && cb({ currentTemp:State.cur, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
     });
     log('VentyVeazy: Status-Notifications aktiv','ok');
+    // Problem2: BLE_PERMANENT + Keep-Alive (robuster Fallback gegen Idle-Disconnect)
+    await this.enableBlePermanent();
+    if(this._keepAlive) clearInterval(this._keepAlive);
+    this._keepAlive = setInterval(async()=>{
+      try{ if(this.control && State.connected) await this.control.readValue(); }catch(_){}
+    }, 20000);
+    log('VentyVeazy: Keep-Alive aktiv (20s)','ok');
   }
   async getBattery(){ return State.device.battery; }
   async getCurrentTemp(){ return State.cur; }
   async pumpOn(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
   async pumpOff(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
-  async disconnect(){ if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
+  async disconnect(){ if(this._keepAlive){ clearInterval(this._keepAlive); this._keepAlive=null; } if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
 }
 
 /* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
@@ -11514,7 +11561,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.2.1 bereit.','ok');
+  log('Sessions v5.0.2.2 bereit.','ok');
 
   setupPwaUpdate();
 
