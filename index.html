@@ -6500,11 +6500,19 @@ class CraftyMightyAdapter extends DeviceAdapter {
   async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
 }
 
-/* ── v5.0.2: Venty / Veazy ────────────────────────────────────────
-   Command-basiert: Single Control-Char (write + notify). Ein Adapter
-   fuer beide Geraete (identische UUIDs/Masken). Notification-Parser
-   ist eine fundierte ANNAHME (firsttris/xythobuz), defensiv codiert
-   und bei Bedarf iterativ via Hex-Dump kalibrierbar. Spec 1.3. */
+/* ── v5.0.3: Venty / Veazy ────────────────────────────────────────
+   1:1 portiert aus firsttris/reactive-volcano-app (MIT-Lizenz,
+   hardware-getestet): src/hooks/venty-veazy/useDeviceStatus.ts +
+   src/provider/BluetoothProvider.tsx + src/utils/uuids.ts.
+   Protokoll: Single Control-Char (write+notify), Command-basiert.
+   - Status wird AKTIV per CMD 0x01 alle 500ms angefragt; das Geraet
+     antwortet mit einem 20B-Frame byte0===1. Dieses Polling ist
+     zugleich der Keep-Alive (verhindert den Idle-Disconnect).
+   - Write-Format: [cmd=1][mask][payload an festen Byte-Offsets].
+   - Status-Frame (byte0=1): Target=Bytes4-5 LE/10, Boost=B6,
+     SuperBoost=B7, Battery=B8, AutoOff=B9+10, HeaterMode=B11
+     (0 aus/1 normal/2 boost/3 super), Charging=B13, Settings=B14,
+     PermanentBLE=B16 bit0. KEIN Current-Temp im Protokoll. */
 class VentyVeazyAdapter extends DeviceAdapter {
   static deviceType   = 'venty_veazy';
   static displayName  = 'Venty / Veazy';
@@ -6528,140 +6536,94 @@ class VentyVeazyAdapter extends DeviceAdapter {
   static SETTINGS_BIT = { UNIT:1<<0, SETPOINT_REACHED:1<<1, FACTORY_RESET:1<<2, ECOMODE_CHARGE:1<<3, BUTTON_CHANGED_FILLING:1<<4, ECOMODE_VOLTAGE:1<<5, BOOST_VISUALIZATION:1<<6 };
   static SETTINGS2_BIT = { BLE_PERMANENT:1<<0 };
 
-  constructor(device){ super(device); this.control=null; this.notifyBuffer=null; this._lastSettingsBits=0; }
+  constructor(device){ super(device); this.control=null; this._q=Promise.resolve(); this._poll=null; this._initDone=false; this._notifyCount=0; }
 
   async bindChars(server){
     const svc = await server.getPrimaryService(VentyVeazyAdapter.SERVICE);
     this.control = await svc.getCharacteristic(VentyVeazyAdapter.CONTROL);
     log('VentyVeazy: Single-Control-Char gebunden','ok');
   }
+  // Alle BLE-Ops serialisieren (firsttris bluetoothQueue, concurrency 1) -> kein "GATT operation already in progress"
+  _enqueue(fn){ this._q = this._q.then(fn).catch(e=>log('VentyVeazy BLE-Op: '+e.message,'warn')); return this._q; }
+  // firsttris writeDeviceStatus: Buffer [cmd=1][mask][payload an Byte-Offsets]
+  _writeCmd(mask, byteMap){
+    if(!this.control) throw new Error('Venty Control-Char fehlt.');
+    return this._enqueue(async()=>{
+      const buf=new ArrayBuffer(20); const dv=new DataView(buf);
+      dv.setUint8(0,1); dv.setUint8(1,mask);
+      for(const [b,v] of Object.entries(byteMap||{})) dv.setUint8(Number(b), v&0xff);
+      await this.control.writeValue(buf);
+    });
+  }
   async setTargetTemp(c){
-    if(!this.control) throw new Error('Venty Control-Char fehlt.');
-    const buf=new ArrayBuffer(3); const dv=new DataView(buf);
-    dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_TEMPERATURE);
-    dv.setUint16(1, Math.round(c*10), true);
-    await this.control.writeValue(buf);
+    const t=Math.round(c*10);
+    await this._writeCmd(VentyVeazyAdapter.WRITE_MASK.SET_TEMPERATURE, {4:t&0xff, 5:(t>>8)&0xff});
+    State.target=Math.round(c);
   }
-  async heaterOn(){
-    if(!this.control) throw new Error('Venty Control-Char fehlt.');
-    const buf=new ArrayBuffer(2); new DataView(buf).setUint8(0, VentyVeazyAdapter.WRITE_MASK.HEATER); new DataView(buf).setUint8(1,1);
-    await this.control.writeValue(buf); State.heater=true;
-  }
-  async heaterOff(){
-    if(!this.control) throw new Error('Venty Control-Char fehlt.');
-    const buf=new ArrayBuffer(2); new DataView(buf).setUint8(0, VentyVeazyAdapter.WRITE_MASK.HEATER); new DataView(buf).setUint8(1,0);
-    await this.control.writeValue(buf); State.heater=false;
-  }
-  async setBoost(on){
-    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_BOOST); dv.setUint8(1, on?1:0);
-    await this.control.writeValue(buf); State.device.boost=!!on;
-  }
-  async setSuperBoost(on){
-    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_SUPERBOOST); dv.setUint8(1, on?1:0);
-    await this.control.writeValue(buf); State.device.superBoost=!!on;
-  }
-  async writeSettings(bits){
-    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SETTINGS); dv.setUint8(1, bits);
-    await this.control.writeValue(buf);
-  }
-  async setBoostVisualization(on){
-    let bits=this._lastSettingsBits||0;
-    if(on) bits|=VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION; else bits&=~VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION;
-    await this.writeSettings(bits); this._lastSettingsBits=bits;
-  }
-  // v5.0.2.2: Frame-Typ-bewusster Parser (1B Settings-Echo, 5B Command-Echo,
-  // >=6B Status). Hypothese A (Andres Hex-Dump): Bytes 2-3 = Current-Temp Uint16 LE /10.
-  // Battery-Position noch unbekannt -> NICHT setzen (lieber "--" als falsch).
-  parseNotification(dv){
-    this._notifyCount = (this._notifyCount||0) + 1;
+  // Heater-Modus: 0=aus, 1=normal, 2=boost, 3=super (firsttris setHeaterMode, mask 32, Byte 11)
+  async setHeaterMode(mode){ await this._writeCmd(VentyVeazyAdapter.WRITE_MASK.HEATER, {11:mode}); }
+  async heaterOn(){ await this.setHeaterMode(1); State.heater=true; }
+  async heaterOff(){ await this.setHeaterMode(0); State.heater=false; }
+  async setBoost(on){ await this.setHeaterMode(on?2:1); State.device.boost=!!on; if(on) State.device.superBoost=false; }
+  async setSuperBoost(on){ await this.setHeaterMode(on?3:1); State.device.superBoost=!!on; if(on) State.device.boost=false; }
+  // Settings (mask 128): Byte 14 = Flag, Byte 15 = Bit-Selektor (firsttris-Muster)
+  async setBoostVisualization(on){ await this._writeCmd(VentyVeazyAdapter.WRITE_MASK.SETTINGS, {14:on?0x40:0x00, 15:0x40}); }
+  async setPermanentBluetooth(on){ await this._writeCmd(VentyVeazyAdapter.WRITE_MASK.SETTINGS, {16:on?0x01:0x00, 17:0x01}); }
+  // Status-Frame (byte0===1) exakt nach firsttris useDeviceStatus.parseDeviceStatus.
+  // Hex-Debug der ersten 10 Frames bleibt fuer Diagnose.
+  parseStatus(dv){
+    this._notifyCount++;
     if(this._notifyCount <= 10){
       const hb=[]; for(let i=0;i<dv.byteLength;i++) hb.push(dv.getUint8(i).toString(16).padStart(2,'0'));
       log('Notify #'+this._notifyCount+' ('+dv.byteLength+'B): '+hb.join(' '),'warn');
     }
-    try{
-      if(dv.byteLength === 1){
-        log('  → 1B Frame (Settings-Echo): 0x'+dv.getUint8(0).toString(16),'warn');
-        return;
-      }
-      if(dv.byteLength === 5){
-        const mask=dv.getUint8(0);
-        log('  → 5B Frame (Command-Echo): mask=0x'+mask.toString(16),'warn');
-        if(mask===0x04) State.device.boost = !!dv.getUint8(1);
-        if(mask===0x08) State.device.superBoost = !!dv.getUint8(1);
-        return;
-      }
-      if(dv.byteLength >= 6){
-        const byte0=dv.getUint8(0);
-        // TYP A: Firmware-Info (Byte0=0x02) -> ASCII Bytes 2-7 (FW) + 11-16 (BL)
-        if(byte0 === 0x02){
-          const ascii=(off,n)=>{let s='';for(let i=0;i<n;i++){const c=dv.getUint8(off+i);if(c===0)break;s+=String.fromCharCode(c);}return s;};
-          const fw=ascii(2,6), bl=ascii(11,6);
-          State.device.firmware=fw; State.device.bootloader=bl;
-          log('  → Firmware-Info: FW='+fw+' BL='+bl,'ok');
-          return;
-        }
-        // TYP C: Heater-Command-Echo (Byte0=0x20, Rest 0x00) -> kein State-Update
-        if(byte0 === 0x20){
-          let allZero=true; for(let i=1;i<dv.byteLength;i++){ if(dv.getUint8(i)!==0){ allZero=false; break; } }
-          if(allZero){ log('  → Heater-Command-Echo (kein State-Update)','warn'); return; }
-        }
-        // TYP B: Status-Frame -> Current-Temp Bytes 1-2 Uint16 LE /10, Bit2=heating
-        // (Bytes 4-5 sind Konstante 0x17b0 = NICHT Target; ignoriert.)
-        const curC=dv.getUint16(1,true)/10;
-        if(curC>=15 && curC<=260){
-          State.cur=curC;
-          State.heater=!!(byte0 & 0x04);
-          log('  → STATUS: cur='+State.cur+'°C heater='+State.heater,'ok');
-          return;
-        }
-        log('  → Unbekannter Frame, byte0=0x'+byte0.toString(16),'warn');
-        this._logRaw(dv);
-        return;
-      }
-      this._logRaw(dv);
-    }catch(e){ this._logRaw(dv); }
-  }
-  _logRaw(dv){
-    const b=[]; for(let i=0;i<dv.byteLength;i++) b.push(dv.getUint8(i).toString(16).padStart(2,'0'));
-    log('VentyVeazy: Notification unklar, Roh-Bytes: '+b.join(' ')+' (bitte an Andre fuer Parser-Kalibrierung)','warn');
-  }
-  // v5.0.2.2 Problem2: BLE_PERMANENT-Setting (Hypothese) gegen 30s-Auto-Disconnect
-  async enableBlePermanent(){
-    try{
-      const buf=new ArrayBuffer(2); const dv=new DataView(buf);
-      dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SETTINGS);
-      dv.setUint8(1, VentyVeazyAdapter.SETTINGS2_BIT.BLE_PERMANENT);
-      await this.control.writeValue(buf);
-      log('BLE_PERMANENT-Setting versucht (Settings-Mask, Hypothese)','warn');
-    }catch(e){ log('BLE_PERMANENT failed: '+e.message,'warn'); }
+    if(dv.byteLength < 1 || dv.getUint8(0) !== 1) return false;   // nur CMD-0x01-Status
+    if(dv.byteLength < 15) return false;
+    const target = Math.round((dv.getUint8(4) + dv.getUint8(5)*256) / 10);  // Bytes 4-5 LE /10
+    const battery = dv.getUint8(8);                                          // Byte 8: Akku %
+    const heaterMode = dv.getUint8(11);                                      // 0 aus,1 normal,2 boost,3 super
+    const charging = dv.getUint8(13) > 0;                                    // Byte 13
+    const settings = dv.getUint8(14);                                        // Byte 14: Flags
+    if(target>=20 && target<=260) State.target = target;
+    if(battery>=0 && battery<=100) State.device.battery = battery;
+    State.heater = heaterMode > 0;
+    State.device.boost = heaterMode === 2;
+    State.device.superBoost = heaterMode === 3;
+    State.device.charging = charging;
+    State.device.setpointReached = !!(settings & 0x02);
+    if(this._notifyCount <= 10) log('  → STATUS: target='+target+'°C bat='+battery+'% mode='+heaterMode+(charging?' laedt':'')+(State.device.setpointReached?' bereit':''),'ok');
+    return true;
   }
   async subscribeStatus(cb){
     if(!this.control) return;
     await this.control.startNotifications();
     this.control.addEventListener('characteristicvaluechanged', e=>{
-      this.notifyBuffer=e.target.value;
-      this.parseNotification(e.target.value);
-      cb && cb({ currentTemp:State.cur, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
+      if(this.parseStatus(e.target.value)){
+        if(typeof renderStatus==='function') renderStatus();  // v5.0.3: Hero live aktualisieren
+        cb && cb({ targetTemp:State.target, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
+      }
     });
     log('VentyVeazy: Status-Notifications aktiv','ok');
-    // v5.0.2.3: BLE_PERMANENT nur EINMAL pro Session (nicht bei jedem Reconnect,
-    // sonst "GATT operation already in progress"). Keep-Alive ebenfalls nur einmal.
-    if(!this._blePermanentAttempted){
-      this._blePermanentAttempted = true;
-      await this.enableBlePermanent();
+    if(!this._initDone){
+      this._initDone = true;
+      // firsttris Init-Sequenz nach Notify-Subscribe: CMD 0x02, 0x1D, 0x01, 0x04 (serialisiert)
+      for(const cmd of [0x02,0x1d,0x01,0x04]){
+        this._enqueue(async()=>{ const b=new ArrayBuffer(20); new DataView(b).setUint8(0,cmd); await this.control.writeValue(b); });
+      }
+      await this.setPermanentBluetooth(true);   // korrektes BLE_PERMANENT (Settings-Mask, Byte16/17)
+      log('VentyVeazy: Init-Sequenz + Permanent-BLE gesendet','ok');
     }
-    if(!this._keepAlive){
-      this._keepAlive = setInterval(async()=>{
-        try{ if(this.control && State.connected) await this.control.readValue(); }catch(_){}
-      }, 20000);
-      log('VentyVeazy: Keep-Alive aktiv (20s)','ok');
+    // Status-Poll alle 500ms (CMD 0x01, mask 0) = Live-Daten UND Keep-Alive gegen Idle-Disconnect
+    if(!this._poll){
+      this._poll = setInterval(()=>{ if(State.connected) this._writeCmd(0, {}); }, 500);
+      log('VentyVeazy: Status-Poll 500ms aktiv (zugleich Keep-Alive)','ok');
     }
   }
   async getBattery(){ return State.device.battery; }
-  async getCurrentTemp(){ return State.cur; }
+  async getCurrentTemp(){ return NaN; }   // Venty/Veazy liefert KEINEN Ist-Temp-Wert (nur Soll + Heater-Mode)
   async pumpOn(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
   async pumpOff(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
-  async disconnect(){ if(this._keepAlive){ clearInterval(this._keepAlive); this._keepAlive=null; } if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
+  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
 }
 
 /* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
@@ -11583,7 +11545,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.2.3 bereit.','ok');
+  log('Sessions v5.0.3 bereit.','ok');
 
   setupPwaUpdate();
 
