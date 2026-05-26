@@ -67,8 +67,11 @@ body{
   font-size:15px;
   line-height:1.5;
   padding-top:var(--safe-top);
-  /* v4.9.2: erhöhtes Padding damit Voice-FAB + Vape-Buddy nicht mit Content kollidieren */
-  padding-bottom:calc(170px + var(--safe-bot-padding));
+  /* v4.9.5: noch mehr Padding-Bottom damit auch bei aktivem Buddy/FAB nichts verschwindet */
+  padding-bottom:calc(220px + var(--safe-bot-padding));
+  /* Scroll-padding damit Anker nicht hinter Top-/Bottom-Nav landen */
+  scroll-padding-bottom:calc(180px + var(--safe-bot-padding));
+  scroll-padding-top:calc(80px + var(--safe-top));
   min-height:100dvh;
   background-image:
     radial-gradient(1400px 700px at 50% -300px, rgba(255,87,34,.10), transparent 60%),
@@ -149,6 +152,47 @@ input,select,textarea{font:inherit;color:inherit}
 .chip.run{color:var(--hot);border-color:rgba(255,87,34,.4);background:rgba(255,87,34,.07)}
 
 .wrap{padding:16px 14px 24px;max-width:580px;margin:0 auto}
+
+/* ═══ v4.9.5: Echtes Responsive + Word-Wrap überall ═══════════════ */
+/* Alle Text-Container brechen lange Wörter sauber um, kein Overflow */
+.card, .toggle-row, .info, p, h2, h3, summary, label, .stat .lbl,
+.dev-info, .prog-name, .prog-steps, .wiz-text small, .set-section-desc{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+/* Code/Mono darf monospaced bleiben, aber auch umbrechen */
+.mono, code, pre{
+  overflow-wrap:anywhere;
+  word-break:break-all;
+}
+/* Inputs nicht überstehen */
+.input, input.input, textarea.input, .stepper input{
+  max-width:100%;box-sizing:border-box;
+}
+/* Toggle-Row: info schrumpft wenn Toggle daneben breit */
+.toggle-row{flex-wrap:wrap;gap:8px}
+.toggle-row .info{min-width:0;flex:1 1 auto}
+/* Stepper-Wrapper nicht überlaufen lassen */
+.stepper{max-width:100%;flex-shrink:0}
+
+/* v4.9.5: Größere Bildschirme — App nutzt mehr Platz */
+@media (min-width:760px){
+  .wrap{max-width:720px;padding:24px 20px 30px}
+  .card{padding:18px}
+}
+@media (min-width:1100px){
+  .wrap{max-width:880px}
+  /* Auf Desktop: zwei-Spalten-Grid für Setup-Tab und Programme */
+  #tab-setup .card,
+  #tab-prog .card{display:block}
+}
+
+/* v4.9.5: ZOOM-basierte Schriftgrößen-Skalierung
+   (skaliert alles im main, nicht nur Text — funktioniert mit hardcoded px) */
+html{--app-zoom:1}
+main.wrap{zoom:var(--app-zoom)}
+/* Modal-Sheets ebenfalls zoomen damit auch die mitskaliert sind */
+.modal .sheet{zoom:var(--app-zoom)}
 .card{
   background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
   border:1px solid var(--line);
@@ -395,11 +439,11 @@ input,select,textarea{font:inherit;color:inherit}
 
 .tab{display:none}
 .tab.active{display:block;animation:fadeUp .3s ease}
-/* v4.9.2: Letzte Card im Tab bekommt extra Luft nach unten */
+/* v4.9.5: Letzte Card im Tab bekommt extra viel Luft nach unten */
 .tab > .card:last-child,
-.tab > div:last-child{margin-bottom:30px}
-/* v4.9.2: Wenn Run-Card aktiv, noch mehr Padding-Bottom damit nicht verdeckt */
-body:has(.run-card.show){padding-bottom:calc(250px + var(--safe-bot-padding))}
+.tab > div:last-child{margin-bottom:60px}
+/* v4.9.5: Wenn Run-Card aktiv, noch mehr Padding-Bottom damit nicht verdeckt */
+body:has(.run-card.show){padding-bottom:calc(300px + var(--safe-bot-padding))}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 .prog-list{display:flex;flex-direction:column;gap:10px}
@@ -1723,6 +1767,26 @@ html.power-saver .card{animation:none !important}
   color:var(--dim);
 }
 
+/* ═══ v4.9.5: Einklappbare Kacheln ═════════════════════════════ */
+.card.collapsible{position:relative}
+.card.collapsible > h3{
+  cursor:pointer;
+  user-select:none;
+  padding-right:34px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  position:relative;
+}
+.card.collapsible > h3::after{
+  content:'▾';
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  font-size:14px;color:var(--muted);
+  transition:transform .2s;
+  flex-shrink:0;
+}
+.card.collapsible.collapsed > h3::after{transform:translateY(-50%) rotate(-90deg)}
+.card.collapsible.collapsed > *:not(h3):not(.help-ico){display:none}
+.card.collapsible.collapsed{padding-bottom:14px}
+
 /* ═══ v4.9.4: Platform-Compatibility Banner ════════════════════ */
 .platform-banner{
   position:fixed;top:0;left:0;right:0;z-index:131;
@@ -1745,6 +1809,13 @@ html.power-saver .card{animation:none !important}
   font-size:24px;cursor:pointer;padding:0 6px;line-height:1;
 }
 .platform-banner button:hover{color:var(--text)}
+
+/* v4.9.5: Font-Scale Buttons Active-State */
+button[data-fs].active{
+  background:rgba(255,87,34,.2)!important;
+  border-color:var(--hot)!important;
+  color:var(--hot)!important;
+}
 
 </style>
 </head>
@@ -5132,6 +5203,11 @@ function wire(){
       PREFS.fontScale = parseInt(b.dataset.fs);
       savePrefs();
       applyFontScale();
+      // v4.9.5: aktiven Button hervorheben
+      document.querySelectorAll('[data-fs]').forEach(x=>{
+        x.classList.toggle('active', parseInt(x.dataset.fs) === PREFS.fontScale);
+      });
+      toast('Schriftgröße: '+PREFS.fontScale+'%');
     });
   });
   wireToggle('#togHighContrast', ()=>PREFS.highContrast, v=>{
@@ -6335,7 +6411,19 @@ function startVoice(){
     handleVoiceCommand(txt);
   };
   voiceRec.onerror = (ev)=>{
-    voiceFeedback('Fehler: '+ev.error, 3000);
+    // v4.9.5: bessere Fehlermeldungen je nach Error-Typ
+    let msg = 'Fehler: '+ev.error;
+    if(ev.error === 'service-not-allowed' || ev.error === 'not-allowed'){
+      msg = 'Browser erlaubt Spracherkennung nicht. iOS Safari/Bluefy unterstützen das leider nicht. Nutze Chrome auf Android oder Desktop, oder die URL-Commands für Siri.';
+    } else if(ev.error === 'no-speech'){
+      msg = 'Nichts gehört. Erneut versuchen.';
+    } else if(ev.error === 'audio-capture'){
+      msg = 'Kein Mikrofon-Zugriff. Bitte Berechtigung erteilen.';
+    } else if(ev.error === 'network'){
+      msg = 'Netzwerk-Fehler. Spracherkennung braucht Internet.';
+    }
+    voiceFeedback(msg, 5000);
+    toast(msg);
     voiceListening = false;
     $('#voiceFab').classList.remove('listening');
   };
@@ -6676,6 +6764,10 @@ function finishSession(){
    SETTINGS MODAL (v4.4)
 ═══════════════════════════════════════════════════════════════ */
 function openSettings(){
+  // v4.9.5: Font-Scale aktiver Button hervorheben
+  document.querySelectorAll('[data-fs]').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.fs) === (PREFS.fontScale||100));
+  });
   // Sync toggles with current PREFS
   $('#togSound').setAttribute('aria-checked', String(!!PREFS.sound));
   $('#togHaptic').setAttribute('aria-checked', String(!!PREFS.haptic));
@@ -7413,8 +7505,8 @@ function showDiagnostics(){
 ═══════════════════════════════════════════════════════════════ */
 function applyFontScale(){
   const scale = PREFS.fontScale||100;
-  document.documentElement.style.setProperty('--font-scale', (scale/100).toFixed(2));
-  document.documentElement.style.fontSize = (scale/100 * 16) + 'px';
+  // v4.9.5: Echte Skalierung via zoom (skaliert auch alle hardcoded px-Werte)
+  document.documentElement.style.setProperty('--app-zoom', (scale/100).toFixed(2));
 }
 function applyHighContrast(){
   document.documentElement.classList.toggle('hc-mode', !!PREFS.highContrast);
@@ -8914,7 +9006,7 @@ function toggleBlindMode(){
     PREFS.sound = true;
     PREFS.haptic = true;
     toast('Blinden-Modus aktiv. ESC = Notaus, V = Status, B = Ballon.');
-    haptiPattern('success');
+    try{ haptiPattern('success'); }catch{}
     if('speechSynthesis' in window){
       const u = new SpeechSynthesisUtterance('Blinden-Modus aktiv. Tastatur: V für Status, Escape für Notaus, B für Ballon, D für Direkt-Zug, eins bis neun für Temperaturen, Leertaste für Heizer.');
       u.lang = 'de-DE'; u.rate = 0.95;
@@ -8928,9 +9020,22 @@ function toggleBlindMode(){
     toast('Blinden-Modus aus');
   }
   savePrefs();
+  // v4.9.5: alle apply-Funktionen + UI-Toggle-Synchronisierung
   applyFontScale();
   applyHighContrast();
   setupVoiceReadoutInterval();
+  // UI-Toggles in Settings synchron updaten (falls offen)
+  const syncToggle = (id, v)=>{
+    const el = document.getElementById(id);
+    if(el) el.setAttribute('aria-checked', String(!!v));
+  };
+  syncToggle('togBlindMode', PREFS.blindMode);
+  syncToggle('togHighContrast', PREFS.highContrast);
+  syncToggle('togVoiceReadout', PREFS.voiceReadout);
+  syncToggle('togTooltipsVoice', PREFS.tooltipsVoice);
+  syncToggle('togHaptiCustom', PREFS.haptiCustom);
+  syncToggle('togSound', PREFS.sound);
+  syncToggle('togHaptic', PREFS.haptic);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -8983,23 +9088,51 @@ const TOOLTIPS = {
 };
 
 function installTooltips(){
+  // v4.9.5: robusteres Mobile-Verhalten — kein title-Attribut (verhindert Browser-Default-Tooltip auf Long-Press),
+  // touch-action sicherstellen, Move während Press cancelt
   for(const [id, txt] of Object.entries(TOOLTIPS)){
     const el = document.getElementById(id);
     if(!el) continue;
-    el.setAttribute('title', txt);
+    // ARIA-Label statt title (title funktioniert auf Touch nicht und kann Browser-Long-Press triggern)
     if(!el.getAttribute('aria-label')){ el.setAttribute('aria-label', txt); }
+    // Auf Desktop trotzdem title für Hover
+    el.setAttribute('title', txt);
+    el.style.touchAction = el.style.touchAction || 'manipulation';
+
     let pressTimer = null;
+    let startX = 0, startY = 0;
+    const cancel = ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} };
+
     el.addEventListener('pointerdown', (e)=>{
-      if(e.pointerType === 'mouse') return;
+      if(e.pointerType === 'mouse') return; // Nur für Touch
+      startX = e.clientX; startY = e.clientY;
+      cancel();
       pressTimer = setTimeout(()=>{
+        // Versuche Browser-Default-Kontextmenü/Selektion zu unterdrücken
+        try{ e.preventDefault(); }catch{}
         showTooltipPopup(txt);
         if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
           try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.05; speechSynthesis.speak(u); }catch{}
         }
-      }, 600);
+        // Vibration falls verfügbar
+        try{ if(PREFS.haptic && navigator.vibrate) navigator.vibrate(20); }catch{}
+      }, 550);
     });
-    el.addEventListener('pointerup', ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} });
-    el.addEventListener('pointercancel', ()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} });
+    el.addEventListener('pointermove', (e)=>{
+      // Bewegung > 8px → kein Long-Press (Scroll-Intent)
+      if(pressTimer && (Math.abs(e.clientX-startX) > 8 || Math.abs(e.clientY-startY) > 8)){
+        cancel();
+      }
+    });
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    el.addEventListener('contextmenu', (e)=>{
+      // Wenn Tooltip gerade angezeigt: Kontextmenü unterdrücken
+      const tp = document.getElementById('tooltipPopup');
+      if(tp && tp.classList.contains('show')){ e.preventDefault(); }
+    });
+
     el.addEventListener('focus', ()=>{
       if(PREFS.tooltipsVoice && 'speechSynthesis' in window){
         try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang='de-DE'; u.rate=1.1; speechSynthesis.speak(u); }catch{}
@@ -9587,9 +9720,6 @@ function renderShortcutExamples(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   v4.9.4: PLATTFORM-ERKENNUNG + COMPATIBILITY BANNER
-═══════════════════════════════════════════════════════════════ */
 function detectPlatform(){
   const ua = navigator.userAgent || '';
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -9601,6 +9731,62 @@ function detectPlatform(){
   const isMobile = /Mobi|Android|iPhone/i.test(ua);
   const hasBluetooth = 'bluetooth' in navigator;
   return {isIOS, isSafari, isBluefy, isChrome, isEdge, isAndroid, isMobile, hasBluetooth};
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.9.5: EINKLAPPBARE CARDS (User-Kontrolle über Sichtbarkeit)
+═══════════════════════════════════════════════════════════════ */
+const COLLAPSE_KEY = 'vol_card_collapse';
+function getCollapseStates(){
+  return LS.get(COLLAPSE_KEY, {});
+}
+function setCollapseState(key, collapsed){
+  const states = getCollapseStates();
+  if(collapsed) states[key] = true;
+  else delete states[key];
+  LS.set(COLLAPSE_KEY, states);
+}
+function makeCardCollapsible(card, key){
+  if(!card || card.classList.contains('collapsible')) return;
+  card.classList.add('collapsible');
+  const states = getCollapseStates();
+  if(states[key]) card.classList.add('collapsed');
+  const h3 = card.querySelector('h3');
+  if(!h3) return;
+  h3.setAttribute('role','button');
+  h3.setAttribute('tabindex','0');
+  h3.setAttribute('aria-expanded', String(!card.classList.contains('collapsed')));
+  const toggle = (e)=>{
+    // Bei click auf einen Button INSIDE h3 (z.B. help-ico): nicht zuklappen
+    if(e.target.closest('button, a, .help-ico, [role="button"]') && e.target !== h3) return;
+    card.classList.toggle('collapsed');
+    const collapsed = card.classList.contains('collapsed');
+    setCollapseState(key, collapsed);
+    h3.setAttribute('aria-expanded', String(!collapsed));
+  };
+  h3.addEventListener('click', toggle);
+  h3.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      toggle(e);
+    }
+  });
+}
+function setupCollapsibleCards(){
+  // Tabs durchgehen und Cards mit h3 collapsible machen
+  const tabs = ['ctl','prog','setup'];
+  for(const tabName of tabs){
+    const tab = document.getElementById('tab-'+tabName);
+    if(!tab) continue;
+    const cards = tab.querySelectorAll(':scope > .card, :scope > div > .card');
+    cards.forEach((card, idx)=>{
+      const h3 = card.querySelector('h3');
+      if(!h3) return;
+      // Eindeutiger Key per Tab+Index+Heading
+      const key = tabName+'_'+idx+'_'+h3.textContent.trim().slice(0,30).replace(/\s+/g,'_');
+      makeCardCollapsible(card, key);
+    });
+  }
 }
 
 function showPlatformBanner(){
@@ -9719,10 +9905,12 @@ async function init(){
 
   // v4.9.4: Platform-Banner + URL-Command
   showPlatformBanner();
+  // v4.9.5: Einklappbare Cards aktivieren
+  setupCollapsibleCards();
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v4.9.4 bereit.','ok');
+  log('Sessions v4.9.5 bereit.','ok');
 
   setupPwaUpdate();
 
