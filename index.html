@@ -2677,6 +2677,9 @@ button[data-sch-day].active{
     <!-- SICHERHEIT: Safety, PIN, Auto-Lock, Bags-Limit, Reise-Modi -->
     <div class="settings-pane" data-set-pane="sicherheit">
       <h3 class="set-section-h">Sicherheits-Timer</h3>
+      <div id="safetyPortableHint" style="display:none;background:rgba(255,87,34,.12);border:1px solid var(--hot);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--hot)">
+        <b>Pflicht-Funktion bei portablen Geraeten</b><br>Auto-Aus erfolgt durch die App, das Geraet selbst hat keinen BLE-Timer. Ohne App-Timer laeuft der Heizer bei Verbindungsabbruch bis zur Hardware-Abschaltung des Geraets.
+      </div>
       <div class="toggle-row">
         <div class="info"><b>Automatisch starten</b><small>Bei Heizer-an wird der Timer mit Default-Minuten gestartet</small></div>
         <button class="toggle" id="togSafetyAuto" role="switch" aria-checked="true" aria-label="Sicherheits-Timer auto"></button>
@@ -4216,6 +4219,19 @@ async function connectBLE(){
     State.device.type = State.adapter.constructor.deviceType;
     LS.set('vol_last_device_type', State.adapter.constructor.deviceType);
     log('Adapter: '+State.adapter.constructor.displayName,'ok');
+    // v5.0.1 K1: portable Geraete (kein BLE-Auto-Aus im Geraet) -> App-Safety-Timer erzwingen
+    if(State.adapter.constructor.capabilities.requiresAppSafetyTimer){
+      const dt = State.adapter.constructor.deviceType;
+      const forcedKey = 'vol_safety_forced_'+dt;
+      if(!LS.get(forcedKey, false)){
+        PREFS.safetyAutoStart = true;
+        if(!PREFS.safetyMinutes || PREFS.safetyMinutes > 15) PREFS.safetyMinutes = 8;
+        if(typeof savePrefs === 'function') savePrefs();
+        LS.set(forcedKey, true);
+        log('Sicherheits-Timer fuer '+State.adapter.constructor.displayName+' erzwungen (8 min, Pflicht bei portablen Geraeten).','warn');
+        toast('Sicherheits-Timer aktiviert (Pflicht bei portablen Geraeten)');
+      }
+    }
     // v5.0.1: adapter-spezifisches Char-Binding. Volcano nutzt das globale
     // State.chars (bindAllChars); Crafty/Mighty/Venty binden selbst.
     if(typeof State.adapter.bindChars === 'function'){
@@ -4350,11 +4366,14 @@ async function withBusy(label, fn){
 async function cmdSetTemp(celsius){
   if(!State.adapter) throw new Error('Kein Geraet verbunden.');
   const tr = State.adapter.constructor.tempRange || {min:40,max:230};
-  const c = clamp(Math.round(celsius), tr.min, tr.max);
+  // v5.0.1 (W2): beim Senden auf Geraete-Range clampen, Programm bleibt unveraendert
+  const req = Math.round(celsius);
+  const c = clamp(req, tr.min, tr.max);
+  if(c !== req){ toast(`Temperatur auf ${c}°C angepasst (Geraete-Limit ${tr.min}-${tr.max})`); }
   return withBusy(`Temp setzen → ${c} °C`, async()=>{
     await State.adapter.setTargetTemp(c);
     State.target=c; renderStatus();
-    log(`Temp gesetzt: ${c} °C (Uint32 LE = ${c*10})`,'ok');
+    log(`Temp gesetzt: ${c} °C (encoded ${c*10})`,'ok');
     toast(`Ziel ${c}°C`);
     // v4.5: Smart-Defaults lernen
     noteUsedTemp(c);
@@ -5458,6 +5477,12 @@ function wire(){
   $('#btnReplayLast')?.addEventListener('click', replayLastProgram);
   // Safety auto-start toggle
   $('#togSafetyAuto')?.addEventListener('click', ()=>{
+    const wouldDisable = PREFS.safetyAutoStart; // aktuell an -> Klick schaltet aus
+    // v5.0.1 K1: bei portablen Geraeten Warnung beim Deaktivieren
+    if(wouldDisable && State.adapter && State.adapter.constructor.capabilities.requiresAppSafetyTimer){
+      const ok = confirm('Achtung: ohne App-Timer schaltet das Geraet erst nach seiner Hardware-Default-Inaktivitaet ab. Dieses Geraet hat keinen BLE-Auto-Aus. Trotzdem deaktivieren?');
+      if(!ok){ return; } // Toggle bleibt an
+    }
     PREFS.safetyAutoStart = !PREFS.safetyAutoStart;
     savePrefs();
     $('#togSafetyAuto').setAttribute('aria-checked', String(PREFS.safetyAutoStart));
@@ -6143,6 +6168,7 @@ class DeviceAdapter {
     pump:false, balloon:false, battery:false, boost:false, superBoost:false,
     brightness:false, vibration:false, autoShutoff:false, firmware:false,
     runtime:false, ecoMode:false, displayCooling:false,
+    requiresAppSafetyTimer:false,   // v5.0.1 K1: App muss Auto-Aus erzwingen?
   };
   constructor(device){ this.device = device || null; }
   async connect(device){ if(device) this.device = device; }
@@ -6175,6 +6201,7 @@ class VolcanoAdapter extends DeviceAdapter {
     pump:true, balloon:true, battery:false, boost:false, superBoost:false,
     brightness:true, vibration:true, autoShutoff:true, firmware:true,
     runtime:true, ecoMode:false, displayCooling:true,
+    requiresAppSafetyTimer:false,   // Volcano hat BLE-Auto-Shutoff im Geraet
   };
   // BLE-Operationen nutzen die in bindAllChars() gebundenen State.chars.
   // Encoding exakt wie v4.9.8: SetTemp Uint32 LE x10, Heater/Pump Uint8=0.
@@ -6220,6 +6247,7 @@ class CraftyMightyAdapter extends DeviceAdapter {
     pump:false, balloon:false, boost:false, superBoost:false,
     brightness:false, vibration:false, autoShutoff:false, firmware:false,
     runtime:false, ecoMode:false, displayCooling:false,
+    requiresAppSafetyTimer:true,    // K1: Mighty/Crafty haben KEINEN BLE-Auto-Aus
   };
   // Char-IDs (Spec 1.2)
   static CHAR = { CURRENT_TEMP:0x11, TARGET_TEMP:0x21, BATTERY:0x41, HEATER_ON:0x81, HEATER_OFF:0x91 };
@@ -7630,6 +7658,9 @@ function applyCapabilitiesUI(){
     const cb = getCurrentBag();
     bmeta.textContent = cb.seconds+' Sek.';
   }
+  // v5.0.1 K1: Pflicht-Hinweis Safety-Timer bei portablen Geraeten
+  const sh = $('#safetyPortableHint');
+  if(sh) sh.style.display = (State.adapter && State.adapter.constructor.capabilities.requiresAppSafetyTimer) ? '' : 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
