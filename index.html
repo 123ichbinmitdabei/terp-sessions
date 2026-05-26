@@ -2018,6 +2018,16 @@ button[data-sch-day].active{
   <div class="body" id="iosBannerBody"></div>
 </div>
 
+<!-- v5.0.1 K3: Verbindungsverlust-Banner -->
+<div id="connLostBanner" role="alertdialog" aria-live="assertive" style="display:none;position:fixed;left:0;right:0;top:0;z-index:90;padding:14px 16px;background:#7a1010;color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.5)">
+  <div style="font-weight:800;font-size:15px;letter-spacing:.04em">⚠ VERBINDUNG VERLOREN</div>
+  <div id="connLostHeat" style="display:none;margin-top:6px;font-size:13px;background:rgba(255,140,40,.25);border:1px solid #ff8c28;border-radius:8px;padding:8px 10px;line-height:1.45">Heizer-Status unbekannt, bitte am Geraet pruefen und ggf. ausschalten.</div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn sm" id="btnConnLostReconnect" style="background:#fff;color:#7a1010;font-weight:700">Neu verbinden</button>
+    <button class="btn sm ghost" id="btnConnLostAck" style="color:#fff;border-color:rgba(255,255,255,.5)">Verstanden</button>
+  </div>
+</div>
+
 <main class="wrap" id="main" role="main">
 
 <!-- ─── TAB: STEUERUNG ──────────────────────────────────────── -->
@@ -3776,6 +3786,7 @@ const State={
   // v4.3 additions
   wakeLock:null,
   reconnectAttempts:0,
+  connectionLost:false, lastKnownHeating:false,   // v5.0.1 K3
   tempHistory:[],          // [{t:timestamp, c:tempCelsius}]
   reachedAnnounced:false,  // to fire reach-flash exactly once per target change
 };
@@ -4006,12 +4017,21 @@ function updateEta(){
 /* ═══════════════════════════════════════════════════════════════
    AUTO-RECONNECT on BLE drop
 ═══════════════════════════════════════════════════════════════ */
+// v5.0.1 K3: Verbindungsverlust-Banner
+function showConnLostBanner(){
+  const b=$('#connLostBanner'); if(!b) return;
+  b.style.display='block';
+  const h=$('#connLostHeat'); if(h) h.style.display = State.lastKnownHeating ? '' : 'none';
+}
+function hideConnLostBanner(){ const b=$('#connLostBanner'); if(b) b.style.display='none'; }
+
 async function tryReconnect(){
   if(!State.device || State.connected) return;
   if(State.reconnectAttempts >= 3){
     log('Auto-Reconnect: 3 Versuche erschöpft, manuell neu verbinden','warn');
     renderLastAction('Verbindung verloren — bitte erneut verbinden', 'err');
     State.reconnectAttempts = 0;
+    showConnLostBanner(); // grosser Banner bleibt bis User reagiert
     return;
   }
   State.reconnectAttempts++;
@@ -4020,10 +4040,21 @@ async function tryReconnect(){
   try{
     State.server = await State.device.gatt.connect();
     State.allServices = await State.server.getPrimaryServices();
-    await bindAllChars();
-    await startAllNotifications();
+    // v5.0.1: adapter-aware Re-Bind (Crafty/Venty binden eigene Chars + Poll)
+    if(State.adapter && typeof State.adapter.bindChars === 'function'){
+      await State.adapter.bindChars(State.server);
+    } else {
+      await bindAllChars();
+    }
+    if(State.adapter && State.adapter.constructor.deviceType !== 'volcano' && typeof State.adapter.subscribeStatus === 'function'){
+      await State.adapter.subscribeStatus(()=>renderStatus());
+    } else {
+      await startAllNotifications();
+    }
     setConn(true);
     State.reconnectAttempts = 0;
+    State.connectionLost = false;
+    hideConnLostBanner();
     log('Reconnect erfolgreich','ok');
     toast('Wieder verbunden');
   }catch(e){
@@ -4043,6 +4074,7 @@ function toast(msg){
 
 function setConn(connected){
   State.connected=connected;
+  if(connected){ State.connectionLost=false; State.reconnectAttempts=0; if(typeof hideConnLostBanner==='function') hideConnLostBanner(); }
   $('#dot').classList.toggle('on', connected);
   $('#connChip').textContent = connected?'Verbunden':'Getrennt';
   $('#connChip').classList.toggle('on', connected);
@@ -4196,12 +4228,14 @@ async function connectBLE(){
     });
     State.device.addEventListener('gattserverdisconnected', ()=>{
       log('BLE getrennt.','warn');
+      // v5.0.1 K3: Verbindungsverlust robust behandeln
+      State.connectionLost = true;
+      State.lastKnownHeating = !!State.heater;
+      State.reconnectAttempts = 0;
       setConn(false);
-      // Try auto-reconnect if we still have a program running or recently active
-      if(State.running || State.heater){
-        srAnnounce('Verbindung verloren, versuche Reconnect', true);
-        setTimeout(tryReconnect, 800);
-      }
+      toast('Verbindung verloren, versuche reconnect...');
+      srAnnounce('Verbindung verloren, versuche Reconnect', true);
+      setTimeout(tryReconnect, 800);
     });
     renderLastAction('Verbinde mit '+State.device.name+'…','busy');
     State.server = await State.device.gatt.connect();
@@ -5356,6 +5390,14 @@ function wire(){
   $('#iosClose').addEventListener('click', ()=>{
     $('#iosBanner').classList.remove('show');
     LS.set('vol_ios_banner_dismissed', true);
+  });
+
+  // v5.0.1 K3: Verbindungsverlust-Banner-Buttons
+  $('#btnConnLostAck')?.addEventListener('click', ()=>{ hideConnLostBanner(); });
+  $('#btnConnLostReconnect')?.addEventListener('click', ()=>{
+    hideConnLostBanner();
+    State.reconnectAttempts = 0;
+    if(State.device){ tryReconnect(); } else { connectBLE(); }
   });
 
   // ═════ v4.4 wiring ═════
@@ -7843,6 +7885,8 @@ function startScheduleEngine(){
 }
 
 function scheduleTick(){
+  // v5.0.1 K3: bei Verbindungsverlust keine Schedules triggern
+  if(State.connectionLost) return;
   const now = Date.now();
   let changed = false;
   for(const sch of SCHEDULES){
