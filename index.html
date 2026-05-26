@@ -3652,6 +3652,11 @@ function buildProgramFromAroma(a){
    DEVICE CAPABILITIES (v4.5)
 ═══════════════════════════════════════════════════════════════ */
 function currentCapabilities(){
+  // v5.0.0+: wenn ein Adapter aktiv ist, treibt dessen Capabilities-Map die UI.
+  if(State.adapter && State.adapter.constructor && State.adapter.constructor.capabilities){
+    const c = State.adapter.constructor.capabilities;
+    return { heater:c.heater, pump:c.pump, bagFill:c.balloon, directDraw:true, battery:c.battery, boost:c.boost, autoOff:c.autoShutoff };
+  }
   const id = getCurrentDeviceId();
   const p = DEVICE_PROFILES[id];
   return p?.capabilities || { heater:true, pump:true, bagFill:true, directDraw:true, battery:false };
@@ -4062,6 +4067,13 @@ function renderStatus(){
   $('#tCurrent').textContent = curStr;
   $('#tTarget').textContent = tgtStr;
 
+  // v5.0.1: Akku-Anzeige im Hero (Crafty/Mighty/Venty mit Battery-Capability)
+  const battEl = $('#battBadge');
+  if(battEl){
+    const bat = State.device && State.device.battery;
+    battEl.textContent = (bat!=null && currentCapabilities().battery) ? `🔋 ${bat}%` : '';
+  }
+
   // Indicators with aria
   const indHeat = $('#indHeat');
   indHeat.classList.toggle('on', !!State.heater);
@@ -4193,7 +4205,6 @@ async function connectBLE(){
     State.allServices = await State.server.getPrimaryServices();
     log(`Verbunden mit ${State.device.name||'Gerät'}.`,'ok');
     renderLastAction('Suche Characteristics…','busy');
-    await bindAllChars();
     // v5.0.0: Adapter bestimmen (Auto-Detection). Fallback Volcano damit
     // bestehende Generic-Profile nicht regredieren.
     const AdapterClass = await detectDevice(State.device, State.server);
@@ -4202,9 +4213,23 @@ async function connectBLE(){
       log('Kein spezifischer Adapter erkannt, Fallback VolcanoAdapter.','warn');
     }
     State.adapter = new (AdapterClass || VolcanoAdapter)(State.device);
+    State.device.type = State.adapter.constructor.deviceType;
+    LS.set('vol_last_device_type', State.adapter.constructor.deviceType);
     log('Adapter: '+State.adapter.constructor.displayName,'ok');
+    // v5.0.1: adapter-spezifisches Char-Binding. Volcano nutzt das globale
+    // State.chars (bindAllChars); Crafty/Mighty/Venty binden selbst.
+    if(typeof State.adapter.bindChars === 'function'){
+      renderLastAction('Binde Geraete-Characteristics…','busy');
+      await State.adapter.bindChars(State.server);
+    } else {
+      await bindAllChars();
+    }
     renderLastAction('Aktiviere Live-Status…','busy');
-    await startAllNotifications();
+    if(State.adapter.constructor.deviceType === 'volcano'){
+      await startAllNotifications();
+    } else if(typeof State.adapter.subscribeStatus === 'function'){
+      await State.adapter.subscribeStatus(()=>renderStatus());
+    }
     setConn(true);
     toast('Verbunden mit '+State.device.name);
     // v4.5: remember device + apply capabilities now BLE chars are set
@@ -4323,8 +4348,9 @@ async function withBusy(label, fn){
 }
 
 async function cmdSetTemp(celsius){
-  if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt. Auto-Mapping ausführen.');
-  const c = clamp(Math.round(celsius), 40, 230);
+  if(!State.adapter) throw new Error('Kein Geraet verbunden.');
+  const tr = State.adapter.constructor.tempRange || {min:40,max:230};
+  const c = clamp(Math.round(celsius), tr.min, tr.max);
   return withBusy(`Temp setzen → ${c} °C`, async()=>{
     await State.adapter.setTargetTemp(c);
     State.target=c; renderStatus();
@@ -4336,7 +4362,7 @@ async function cmdSetTemp(celsius){
 }
 
 async function cmdHeaterOn(){
-  if(!State.chars.heaterOn) throw new Error('HeaterOn-Char fehlt.');
+  if(!State.adapter) throw new Error('Kein Geraet verbunden.');
   return withBusy('Heizer EIN', async()=>{
     await State.adapter.heaterOn();
     log('Heizer EIN','ok');
@@ -4350,7 +4376,7 @@ async function cmdHeaterOn(){
   });
 }
 async function cmdHeaterOff(){
-  if(!State.chars.heaterOff) throw new Error('HeaterOff-Char fehlt.');
+  if(!State.adapter) throw new Error('Kein Geraet verbunden.');
   return withBusy('Heizer AUS', async()=>{
     await State.adapter.heaterOff();
     log('Heizer AUS','ok');
@@ -4379,7 +4405,7 @@ async function cmdHeaterOff(){
   });
 }
 async function cmdPumpOn(){
-  if(!State.chars.pumpOn) throw new Error('PumpOn-Char fehlt.');
+  if(!currentCapabilities().pump){ toast('Pumpe nicht verfuegbar bei diesem Geraet'); log('Pump-Step uebersprungen (keine Pumpe)','warn'); return; }
   return withBusy('Pumpe EIN', async()=>{
     await State.adapter.pumpOn();
     log('Pumpe EIN','ok');
@@ -4387,7 +4413,7 @@ async function cmdPumpOn(){
   });
 }
 async function cmdPumpOff(){
-  if(!State.chars.pumpOff) throw new Error('PumpOff-Char fehlt.');
+  if(!currentCapabilities().pump){ return; }
   return withBusy('Pumpe AUS', async()=>{
     await State.adapter.pumpOff();
     log('Pumpe AUS','ok');
@@ -6179,6 +6205,102 @@ class VolcanoAdapter extends DeviceAdapter {
   }
 }
 
+/* ── v5.0.1: Crafty / Crafty+ / Mighty / Mighty+ ──────────────────
+   Single Service, Char-Bytes dynamisch. Temp + Battery Uint16 LE.
+   Keine Pumpe, kein Ballon. Status via Poll (2s) bzw. Notify falls
+   das Geraet Current-Temp-Notify unterstuetzt. Spec Kapitel 1.2. */
+class CraftyMightyAdapter extends DeviceAdapter {
+  static deviceType   = 'crafty_mighty';
+  static displayName  = 'Crafty / Mighty';
+  static namePatterns = [/^STORZ&BICKEL$/i, /^Storz&Bickel$/i, /^MIGHTY/i, /^CRAFTY/i];
+  static serviceUUIDs = ['00000001-4c45-4b43-4942-265a524f5453'];
+  static tempRange    = { min:40, max:210 };
+  static capabilities = {
+    targetTemp:true, currentTemp:true, heater:true, battery:true,
+    pump:false, balloon:false, boost:false, superBoost:false,
+    brightness:false, vibration:false, autoShutoff:false, firmware:false,
+    runtime:false, ecoMode:false, displayCooling:false,
+  };
+  // Char-IDs (Spec 1.2)
+  static CHAR = { CURRENT_TEMP:0x11, TARGET_TEMP:0x21, BATTERY:0x41, HEATER_ON:0x81, HEATER_OFF:0x91 };
+  static uuid(xx){ return '000000'+xx.toString(16).padStart(2,'0')+'-4c45-4b43-4942-265a524f5453'; }
+
+  constructor(device){ super(device); this.chars={}; this._poll=null; }
+
+  async bindChars(server){
+    const C=CraftyMightyAdapter;
+    const svc = await server.getPrimaryService(C.serviceUUIDs[0]);
+    const get = async(xx)=>{ try{ return await svc.getCharacteristic(C.uuid(xx)); }catch(_){ return null; } };
+    this.chars.curTemp   = await get(C.CHAR.CURRENT_TEMP);
+    this.chars.target    = await get(C.CHAR.TARGET_TEMP);
+    this.chars.battery   = await get(C.CHAR.BATTERY);
+    this.chars.heaterOn  = await get(C.CHAR.HEATER_ON);
+    this.chars.heaterOff = await get(C.CHAR.HEATER_OFF);
+    const missing = Object.entries(this.chars).filter(([k,v])=>!v).map(([k])=>k);
+    if(missing.length) log('Crafty/Mighty: Chars fehlen: '+missing.join(', '),'warn');
+    else log('Crafty/Mighty: 5 Characteristics gebunden','ok');
+  }
+  async setTargetTemp(c){
+    if(!this.chars.target) throw new Error('Crafty TargetTemp-Char fehlt.');
+    const buf=new ArrayBuffer(2); new DataView(buf).setUint16(0, Math.round(c*10), true); // Uint16 LE x10
+    await this.chars.target.writeValue(buf);
+  }
+  async getTargetTemp(){
+    if(!this.chars.target) return State.target;
+    const dv=await this.chars.target.readValue();
+    return dv.byteLength>=2 ? dv.getUint16(0,true)/10 : State.target;
+  }
+  async getCurrentTemp(){
+    if(!this.chars.curTemp) return State.cur;
+    const dv=await this.chars.curTemp.readValue();
+    return dv.byteLength>=2 ? dv.getUint16(0,true)/10 : State.cur;
+  }
+  async heaterOn(){
+    if(!this.chars.heaterOn) throw new Error('Crafty HeaterOn-Char fehlt.');
+    await this.chars.heaterOn.writeValue(new Uint8Array([0,0])); // 2 bytes, Wert egal
+    State.heater=true;
+  }
+  async heaterOff(){
+    if(!this.chars.heaterOff) throw new Error('Crafty HeaterOff-Char fehlt.');
+    await this.chars.heaterOff.writeValue(new Uint8Array([0,0]));
+    State.heater=false;
+  }
+  async getBattery(){
+    if(!this.chars.battery) return null;
+    const dv=await this.chars.battery.readValue();
+    return dv.byteLength>=2 ? dv.getUint16(0,true) : null;
+  }
+  // Crafty hat keine Pumpe
+  async pumpOn(){ throw new Error('Crafty/Mighty hat keine Pumpe.'); }
+  async pumpOff(){ throw new Error('Crafty/Mighty hat keine Pumpe.'); }
+
+  async subscribeStatus(cb){
+    // Notify auf Current-Temp testweise, sonst Poll alle 2s.
+    const poll = async()=>{
+      try{
+        const ct=await this.getCurrentTemp(); if(isFinite(ct)) State.cur=ct;
+        const bat=await this.getBattery(); if(bat!=null) State.device.battery=bat;
+        cb && cb({ currentTemp:State.cur, battery:State.device?.battery, heating:State.heater });
+      }catch(_){}
+    };
+    if(this.chars.curTemp && this.chars.curTemp.properties && this.chars.curTemp.properties.notify){
+      try{
+        await this.chars.curTemp.startNotifications();
+        this.chars.curTemp.addEventListener('characteristicvaluechanged', e=>{
+          const dv=e.target.value; if(dv.byteLength>=2){ State.cur=dv.getUint16(0,true)/10; cb&&cb({currentTemp:State.cur, battery:State.device?.battery, heating:State.heater}); }
+        });
+        log('Crafty/Mighty: Current-Temp Notify aktiv','ok');
+        // Battery trotzdem pollen (kein Notify)
+        await poll(); this._poll=setInterval(poll, 2000);
+        return;
+      }catch(_){ log('Crafty/Mighty: Notify nicht moeglich, nutze Poll','warn'); }
+    }
+    await poll();
+    this._poll=setInterval(poll, 2000);
+  }
+  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
+}
+
 /* Bestimmt den passenden Adapter nach GATT-Connect (Spec Kapitel 2.2).
    v5.0.0: nur Volcano aktiv. Andere Geraete folgen in v5.0.1+. */
 async function detectDevice(bleDevice, gattServer){
@@ -6186,11 +6308,11 @@ async function detectDevice(bleDevice, gattServer){
   if(/^S&B VOLCANO/i.test(name) || /^VOLCANO/i.test(name)) return VolcanoAdapter;
   if(/^VY\d{3}$/.test(name) || /^VENTY/i.test(name)){ /* TODO v5.0.2 VentyAdapter */ return null; }
   if(/^VZ\d{3}$/.test(name)) return null; // Veazy: out-of-scope
-  if(/STORZ&BICKEL/i.test(name)){ /* TODO v5.0.1 CraftyMightyAdapter */ return null; }
+  if(CraftyMightyAdapter.namePatterns.some(re=>re.test(name))) return CraftyMightyAdapter;
   // Service-UUID-Probe als Fallback
   if(gattServer){
     try{ await gattServer.getPrimaryService('10100000-5354-4f52-5a26-4249434b454c'); return VolcanoAdapter; }catch(_){}
-    try{ await gattServer.getPrimaryService('00000001-4c45-4b43-4942-265a524f5453'); return null; }catch(_){} // Crafty/Mighty TODO
+    try{ await gattServer.getPrimaryService('00000001-4c45-4b43-4942-265a524f5453'); return CraftyMightyAdapter; }catch(_){}
     try{ await gattServer.getPrimaryService('00000000-5354-4f52-5a26-4249434b454c'); return null; }catch(_){} // Venty TODO
   }
   return null;
@@ -11058,7 +11180,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.0 bereit.','ok');
+  log('Sessions v5.0.1 bereit.','ok');
 
   setupPwaUpdate();
 
