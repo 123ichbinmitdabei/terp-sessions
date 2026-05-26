@@ -4214,14 +4214,24 @@ async function connectBLE(){
     renderLastAction('Geräteauswahl öffnen…','busy');
     const u=getUUIDs();
     const services = [...new Set([u.serviceState, u.serviceControl,
-      '10100000-5354-4f52-5a26-4249434b454c',
-      '10110000-5354-4f52-5a26-4249434b454c',
-      '10130000-5354-4f52-5a26-4249434b454c',
-      '00000001-4c45-4b43-4942-265a524f5453',
-      '00000002-4c45-4b43-4942-265a524f5453',
-      '00000003-4c45-4b43-4942-265a524f5453',
-      '00000000-5354-4f52-5a26-4249434b454c'].filter(Boolean))];
+      '10100000-5354-4f52-5a26-4249434b454c',   // Volcano State
+      '10110000-5354-4f52-5a26-4249434b454c',   // Volcano Control
+      '10130000-5354-4f52-5a26-4249434b454c',   // Volcano Service5
+      '00000001-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Bootloader
+      '01000002-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Service2
+      '00000001-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 1
+      '00000002-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 2 (E3: Firmware/AutoOff)
+      '00000003-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 3
+      '00000000-5354-4f52-5a26-4249434b454c'    // Venty/Veazy
+      // v6.0+ Multi-Brand (via Settings-Toggle aktivierbar, A5):
+      // '8e320200-64d2-11e6-bdf4-0800200c9a66'  // PAX 3/Plus/Mini/Era
+      // Puffco Peak Pro/Proxy: TODO v7.0 (Service-UUID aus RE)
+      // Firefly 2+: TODO v8.0
+      ].filter(Boolean))];
     log('Gerätedialog öffnen…');
+    // v5.0.1 A4: acceptAllDevices zeigt alle BLE-Geraete (inkl. kuenftiger Marken).
+    // v6.0+ Multi-Brand-Modus koennte stattdessen gezielt filtern:
+    //   filters:[{namePrefix:'S&B'},{namePrefix:'PAX'},{namePrefix:'Puffco'},{namePrefix:'Firefly'}]
     State.device = await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
       optionalServices:services,
@@ -4250,8 +4260,15 @@ async function connectBLE(){
       log('Kein spezifischer Adapter erkannt, Fallback VolcanoAdapter.','warn');
     }
     State.adapter = new (AdapterClass || VolcanoAdapter)(State.device);
+    // v5.0.1 A3: flexible Datenfelder (nullable, nur gefuellt wenn Adapter sie liefert)
     State.device.type = State.adapter.constructor.deviceType;
+    State.device.subtype = State.device.subtype || null;       // venty|veazy|...
+    State.device.manufacturer = 'Storz & Bickel';
+    if(State.device.firmware===undefined) State.device.firmware = null;
+    if(State.device.battery===undefined) State.device.battery = null;
+    ['boost','superBoost','ecoCurrent','ecoVoltage'].forEach(k=>{ if(State.device[k]===undefined) State.device[k]=false; });
     LS.set('vol_last_device_type', State.adapter.constructor.deviceType);
+    LS.set('vol_last_device', { type:State.adapter.constructor.deviceType, name:State.device.name||'', lastSeen:Date.now() }); // W3-Vorbereitung
     log('Adapter: '+State.adapter.constructor.displayName,'ok');
     // v5.0.1 K1: portable Geraete (kein BLE-Auto-Aus im Geraet) -> App-Safety-Timer erzwingen
     if(State.adapter.constructor.capabilities.requiresAppSafetyTimer){
@@ -6210,7 +6227,12 @@ class DeviceAdapter {
     pump:false, balloon:false, battery:false, boost:false, superBoost:false,
     brightness:false, vibration:false, autoShutoff:false, firmware:false,
     runtime:false, ecoMode:false, displayCooling:false,
+    boostTemp:false,                // v5.0.1 E3: separater Boost-Setpoint (Crafty/Mighty)
     requiresAppSafetyTimer:false,   // v5.0.1 K1: App muss Auto-Aus erzwingen?
+    // v6.0+ Multi-Brand-Vorbereitung (A2), Adapter deklarieren nur was sie koennen:
+    flavorMode:false, stealthMode:false, standardMode:false, lockState:false, usageLimit:false, ledColor:false,  // PAX (v6.0)
+    dabCount:false, chamberType:false, lanternColor:false, profile1234:false,  // Puffco (v7.0)
+    requiresAuth:false, authMethod:null,   // null|'aes128-ecb-serial'|'sha256-handshake'
   };
   constructor(device){ this.device = device || null; }
   async connect(device){ if(device) this.device = device; }
@@ -6237,6 +6259,14 @@ class VolcanoAdapter extends DeviceAdapter {
   static displayName  = 'Volcano Hybrid';
   static namePatterns = [/^S&B VOLCANO/i, /^VOLCANO/i];
   static serviceUUIDs = ['10100000-5354-4f52-5a26-4249434b454c','10110000-5354-4f52-5a26-4249434b454c'];
+  // v5.0.1 E5: bekannte Zusatz-Chars (noch ungenutzt, fuer Firmware/Runtime/Display in v5.0.3+)
+  static KNOWN_CHARS = {
+    display:'1010000d-5354-4f52-5a26-4249434b454c', serialNumber:'10100008-5354-4f52-5a26-4249434b454c',
+    firmwareVersion:'10100003-5354-4f52-5a26-4249434b454c', firmwareBLEVersion:'10100004-5354-4f52-5a26-4249434b454c',
+    currentAutoOffValue:'1011000c-5354-4f52-5a26-4249434b454c', hoursOfHeating:'10110015-5354-4f52-5a26-4249434b454c',
+    minutesOfHeating:'10110016-5354-4f52-5a26-4249434b454c', vibration:'1010000e-5354-4f52-5a26-4249434b454c',
+    shutoffTime:'1011000d-5354-4f52-5a26-4249434b454c', brightness:'10110005-5354-4f52-5a26-4249434b454c',
+  };
   static tempRange    = { min:40, max:230 };
   static capabilities = {
     targetTemp:true, currentTemp:true, heater:true,
@@ -6376,8 +6406,10 @@ class CraftyMightyAdapter extends DeviceAdapter {
 async function detectDevice(bleDevice, gattServer){
   const name = (bleDevice && bleDevice.name) || '';
   if(/^S&B VOLCANO/i.test(name) || /^VOLCANO/i.test(name)) return VolcanoAdapter;
-  if(/^VY\d{3}$/.test(name) || /^VENTY/i.test(name)){ /* TODO v5.0.2 VentyAdapter */ return null; }
-  if(/^VZ\d{3}$/.test(name)) return null; // Veazy: out-of-scope
+  // v5.0.2 (E1): Venty heisst "S&B VY...", Veazy "S&B VZ..." (firsttris-Korrektur).
+  // Beide bedient kuenftig EIN VentyVeazyAdapter (gleiche Service/Char-UUIDs).
+  if(/S&B VY/i.test(name)){ /* TODO v5.0.2 VentyVeazyAdapter (subtype venty) */ return null; }
+  if(/S&B VZ/i.test(name)){ /* TODO v5.0.2 VentyVeazyAdapter (subtype veazy) */ return null; }
   if(CraftyMightyAdapter.namePatterns.some(re=>re.test(name))) return CraftyMightyAdapter;
   // Service-UUID-Probe als Fallback
   if(gattServer){
