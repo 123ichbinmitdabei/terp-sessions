@@ -2135,6 +2135,11 @@ button[data-sch-day].active{
       <button class="btn hot" id="btnHeat" data-tip="Heizer ein- oder ausschalten (Tastatur: Leertaste). Sicherheits-Timer startet automatisch." style="flex:1">Heizer aus</button>
       <button class="btn cool" id="btnPump" style="flex:1">Pumpe aus</button>
     </div>
+    <!-- v5.0.2: Boost-Steuerung (nur Venty/Veazy, via capabilities sichtbar) -->
+    <div class="row" id="boostRow" style="margin-top:10px;display:none">
+      <button class="btn" id="btnBoost" data-tip="Boost: kurzzeitig hoehere Leistung fuer einen kraeftigeren Zug" style="flex:1">⚡ Boost</button>
+      <button class="btn" id="btnSuperBoost" data-tip="Super-Boost: maximale Leistung" style="flex:1">⚡⚡ Super</button>
+    </div>
     <div class="row" style="margin-top:10px">
       <div class="field">
         <label>Pumpe für (Sek.)</label>
@@ -2697,6 +2702,11 @@ button[data-sch-day].active{
       <div class="toggle-row">
         <div class="info"><b>Default-Minuten</b><small>Bis Auto-Aus</small></div>
         <input class="input mono" id="safetyMinInput" type="number" min="1" max="60" step="1" style="width:80px" inputmode="numeric" aria-label="Sicherheits-Timer Minuten">
+      </div>
+      <!-- v5.0.2 N1: Boost-LED-Visualisierung (nur Venty/Veazy) -->
+      <div class="toggle-row" id="boostVizRow" style="display:none">
+        <div class="info"><b>Boost-LED-Visualisierung</b><small>Animiert die Geraete-LED waehrend Boost</small></div>
+        <button class="toggle" id="togBoostViz" role="switch" aria-checked="false" aria-label="Boost-LED-Visualisierung"></button>
       </div>
 
       <h3 class="set-section-h">Zugriffsschutz</h3>
@@ -4108,6 +4118,10 @@ function renderStatus(){
     const bat = State.device && State.device.battery;
     battEl.textContent = (bat!=null && currentCapabilities().battery) ? `🔋 ${bat}%` : '';
   }
+  // v5.0.2: Boost-Button-Status (Venty/Veazy)
+  const bb=$('#btnBoost'), sb=$('#btnSuperBoost');
+  if(bb){ bb.classList.toggle('hot', !!(State.device&&State.device.boost)); bb.setAttribute('aria-pressed', String(!!(State.device&&State.device.boost))); }
+  if(sb){ sb.classList.toggle('hot', !!(State.device&&State.device.superBoost)); sb.setAttribute('aria-pressed', String(!!(State.device&&State.device.superBoost))); }
 
   // Indicators with aria
   const indHeat = $('#indHeat');
@@ -4263,6 +4277,14 @@ async function connectBLE(){
     // v5.0.1 A3: flexible Datenfelder (nullable, nur gefuellt wenn Adapter sie liefert)
     State.device.type = State.adapter.constructor.deviceType;
     State.device.subtype = State.device.subtype || null;       // venty|veazy|...
+    // v5.0.2 Step3: Venty vs Veazy unterscheiden (gleicher Adapter)
+    if(State.adapter.constructor === VentyVeazyAdapter){
+      if(/S&B VZ/i.test(State.device.name||'')){
+        State.device.subtype='veazy';
+        log('Veazy erkannt (Beta, ungetestete Hardware-Variante)','warn');
+        toast('Veazy verbunden (Beta-Modus, evtl. Bugs - bitte Feedback an Andre)');
+      } else { State.device.subtype='venty'; }
+    }
     State.device.manufacturer = 'Storz & Bickel';
     if(State.device.firmware===undefined) State.device.firmware = null;
     if(State.device.battery===undefined) State.device.battery = null;
@@ -5341,6 +5363,9 @@ function wire(){
   $('#btnSetTemp').addEventListener('click', async()=>{ try{ await cmdSetTemp(Number($('#tInput').value)); }catch(e){ log(e.message,'err'); } });
   $('#btnHeat').addEventListener('click', async()=>{ try{ await cmdHeater(!State.heater); }catch(e){ log(e.message,'err'); } });
   $('#btnPump').addEventListener('click', async()=>{ try{ await cmdPump(!State.pump); }catch(e){ log(e.message,'err'); } });
+  // v5.0.2: Boost / Super-Boost (Venty/Veazy)
+  $('#btnBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setBoost) return; await State.adapter.setBoost(!State.device?.boost); renderStatus(); toast(State.device?.boost?'⚡ Boost an':'Boost aus'); }catch(e){ log(e.message,'err'); } });
+  $('#btnSuperBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setSuperBoost) return; await State.adapter.setSuperBoost(!State.device?.superBoost); renderStatus(); toast(State.device?.superBoost?'⚡⚡ Super-Boost an':'Super-Boost aus'); }catch(e){ log(e.message,'err'); } });
   $('#btnPumpFor').addEventListener('click', async()=>{
     try{ const s=Number($('#pInput').value); await cmdPumpFor(s); }catch(e){ log(e.message,'err'); }
   });
@@ -5407,6 +5432,13 @@ function wire(){
   $('#iosClose').addEventListener('click', ()=>{
     $('#iosBanner').classList.remove('show');
     LS.set('vol_ios_banner_dismissed', true);
+  });
+
+  // v5.0.2 N1: Boost-LED-Visualisierung
+  $('#togBoostViz')?.addEventListener('click', async()=>{
+    const on = $('#togBoostViz').getAttribute('aria-checked')!=='true';
+    $('#togBoostViz').setAttribute('aria-checked', String(on));
+    try{ if(State.adapter?.setBoostVisualization) await State.adapter.setBoostVisualization(on); }catch(e){ log(e.message,'err'); }
   });
 
   // v5.0.1 K3: Verbindungsverlust-Banner-Buttons
@@ -6322,7 +6354,8 @@ class CraftyMightyAdapter extends DeviceAdapter {
     requiresAppSafetyTimer:true,    // K1: Mighty/Crafty haben KEINEN BLE-Auto-Aus
   };
   // Char-IDs (Spec 1.2)
-  static CHAR = { CURRENT_TEMP:0x11, TARGET_TEMP:0x21, BATTERY:0x41, HEATER_ON:0x81, HEATER_OFF:0x91 };
+  static CHAR = { CURRENT_TEMP:0x11, TARGET_TEMP:0x21, BATTERY:0x41, HEATER_ON:0x81, HEATER_OFF:0x91,
+    BATTERY_PRIMARY:0x63, BATTERY_FALLBACK:0x73 }; // v5.0.2: firsttris nutzt 0x63/0x73, xythobuz 0x41
   static uuid(xx){ return '000000'+xx.toString(16).padStart(2,'0')+'-4c45-4b43-4942-265a524f5453'; }
 
   constructor(device){ super(device); this.chars={}; this._poll=null; }
@@ -6333,12 +6366,19 @@ class CraftyMightyAdapter extends DeviceAdapter {
     const get = async(xx)=>{ try{ return await svc.getCharacteristic(C.uuid(xx)); }catch(_){ return null; } };
     this.chars.curTemp   = await get(C.CHAR.CURRENT_TEMP);
     this.chars.target    = await get(C.CHAR.TARGET_TEMP);
-    this.chars.battery   = await get(C.CHAR.BATTERY);
     this.chars.heaterOn  = await get(C.CHAR.HEATER_ON);
     this.chars.heaterOff = await get(C.CHAR.HEATER_OFF);
-    const missing = Object.entries(this.chars).filter(([k,v])=>!v).map(([k])=>k);
+    // v5.0.2 Step0: Battery-Fallback (0x63 primary, 0x41 legacy, 0x73 secondary)
+    this.chars.battery_primary  = await get(C.CHAR.BATTERY_PRIMARY);
+    this.chars.battery_legacy   = await get(C.CHAR.BATTERY);
+    this.chars.battery_fallback = await get(C.CHAR.BATTERY_FALLBACK);
+    this.chars.battery = this.chars.battery_primary || this.chars.battery_legacy || this.chars.battery_fallback;
+    // Nur die Pflicht-Chars pruefen (Battery hat eigene Fallback-Kette)
+    const required = {curTemp:this.chars.curTemp, target:this.chars.target, heaterOn:this.chars.heaterOn, heaterOff:this.chars.heaterOff};
+    const missing = Object.entries(required).filter(([k,v])=>!v).map(([k])=>k);
+    if(!this.chars.battery) missing.push('battery(0x63/0x41/0x73)');
     if(missing.length) log('Crafty/Mighty: Chars fehlen: '+missing.join(', '),'warn');
-    else log('Crafty/Mighty: 5 Characteristics gebunden','ok');
+    else log('Crafty/Mighty: Characteristics gebunden (Battery-Char: '+(this.chars.battery_primary?'0x63':this.chars.battery_legacy?'0x41':'0x73')+')','ok');
   }
   async setTargetTemp(c){
     if(!this.chars.target) throw new Error('Crafty TargetTemp-Char fehlt.');
@@ -6366,9 +6406,16 @@ class CraftyMightyAdapter extends DeviceAdapter {
     State.heater=false;
   }
   async getBattery(){
-    if(!this.chars.battery) return null;
-    const dv=await this.chars.battery.readValue();
-    return dv.byteLength>=2 ? dv.getUint16(0,true) : null;
+    // v5.0.2 Step0: 0x63 -> 0x41 -> 0x73, erster plausibler Wert (0-100) gewinnt
+    for(const key of ['battery_primary','battery_legacy','battery_fallback']){
+      const ch=this.chars[key];
+      if(!ch) continue;
+      try{
+        const dv=await ch.readValue();
+        if(dv.byteLength>=2){ const v=dv.getUint16(0,true); if(v>=0 && v<=100) return v; }
+      }catch(_){}
+    }
+    return null;
   }
   // Crafty hat keine Pumpe
   async pumpOn(){ throw new Error('Crafty/Mighty hat keine Pumpe.'); }
@@ -6401,21 +6448,126 @@ class CraftyMightyAdapter extends DeviceAdapter {
   async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
 }
 
-/* Bestimmt den passenden Adapter nach GATT-Connect (Spec Kapitel 2.2).
-   v5.0.0: nur Volcano aktiv. Andere Geraete folgen in v5.0.1+. */
+/* ── v5.0.2: Venty / Veazy ────────────────────────────────────────
+   Command-basiert: Single Control-Char (write + notify). Ein Adapter
+   fuer beide Geraete (identische UUIDs/Masken). Notification-Parser
+   ist eine fundierte ANNAHME (firsttris/xythobuz), defensiv codiert
+   und bei Bedarf iterativ via Hex-Dump kalibrierbar. Spec 1.3. */
+class VentyVeazyAdapter extends DeviceAdapter {
+  static deviceType   = 'venty_veazy';
+  static displayName  = 'Venty / Veazy';
+  static namePatterns = [/S&B VY/i, /S&B VZ/i];
+  static serviceUUIDs = ['00000000-5354-4f52-5a26-4249434b454c'];
+  static tempRange    = { min:40, max:210 };
+  static capabilities = {
+    targetTemp:true, currentTemp:false,   // Current-Temp kommt nur via Notification
+    heater:true, pump:false, balloon:false,
+    battery:true, boost:true, superBoost:true,
+    brightness:true, vibration:true, autoShutoff:false, firmware:true,
+    runtime:true, ecoMode:true, displayCooling:false,
+    boostTemp:false, requiresAppSafetyTimer:true, bleAlwaysOn:true,
+    flavorMode:false, stealthMode:false, standardMode:false, lockState:false, usageLimit:false, ledColor:false,
+    dabCount:false, chamberType:false, lanternColor:false, profile1234:false,
+    requiresAuth:false, authMethod:null,
+  };
+  static SERVICE = '00000000-5354-4f52-5a26-4249434b454c';
+  static CONTROL = '00000001-5354-4f52-5a26-4249434b454c';
+  static WRITE_MASK = { SET_TEMPERATURE:1<<1, SET_BOOST:1<<2, SET_SUPERBOOST:1<<3, HEATER:1<<5, SETTINGS:1<<7 };
+  static SETTINGS_BIT = { UNIT:1<<0, SETPOINT_REACHED:1<<1, FACTORY_RESET:1<<2, ECOMODE_CHARGE:1<<3, BUTTON_CHANGED_FILLING:1<<4, ECOMODE_VOLTAGE:1<<5, BOOST_VISUALIZATION:1<<6 };
+  static SETTINGS2_BIT = { BLE_PERMANENT:1<<0 };
+
+  constructor(device){ super(device); this.control=null; this.notifyBuffer=null; this._lastSettingsBits=0; }
+
+  async bindChars(server){
+    const svc = await server.getPrimaryService(VentyVeazyAdapter.SERVICE);
+    this.control = await svc.getCharacteristic(VentyVeazyAdapter.CONTROL);
+    log('VentyVeazy: Single-Control-Char gebunden','ok');
+  }
+  async setTargetTemp(c){
+    if(!this.control) throw new Error('Venty Control-Char fehlt.');
+    const buf=new ArrayBuffer(3); const dv=new DataView(buf);
+    dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_TEMPERATURE);
+    dv.setUint16(1, Math.round(c*10), true);
+    await this.control.writeValue(buf);
+  }
+  async heaterOn(){
+    if(!this.control) throw new Error('Venty Control-Char fehlt.');
+    const buf=new ArrayBuffer(2); new DataView(buf).setUint8(0, VentyVeazyAdapter.WRITE_MASK.HEATER); new DataView(buf).setUint8(1,1);
+    await this.control.writeValue(buf); State.heater=true;
+  }
+  async heaterOff(){
+    if(!this.control) throw new Error('Venty Control-Char fehlt.');
+    const buf=new ArrayBuffer(2); new DataView(buf).setUint8(0, VentyVeazyAdapter.WRITE_MASK.HEATER); new DataView(buf).setUint8(1,0);
+    await this.control.writeValue(buf); State.heater=false;
+  }
+  async setBoost(on){
+    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_BOOST); dv.setUint8(1, on?1:0);
+    await this.control.writeValue(buf); State.device.boost=!!on;
+  }
+  async setSuperBoost(on){
+    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SET_SUPERBOOST); dv.setUint8(1, on?1:0);
+    await this.control.writeValue(buf); State.device.superBoost=!!on;
+  }
+  async writeSettings(bits){
+    const buf=new ArrayBuffer(2); const dv=new DataView(buf); dv.setUint8(0, VentyVeazyAdapter.WRITE_MASK.SETTINGS); dv.setUint8(1, bits);
+    await this.control.writeValue(buf);
+  }
+  async setBoostVisualization(on){
+    let bits=this._lastSettingsBits||0;
+    if(on) bits|=VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION; else bits&=~VentyVeazyAdapter.SETTINGS_BIT.BOOST_VISUALIZATION;
+    await this.writeSettings(bits); this._lastSettingsBits=bits;
+  }
+  // Defensiver Parser: nur plausible Werte uebernehmen, sonst Roh-Bytes loggen
+  parseNotification(dv){
+    try{
+      if(dv.byteLength < 6){ this._logRaw(dv); return; }
+      const status=dv.getUint8(0);
+      const bat=dv.getUint8(1);
+      const cur=dv.getUint16(2,true)/10;
+      const tgt=dv.getUint16(4,true)/10;
+      let plausible=false;
+      if(bat>=0 && bat<=100){ State.device.battery=bat; plausible=true; }
+      if(cur>=20 && cur<=260){ State.cur=cur; plausible=true; }
+      if(tgt>=40 && tgt<=260){ State.target=tgt; plausible=true; }
+      State.heater=!!(status & 0x01);
+      State.device.boost=!!(status & 0x02);
+      State.device.superBoost=!!(status & 0x04);
+      if(!plausible) this._logRaw(dv);
+    }catch(e){ this._logRaw(dv); }
+  }
+  _logRaw(dv){
+    const b=[]; for(let i=0;i<dv.byteLength;i++) b.push(dv.getUint8(i).toString(16).padStart(2,'0'));
+    log('VentyVeazy: Notification unklar, Roh-Bytes: '+b.join(' ')+' (bitte an Andre fuer Parser-Kalibrierung)','warn');
+  }
+  async subscribeStatus(cb){
+    if(!this.control) return;
+    await this.control.startNotifications();
+    this.control.addEventListener('characteristicvaluechanged', e=>{
+      this.notifyBuffer=e.target.value;
+      this.parseNotification(e.target.value);
+      cb && cb({ currentTemp:State.cur, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
+    });
+    log('VentyVeazy: Status-Notifications aktiv','ok');
+  }
+  async getBattery(){ return State.device.battery; }
+  async getCurrentTemp(){ return State.cur; }
+  async pumpOn(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
+  async pumpOff(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
+  async disconnect(){ if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
+}
+
+/* Bestimmt den passenden Adapter nach GATT-Connect (Spec Kapitel 2.2). */
 async function detectDevice(bleDevice, gattServer){
   const name = (bleDevice && bleDevice.name) || '';
   if(/^S&B VOLCANO/i.test(name) || /^VOLCANO/i.test(name)) return VolcanoAdapter;
-  // v5.0.2 (E1): Venty heisst "S&B VY...", Veazy "S&B VZ..." (firsttris-Korrektur).
-  // Beide bedient kuenftig EIN VentyVeazyAdapter (gleiche Service/Char-UUIDs).
-  if(/S&B VY/i.test(name)){ /* TODO v5.0.2 VentyVeazyAdapter (subtype venty) */ return null; }
-  if(/S&B VZ/i.test(name)){ /* TODO v5.0.2 VentyVeazyAdapter (subtype veazy) */ return null; }
+  // v5.0.2 (E1): Venty "S&B VY...", Veazy "S&B VZ..." -> ein VentyVeazyAdapter
+  if(/S&B VY/i.test(name) || /S&B VZ/i.test(name)) return VentyVeazyAdapter;
   if(CraftyMightyAdapter.namePatterns.some(re=>re.test(name))) return CraftyMightyAdapter;
   // Service-UUID-Probe als Fallback
   if(gattServer){
     try{ await gattServer.getPrimaryService('10100000-5354-4f52-5a26-4249434b454c'); return VolcanoAdapter; }catch(_){}
     try{ await gattServer.getPrimaryService('00000001-4c45-4b43-4942-265a524f5453'); return CraftyMightyAdapter; }catch(_){}
-    try{ await gattServer.getPrimaryService('00000000-5354-4f52-5a26-4249434b454c'); return null; }catch(_){} // Venty TODO
+    try{ await gattServer.getPrimaryService('00000000-5354-4f52-5a26-4249434b454c'); return VentyVeazyAdapter; }catch(_){}
   }
   return null;
 }
@@ -7735,6 +7887,14 @@ function applyCapabilitiesUI(){
   // v5.0.1 K1: Pflicht-Hinweis Safety-Timer bei portablen Geraeten
   const sh = $('#safetyPortableHint');
   if(sh) sh.style.display = (State.adapter && State.adapter.constructor.capabilities.requiresAppSafetyTimer) ? '' : 'none';
+  // v5.0.2: Boost-Row nur bei cap.boost (Venty/Veazy)
+  const br = $('#boostRow');
+  if(br) br.style.display = caps.boost ? 'flex' : 'none';
+  const bsuper = $('#btnSuperBoost');
+  if(bsuper) bsuper.style.display = (State.adapter && State.adapter.constructor.capabilities.superBoost) ? '' : 'none';
+  // v5.0.2: Boost-Visualization-Toggle nur bei Venty/Veazy
+  const bvRow = $('#boostVizRow');
+  if(bvRow) bvRow.style.display = (State.adapter && State.adapter.constructor.capabilities.boost && State.adapter.setBoostVisualization) ? '' : 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -11287,7 +11447,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.1 bereit.','ok');
+  log('Sessions v5.0.2 bereit.','ok');
 
   setupPwaUpdate();
 
