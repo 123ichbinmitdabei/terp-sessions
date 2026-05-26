@@ -2038,7 +2038,7 @@ button[data-sch-day].active{
   <div class="hero hero-card" id="hero" role="region" aria-label="Aktuelle Geräte-Werte">
     <div class="hero-grid">
       <div>
-        <div class="t-meta">Aktuelle Temperatur · <button class="dev-badge" id="devBadge" aria-label="Gerät wechseln"><span class="ico" id="devBadgeIco">🌋</span><span id="devBadgeName">Volcano</span><span class="arrow">›</span></button> <span id="battBadge"></span></div>
+        <div class="t-meta">Aktuelle Temperatur · <button class="dev-badge" id="devBadge" aria-label="Gerät wechseln"><span class="ico" id="devBadgeIco">🌋</span><span id="devBadgeName">Volcano</span><span class="arrow">›</span></button> <span id="battBadge"></span> <span id="fwBadge" style="font-size:10px;color:var(--muted)"></span></div>
         <div class="t-current">
           <span class="val mono" id="tCurrent" aria-live="polite" aria-atomic="true">––</span>
           <span class="unit" aria-hidden="true">°C</span>
@@ -4119,6 +4119,9 @@ function renderStatus(){
     // v5.0.2.2: bei Battery-Capability aber unbekanntem Wert "--" statt falscher Zahl
     battEl.textContent = currentCapabilities().battery ? (bat!=null ? `🔋 ${bat}%` : '🔋 --') : '';
   }
+  // v5.0.2.3: Firmware-Info anzeigen wenn vorhanden
+  const fwEl = $('#fwBadge');
+  if(fwEl){ const fw=State.device&&State.device.firmware; fwEl.textContent = fw ? `FW ${fw}${State.device.bootloader?(' / BL '+State.device.bootloader):''}` : ''; }
   // v5.0.2: Boost-Button-Status (Venty/Veazy)
   const bb=$('#btnBoost'), sb=$('#btnSuperBoost');
   if(bb){ bb.classList.toggle('hot', !!(State.device&&State.device.boost)); bb.setAttribute('aria-pressed', String(!!(State.device&&State.device.boost))); }
@@ -6588,17 +6591,31 @@ class VentyVeazyAdapter extends DeviceAdapter {
         return;
       }
       if(dv.byteLength >= 6){
-        const status=dv.getUint8(0);
-        // v5.0.2.2 kalibriert an Andres Hex (04 ce 06 00...): Current-Temp = Bytes 1-2 Uint16 LE /10
-        // (0x06ce=1742 -> 174.2°C). Byte 0 = Status (Bit 2 = heating, da byte0=0x04 bei Heizer-an).
-        const curA=dv.getUint16(1,true)/10;
-        let plausible=false;
-        if(curA>=20 && curA<=260){ State.cur=curA; plausible=true; }
-        // Target-Temp-Position noch unbekannt (Bytes 3-5 ergaben keine plausible Temp) -> nicht setzen
-        State.heater = !!(status & 0x04);  // Bit 2 = heating (an Andres Daten bestaetigt)
-        // Battery-Byte unbekannt -> bewusst nicht gesetzt (State.device.battery bleibt null)
-        if(plausible) log('  → STATUS: cur='+State.cur+'°C target='+State.target+'°C heater='+State.heater,'ok');
-        else { log('  → STATUS-Frame unklar, Felder verworfen','warn'); this._logRaw(dv); }
+        const byte0=dv.getUint8(0);
+        // TYP A: Firmware-Info (Byte0=0x02) -> ASCII Bytes 2-7 (FW) + 11-16 (BL)
+        if(byte0 === 0x02){
+          const ascii=(off,n)=>{let s='';for(let i=0;i<n;i++){const c=dv.getUint8(off+i);if(c===0)break;s+=String.fromCharCode(c);}return s;};
+          const fw=ascii(2,6), bl=ascii(11,6);
+          State.device.firmware=fw; State.device.bootloader=bl;
+          log('  → Firmware-Info: FW='+fw+' BL='+bl,'ok');
+          return;
+        }
+        // TYP C: Heater-Command-Echo (Byte0=0x20, Rest 0x00) -> kein State-Update
+        if(byte0 === 0x20){
+          let allZero=true; for(let i=1;i<dv.byteLength;i++){ if(dv.getUint8(i)!==0){ allZero=false; break; } }
+          if(allZero){ log('  → Heater-Command-Echo (kein State-Update)','warn'); return; }
+        }
+        // TYP B: Status-Frame -> Current-Temp Bytes 1-2 Uint16 LE /10, Bit2=heating
+        // (Bytes 4-5 sind Konstante 0x17b0 = NICHT Target; ignoriert.)
+        const curC=dv.getUint16(1,true)/10;
+        if(curC>=15 && curC<=260){
+          State.cur=curC;
+          State.heater=!!(byte0 & 0x04);
+          log('  → STATUS: cur='+State.cur+'°C heater='+State.heater,'ok');
+          return;
+        }
+        log('  → Unbekannter Frame, byte0=0x'+byte0.toString(16),'warn');
+        this._logRaw(dv);
         return;
       }
       this._logRaw(dv);
@@ -6627,13 +6644,18 @@ class VentyVeazyAdapter extends DeviceAdapter {
       cb && cb({ currentTemp:State.cur, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
     });
     log('VentyVeazy: Status-Notifications aktiv','ok');
-    // Problem2: BLE_PERMANENT + Keep-Alive (robuster Fallback gegen Idle-Disconnect)
-    await this.enableBlePermanent();
-    if(this._keepAlive) clearInterval(this._keepAlive);
-    this._keepAlive = setInterval(async()=>{
-      try{ if(this.control && State.connected) await this.control.readValue(); }catch(_){}
-    }, 20000);
-    log('VentyVeazy: Keep-Alive aktiv (20s)','ok');
+    // v5.0.2.3: BLE_PERMANENT nur EINMAL pro Session (nicht bei jedem Reconnect,
+    // sonst "GATT operation already in progress"). Keep-Alive ebenfalls nur einmal.
+    if(!this._blePermanentAttempted){
+      this._blePermanentAttempted = true;
+      await this.enableBlePermanent();
+    }
+    if(!this._keepAlive){
+      this._keepAlive = setInterval(async()=>{
+        try{ if(this.control && State.connected) await this.control.readValue(); }catch(_){}
+      }, 20000);
+      log('VentyVeazy: Keep-Alive aktiv (20s)','ok');
+    }
   }
   async getBattery(){ return State.device.battery; }
   async getCurrentTemp(){ return State.cur; }
@@ -11561,7 +11583,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.2.2 bereit.','ok');
+  log('Sessions v5.0.2.3 bereit.','ok');
 
   setupPwaUpdate();
 
