@@ -1,8 +1,12 @@
-# Sessions — S&B Vape Controller (v4.9.8)
+# Sessions — S&B Vape Controller (v5.0.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~432 KB.
 
-## Was ist neu in v4.9.8 — Session-Scheduler (Pre-Heat-Erweiterung)
+## Was ist neu in v5.0.0 — Foundation für Multi-Device
+
+Reiner Architektur-Refactor, keine sichtbare Verhaltensänderung für Volcano. Der bestehende BLE-Code ist jetzt im **DeviceAdapter-Pattern** gekapselt (`DeviceAdapter`-Basisklasse, `VolcanoAdapter`), mit Capabilities-Map pro Gerät, Auto-Detection-Layer (`detectDevice`) und Vorbereitung für Crafty/Mighty (v5.0.1) und Venty (v5.0.2). Alle Steuerbefehle laufen über `State.adapter`.
+
+## Was war in v4.9.8 — Session-Scheduler (Pre-Heat-Erweiterung)
 
 Andre's Wunsch: „Pre-Heat umbenennen und als Timer nutzen. Start einer Session in X Stunden/Minuten mit Temperatur oder Programm, mit Möglichkeit der Wiederholung bis hin zum Wochenplan."
 
