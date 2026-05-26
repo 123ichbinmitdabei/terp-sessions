@@ -1,122 +1,78 @@
-# Sessions — S&B Vape Controller (v4.9.6)
+# Sessions — S&B Vape Controller (v4.9.7)
 
-Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~404 KB.
+Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~408 KB.
 
-## Was ist neu in v4.9.6 — Tutorial-Assistent + universelle Tooltips + Mobile-Gesten
+## Was ist neu in v4.9.7 — Tour-Bug-Fix + Settings-Tabs deutlich sichtbar
 
-Andre's Real-World-Feedback:
-- „Wenn Pre-Heat abgebrochen, sollte die Anzeige verschwinden" — Bug ✅
-- „Nicht alle Knöpfe haben einen [Tooltip]" — ✅
-- „Es wäre gut wenn es auch zu den Programmen einen gäbe, so dass auch diese kurz erläutert werden" — ✅
-- „Eine genaue Anleitung wie man ein Programm zum ersten Mal durchführt, mit Tipps wie ein Assistent" — ✅
-- „Bedienung über Tastatur funktioniert, brauchen aber was fürs Handy/Tablet" — ✅
+### 🔴 Bug-Fix: Onboarding-Tour starb nach Schritt 1
 
-### 🐛 Bug-Fix: Pre-Heat-Abbrechen
+CC fand einen echten Bug in v4.9.6: Die Tour stieg bei Schritt 2 (Spotlight auf "Verbinden"-Knopf in der Topbar) in eine Endlosschleife ein.
 
-`cancelPreheat()` setzt jetzt zusätzlich `style.display = 'none'` und cleart den Info-Text. Auch `startPreheatCountdown()` resettet explizit das `display`. Verhindert Geister-Anzeige nach Abbruch.
+**Ursache:** `showTourStep()` prüfte mit `rect.top < 80` ob das Element zentriert werden soll. Der Verbinden-Knopf sitzt aber bei `top=14px` ganz oben — die Seite kann ihn nicht „zentrieren" wenn `scrollY` schon bei 0 ist. Die Funktion plante sich endlos selbst neu, das Overlay verschwand dauerhaft.
 
-### 🆕 Onboarding-Tour wie ein Assistent
+**Fix:**
+1. Bedingung verschärft auf `rect.bottom < 0 || rect.top > vh` — nur scrollen wenn Element WIRKLICH außerhalb des Viewports ist
+2. **`_tourScrollRetried`-Flag** verhindert mehrfaches Scroll-Retry pro Schritt (max 1 Versuch)
+3. Flag wird bei Next/Prev/Start zurückgesetzt
+4. Spotlight + Bubble bekommen jetzt **Clamp** damit sie auch bei Rand-Elementen sichtbar bleiben
 
-Beim ersten App-Start zeigt sich automatisch ein **8-Schritte-Walkthrough mit Spotlight**:
+Die Tour läuft jetzt alle 8 Schritte durch.
 
-1. Willkommen + Tour-Erklärung
-2. Bluetooth verbinden (Highlight: Verbinden-Knopf in der Topbar)
-3. Status auf einen Blick (Highlight: Hero-Card)
-4. Quick-Actions (Highlight: Direkt-Zug)
-5. Programme-Tab (Highlight: Programme-Knopf in Bottom-Nav)
-6. Setup-Tab (Highlight: Setup-Knopf)
-7. ? = Anleitung (Highlight: Hilfe-Knopf)
-8. Tipps zum Schluss (Long-Press-Hinweis, ESC, V-Taste, Siri)
+### 🆕 Settings-Tabs deutlich sichtbar
 
-**Features:**
-- Spotlight mit Puls-Animation um das aktuelle Element
-- Scroll-into-View automatisch wenn Element nicht sichtbar
-- Bubble mit Schritt-Zähler („Schritt 3 / 8")
-- Buttons: Überspringen / Zurück / Weiter / Los geht's
-- ESC zum Abbrechen
-- LocalStorage merkt sich ob Tour gelaufen ist (`vol_tour_completed`)
-- Settings → Daten → „🎓 Tour neu starten" jederzeit re-startbar
+Andre's Feedback: „Es ist nicht auf Anhieb ersichtlich dass es noch mehr Registerkarten gibt als die die man sofort sieht. Das muss deutlicher werden."
 
-### 🆕 Universelle Tooltips für ALLE Knöpfe (auch dynamische)
-
-**Vorher:** Tooltips nur für die ~50 IDs im TOOLTIPS-Dict. Dynamisch erzeugte Knöpfe (Programme, Aroma-Karten, Devices) bekamen nichts.
+**Vorher:** Subtiler dunkler Tab-Strip, aktiver Tab nur leicht abgesetzt. Bei kleinem Bildschirm waren Tab 5 + 6 unsichtbar.
 
 **Jetzt:**
-1. **`data-tip` Attribut** überall: jeder Button kann einen Tip mitbringen
-2. **`installTooltipBehavior(root)`** scannt alle Elemente mit `data-tip` ODER `aria-label` (auf Buttons/Links/Toggles/Tabs)
-3. **MutationObserver `setupDynamicTooltips()`** beobachtet neue DOM-Knoten und installiert Tooltips automatisch
-4. **`data-tipBound` Flag** verhindert Doppel-Bindung
 
-**Programme-Tooltips:**
-- Jede Karte hat einen Tip mit Programmbeschreibung + geschätzte Dauer (Long-Press auf die Karte)
-- Jeder Aktions-Button hat eigenen Tip:
-  - „Programm jetzt starten — automatischer Ablauf der Schritte"
-  - „Schritte und Einstellungen bearbeiten"
-  - „QR-Code erzeugen zum Teilen per Handy-Scan"
-  - „Als Home-Assistant-Script-YAML herunterladen (Phase 2)"
-  - „Programm dauerhaft löschen"
+1. **Hinweis-Text** über den Tabs: „─── 6 KATEGORIEN — WISCHEN FÜR MEHR ───" mit Trennlinien
+2. **Orangener Border** um den ganzen Tab-Strip plus zarte Schimmer-Aura
+3. **Aktiver Tab** mit oranger Background-Farbe + Schatten + weißer Schrift — visuell unmissverständlich
+4. **Größere Tabs** (44px hoch, 13px Schrift statt 12px, 11px Padding statt 8px)
+5. **Scroll-Gradient links/rechts:** wenn weitere Tabs links oder rechts verborgen sind, erscheint ein zarter Fade-Schatten am Rand → „hier geht noch was"
+6. **Scroll-Snap** auf jeden Tab beim Wischen
+7. **Aktiver Tab scrollt sich selbst in Sicht** beim Wechsel
+8. **Sichtbare Scrollbar** (3px hoch, orange) am unteren Tab-Strip-Rand
 
-**Mehr Tooltips:**
-- Heizer-Hauptknopf, „Letztes Programm nochmal", „+ Neues Programm"
-- Bottom-Nav-Tabs erklären sich selbst
-- Tour-Reset-Knopf erklärt sich selbst
+**Resultat:** Bei jedem Bildschirm sieht man sofort dass es 6 Kategorien gibt und kann horizontal scrollen.
 
-### 🆕 Mobile-Gesten als Tastatur-Equivalent
+## Test-Status v4.9.6 (zur Erinnerung)
 
-**Swipe links / rechts** im Body wechselt zwischen den Tabs (Steuerung → Programme → Setup):
-- Swipe-Mindeststrecke: 80px horizontal
-- Max-Zeit: 500ms (sonst kein Swipe)
-- Vertikal-Verschiebung > Horizontal: ignoriert (sonst würde Scrollen Tab wechseln)
-- Ignoriert Inputs, Buttons, Modals, Stepper, Pills (nur "freie" Areas)
-- Haptisches Feedback bei erfolgreichem Wechsel
+CC's letzter Test:
+- ✅ Universelle Tooltips: 75/75 Elemente
+- ✅ Programme: Karten 6/6, Aktions-Knöpfe 24/24
+- ✅ Swipe Tab-Wechsel
+- ✅ Pre-Heat-Cancel-Fix
+- ✅ Long-Press Hero → TTS
+- ✅ Regression 24/24
+- 🔴 Tour starb nach Schritt 1 → **JETZT IN v4.9.7 GEFIXT**
 
-**Long-Press (1 Sek) auf die Hero-Card** = V-Taste-Equivalent → Status wird per TTS vorgelesen:
-- „Aktuelle Temperatur 185 Grad, Heizer an, Ziel 185 Grad"
-- Funktioniert ohne Tastatur — wichtig für Mobile-User mit Blinden-Modus
-- Dreifach-Vibration als Bestätigung
+## Was zu testen ist in v4.9.7
 
-**Was bleibt für Tastatur-Nutzer:**
-- 1-9 → Lieblings-Temperatur
-- Space → Heizer
-- B / D / V / ESC → Ballon / Direkt-Zug / Status / Notaus
-- Tastatur-Shortcut-Liste weiter in Settings → Inklusion
+### Tour-Bug-Fix
+1. LocalStorage in DevTools `vol_tour_completed` löschen → Reload → **Tour läuft alle 8 Schritte durch**
+2. Settings → Daten → 🎓 Tour neu starten → genauso alle 8 Schritte
+3. Spotlight bleibt bei Rand-Elementen sichtbar (Verbinden-Knopf oben links)
 
-### Was war in v4.9.5 (zur Erinnerung)
-
-UX-Reparatur: Schriftgröße via `zoom` (statt fontSize), Blindenmodus mit UI-Sync, Mikrofon graceful Error, Bottom-Padding 220+safe, einklappbare Karten, echtes Responsive.
-
-### Was bleibt offen
-
-1. **Crafty / Mighty / Venty BLE-Implementierung** — UUIDs sind im Code, aber die echte BLE-Kommunikation ist nur für Volcano implementiert. Diese Geräte haben anderen Char-Sets. **Größerer Bau, v5.0.** Andre wünscht alle Geräte funktional.
-2. **App-Erweiterungen** — Andre hat gesagt „alles nochmal anschauen und erweitern, professionalisieren". Vage; ich brauche pro App konkrete Wünsche. Vorschlag: nach Tour-Lauf am echten Gerät zeigt sich was wirklich noch fehlt.
-
-## Was zu testen ist
-
-### Sofort beim Reload (PWA-Update)
-1. **Erster Start** → Tour startet nach 1.2s automatisch
-2. **Tour „Weiter"** durchklicken bis zum Ende → speichert `vol_tour_completed=true`
-
-### Pre-Heat Bug
-3. Quick-Action „Pre-Heat" → 1 Min eingeben → Anzeige erscheint im Hero
-4. ×-Knopf in der Pre-Heat-Anzeige drücken → **Anzeige muss verschwinden**
-
-### Tooltips
-5. **Lange auf JEDEN Knopf tippen** (>0.5s) → Popup mit Erklärung
-6. **Lange auf eine Programm-Karte tippen** → Programm-Beschreibung + Dauer
-
-### Mobile-Gesten
-7. **Swipe nach links** in der Mitte vom Steuerung-Tab → wechselt zu Programme
-8. **Swipe nach rechts** in Setup → zurück zu Programme
-9. **Lange auf Hero-Card drücken** (1 Sek) → TTS spricht aktuellen Status
-
-### Tour re-startbar
-10. Settings → Daten → „🎓 Tour neu starten" → Tour läuft erneut
+### Settings-Tabs
+4. Settings öffnen → **Hinweis „6 Kategorien — Wischen für mehr"** über den Tabs sichtbar
+5. **Aktiver Tab** in orange mit weißer Schrift unmissverständlich
+6. Auf schmalem Bildschirm: **Fade-Schatten rechts** zeigt dass weitere Tabs hidden sind
+7. Wischen scrollt mit Snap-Points
+8. Klick auf einen Tab scrollt diesen automatisch in Sicht
 
 ## Roadmap
 
-**v5.0**: Crafty / Mighty / Venty BLE-Implementierung (eigenes Char-Set, größerer Bau)
-**v4.10**: 3D-Volcano-Vorschau (Three.js dynamic, optional)
-**Phase 2**: Pi 4 + HA + HACS + Alexa-Skill
+**v5.0 (nach Andre's Go):** Crafty / Mighty / Venty BLE-Implementierung mit deren spezifischem Char-Set. Das wird ein größerer Bau:
+- Service-UUID `00000001-4c45-4b43-4942-265a524f5453` (Crafty/Mighty)
+- Andere Encoding-Varianten
+- Akku-Status statt nur Heizer
+- Venty hat Boost-Mode
+- Vermutlich 1-2 Iterationen nötig wegen Trial-and-Error
+
+**v4.10:** 3D-Volcano-Vorschau (Three.js dynamic, optional)
+**Phase 2:** Pi 4 + HA + HACS + Alexa-Skill
 
 ## Hinweis zur Ballon-Füllung
 

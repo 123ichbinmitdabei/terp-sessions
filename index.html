@@ -1653,27 +1653,72 @@ html.power-saver .card{animation:none !important}
 .btn.danger:hover{background:rgba(248,113,113,.2)}
 
 /* ═══ v4.9: Settings Sub-Tabs + Section Headers ═════════════════ */
+/* ═══ v4.9.7: Settings-Tabs deutlich sichtbar ════════════════════ */
+.settings-tabs-wrap{
+  position:relative;
+  margin:14px 0 18px;
+}
+.settings-tabs-wrap::before{
+  content:'';
+  position:absolute;top:0;bottom:0;right:0;width:32px;
+  background:linear-gradient(90deg, transparent, var(--bg));
+  pointer-events:none;border-radius:0 var(--r) var(--r) 0;
+  opacity:0;transition:opacity .2s;
+  z-index:1;
+}
+.settings-tabs-wrap.scrollable-right::before{opacity:1}
+.settings-tabs-wrap::after{
+  content:'';
+  position:absolute;top:0;bottom:0;left:0;width:32px;
+  background:linear-gradient(-90deg, transparent, var(--bg));
+  pointer-events:none;border-radius:var(--r) 0 0 var(--r);
+  opacity:0;transition:opacity .2s;
+  z-index:1;
+}
+.settings-tabs-wrap.scrollable-left::after{opacity:1}
+.settings-tabs-hint{
+  font-size:10px;font-family:var(--font-mono);
+  color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.settings-tabs-hint::before,
+.settings-tabs-hint::after{
+  content:'';flex:1;height:1px;background:var(--line);
+}
+
 .settings-tabs{
-  display:flex;gap:4px;
+  display:flex;gap:6px;
   background:var(--bg);
-  padding:4px;border-radius:var(--r);
-  border:1px solid var(--line);
-  margin:8px 0 16px;
+  padding:6px;border-radius:var(--r);
+  border:1px solid var(--hot);
+  box-shadow:0 0 0 2px rgba(255,87,34,.08);
   overflow-x:auto;
   scrollbar-width:thin;
   -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
 }
+.settings-tabs::-webkit-scrollbar{height:3px}
+.settings-tabs::-webkit-scrollbar-thumb{background:var(--hot);border-radius:2px}
 .settings-tabs button{
   flex-shrink:0;
-  padding:8px 12px;font-size:12px;
+  padding:11px 14px;font-size:13px;
   background:transparent;color:var(--muted);
-  border:0;border-radius:var(--r-sm);cursor:pointer;
+  border:1.5px solid transparent;border-radius:var(--r-sm);cursor:pointer;
   font-family:var(--font-mono);font-weight:600;
   white-space:nowrap;
   transition:all .15s;
+  scroll-snap-align:start;
+  min-height:44px;
+  display:flex;align-items:center;gap:6px;
 }
-.settings-tabs button:hover{color:var(--text)}
-.settings-tabs button.active{background:var(--bg-3);color:var(--text)}
+.settings-tabs button:hover{color:var(--text);background:var(--bg-2)}
+.settings-tabs button.active{
+  background:var(--hot);color:#fff;
+  border-color:var(--hot);
+  box-shadow:0 2px 8px rgba(255,87,34,.4);
+}
 .settings-tabs button:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
 
 .settings-pane{display:none}
@@ -2518,14 +2563,17 @@ button[data-fs].active{
     <div class="grab"></div>
     <h2>Einstellungen</h2>
 
-    <!-- Sub-Tabs für Settings (v4.9 Polishing) -->
-    <div class="settings-tabs" role="tablist" aria-label="Einstellungs-Kategorien">
-      <button data-set-tab="stil" class="active" role="tab" aria-selected="true">🎨 Stil</button>
-      <button data-set-tab="inklusion" role="tab" aria-selected="false">♿ Inklusion</button>
-      <button data-set-tab="sicherheit" role="tab" aria-selected="false">🔒 Sicherheit</button>
-      <button data-set-tab="workflow" role="tab" aria-selected="false">🛠 Workflow</button>
-      <button data-set-tab="erweitert" role="tab" aria-selected="false">🚀 Erweitert</button>
-      <button data-set-tab="daten" role="tab" aria-selected="false">💾 Daten</button>
+    <!-- Sub-Tabs für Settings (v4.9 Polishing, v4.9.7 deutlicher gemacht) -->
+    <div class="settings-tabs-hint">6 Kategorien — wischen für mehr</div>
+    <div class="settings-tabs-wrap" id="settingsTabsWrap">
+      <div class="settings-tabs" role="tablist" aria-label="Einstellungs-Kategorien" id="settingsTabsScroll">
+        <button data-set-tab="stil" class="active" role="tab" aria-selected="true">🎨 Stil</button>
+        <button data-set-tab="inklusion" role="tab" aria-selected="false">♿ Inklusion</button>
+        <button data-set-tab="sicherheit" role="tab" aria-selected="false">🔒 Sicherheit</button>
+        <button data-set-tab="workflow" role="tab" aria-selected="false">🛠 Workflow</button>
+        <button data-set-tab="erweitert" role="tab" aria-selected="false">🚀 Erweitert</button>
+        <button data-set-tab="daten" role="tab" aria-selected="false">💾 Daten</button>
+      </div>
     </div>
 
     <!-- STIL: Erscheinungsbild + Theme -->
@@ -4922,16 +4970,33 @@ function switchSettingsTab(name){
     const active = b.dataset.setTab === name;
     b.classList.toggle('active', active);
     b.setAttribute('aria-selected', String(active));
+    // v4.9.7: Aktiven Tab in horizontalen Scroll-View bringen
+    if(active){
+      try{ b.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }catch{}
+    }
   });
   document.querySelectorAll('[data-set-pane]').forEach(p=>{
     p.classList.toggle('active', p.dataset.setPane === name);
   });
+  // v4.9.7: Scroll-Indikator updaten
+  updateSettingsTabsScrollHint();
   // Focus the first focusable in the new pane for a11y
   const pane = document.querySelector('[data-set-pane="'+name+'"]');
   if(pane){
     const focusable = pane.querySelector('button, [role="switch"], input:not([type="hidden"]), select, textarea');
     if(focusable){ setTimeout(()=>focusable.focus(), 100); }
   }
+}
+
+// v4.9.7: Zeigt Gradient-Schatten links/rechts wenn Tabs horizontal scrollbar
+function updateSettingsTabsScrollHint(){
+  const wrap = document.getElementById('settingsTabsWrap');
+  const scroll = document.getElementById('settingsTabsScroll');
+  if(!wrap || !scroll) return;
+  const canScrollLeft = scroll.scrollLeft > 4;
+  const canScrollRight = scroll.scrollLeft + scroll.clientWidth < scroll.scrollWidth - 4;
+  wrap.classList.toggle('scrollable-left', canScrollLeft);
+  wrap.classList.toggle('scrollable-right', canScrollRight);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -5601,6 +5666,8 @@ function wire(){
   document.querySelectorAll('[data-set-tab]').forEach(b=>{
     b.addEventListener('click', ()=>switchSettingsTab(b.dataset.setTab));
   });
+  // v4.9.7: Scroll-Listener für Scroll-Hint
+  $('#settingsTabsScroll')?.addEventListener('scroll', updateSettingsTabsScrollHint);
 
   // Migrate old v3 slots if present
   migrateFromV3();
@@ -6824,6 +6891,8 @@ function openSettings(){
   document.querySelectorAll('[data-fs]').forEach(b=>{
     b.classList.toggle('active', parseInt(b.dataset.fs) === (PREFS.fontScale||100));
   });
+  // v4.9.7: Scroll-Indikator initialisieren
+  setTimeout(updateSettingsTabsScrollHint, 100);
   // Sync toggles with current PREFS
   $('#togSound').setAttribute('aria-checked', String(!!PREFS.sound));
   $('#togHaptic').setAttribute('aria-checked', String(!!PREFS.haptic));
@@ -9863,11 +9932,13 @@ const TOUR_STEPS = [
 
 let _tourIdx = 0;
 let _tourActive = false;
+let _tourScrollRetried = false;  // v4.9.7: Endlos-Scroll-Schutz
 
 function startOnboardingTour(force){
   if(!force && LS.get('vol_tour_completed', false)) return;
   _tourIdx = 0;
   _tourActive = true;
+  _tourScrollRetried = false;
   showTourStep();
 }
 
@@ -9888,17 +9959,35 @@ function showTourStep(){
     const target = document.querySelector(step.target);
     if(target){
       const rect = target.getBoundingClientRect();
-      // Make sure target is visible (scroll into view if not)
-      if(rect.top < 80 || rect.bottom > window.innerHeight - 100){
+      const vh = window.innerHeight;
+      // v4.9.7 Fix: Endlos-Scroll-Schleife verhindern
+      // - nur wenn Element echt off-screen (nicht bei oberen 80px-Sicherheits-Margin)
+      // - max 1 Scroll-Retry pro Schritt
+      // - "Scroll bewegt sich nicht" wird erkannt
+      const offScreen = rect.bottom < 0 || rect.top > vh;
+      if(offScreen && !_tourScrollRetried){
+        _tourScrollRetried = true;
+        const prevY = window.scrollY;
         target.scrollIntoView({behavior:'smooth', block:'center'});
-        setTimeout(showTourStep, 350); // re-render after scroll
+        setTimeout(()=>{
+          // Wenn Scroll sich nicht bewegt hat, einfach trotzdem rendern
+          showTourStep();
+        }, 400);
         return;
       }
+      _tourScrollRetried = false;
       spotlight = document.createElement('div');
       spotlight.className = 'tour-spotlight';
-      spotlight.style.cssText = `top:${rect.top - 6}px;left:${rect.left - 6}px;width:${rect.width + 12}px;height:${rect.height + 12}px`;
+      // Clamp damit Spotlight im Viewport bleibt
+      const sl_top = Math.max(4, rect.top - 6);
+      const sl_left = Math.max(4, rect.left - 6);
+      spotlight.style.cssText = `top:${sl_top}px;left:${sl_left}px;width:${rect.width + 12}px;height:${rect.height + 12}px`;
+      // Bubble-Position: vermeide oben/unten überlauf
+      const bubbleTop = step.placement === 'top'
+        ? Math.max(80, rect.top - 20)
+        : Math.min(vh - 200, rect.bottom + 14);
       bubblePos = {
-        top: step.placement === 'top' ? rect.top - 20 : rect.bottom + 14,
+        top: bubbleTop,
         left: rect.left + rect.width / 2,
         place: step.placement || 'bottom',
       };
@@ -9941,9 +10030,11 @@ function showTourStep(){
         endOnboardingTour();
       } else if(a === 'next'){
         _tourIdx++;
+        _tourScrollRetried = false;  // v4.9.7: für neuen Step zurücksetzen
         showTourStep();
       } else if(a === 'prev'){
         _tourIdx = Math.max(0, _tourIdx - 1);
+        _tourScrollRetried = false;
         showTourStep();
       }
     });
@@ -10214,7 +10305,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v4.9.6 bereit.','ok');
+  log('Sessions v4.9.7 bereit.','ok');
 
   setupPwaUpdate();
 
