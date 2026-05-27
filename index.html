@@ -609,6 +609,20 @@ details summary:hover{color:var(--text)}
   transition:opacity .25s, transform .25s;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+/* v8.1.0 Modul 2: friendly Fehler-Toast */
+.toast.friendly{border-radius:14px;padding:14px 18px 14px 16px;max-width:340px;width:calc(100% - 32px);
+  text-align:left;white-space:normal;line-height:1.4;bottom:calc(120px + var(--safe-bot-padding));
+  border-left:4px solid var(--hot)}
+.toast.friendly.sev-err{border-left-color:var(--hot,#e64a19)}
+.toast.friendly.sev-warn{border-left-color:#e0a106}
+.toast.friendly.sev-info{border-left-color:var(--accent,#5ab)}
+.toast.friendly.show{transform:translateX(-50%) translateY(-4px)}
+.toast.friendly .t-title{font-weight:700;margin-bottom:4px;padding-right:18px}
+.toast.friendly .t-msg{font-weight:400;font-size:12.5px;opacity:.95}
+.toast.friendly .t-action{font-style:italic;font-size:11px;opacity:.8;margin-top:6px}
+.toast.friendly .t-close{position:absolute;top:8px;right:10px;background:none;border:none;color:inherit;
+  font-size:16px;line-height:1;cursor:pointer;opacity:.7;padding:2px 4px}
+.toast.friendly .t-close:hover{opacity:1}
 
 .foot{
   font-size:11px;color:var(--dim);text-align:center;
@@ -1158,6 +1172,12 @@ html[data-theme="cosmos"] .hero{
 .quick-action.primary:hover:not(:disabled){
   background:linear-gradient(180deg, rgba(255,87,34,.28), rgba(255,87,34,.10));
 }
+/* v8.1.0 Modul 4: "nächster Schritt"-Puls + Pin-Marker */
+@keyframes qaPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,87,34,.0)}50%{box-shadow:0 0 0 4px rgba(255,87,34,.18)}}
+.quick-action.qa-pulse{animation:qaPulse 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){ .quick-action.qa-pulse{animation:none;border-color:var(--hot)} }
+.quick-action.qa-pinned{position:relative}
+.quick-action.qa-pinned::after{content:'📌';position:absolute;top:4px;right:6px;font-size:10px;opacity:.85}
 .quick-action.cool{
   background:rgba(125,211,252,.10);
   border-color:rgba(125,211,252,.35);color:var(--cool);
@@ -1776,6 +1796,13 @@ html.power-saver .card{animation:none !important}
   background:var(--line);
 }
 .tab-section-header span.ico{margin-left:-4px;margin-right:4px}
+/* v8.1.0 Modul 3: Setup-Tab Akkordeon (Sektionen auf-/zuklappbar) */
+details.setup-acc{margin:0}
+summary.tab-section-header{cursor:pointer;list-style:none;user-select:none}
+summary.tab-section-header::-webkit-details-marker{display:none}
+summary.tab-section-header .acc-chevron{margin-left:6px;transition:transform .2s;font-size:10px;opacity:.7}
+details.setup-acc[open] > summary.tab-section-header .acc-chevron{transform:rotate(90deg)}
+summary.tab-section-header:hover{color:var(--text)}
 
 /* ═══ v4.9: Polishing - hover + focus consistency ═══════════════ */
 .card{transition:border-color .15s}
@@ -2236,7 +2263,7 @@ button[data-sch-day].active{
   <h2 id="tab-setup-label" class="sr-only">Setup und Einstellungen</h2>
 
   <!-- ═══ Gerät ═══════════════════════════════════ -->
-  <div class="tab-section-header"><span class="ico" aria-hidden="true">📱</span><span>Gerät</span></div>
+  <details class="setup-acc" data-acc="geraet" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📱</span><span>Gerät</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <div class="card">
     <h3>Aktives Gerät</h3>
@@ -2251,7 +2278,8 @@ button[data-sch-day].active{
   </div>
 
   <!-- ═══ Übersicht ═══════════════════════════════════ -->
-  <div class="tab-section-header"><span class="ico" aria-hidden="true">📊</span><span>Übersicht</span></div>
+  </details>
+  <details class="setup-acc" data-acc="uebersicht" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📊</span><span>Übersicht</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <!-- v4.7: Context (Wetter, Mond, Tageszeit, Saison) -->
   <div class="card" id="contextCard"></div>
@@ -2322,7 +2350,8 @@ button[data-sch-day].active{
   </div>
 
   <!-- ═══ Werkzeuge ═══════════════════════════════════ -->
-  <div class="tab-section-header"><span class="ico" aria-hidden="true">🛠</span><span>Werkzeuge</span></div>
+  </details>
+  <details class="setup-acc" data-acc="werkzeuge" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">🛠</span><span>Werkzeuge</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <!-- v4.7+v4.8: Tools-Sammlung -->
   <div class="card">
@@ -2348,7 +2377,8 @@ button[data-sch-day].active{
   </div>
 
   <!-- ═══ Erweitert ═══════════════════════════════════ -->
-  <div class="tab-section-header"><span class="ico" aria-hidden="true">🔧</span><span>Erweitert</span></div>
+  </details>
+  <details class="setup-acc" data-acc="erweitert" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">🔧</span><span>Erweitert</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <!-- v4.8: Custom BLE Profiles -->
   <div class="card">
@@ -2359,7 +2389,8 @@ button[data-sch-day].active{
   </div>
 
   <!-- ═══ Verbindung ═══════════════════════════════════ -->
-  <div class="tab-section-header"><span class="ico" aria-hidden="true">📡</span><span>Verbindung & Debugging</span></div>
+  </details>
+  <details class="setup-acc" data-acc="verbindung" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📡</span><span>Verbindung & Debugging</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <div class="card">
     <h3>Bluetooth</h3>
@@ -2429,6 +2460,8 @@ button[data-sch-day].active{
       <button class="btn sm ghost" id="btnClearLog">Log leeren</button>
     </div>
   </div>
+
+  </details>
 
   <div class="foot">⚠️ Lass den Volcano niemals unbeaufsichtigt. Nutzung auf eigenes Risiko.</div>
 </section>
@@ -2716,6 +2749,11 @@ button[data-sch-day].active{
     <div class="settings-pane active" data-set-pane="stil">
       <h3 class="set-section-h">Theme</h3>
       <p class="set-section-desc">Wähle das visuelle Erscheinungsbild der App.</p>
+      <!-- v8.1.0 Modul 1: Automatisch dem Systemfarbschema folgen -->
+      <div class="toggle-row">
+        <div class="info"><b>Automatisch (System)</b><small>Folgt dem hellen/dunklen Modus deines Geräts</small></div>
+        <button class="toggle" id="togThemeAuto" role="switch" aria-checked="false" aria-label="Theme automatisch dem System folgen"></button>
+      </div>
       <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Theme auswählen"></div>
     </div>
 
@@ -3464,6 +3502,8 @@ button[data-sch-day].active{
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- v8.1.0 Modul 2: benutzerfreundlicher Fehler-Toast (Titel + Hinweis + Schliessen) -->
+<div class="toast friendly" id="friendlyToast" role="alert" aria-live="assertive"></div>
 
 <script>
 /* aes-js v3.1.2 by Richard Moore (MIT) - github.com/ricmoo/aes-js
@@ -4294,6 +4334,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 ═══════════════════════════════════════════════════════════════ */
 const PREFS_DEFAULTS = {
   theme:'dark',          // 'dark' | 'light' | 'lava' | 'forest' | 'cosmos' | 'paper'
+  themeAuto:false,       // v8.1.0: true -> folgt System (prefers-color-scheme), ignoriert theme
   sound:true,
   haptic:true,
   voice:true,
@@ -4967,6 +5008,42 @@ function toast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
+/* ═══ v8.1.0 MODUL 2: Benutzerfreundliche Fehlermeldungen ═══
+   Wandelt technische BLE-/Adapter-Fehler in {title,message,action,severity}.
+   Reihenfolge der Treffer ist wichtig (spezifisch vor generisch). */
+function humanizeError(error, context){
+  const raw = (error && (error.message || error.name || String(error))) || '';
+  const m = raw.toLowerCase();
+  const has = (...keys)=>keys.some(k=>m.includes(k.toLowerCase()));
+  // Spezifische Adapter-Fehler zuerst
+  if(has('Puffco-Auth')) return { title:'Puffco-Authentifizierung fehlgeschlagen', message:'Der Auth-Handshake mit dem Peak Pro hat nicht funktioniert.', action:'Mögliche Ursachen: Firmware sehr alt oder sehr neu. Bitte als Pioneer melden mit Firmware-Version.', severity:'err' };
+  if(has('PAX-Seriennummer','Seriennummer ungueltig','Seriennummer ungültig')) return { title:'PAX-Seriennummer ungültig', message:'Die Seriennummer muss 8 Zeichen lang sein (A-Z und 0-9).', action:'Schau im Akkufach deines PAX nach oder in der offiziellen PAX-App.', severity:'warn' };
+  if(has('User cancelled','User denied','cancelled','chooser was cancelled','aborted')) return { title:'Verbindung abgebrochen', message:'Du hast den Geräte-Dialog geschlossen.', action:"Klicke nochmal 'Verbinden' und wähle dein Gerät aus.", severity:'info' };
+  if(has('bluetooth adapter','adapter not available','globally disabled','bluetooth not','web bluetooth')) return { title:'Bluetooth nicht verfügbar', message:'Dein Browser oder Gerät unterstützt kein Web Bluetooth (oder es ist aus).', action:'Nutze Chrome/Edge auf Desktop/Android und aktiviere Bluetooth. iOS unterstützt Web Bluetooth nicht.', severity:'err' };
+  if(has('NotFoundError','No Services','no services matching','service not found','getprimaryservice')) return { title:'Gerät nicht gefunden', message:'Das ausgewählte Gerät hat keinen passenden Bluetooth-Service.', action:'Stelle sicher dass Bluetooth aktiv ist und das Gerät eingeschaltet/in Reichweite ist. Bei Problemen: Diagnose-Log im Setup-Tab ansehen.', severity:'warn' };
+  if(has('GATT operation failed','gatt operation','gatt error','operation already in progress','disconnected')) return { title:'Befehl fehlgeschlagen', message:'Das Gerät hat den Befehl nicht angenommen.', action:'Verbindung trennen und neu verbinden. Falls anhaltend: Diagnose-Log im Setup exportieren.', severity:'warn' };
+  // Default
+  return { title:'Etwas ist schiefgelaufen', message: raw || 'Unbekannter Fehler.', action:'Versuche es nochmal oder schau im Log nach.', severity:'err' };
+}
+let friendlyToastTimer=null;
+function showFriendlyError(error, context){
+  const info = humanizeError(error, context);
+  const el = $('#friendlyToast');
+  if(!el){ toast(info.title); return info; }
+  el.className = 'toast friendly sev-'+info.severity;
+  el.innerHTML = `<button class="t-close" aria-label="Schließen">×</button>`
+    + `<div class="t-title">${escapeHtml(info.title)}</div>`
+    + `<div class="t-msg">${escapeHtml(info.message)}</div>`
+    + `<div class="t-action">${escapeHtml(info.action)}</div>`;
+  el.querySelector('.t-close').addEventListener('click', ()=>el.classList.remove('show'));
+  el.classList.add('show');
+  clearTimeout(friendlyToastTimer);
+  friendlyToastTimer=setTimeout(()=>el.classList.remove('show'), 8000);
+  // zusaetzlich ins App-Log
+  if(typeof log==='function') log(info.title+': '+info.message+(context?' ['+context+']':''), info.severity==='info'?'warn':info.severity);
+  return info;
+}
+
 function setConn(connected){
   State.connected=connected;
   if(connected){ State.connectionLost=false; State.reconnectAttempts=0; if(typeof hideConnLostBanner==='function') hideConnLostBanner(); }
@@ -4982,6 +5059,8 @@ function setConn(connected){
   }else{
     renderLastAction('Tippe „Verbinden" um zu starten', '');
   }
+  State._qaHeaterSnapshot = !!State.heater;   // v8.1.0 Modul 4
+  if(typeof renderQuickActions==='function') renderQuickActions();
 }
 
 function setHeatGlow(){
@@ -4992,6 +5071,11 @@ function setHeatGlow(){
 }
 
 function renderStatus(){
+  // v8.1.0 Modul 4: Quick-Actions nur bei Heizer-Wechsel neu rendern (nicht bei jedem Status-Poll)
+  if(State.connected && State._qaHeaterSnapshot !== !!State.heater){
+    State._qaHeaterSnapshot = !!State.heater;
+    if(typeof renderQuickActions==='function') renderQuickActions();
+  }
   const curStr = isFinite(State.cur)?Math.round(State.cur):'––';
   const tgtStr = isFinite(State.target)?Math.round(State.target):'––';
   $('#tCurrent').textContent = curStr;
@@ -5273,6 +5357,7 @@ async function connectBLE(){
     renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
     setConn(false);
     captureDiagnostics(e.message);
+    showFriendlyError(e, 'connect');   // v8.1.0 Modul 2: benutzerfreundlicher Hinweis
   }
 }
 
@@ -5374,6 +5459,7 @@ async function withBusy(label, fn){
     return result;
   }catch(e){
     renderLastAction(label+' — FEHLER: '+e.message, 'err');
+    if(!State._suppressFriendly) showFriendlyError(e, label);   // v8.1.0 Modul 2
     throw e;
   }finally{
     State.busy = false;
@@ -5591,6 +5677,7 @@ async function autoMap(){
 async function testUUIDs(){
   if(!State.connected){ toast('Erst verbinden'); return; }
   renderLastAction('UUID-Test läuft…','busy');
+  State._suppressFriendly = true;   // v8.1.0 Modul 2: Selbsttest sammelt Fehler still, kein Toast-Spam
   const results=[];
   const T = isFinite(State.target) ? State.target : 185;
   const target = clamp(T+5, 40, 230);
@@ -5603,6 +5690,7 @@ async function testUUIDs(){
   try{ await cmdPumpOff(); results.push('✓ pump_off'); }catch(e){ results.push('✗ pump_off: '+e.message); }
   await sleep(500);
   try{ await cmdHeaterOff(); results.push('✓ heater_off'); }catch(e){ results.push('✗ heater_off: '+e.message); }
+  State._suppressFriendly = false;   // v8.1.0 Modul 2: Selbsttest beendet
   const fails = results.filter(r=>r.startsWith('✗')).length;
   log('UUID-Tester: '+results.join(' | '), fails?'warn':'ok');
   if(fails===0){
@@ -6438,6 +6526,8 @@ function wire(){
     savePrefs();
     if(v) playTone(660, 100, .1);
   });
+  // v8.1.0 Modul 1: Theme automatisch dem System folgen
+  wireToggle('#togThemeAuto', ()=>PREFS.themeAuto, v=>{ setThemeAuto(v); });
   wireToggle('#togHaptic', ()=>PREFS.haptic, v=>{
     PREFS.haptic = v;
     savePrefs();
@@ -8239,14 +8329,43 @@ async function wizTest(){
 /* ═══════════════════════════════════════════════════════════════
    THEME SYSTEM (v4.4)
 ═══════════════════════════════════════════════════════════════ */
+// v8.1.0: effektives Theme - bei themeAuto folgt es dem Systemschema (dark/light).
+function effectiveTheme(){
+  if(PREFS.themeAuto){
+    try{ return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; }
+    catch(_){ return 'dark'; }
+  }
+  return PREFS.theme;
+}
 function applyTheme(){
-  document.documentElement.setAttribute('data-theme', PREFS.theme);
+  const eff = effectiveTheme();
+  document.documentElement.setAttribute('data-theme', eff);
   // Update meta theme-color
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta){
     const previews = { dark:'#0c0a08', light:'#faf6ee', lava:'#1a0608', forest:'#0a1410', cosmos:'#080a1c', paper:'#f9f6ee' };
-    meta.setAttribute('content', previews[PREFS.theme] || '#0c0a08');
+    meta.setAttribute('content', previews[eff] || '#0c0a08');
   }
+}
+// v8.1.0: bei Auto-Modus auf Systemwechsel reagieren (einmalig registriert)
+let _themeAutoMqlBound = false;
+function bindThemeAutoListener(){
+  if(_themeAutoMqlBound || !(window.matchMedia)) return;
+  try{
+    const mql = window.matchMedia('(prefers-color-scheme: light)');
+    const handler = ()=>{ if(PREFS.themeAuto) applyTheme(); };
+    if(mql.addEventListener) mql.addEventListener('change', handler);
+    else if(mql.addListener) mql.addListener(handler);   // ältere Browser
+    _themeAutoMqlBound = true;
+  }catch(_){}
+}
+// v8.1.0: Auto-Modus umschalten
+function setThemeAuto(on){
+  PREFS.themeAuto = !!on;
+  savePrefs();
+  if(PREFS.themeAuto) bindThemeAutoListener();
+  applyTheme();
+  if(typeof renderThemePicker==='function') renderThemePicker();
 }
 function toggleTheme(){
   PREFS.theme = (PREFS.theme==='light') ? 'dark' : 'light';
@@ -8487,7 +8606,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.0.0';
+const SW_VERSION_LABEL='v8.1.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9597,6 +9716,93 @@ function applyCapabilitiesUI(){
 /* ═══════════════════════════════════════════════════════════════
    v4.5: DIRECT-DRAW (Pumpe X Sek. + aus)
 ═══════════════════════════════════════════════════════════════ */
+/* ═══ v8.1.0 MODUL 4: Smart Quick-Actions (kontextabhängig) ═══
+   Baut #quickActions je nach Verbindungs-/Geräte-/Heizer-Status neu.
+   Reuse bestehender Funktionen/Buttons (kein neues Steuer-Verhalten).
+   Long-Press auf eine Aktion pinnt sie an Position 1. */
+const QA_PIN_KEY='sessions_quickaction_pin';
+function quickActionDefs(){
+  const A=[];
+  if(!State.connected){
+    A.push({id:'qaConnect',ico:'🔗',lbl:'Verbinden',meta:'Gerät wählen',fn:()=>connectBLE(),cls:'primary'});
+    const last=LS.get('vol_last_device',null);
+    if(last&&last.name) A.push({id:'qaLastDevice',ico:'↻',lbl:'Letztes Gerät',meta:String(last.name).slice(0,16),fn:()=>connectBLE()});
+    A.push({id:'qaTimer',ico:'⏱',lbl:'Timer',meta:'geplant',fn:()=>openScheduleModal()});
+    return A;
+  }
+  if(State.adapter && State.adapter.constructor.probeOnly){
+    A.push({id:'qaPioneer',ico:'🔬',lbl:'Pioneer melden',meta:'RE-Hilfe',fn:()=>{ try{ location.href=fireflyHelpMailto(); }catch(_){ } },cls:'primary'});
+    return A;
+  }
+  const dt=State.adapter && State.adapter.constructor.deviceType;
+  const caps=currentCapabilities();
+  const heating=!!State.heater;
+  const DIRECT={id:'qaDirectDraw',ico:'💨',lbl:'Direkt-Zug',meta:(PREFS.directDrawSec||5)+' Sek.',fn:()=>quickDirectDraw()};
+  const BAG={id:'qaBagFill',ico:'🎈',lbl:'Ballon füllen',meta:getCurrentBag().seconds+' Sek.',fn:()=>openBagModal()};
+  const TIMER={id:'qaTimer',ico:'⏱',lbl:'Timer',meta:'geplant',fn:()=>openScheduleModal()};
+  const AROMA={id:'qaAroma',ico:'🌿',lbl:'Aroma & Sorten',meta:'Empfehlungen',fn:()=>openAroma()};
+  if(dt==='volcano'){
+    A.push(Object.assign({},DIRECT,{cls:'primary'}));
+    A.push(Object.assign({},BAG,{pulse:heating}));        // heizt -> Ballon füllen ist der nächste Schritt
+    A.push(TIMER); A.push(AROMA);
+  } else if(dt==='crafty_mighty'){
+    A.push(Object.assign({},DIRECT,{cls:'primary',pulse:heating})); A.push(TIMER); A.push(AROMA);
+  } else if(dt==='venty_veazy'){
+    A.push(Object.assign({},DIRECT,{cls:'primary',pulse:heating}));
+    if(caps.boost) A.push({id:'qaBoost',ico:'⚡',lbl:'Boost',meta:'',fn:()=>$('#btnBoost')?.click()});
+    A.push(TIMER);
+  } else if(dt==='pax'){
+    A.push({id:'qaSetTemp',ico:'🌡',lbl:'Temp setzen',meta:'',fn:()=>$('#btnSetTemp')?.click(),cls:'primary'});
+    A.push(AROMA); A.push(TIMER);
+  } else if(dt==='puffco'){
+    A.push({id:'qaHeatStart',ico:'🔥',lbl:'Heizen starten',meta:'',fn:()=>cmdHeaterOn(),cls:'primary',pulse:!heating});
+    A.push({id:'qaHeatStop',ico:'🛑',lbl:'Heizen abbrechen',meta:'',fn:()=>cmdHeaterOff(),pulse:heating});
+    A.push(AROMA);
+  } else {
+    A.push(DIRECT); A.push(TIMER); A.push(AROMA);
+  }
+  const pin=LS.get(QA_PIN_KEY,null);
+  if(pin){ const i=A.findIndex(a=>a.id===pin); if(i>0){ const [p]=A.splice(i,1); A.unshift(p); } }
+  return A;
+}
+function renderQuickActions(){
+  const root=$('#quickActions'); if(!root) return;
+  const defs=quickActionDefs();
+  const pin=LS.get(QA_PIN_KEY,null);
+  root.innerHTML='';
+  for(const d of defs){
+    const b=document.createElement('button');
+    b.className='quick-action'+(d.cls?(' '+d.cls):'')+(d.pulse?' qa-pulse':'')+(pin===d.id?' qa-pinned':'');
+    b.id=d.id;
+    b.setAttribute('aria-label',d.lbl);
+    b.innerHTML=`<span class="ico" aria-hidden="true">${d.ico}</span><span class="lbl">${escapeHtml(d.lbl)}</span><span class="meta">${escapeHtml(d.meta||'')}</span>`;
+    b.addEventListener('click',()=>{ if(b._lp){ b._lp=false; return; } try{ d.fn(); }catch(err){ log(err.message,'err'); } });
+    let t=null;
+    const start=()=>{ t=setTimeout(()=>{ b._lp=true; toggleQuickActionPin(d.id); }, 500); };
+    const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
+    b.addEventListener('pointerdown',start); b.addEventListener('pointerup',cancel); b.addEventListener('pointerleave',cancel);
+    root.appendChild(b);
+  }
+}
+function toggleQuickActionPin(id){
+  const cur=LS.get(QA_PIN_KEY,null);
+  const next=(cur===id)?null:id;
+  LS.set(QA_PIN_KEY,next);
+  toast(next?'📌 Schnellzugriff angepinnt':'Pin entfernt');
+  renderQuickActions();
+}
+
+/* ═══ v8.1.0 MODUL 3: Setup-Tab Akkordeon-Persistenz ═══ */
+const SETUP_ACC_KEY='sessions_settings_section_open';
+function initSetupAccordion(){
+  let state={}; try{ state=LS.get(SETUP_ACC_KEY,{})||{}; }catch(_){ state={}; }
+  document.querySelectorAll('#tab-setup details.setup-acc').forEach(d=>{
+    const k=d.getAttribute('data-acc'); if(!k) return;
+    if(Object.prototype.hasOwnProperty.call(state,k)) d.open = !!state[k];   // gespeicherten Zustand anwenden
+    d.addEventListener('toggle',()=>{ state[k]=d.open; try{ LS.set(SETUP_ACC_KEY,state); }catch(_){ } });
+  });
+}
+
 async function quickDirectDraw(){
   if(!State.connected){ toast('Erst verbinden'); return; }
   const caps = currentCapabilities();
@@ -10134,9 +10340,11 @@ function renderThemePicker(){
   root.innerHTML='';
   for(const [id, t] of Object.entries(THEMES)){
     const card = document.createElement('button');
-    card.className = 'theme-card '+(PREFS.theme===id?'active':'');
+    // v8.1.0: bei Auto-Modus ist keine manuelle Karte aktiv markiert
+    const isActive = !PREFS.themeAuto && PREFS.theme===id;
+    card.className = 'theme-card '+(isActive?'active':'');
     card.setAttribute('aria-label', t.label+' Theme');
-    card.setAttribute('aria-pressed', String(PREFS.theme===id));
+    card.setAttribute('aria-pressed', String(isActive));
     card.innerHTML = `
       <span class="swatch" style="background:${t.preview}"></span>
       <span class="lbl">${escapeHtml(t.label)}</span>
@@ -10144,9 +10352,11 @@ function renderThemePicker(){
     `;
     card.addEventListener('click', ()=>{
       PREFS.theme = id;
+      PREFS.themeAuto = false;       // v8.1.0: manuelle Wahl beendet Auto-Modus
       savePrefs();
       applyTheme();
       renderThemePicker();
+      const tog = $('#togThemeAuto'); if(tog) tog.setAttribute('aria-checked','false');
       toast(t.label+' Theme aktiv');
     });
     root.appendChild(card);
@@ -11986,6 +12196,7 @@ function toggleBlindMode(){
   syncToggle('togHaptiCustom', PREFS.haptiCustom);
   syncToggle('togSound', PREFS.sound);
   syncToggle('togHaptic', PREFS.haptic);
+  syncToggle('togThemeAuto', PREFS.themeAuto);   // v8.1.0 Modul 1
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -13041,6 +13252,8 @@ function showPlatformBanner(){
 async function init(){
   // v4.5: apply theme first to avoid flash
   applyTheme();
+  if(PREFS.themeAuto) bindThemeAutoListener();   // v8.1.0 Modul 1
+  initSetupAccordion();                          // v8.1.0 Modul 3
   // v4.6: apply font scale + high contrast early
   applyFontScale();
   applyHighContrast();
@@ -13154,7 +13367,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.0.0 bereit.','ok');
+  log('Sessions v8.1.0 bereit.','ok');
 
   setupPwaUpdate();
 

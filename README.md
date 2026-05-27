@@ -1,6 +1,15 @@
-# Sessions — Vape Controller (v8.0.0)
+# Sessions — Vape Controller (v8.1.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.1.0 — UX-Polish
+
+Vier Komfort-Features, keine Änderung an den Geräte-Adaptern oder Frameworks (236/236 Tests grün).
+
+- **Theme „Automatisch (System)"**: neuer Schalter im Setup → Stil. Folgt dem hellen/dunklen Systemfarbschema (`prefers-color-scheme`) und reagiert live auf Systemwechsel. Die bestehenden 6 Themes (Dunkel/Hell/Lava/Forest/Cosmos/Paper) bleiben unverändert; eine manuelle Theme-Wahl beendet den Auto-Modus.
+- **Benutzerfreundliche Fehlermeldungen**: technische BLE-Fehler werden in verständliche Hinweise mit Titel, Erklärung und konkreter Handlungsempfehlung übersetzt (`humanizeError` + größerer „friendly"-Toast mit Schließen-X, 8 s). Greift bei Verbinden, Heizen/Temperatur/Pumpe und Adapter-Auth; der UUID-Selbsttest bleibt bewusst still.
+- **Setup-Tab als Akkordeon**: die fünf Setup-Sektionen (Gerät / Übersicht / Werkzeuge / Erweitert / Verbindung) sind jetzt auf-/zuklappbar (`<details>`), der Zustand wird pro Sektion gespeichert. Die App-Einstellungen im Settings-Modal (eigene Sub-Tabs) bleiben unverändert.
+- **Smarte Schnellzugriffe**: die Quick-Actions auf der Steuerung passen sich Verbindungs-, Geräte- und Heizer-Status an (z. B. Volcano: Direkt-Zug/Ballon/Timer/Aroma mit Puls auf dem nächsten Schritt; Puffco: Heizen starten/abbrechen; Firefly: nur „Pioneer melden"). Eine Aktion lässt sich per Long-Press anpinnen (bleibt an Position 1).
 
 ## v8.0.0 — Firefly (Probe-Only, RE-Hilfe gesucht) 🔬
 
