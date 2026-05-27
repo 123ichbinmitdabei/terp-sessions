@@ -2261,6 +2261,27 @@ button[data-sch-day].active{
     </div>
   </div>
 
+  <!-- v5.1.0 Modul 1: Geraete-Statistik (pro Geraetetyp) -->
+  <div class="card" id="deviceStatsCard">
+    <h3>Geräte-Statistik <span style="font-size:11px;color:var(--muted);font-weight:400">pro Gerätetyp</span></h3>
+    <div id="deviceStatsBody"></div>
+    <button class="btn sm ghost block" id="btnResetTours" style="margin-top:10px">🎓 Geräte-Touren zurücksetzen</button>
+  </div>
+
+  <!-- v5.1.0 Modul 2: Home Assistant Export -->
+  <div class="card" id="haExportCard">
+    <h3>Home Assistant Export</h3>
+    <p class="wiz-text"><small>Sessions ist eine Browser-App (kein Server). Du kannst die Statistik an einen eigenen WebHook (z.B. NodeRed, n8n) senden und in Home Assistant per REST-Sensor einbinden. Das YAML-Snippet unten kommt in deine <b>configuration.yaml</b> unter <b>sensor:</b>. Senden passiert nur auf Knopfdruck (keine Auto-Übertragung).</small></p>
+    <label style="font-size:12px;font-weight:600;display:block;margin:8px 0 4px">WebHook-URL</label>
+    <input class="input mono" id="haWebhookUrl" type="url" placeholder="https://dein-webhook/sessions-stats" style="width:100%;box-sizing:border-box" aria-label="Home Assistant WebHook-URL">
+    <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px">YAML-Snippet</label>
+    <textarea id="haYamlOut" class="input mono" readonly rows="10" style="width:100%;box-sizing:border-box;font-size:11px;white-space:pre" aria-label="Home Assistant YAML"></textarea>
+    <div class="row" style="gap:8px;margin-top:8px">
+      <button class="btn sm ghost" id="btnHaCopy" style="flex:1">📋 YAML kopieren</button>
+      <button class="btn sm ghost" id="btnHaTest" style="flex:1">Test-Senden</button>
+    </div>
+  </div>
+
   <!-- v4.6: Wartung -->
   <div class="card" id="maintenanceCard">
     <h3>Wartung & Pflege</h3>
@@ -2404,6 +2425,22 @@ button[data-sch-day].active{
     <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen">Stop</button>
   </div>
   <div class="bar" role="progressbar" aria-label="Programm-Fortschritt" aria-valuemin="0" aria-valuemax="100"><div id="runBar"></div></div>
+</div>
+
+<!-- v5.1.0 Modul 3+4: Slides-Modal (Geraete-Tour + Migrations-Wizard) -->
+<div class="modal" id="modalSlides" role="dialog" aria-modal="true" aria-label="Tour">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <button class="btn sm ghost" id="slidesSkip" style="position:absolute;right:14px;top:12px;padding:4px 10px;font-size:12px">Überspringen ✕</button>
+    <h2 id="slidesTitle" style="margin-right:90px">Tour</h2>
+    <div id="slidesDots" style="display:flex;gap:6px;margin:4px 0 12px"></div>
+    <div id="slidesBody" class="wiz-text" style="min-height:90px;white-space:pre-line"></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn ghost" id="slidesPrev" style="flex:1">← Zurück</button>
+      <button class="btn primary" id="slidesNext" style="flex:2">Weiter →</button>
+    </div>
+  </div>
 </div>
 
 <!-- Visual flash when target temperature reached -->
@@ -4382,6 +4419,8 @@ async function connectBLE(){
     // v4.5: remember device + apply capabilities now BLE chars are set
     rememberDevice(State.device.name||'', getCurrentDeviceId(), State.device.name);
     applyCapabilitiesUI();
+    devStatSession();   // v5.1.0 Modul 1: Geraete-Session zaehlen
+    maybeDeviceTour();  // v5.1.0 Modul 3: geraetespezifische Tour beim ersten Connect
   }catch(e){
     log('Verbindungsfehler: '+e.message,'err');
     renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
@@ -4518,6 +4557,7 @@ async function cmdHeaterOn(){
     log('Heizer EIN','ok');
     if(PREFS.sound) toast('🔥 Heizer EIN'); else toast('Heizer EIN');
     statsHeatStart();
+    devStatHeaterOn();   // v5.1.0: Geraete-Stats
     maybeAutoStartSafety();
     // v4.8: webhook + mqtt
     fireWebhook('heaterOn', {temp:State.target});
@@ -4559,6 +4599,7 @@ async function cmdPumpOn(){
   return withBusy('Pumpe EIN', async()=>{
     await State.adapter.pumpOn();
     log('Pumpe EIN','ok');
+    devStatPump();   // v5.1.0: Geraete-Stats
     toast('💨 Pumpe EIN');
   });
 }
@@ -5437,8 +5478,8 @@ function wire(){
   $('#btnHeat').addEventListener('click', async()=>{ try{ await cmdHeater(!State.heater); }catch(e){ log(e.message,'err'); } });
   $('#btnPump').addEventListener('click', async()=>{ try{ await cmdPump(!State.pump); }catch(e){ log(e.message,'err'); } });
   // v5.0.2: Boost / Super-Boost (Venty/Veazy)
-  $('#btnBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setBoost) return; await State.adapter.setBoost(!State.device?.boost); renderStatus(); toast(State.device?.boost?'⚡ Boost an':'Boost aus'); }catch(e){ log(e.message,'err'); } });
-  $('#btnSuperBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setSuperBoost) return; await State.adapter.setSuperBoost(!State.device?.superBoost); renderStatus(); toast(State.device?.superBoost?'⚡⚡ Super-Boost an':'Super-Boost aus'); }catch(e){ log(e.message,'err'); } });
+  $('#btnBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setBoost) return; const on=!State.device?.boost; await State.adapter.setBoost(on); if(on) devStatBoost(false); renderStatus(); toast(State.device?.boost?'⚡ Boost an':'Boost aus'); }catch(e){ log(e.message,'err'); } });
+  $('#btnSuperBoost')?.addEventListener('click', async()=>{ try{ if(!State.adapter?.setSuperBoost) return; const on=!State.device?.superBoost; await State.adapter.setSuperBoost(on); if(on) devStatBoost(true); renderStatus(); toast(State.device?.superBoost?'⚡⚡ Super-Boost an':'Super-Boost aus'); }catch(e){ log(e.message,'err'); } });
   $('#btnPumpFor').addEventListener('click', async()=>{
     try{ const s=Number($('#pInput').value); await cmdPumpFor(s); }catch(e){ log(e.message,'err'); }
   });
@@ -6985,6 +7026,7 @@ function statsHeatStop(){
   heatStartedAt = null;
   savePrefs();
   renderStats();
+  devStatHeatSec(elapsed);   // v5.1.0: Geraete-Heizzeit
 }
 function statsAddBag(){
   PREFS.stats.bagsFilled++;
@@ -7013,6 +7055,178 @@ function renderStats(){
   const b=$('#statBags'); if(b) b.textContent = PREFS.stats.bagsFilled;
   const h=$('#statHeat'); if(h) h.textContent = fmtHeat(PREFS.stats.totalHeatSec);
   const s=$('#statSess'); if(s) s.textContent = PREFS.stats.sessionsCount;
+}
+
+/* ═══ v5.1.0 MODUL 1: Geraete-Statistik (pro Geraetetyp) ═══
+   Eigener Store, stoert PREFS.stats/Achievements nicht. Failsafe: kein Crash bei LS-Fehler. */
+const DEVSTATS_KEY='sessions_stats_v1';
+let DEVSTATS = (()=>{ try{ return LS.get(DEVSTATS_KEY, {}) || {}; }catch{ return {}; } })();
+const DEVSTATS_LABELS = { volcano:'🌋 Volcano', crafty_mighty:'🔥 Crafty / Mighty', venty_veazy:'🌪️ Venty / Veazy' };
+function devStatsBucket(type){
+  type = type || (State.adapter && State.adapter.constructor.deviceType) || 'volcano';
+  if(!DEVSTATS[type]) DEVSTATS[type] = { sessions:0, totalHeatSec:0, heaterEvents:0, pumpEvents:0, boostEvents:0, superBoostEvents:0, bagFills:0, maxTemp:0, firstSession:null, lastSession:null };
+  return DEVSTATS[type];
+}
+function saveDevStats(){ try{ LS.set(DEVSTATS_KEY, DEVSTATS); }catch(_){} }
+function devStatSession(){ try{ const b=devStatsBucket(); b.sessions++; const now=Date.now(); if(!b.firstSession) b.firstSession=now; b.lastSession=now; saveDevStats(); renderDeviceStats(); }catch(_){} }
+function devStatHeaterOn(){ try{ const b=devStatsBucket(); b.heaterEvents++; if(isFinite(State.target)) b.maxTemp=Math.max(b.maxTemp, Math.round(State.target)); saveDevStats(); }catch(_){} }
+function devStatHeatSec(sec){ try{ if(sec>0){ devStatsBucket().totalHeatSec+=sec; saveDevStats(); renderDeviceStats(); } }catch(_){} }
+function devStatPump(){ try{ devStatsBucket().pumpEvents++; saveDevStats(); }catch(_){} }
+function devStatBoost(sup){ try{ const b=devStatsBucket(); if(sup) b.superBoostEvents++; else b.boostEvents++; saveDevStats(); }catch(_){} }
+function devStatBagFill(){ try{ devStatsBucket().bagFills++; saveDevStats(); renderDeviceStats(); }catch(_){} }
+function resetDeviceStats(type){ if(DEVSTATS[type] && confirm('Statistik für '+(DEVSTATS_LABELS[type]||type)+' wirklich zurücksetzen?')){ delete DEVSTATS[type]; saveDevStats(); renderDeviceStats(); toast('Statistik zurückgesetzt'); } }
+function fmtHeatLong(sec){ if(!sec) return '0 min'; const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60); return (h?h+'h ':'')+m+'min'; }
+function fmtDateShort(ts){ return ts ? new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '–'; }
+function renderDeviceStats(){
+  const root=$('#deviceStatsBody'); if(!root) return;
+  const types=Object.keys(DEVSTATS).filter(t=>DEVSTATS[t] && DEVSTATS[t].sessions>0);
+  if(!types.length){ root.innerHTML='<div style="color:var(--muted);font-size:13px;padding:6px 0">Noch keine Geräte-Daten. Verbinde ein Gerät und heize, dann erscheinen hier Statistiken pro Gerätetyp.</div>'; return; }
+  root.innerHTML='';
+  for(const t of types){
+    const s=DEVSTATS[t];
+    const rows=[
+      ['Sessions', s.sessions],
+      ['Heizzeit gesamt', fmtHeatLong(s.totalHeatSec)],
+      ['Heizer-Aktivierungen', s.heaterEvents],
+      ['Max-Temperatur', s.maxTemp?s.maxTemp+'°C':'–'],
+    ];
+    if(t==='volcano'){ rows.push(['Pumpe-Zyklen', s.pumpEvents], ['Ballons (geschätzt)', s.bagFills]); }
+    if(t==='crafty_mighty'){ rows.push(['Boost-Zyklen', s.boostEvents]); }
+    if(t==='venty_veazy'){ rows.push(['Boost-Zyklen', s.boostEvents], ['Super-Boost-Zyklen', s.superBoostEvents]); }
+    rows.push(['Erste Session', fmtDateShort(s.firstSession)], ['Letzte Session', fmtDateShort(s.lastSession)]);
+    const div=document.createElement('div');
+    div.className='card'; div.style.cssText='margin-bottom:10px;padding:12px';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>${DEVSTATS_LABELS[t]||t}</b><button class="btn sm ghost" data-reset-stats="${t}" style="font-size:11px;padding:3px 8px">Zurücksetzen</button></div>`
+      + rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-bottom:1px solid var(--line)"><span style="color:var(--muted)">${k}</span><b class="mono">${v}</b></div>`).join('');
+    div.querySelector('[data-reset-stats]').addEventListener('click', e=>resetDeviceStats(e.currentTarget.dataset.resetStats));
+    root.appendChild(div);
+  }
+}
+/* ═══ v5.1.0 MODUL 3+4: Slides-Engine (Geraete-Tour + Migrations-Wizard) ═══ */
+let _slides=[], _slideIdx=0, _slidesOnDone=null;
+function showSlides(title, slides, onDone){
+  _slides=slides||[]; _slideIdx=0; _slidesOnDone=onDone||null;
+  const m=$('#modalSlides'); if(!m || !_slides.length) return;
+  $('#slidesTitle').textContent=title||'';
+  renderSlide();
+  m.classList.add('open');
+}
+function renderSlide(){
+  const s=_slides[_slideIdx]; if(!s) return;
+  $('#slidesBody').innerHTML = (s.h?('<b>'+escapeHtml(s.h)+'</b>\n\n'):'') + escapeHtml(s.t||'');
+  const dots=$('#slidesDots');
+  if(dots) dots.innerHTML=_slides.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===_slideIdx?'var(--hot)':'var(--line)'}"></span>`).join('');
+  $('#slidesPrev').style.visibility = _slideIdx>0 ? '' : 'hidden';
+  $('#slidesNext').textContent = _slideIdx < _slides.length-1 ? 'Weiter →' : 'Fertig ✓';
+}
+function closeSlides(done){
+  $('#modalSlides').classList.remove('open');
+  const cb=_slidesOnDone; _slidesOnDone=null; _slides=[];
+  if(done && cb) cb();
+}
+function wireSlides(){
+  $('#slidesPrev')?.addEventListener('click', ()=>{ if(_slideIdx>0){ _slideIdx--; renderSlide(); } });
+  $('#slidesNext')?.addEventListener('click', ()=>{ if(_slideIdx<_slides.length-1){ _slideIdx++; renderSlide(); } else { closeSlides(true); } });
+  $('#slidesSkip')?.addEventListener('click', ()=>closeSlides(true)); // Skip zaehlt als gesehen
+}
+
+const DEVICE_TOURS = {
+  volcano: { title:'🌋 Volcano', slides:[
+    {h:'Willkommen, Volcano-User', t:'Sessions kann jetzt mehr, dein Volcano funktioniert weiterhin genau wie gewohnt.'},
+    {h:'Heizen + Pumpe getrennt', t:'Heizer und Pumpe steuerst du wie immer einzeln.'},
+    {h:'Programme', t:'Definiere Temperaturstufen und Pumpzeiten als Reihen, automatisch ablaufend.'},
+    {h:'Sicherheits-Timer', t:'Automatischer Heizer-Stop nach X Minuten, einstellbar im Setup.'},
+    {h:'Tipp', t:'Sprachsteuerung über den Mikrofon-Knopf.'},
+  ]},
+  crafty_mighty: { title:'🔥 Crafty / Mighty', slides:[
+    {h:'Crafty/Mighty erkannt', t:'Beta-Status, ohne BLE-Hardware getestet (Mock-validiert).'},
+    {h:'Steuerung', t:'Temperatur und Heizer per BLE, keine Pumpe (Direkt-Zug).'},
+    {h:'Sicherheits-Timer Pflicht', t:'Bei portablen Geräten startet der App-Timer automatisch (8 Min), da das Gerät keinen BLE-Auto-Aus hat.'},
+    {h:'Akku', t:'Die Akku-Anzeige zeigt den Ladestand.'},
+    {h:'Tipp', t:'Der Statistik-Bereich im Setup zeigt deine Heizgewohnheiten pro Gerät.'},
+  ]},
+  venty_veazy: { title:'🌪️ Venty / Veazy', slides:[
+    {h:'Venty/Veazy erkannt', t:'Protokoll aus firsttris/reactive-volcano-app portiert (hardware-getestet).'},
+    {h:'Temperatur', t:'Die Soll-Temperatur ist sichtbar. Eine Ist-Temperatur liefert das Gerät protokollbedingt NICHT, stattdessen siehst du Heizt/Bereit.'},
+    {h:'Boost', t:'Boost erhöht die Leistung, Super-Boost noch mehr.'},
+    {h:'Akku', t:'Akku-Anzeige mit Lade-Indikator (Blitz wenn am Netzteil).'},
+    {h:'Sicherheits-Timer Pflicht', t:'App-Timer startet automatisch (8 Min) bei portablen Geräten.'},
+  ]},
+};
+function maybeDeviceTour(){
+  try{
+    const type = State.adapter && State.adapter.constructor.deviceType;
+    if(!type || !DEVICE_TOURS[type]) return;
+    const key = 'sessions_tour_'+type+'_seen';
+    if(LS.get(key, false)) return;
+    const tour = DEVICE_TOURS[type];
+    setTimeout(()=>showSlides(tour.title+' — Tour', tour.slides, ()=>{ try{ LS.set(key, true); }catch(_){} }), 600);
+  }catch(_){}
+}
+function resetDeviceTours(){
+  try{ ['volcano','crafty_mighty','venty_veazy'].forEach(t=>LS.set('sessions_tour_'+t+'_seen', false)); toast('Touren zurückgesetzt, erscheinen beim nächsten Connect wieder'); }catch(_){}
+}
+
+/* MODUL 4: v4 -> v5 Migrations-Wizard (einmalig beim ersten Start nach Update) */
+function maybeMigrationWizard(){
+  try{
+    const wasV4 = LS.get('vol_tour_completed', false) || LS.get('vol_onboarded', false);
+    if(!wasV4) return;                       // frischer Nutzer -> kein Wizard
+    if(LS.get('sessions_migration_v5_seen', false)) return;
+    const slides=[
+      {h:'Sessions ist da!', t:'Aus „Volcano Controller" wurde Sessions (v5.1.0), gleiches Tool, neuer Name.'},
+      {h:'Jetzt 3 Geräte-Familien', t:'Volcano (wie immer), Crafty/Mighty (neu, Beta), Venty/Veazy (neu, hardware-getestet).'},
+      {h:'Deine Daten bleiben', t:'Programme und Einstellungen sind erhalten, schau einmal im Setup-Tab dass alles da ist.'},
+      {h:'Neue Features', t:'Statistik pro Gerät, Home-Assistant-Export, gerätespezifische Touren, Mikrofon-Sprachsteuerung.'},
+    ];
+    setTimeout(()=>showSlides('Update auf v5', slides, ()=>{ try{ LS.set('sessions_migration_v5_seen', true); }catch(_){} }), 900);
+  }catch(_){}
+}
+
+/* ═══ v5.1.0 MODUL 2: Home Assistant Export (WebHook-basiert, kein Push-Server) ═══ */
+const HA_WEBHOOK_KEY='sessions_ha_webhook';
+function haGetWebhook(){ try{ return LS.get(HA_WEBHOOK_KEY,'') || ''; }catch{ return ''; } }
+function generateHaYaml(url){
+  const base = url && url.trim() ? url.trim() : 'https://YOUR-WEBHOOK-URL/sessions-stats';
+  const fam = [
+    {key:'volcano', name:'Volcano'},
+    {key:'crafty_mighty', name:'Crafty Mighty'},
+    {key:'venty_veazy', name:'Venty Veazy'},
+  ];
+  let out = '# Home Assistant config snippet\n# Generated by Sessions PWA v5.1.0\n# In configuration.yaml unter "sensor:" einfuegen.\nsensor:\n';
+  for(const f of fam){
+    out += `  - platform: rest\n`
+        +  `    name: "Sessions ${f.name} Heat"\n`
+        +  `    resource: "${base}/${f.key}"\n`
+        +  `    value_template: "{{ value_json.heaterEvents | default(0) }}"\n`
+        +  `    json_attributes:\n      - totalHeatSec\n      - maxTemp\n      - sessions\n      - lastSession\n    scan_interval: 300\n`;
+  }
+  return out;
+}
+function renderHaExport(){
+  const urlEl=$('#haWebhookUrl'); const out=$('#haYamlOut');
+  if(urlEl && !urlEl.value) urlEl.value = haGetWebhook();
+  if(out) out.value = generateHaYaml(urlEl ? urlEl.value : '');
+}
+async function haTestSend(){
+  const url = ($('#haWebhookUrl')?.value || '').trim();
+  if(!/^https?:\/\//i.test(url)){ toast('Bitte gültige WebHook-URL (https://…) eingeben'); return; }
+  try{
+    const payload = { generatedBy:'Sessions PWA v5.1.0', ts:Date.now(), stats:DEVSTATS };
+    await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    toast('Stats an WebHook gesendet (no-cors, keine Antwort lesbar)');
+    log('HA-Export an '+url+' gesendet','ok');
+  }catch(e){ toast('Senden fehlgeschlagen: '+e.message); log('HA-Export-Fehler: '+e.message,'err'); }
+}
+function wireHaExport(){
+  const urlEl=$('#haWebhookUrl');
+  urlEl?.addEventListener('input', ()=>{ try{ LS.set(HA_WEBHOOK_KEY, urlEl.value.trim()); }catch(_){} renderHaExport(); });
+  $('#btnHaCopy')?.addEventListener('click', async()=>{
+    const txt = $('#haYamlOut')?.value || '';
+    try{ await navigator.clipboard.writeText(txt); toast('YAML kopiert'); }
+    catch(_){ const ta=$('#haYamlOut'); ta.select(); try{ document.execCommand('copy'); toast('YAML kopiert'); }catch(e){ toast('Kopieren nicht möglich'); } }
+  });
+  $('#btnHaTest')?.addEventListener('click', haTestSend);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -7122,6 +7336,7 @@ async function startBagFill(){
     await cmdPumpOff();
     if(!bagRunState.stop){
       statsAddBag();
+      devStatBagFill();   // v5.1.0: Geraete-Stats
       $('#bagCountdown').textContent = '✓';
       $('#bagStatus').textContent = 'Ballon gefüllt!';
       $('#bagBar').style.width = '100%';
@@ -11487,6 +11702,11 @@ async function init(){
   renderPrograms();
 
   renderStats();
+  renderDeviceStats();   // v5.1.0 Modul 1
+  wireHaExport(); renderHaExport();   // v5.1.0 Modul 2
+  wireSlides();          // v5.1.0 Modul 3+4
+  $('#btnResetTours')?.addEventListener('click', resetDeviceTours);
+  maybeMigrationWizard();// v5.1.0 Modul 4: v4->v5 Wizard beim ersten Start
   loadNotes();
   renderBagCurrent();
   initVoice();
@@ -11566,7 +11786,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.4 bereit.','ok');
+  log('Sessions v5.1.0 bereit.','ok');
 
   setupPwaUpdate();
 
