@@ -5159,8 +5159,8 @@ async function connectBLE(){
       '00000002-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 2 (E3: Firmware/AutoOff)
       '00000003-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 3
       '00000000-5354-4f52-5a26-4249434b454c',   // Venty/Veazy
-      '8e320200-64d2-11e6-bdf4-0800200c9a66'    // v6.0.0: PAX 3 (Beta) - Pflicht fuer getPrimaryService
-      // Puffco Peak Pro/Proxy: TODO v7.0 (Service-UUID aus RE)
+      '8e320200-64d2-11e6-bdf4-0800200c9a66',   // v6.0.0: PAX 3 (Beta) - Pflicht fuer getPrimaryService
+      '06caf9c0-74d3-454f-9be9-e30cd999c17a'    // v7.0.0: Puffco Peak Pro (Beta) - enthaelt die f9a98c15-Chars
       // Firefly 2+: TODO v8.0
       ].filter(Boolean))];
     log('Gerätedialog öffnen…');
@@ -5215,7 +5215,7 @@ async function connectBLE(){
         toast('Veazy verbunden (Beta-Modus, evtl. Bugs - bitte Feedback an Andre)');
       } else { State.device.subtype='venty'; }
     }
-    State.device.manufacturer = (State.adapter.constructor.deviceType==='pax') ? 'PAX Labs' : 'Storz & Bickel';
+    State.device.manufacturer = ({pax:'PAX Labs', puffco:'Puffco'})[State.adapter.constructor.deviceType] || 'Storz & Bickel';
     if(State.device.firmware===undefined) State.device.firmware = null;
     if(State.device.battery===undefined) State.device.battery = null;
     ['boost','superBoost','ecoCurrent','ecoVoltage'].forEach(k=>{ if(State.device[k]===undefined) State.device[k]=false; });
@@ -7715,6 +7715,154 @@ class PaxAdapter extends DeviceAdapter {
   async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.chars.notify){ try{ await this.chars.notify.stopNotifications(); }catch(_){} } }
 }
 
+/* ── v7.0.0: Puffco Peak Pro (BETA) ───────────────────────────────
+   Protokoll aus ZWEI unabhaengigen Open-Source-Quellen, die exakt
+   uebereinstimmen (keine Widersprueche):
+   - Fr0st3h/Puffco-Reverse-Engineering-Writeup (README Schritte 1-7 +
+     deobfuscated App puffco.app_2.4.3): Auth-Handschritte, Char-Offsets,
+     float32-LE-Byte-Vektoren (287°C = 00 80 8F 43; cmd7 = 00 00 E0 40).
+   - meekzyr/PuffcoPC (puffco/btnet/client.py create_auth_token +
+     __init__.py Constants/UUIDs/Enums; doc/characteristics.txt).
+   Auth (Firmware X): token = SHA-256(DEVICE_HANDSHAKE[16] || accessSeed[16])
+   [0..15], zurueckgeschrieben auf das E0-Characteristic. SHA-256 ist nativ
+   (Web Crypto) -> KEIN AES. Token gegen BEIDE Referenz-Implementierungen
+   validiert (identischer Output 71ea3b9b... fuer Fr0st3hs publizierten Seed).
+   Werte: IEEE-754 float32 little-endian, Temperatur in Celsius.
+   Temp setzen = aktives Profil anpeilen (Pointer 61) + dessen Preheat-Temp
+   (63) schreiben (so macht es die offizielle App + PuffcoPC).
+   BETA: keine Hardware -> Pioneers-Framework (unverified). Nur Peak Pro.
+   Lorax-Protokoll (neuere Firmware) NICHT implementiert (TODO). */
+const PUFFCO_SERVICE = '06caf9c0-74d3-454f-9be9-e30cd999c17a';        // PuffcoPC Characteristics.SERVICE_UUID
+const PUFFCO_CHAR_BASE = 'f9a98c15-c651-4f34-b656-d100bf5800';        // Fr0st3h base + 2-hex Offset
+function puffcoChar(xx){ return PUFFCO_CHAR_BASE + xx; }
+// DEVICE_HANDSHAKE (base64 FUrZc0WilhUBteT2JlCc+A== = 16 Bytes) — PuffcoPC __init__.py / Fr0st3h README Z.49
+const PUFFCO_HANDSHAKE = new Uint8Array([0x15,0x4a,0xd9,0x73,0x45,0xa2,0x96,0x15,0x01,0xb5,0xe4,0xf6,0x26,0x50,0x9c,0xf8]);
+const PUFFCO_CHARS = { SEED:'e0', CURRENT_TEMP:'25', TARGET_TEMP:'26', BATTERY:'20', OP_STATE:'22',
+  MODE_CMD:'40', CHAMBER:'3f', PROFILE_SELECT:'41', PROFILE_POINTER:'61', PROFILE_TEMP:'63', TOTAL_DABS:'2f' };
+const PUFFCO_OP = {0:'INIT',1:'INIT',2:'INIT',3:'MASTER_OFF',4:'SLEEP',5:'IDLE',6:'TEMP_SELECT',7:'PREHEAT',8:'ACTIVE',9:'FADE',10:'VERSION',11:'BATTERY',12:'FACTORY_TEST',13:'BONDING'}; // PuffcoPC OperatingState
+const PUFFCO_CMD = { MASTER_OFF:0, IDLE:2, HEAT_START:7, HEAT_ABORT:8, BOOST:9 };  // PuffcoPC DeviceCommands
+
+// Auth-Token: SHA-256(handshake || seed)[0..15]. (client.py create_auth_token / Fr0st3h README Z.18-24)
+async function puffcoAuthToken(accessSeed){
+  const buf=new Uint8Array(32);
+  buf.set(PUFFCO_HANDSHAKE.subarray(0,16),0);
+  buf.set(accessSeed.subarray(0,16),16);
+  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+  return digest.slice(0,16);
+}
+function puffcoF32(bytes){ if(!bytes || bytes.byteLength<4) return NaN; return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getFloat32(0,true); }
+function puffcoF32Bytes(v){ const b=new Uint8Array(4); new DataView(b.buffer).setFloat32(0,v,true); return b; }
+function puffcoDvBytes(dv){ return new Uint8Array(dv.buffer.slice(dv.byteOffset, dv.byteOffset+dv.byteLength)); }
+
+class PuffcoAdapter extends DeviceAdapter {
+  static deviceType   = 'puffco';
+  static displayName  = 'Puffco Peak Pro (Beta)';
+  static namePatterns = [/puffco/i, /peak/i, /proxy/i, /pivot/i];
+  static serviceUUIDs = [PUFFCO_SERVICE];
+  static tempRange    = { min:204, max:327 };   // 400-620°F (PuffcoPC Constants) in °C
+  static HARD_MAX_TEMP_C = 327;
+  static capabilities = {
+    targetTemp:true, currentTemp:true, heater:true,
+    pump:false, balloon:false, battery:true, boost:false, superBoost:false,
+    brightness:false, vibration:false, autoShutoff:false, firmware:false,
+    runtime:false, ecoMode:false, displayCooling:false, boostTemp:false,
+    requiresAppSafetyTimer:true,
+    flavorMode:false, stealthMode:false, standardMode:false, lockState:false, usageLimit:false, ledColor:false,
+    dabCount:true, chamberType:true, lanternColor:false, profile1234:false,
+    requiresAuth:true, authMethod:'sha256-seedkey',
+  };
+  static SUBTYPES = {
+    peak_pro: { name:'Peak Pro', supported:true },
+    proxy:    { name:'Proxy', supported:false, reason:'nicht in Quelle dokumentiert' },
+    pivot:    { name:'Pivot', supported:false, reason:'nicht in Quelle dokumentiert' },
+  };
+  constructor(device){ super(device); this.svc=null; this.chars={}; this._q=Promise.resolve(); this._poll=null; this._authed=false; }
+  _enqueue(fn){ this._q=this._q.then(fn).catch(e=>log('Puffco BLE-Op: '+e.message,'warn')); return this._q; }
+
+  async bindChars(server){
+    this.svc = await server.getPrimaryService(PUFFCO_SERVICE);
+    const get=async(xx)=>{ try{ return await this.svc.getCharacteristic(puffcoChar(xx)); }catch(_){ return null; } };
+    this.chars.seed     = await get(PUFFCO_CHARS.SEED);
+    this.chars.curTemp  = await get(PUFFCO_CHARS.CURRENT_TEMP);
+    this.chars.target   = await get(PUFFCO_CHARS.TARGET_TEMP);
+    this.chars.battery  = await get(PUFFCO_CHARS.BATTERY);
+    this.chars.opState  = await get(PUFFCO_CHARS.OP_STATE);
+    this.chars.mode     = await get(PUFFCO_CHARS.MODE_CMD);
+    this.chars.chamber  = await get(PUFFCO_CHARS.CHAMBER);
+    this.chars.profSel  = await get(PUFFCO_CHARS.PROFILE_SELECT);
+    this.chars.profPtr  = await get(PUFFCO_CHARS.PROFILE_POINTER);
+    this.chars.profTemp = await get(PUFFCO_CHARS.PROFILE_TEMP);
+    this.chars.dabs     = await get(PUFFCO_CHARS.TOTAL_DABS);
+    log('Puffco: Characteristics gebunden (BETA, ungetestet - Feedback an Andre)','warn');
+    await this._authenticate();
+  }
+  // Firmware-X-Handshake: E0 lesen -> Token -> E0 zurueckschreiben. Aeltere Firmware ohne E0 -> kein Auth.
+  async _authenticate(){
+    if(!this.chars.seed){ log('Puffco: kein E0-Char -> keine Auth (aeltere Firmware)','warn'); return; }
+    let seed;
+    try{
+      const dv=await this.chars.seed.readValue();
+      seed=puffcoDvBytes(dv);
+    }catch(e){ log('Puffco: E0-Read fehlgeschlagen, evtl. aeltere Firmware: '+e.message,'warn'); return; }
+    if(seed.length<16){ log('Puffco: accessSeed <16B ('+seed.length+'), Auth uebersprungen','warn'); return; }
+    try{
+      const token=await puffcoAuthToken(seed);
+      await this.chars.seed.writeValue(token);
+      this._authed=true;
+      log('Puffco: Firmware-X-Handshake gesendet (SHA-256-Auth)','ok');
+    }catch(e){
+      // Hardlock: Auth-Fehler -> sofort trennen
+      log('Puffco: Auth-Write fehlgeschlagen -> Disconnect: '+e.message,'err');
+      toast('Puffco-Authentifizierung fehlgeschlagen - getrennt');
+      try{ State.server?.disconnect(); }catch(_){}
+      throw new Error('Puffco-Auth fehlgeschlagen');
+    }
+  }
+  _sendMode(cmd){
+    if(!this.chars.mode) throw new Error('Puffco Mode-Char fehlt.');
+    return this._enqueue(()=>this.chars.mode.writeValue(puffcoF32Bytes(cmd)));   // float32 LE des Kommandos
+  }
+  async heaterOn(){ await this._sendMode(PUFFCO_CMD.HEAT_START); State.heater=true; }
+  async heaterOff(){ await this._sendMode(PUFFCO_CMD.HEAT_ABORT); State.heater=false; }
+  async setTargetTemp(c){
+    const r=PuffcoAdapter.tempRange;
+    const clamped=Math.max(r.min, Math.min(PuffcoAdapter.HARD_MAX_TEMP_C, Math.round(c)));
+    if(clamped!==Math.round(c)) log('Puffco: Zieltemperatur auf '+clamped+'°C begrenzt (Limit '+r.min+'-'+r.max+'°C)','warn');
+    if(!this.chars.profTemp) throw new Error('Puffco Profil-Temp-Char fehlt.');
+    // Aktives Profil ermitteln (41, float32) -> anpeilen (61, [idx,0,0,0]) -> Preheat-Temp (63, float32 LE °C) setzen.
+    await this._enqueue(async()=>{
+      let idx=0;
+      if(this.chars.profSel){ try{ const f=puffcoF32(puffcoDvBytes(await this.chars.profSel.readValue())); if(isFinite(f)) idx=Math.max(0,Math.min(3,Math.round(f))); }catch(_){ } }
+      if(this.chars.profPtr){ await this.chars.profPtr.writeValue(new Uint8Array([idx,0,0,0])); }
+      await this.chars.profTemp.writeValue(puffcoF32Bytes(clamped));
+    });
+    State.target=clamped;
+  }
+  async getBattery(){ return State.device?.battery ?? null; }
+  async getCurrentTemp(){ return isFinite(State.cur) ? State.cur : NaN; }
+  async pumpOn(){ throw new Error('Puffco hat keine Pumpe.'); }
+  async pumpOff(){ throw new Error('Puffco hat keine Pumpe.'); }
+
+  async subscribeStatus(cb){
+    const readF32=async(ch)=>{ if(!ch) return NaN; try{ return puffcoF32(puffcoDvBytes(await ch.readValue())); }catch(_){ return NaN; } };
+    const poll=async()=>{
+      try{
+        const ct=await readF32(this.chars.curTemp); if(isFinite(ct)&&ct>0&&ct<400) State.cur=ct;   // NaN wenn Atomizer entfernt
+        const tt=await readF32(this.chars.target);  if(isFinite(tt)&&tt>=50&&tt<=400) State.target=Math.round(tt);
+        const bat=await readF32(this.chars.battery); if(isFinite(bat)&&bat>=0&&bat<=100) State.device.battery=Math.round(bat);
+        const os=await readF32(this.chars.opState);
+        if(isFinite(os)){ const s=Math.round(os); State.device.operatingState=PUFFCO_OP[s]||('?'+s); State.heater=(s===7||s===8||s===9); }  // PREHEAT|ACTIVE|FADE
+        const chm=await readF32(this.chars.chamber); if(isFinite(chm)) State.device.chamberType=Math.round(chm);
+        cb && cb({ currentTemp:State.cur, targetTemp:State.target, battery:State.device.battery, heating:State.heater });
+        if(typeof renderStatus==='function') renderStatus();
+      }catch(_){}
+    };
+    await poll();
+    if(!this._poll) this._poll=setInterval(()=>{ if(State.connected) poll(); }, 2000);
+  }
+  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
+}
+
 /* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
    die je Geraete-Generation variieren). Danach toleranter Name-Fallback. */
 async function detectDevice(bleDevice, gattServer){
@@ -7731,6 +7879,7 @@ async function detectDevice(bleDevice, gattServer){
     if(uuids.includes('10100000-5354-4f52-5a26-4249434b454c') || uuids.includes('10110000-5354-4f52-5a26-4249434b454c')){ log('detectDevice: ✓ Volcano-Service → VolcanoAdapter','ok'); return VolcanoAdapter; }
     if(uuids.includes('00000001-4c45-4b43-4942-265a524f5453')){ log('detectDevice: ✓ Crafty/Mighty-Service → CraftyMightyAdapter','ok'); return CraftyMightyAdapter; }
     if(uuids.includes('8e320200-64d2-11e6-bdf4-0800200c9a66')){ log('detectDevice: ✓ PAX-Service → PaxAdapter (BETA)','ok'); return PaxAdapter; }
+    if(uuids.includes('06caf9c0-74d3-454f-9be9-e30cd999c17a')){ log('detectDevice: ✓ Puffco-Service → PuffcoAdapter (BETA)','ok'); return PuffcoAdapter; }
     log('detectDevice: kein bekannter Service gefunden','warn');
   }
 
@@ -7740,6 +7889,7 @@ async function detectDevice(bleDevice, gattServer){
   if(/\bVZ[\d_]/i.test(name) || /VEAZY/i.test(name)){ log('detectDevice: ✓ Veazy via Name','ok'); return VentyVeazyAdapter; }
   if(/STORZ.?&?.?BICKEL/i.test(name) || /MIGHTY/i.test(name) || /CRAFTY/i.test(name)){ log('detectDevice: ✓ Crafty/Mighty via Name','ok'); return CraftyMightyAdapter; }
   if(/^PAX/i.test(name)){ log('detectDevice: ✓ PAX via Name → PaxAdapter (BETA)','ok'); return PaxAdapter; }
+  if(/puffco|peak|proxy|pivot/i.test(name)){ log('detectDevice: ✓ Puffco via Name → PuffcoAdapter (BETA)','ok'); return PuffcoAdapter; }
 
   log('detectDevice: NICHTS gematcht. Name="'+name+'", siehe DIAGNOSE-DUMP','err');
   return null;
@@ -8272,7 +8422,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v6.0.0';
+const SW_VERSION_LABEL='v7.0.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12927,7 +13077,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v6.0.0 bereit.','ok');
+  log('Sessions v7.0.0 bereit.','ok');
 
   setupPwaUpdate();
 
