@@ -2109,8 +2109,20 @@ button[data-sch-day].active{
     </div>
   </div>
 
+  <!-- v8.0.0: Probe-Only-Banner (Firefly u.ae.): Geraet erkannt, kein offenes Protokoll -->
+  <div id="probeOnlyBanner" class="card" style="display:none;border-color:var(--accent,#5ab)">
+    <h3>🔬 Gerät erkannt, Protokoll-Recherche läuft</h3>
+    <p class="wiz-text"><small>Wir haben dein Gerät erkannt, aber das BLE-Protokoll ist noch nicht offen dokumentiert. Es gibt daher noch keine Steuerung. Du kannst uns als Pioneer beim Reverse-Engineering helfen:</small></p>
+    <ul style="font-size:13px;margin:6px 0 10px 0;padding-left:18px">
+      <li>BLE-Sniffer-Logs aus der offiziellen App (Android HCI-Snoop oder Wireshark)</li>
+      <li>Service-/Characteristic-UUIDs (z.B. nRF Connect / Web Bluetooth Inspector)</li>
+      <li>Beobachtete Befehle (Temperatur setzen, Heizen, Akku lesen)</li>
+    </ul>
+    <a class="btn primary block" id="btnFireflyHelp" href="#" target="_blank" rel="noopener">📧 Reverse-Engineering-Hilfe anbieten</a>
+  </div>
+
   <!-- Manual temp control -->
-  <div class="card">
+  <div class="card" id="manualControlCard">
     <h3>Manuelle Steuerung</h3>
     <div class="field">
       <label>Zieltemperatur (40–230 °C)</label>
@@ -5215,7 +5227,7 @@ async function connectBLE(){
         toast('Veazy verbunden (Beta-Modus, evtl. Bugs - bitte Feedback an Andre)');
       } else { State.device.subtype='venty'; }
     }
-    State.device.manufacturer = ({pax:'PAX Labs', puffco:'Puffco'})[State.adapter.constructor.deviceType] || 'Storz & Bickel';
+    State.device.manufacturer = ({pax:'PAX Labs', puffco:'Puffco', firefly:'Firefly'})[State.adapter.constructor.deviceType] || 'Storz & Bickel';
     if(State.device.firmware===undefined) State.device.firmware = null;
     if(State.device.battery===undefined) State.device.battery = null;
     ['boost','superBoost','ecoCurrent','ecoVoltage'].forEach(k=>{ if(State.device[k]===undefined) State.device[k]=false; });
@@ -7863,6 +7875,58 @@ class PuffcoAdapter extends DeviceAdapter {
   async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
 }
 
+/* ── v8.0.0: Firefly (PROBE-ONLY) ─────────────────────────────────
+   ERWARTET: kein vollstaendiges Open-Source-Protokoll. Recherche
+   (GitHub-Repo-Suche "firefly vaporizer bluetooth" = 0 Treffer; npm;
+   Web) lieferte KEINE eindeutige BLE-Service-/Characteristic-/Frame-
+   Quelle. Daher KEIN Raten und KEIN Reverse-Engineering der Firefly-
+   Web-App (fireflyvaporwebapp.com) -> reiner Probe-Only-Adapter:
+   Erkennung + Pioneers-RE-Aufruf, KEINE Steuerung. Wenn Pioneers
+   echte Sniffer-Logs / UUIDs liefern, kann hier ein echter Adapter
+   nachgezogen werden. Geschuetzt durch Pioneers (Level 'probe_only').
+   Firefly-App-Temperaturbereich laut Hersteller 200-500°F (nur Info,
+   nicht als Protokoll verwendbar). */
+class FireflyAdapter extends DeviceAdapter {
+  static deviceType   = 'firefly';
+  static displayName  = 'Firefly (Pioneer-Recherche)';
+  static namePatterns = [/firefly/i];
+  static serviceUUIDs = [];          // unbekannt bis Pioneers melden - KEINE Spekulation
+  static probeOnly    = true;
+  static tempRange    = { min:93, max:260 };   // 200-500°F (nur Anzeige, ungenutzt da keine Steuerung)
+  static capabilities = {
+    targetTemp:false, currentTemp:false, heater:false,
+    pump:false, balloon:false, battery:false, boost:false, superBoost:false,
+    brightness:false, vibration:false, autoShutoff:false, firmware:false,
+    runtime:false, ecoMode:false, displayCooling:false, boostTemp:false,
+    requiresAppSafetyTimer:false,    // nichts zu steuern
+    flavorMode:false, stealthMode:false, standardMode:false, lockState:false, usageLimit:false, ledColor:false,
+    dabCount:false, chamberType:false, lanternColor:false, profile1234:false,
+    requiresAuth:false, authMethod:null,
+    betaWarning:true,
+  };
+  static SUBTYPES = {
+    firefly_2:     { name:'Firefly 2',  supported:false, reason:'Pioneer-Recherche laeuft' },
+    firefly_2plus: { name:'Firefly 2+', supported:false, reason:'Pioneer-Recherche laeuft' },
+  };
+  constructor(device){ super(device); }
+  async bindChars(server){ log('Firefly: nur Erkennung, Steuerung noch nicht implementiert (kein offenes Protokoll). Hilf uns als Pioneer!','warn'); }
+  async setTargetTemp(c){ throw new Error('Firefly-Steuerung noch nicht implementiert (Protokoll-Recherche laeuft).'); }
+  async heaterOn(){ throw new Error('Firefly-Steuerung noch nicht implementiert (Protokoll-Recherche laeuft).'); }
+  async heaterOff(){ throw new Error('Firefly-Steuerung noch nicht implementiert (Protokoll-Recherche laeuft).'); }
+  async pumpOn(){ throw new Error('Firefly hat keine Pumpe.'); }
+  async pumpOff(){ throw new Error('Firefly hat keine Pumpe.'); }
+  async getBattery(){ return null; }
+  async getCurrentTemp(){ return NaN; }
+  async subscribeStatus(cb){ /* No-Op: kein bekanntes Status-Protokoll */ }
+  async disconnect(){ /* No-Op */ }
+}
+// RE-Hilfe-Aufruf (Probe-Only): eigener Betreff, fragt gezielt nach Sniffer-Logs/UUIDs.
+function fireflyHelpMailto(){
+  const subj=encodeURIComponent('[Pioneers RE-Hilfe] Firefly BLE-Protokoll');
+  const body=encodeURIComponent('Ich moechte beim Reverse-Engineering des Firefly helfen.\n\nWas hilft uns:\n- BLE-Sniffer-Logs aus der offiziellen Firefly-App (Android HCI-Snoop oder Wireshark)\n- Service-/Characteristic-UUIDs (z.B. via nRF Connect / Web Bluetooth Inspector)\n- Beobachtete Befehle (Temperatur setzen, Heizen, Akku lesen)\n\nGeraet (Firefly 2 / 2+): \nBrowser: '+navigator.userAgent+'\n');
+  return 'mailto:'+PIONEERS_EMAIL+'?subject='+subj+'&body='+body;
+}
+
 /* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
    die je Geraete-Generation variieren). Danach toleranter Name-Fallback. */
 async function detectDevice(bleDevice, gattServer){
@@ -7890,6 +7954,7 @@ async function detectDevice(bleDevice, gattServer){
   if(/STORZ.?&?.?BICKEL/i.test(name) || /MIGHTY/i.test(name) || /CRAFTY/i.test(name)){ log('detectDevice: ✓ Crafty/Mighty via Name','ok'); return CraftyMightyAdapter; }
   if(/^PAX/i.test(name)){ log('detectDevice: ✓ PAX via Name → PaxAdapter (BETA)','ok'); return PaxAdapter; }
   if(/puffco|peak|proxy|pivot/i.test(name)){ log('detectDevice: ✓ Puffco via Name → PuffcoAdapter (BETA)','ok'); return PuffcoAdapter; }
+  if(/firefly/i.test(name)){ log('detectDevice: ✓ Firefly via Name → FireflyAdapter (PROBE-ONLY, kein offenes Protokoll)','warn'); return FireflyAdapter; }
 
   log('detectDevice: NICHTS gematcht. Name="'+name+'", siehe DIAGNOSE-DUMP','err');
   return null;
@@ -8367,8 +8432,8 @@ function maybeMigrationWizard(){
    Greift automatisch fuer kuenftige unverified-Adapter (PAX/Puffco/Firefly). */
 const PIONEERS_EMAIL='andre@marianacannabis.de';
 const PIONEERS_REPO='MarianaCannabis/volcano';
-const BETA_STATUS = { volcano:'stable', crafty_mighty:'mock_only', venty_veazy:'stable', pax:'unverified', puffco:'unverified', firefly:'unverified' };
-const BETA_LABELS = { stable:{pill:'✓ Stable',color:'var(--ok)'}, mock_only:{pill:'🔬 Mock-validiert',color:'var(--accent,#5ab)'}, unverified:{pill:'🟡 Tester gesucht',color:'var(--hot)'} };
+const BETA_STATUS = { volcano:'stable', crafty_mighty:'mock_only', venty_veazy:'stable', pax:'unverified', puffco:'unverified', firefly:'probe_only' };
+const BETA_LABELS = { stable:{pill:'✓ Stable',color:'var(--ok)'}, mock_only:{pill:'🔬 Mock-validiert',color:'var(--accent,#5ab)'}, unverified:{pill:'🟡 Tester gesucht',color:'var(--hot)'}, probe_only:{pill:'🔬 RE-Hilfe gesucht',color:'var(--accent,#5ab)'} };
 const BETA_DEVNAMES = { volcano:'Volcano Hybrid', crafty_mighty:'Crafty / Mighty', venty_veazy:'Venty / Veazy', pax:'PAX', puffco:'Puffco', firefly:'Firefly' };
 function getBetaLevel(type){ return BETA_STATUS[type] || 'unverified'; }
 function getBetaInfo(type){ const level=getBetaLevel(type); const l=BETA_LABELS[level]||BETA_LABELS.unverified; return { level, label:l.pill, color:l.color, confirmKey:'sessions_beta_confirmed_'+type }; }
@@ -8422,7 +8487,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v7.0.0';
+const SW_VERSION_LABEL='v8.0.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9515,6 +9580,18 @@ function applyCapabilitiesUI(){
   // v5.2.0 Phase 6a: Notfall-Stop bei unverified Beta-Geraeten dauerhaft sichtbar
   const es = $('#btnEmergencyStop');
   if(es) es.style.display = (State.adapter && getBetaLevel(State.adapter.constructor.deviceType)==='unverified') ? '' : 'none';
+  // v8.0.0: Probe-Only (Firefly u.ae.) - Steuerung ausblenden, RE-Aufruf-Banner zeigen.
+  const probe = !!(State.adapter && State.adapter.constructor.probeOnly);
+  const mcard = $('#manualControlCard');
+  if(mcard) mcard.style.display = probe ? 'none' : '';
+  const banner = $('#probeOnlyBanner');
+  if(banner) banner.style.display = probe ? '' : 'none';
+  if(probe){
+    // Quick-Actions sperren (Steuerung nicht moeglich); im Nicht-Probe-Fall regelt das die Capability-Logik oben.
+    ['qaDirectDraw','qaBagFill'].forEach(id=>{ const el=$('#'+id); if(el) el.disabled = true; });
+    const help=$('#btnFireflyHelp');
+    if(help) help.setAttribute('href', fireflyHelpMailto());
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -13077,7 +13154,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v7.0.0 bereit.','ok');
+  log('Sessions v8.0.0 bereit.','ok');
 
   setupPwaUpdate();
 

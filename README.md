@@ -1,6 +1,19 @@
-# Sessions — Vape Controller (v7.0.0)
+# Sessions — Vape Controller (v8.0.0)
 
-Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Single-File HTML PWA.
+Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.0.0 — Firefly (Probe-Only, RE-Hilfe gesucht) 🔬
+
+Firefly ist die schwierigste Plattform der Roadmap: **es existiert kein vollständiges Open-Source-Reverse-Engineering**. Die GitHub-Repo-Suche „firefly vaporizer bluetooth" liefert **0 Treffer**, npm/Web-Recherche keine eindeutige BLE-Service-/Characteristic-/Frame-Dokumentation. Die offizielle Steuerung läuft über die Hersteller-Web-App (fireflyvaporwebapp.com), die **bewusst nicht reverse-engineert** wurde.
+
+**→ Konsequenz: kein Raten. Firefly läuft als Probe-Only-Adapter** — das Gerät wird erkannt, aber es gibt **keine Steuerung**. Stattdessen ein Aufruf an die Community, beim Reverse-Engineering zu helfen.
+
+- **Erkennung:** per Name (`/firefly/i`); keine spekulative Service-UUID.
+- **UI:** Beim Verbinden wird die manuelle Steuerung ausgeblendet und ein Banner „🔬 Gerät erkannt, Protokoll-Recherche läuft" mit einem Reverse-Engineering-Hilfe-Button (eigener E-Mail-Betreff `[Pioneers RE-Hilfe]`) gezeigt. Alle Steuer-Methoden werfen einen klaren Fehler statt etwas zu raten.
+- **Pioneers-Framework:** neue Status-Stufe **`probe_only`** (Pille „🔬 RE-Hilfe gesucht", abgegrenzt von „🟡 Tester gesucht").
+- **Was RE-Helfer liefern können:** BLE-Sniffer-Logs aus der offiziellen App (Android HCI-Snoop / Wireshark), Service-/Characteristic-UUIDs (nRF Connect / Web Bluetooth Inspector), beobachtete Befehle (Temperatur, Heizen, Akku). Damit lässt sich später ein echter Adapter nachziehen.
+- **Scope:** Firefly 2 / 2+ als Subtypes geführt (`supported:false`, Recherche läuft). Hersteller-Temperaturbereich 200–500 °F (nur Info, nicht als Protokoll verwendet).
+- **Tests:** 16 automatisierte (Detection, Probe-Only-Verhalten, alle Steuer-Methoden werfen, UI-Ausblendung, Banner, Pioneers-Pille). Volle Regression grün, alle anderen Geräte unverändert.
 
 ## v7.0.0 — Puffco Peak Pro (Beta) ⚠️
 
