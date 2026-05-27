@@ -1,6 +1,18 @@
-# Sessions — Vape Controller (v8.1.0)
+# Sessions — Vape Controller (v8.2.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.2.0 — Session-Tracking (Minimal)
+
+Ein eigenständiges, lokales Session-Tagebuch — **parallel** zur bestehenden v5.1.0-Statistik (die unverändert bleibt). Alles in `localStorage`, kein Tracking, kein Cloud-Sync, keine Chart-Library (Inline-SVG). Bewusst minimal gehalten; Mood/Zweck/Aroma/Limits folgen in v8.3.0.
+
+- **Auto-Erkennung**: Heizer-EIN startet einen Session-Kandidaten, Heizer-AUS beendet ihn. Sessions unter 60 s werden verworfen; längere öffnen ein Notiz-Modal. Manueller Start/Stopp zusätzlich per Quick-Action („Session beginnen/beenden").
+- **Notiz-Modal**: Stärke 1–10 (Pflicht, Default 5), Effekt (Entspannt/Energetisch/Kreativ/Schläfrig/Fokussiert/Sozial, optional), Freitext-Notiz. „Speichern" / „Später" (halb-gespeichert, erscheint als offene Session) / „Verwerfen".
+- **Sessions-Sektion** im Setup-Tab (neues Akkordeon „📝 Sessions"): Liste neueste zuerst, Geräte-/Zeitraum-Filter, Aufklappen für Details, Bearbeiten/Löschen, JSON-Export, Banner für offene Sessions.
+- **Drei Visualisierungen** (ab 5 Sessions): Wochen-Trend (12 W), GitHub-Style-Aktivitäts-Heatmap (7×12), Pausen-Historie (Top 5 + aktueller Streak).
+- **Sanfte Hinweise**: sachlich-beobachtende Gesundheits-Notiz je nach Konsumdichte (keine Moral, kein Shaming).
+- **3 Achievements** (Basis): „Bewusster Konsument", „Erste Pause", „Reflektierende Woche".
+- **Tests**: +28 (v82tracking), volle Regression 264 grün. Keine Adapter-/Pioneers-/v5.1.0-Stats-Änderungen.
 
 ## v8.1.0 — UX-Polish
 

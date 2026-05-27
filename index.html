@@ -1803,6 +1803,38 @@ summary.tab-section-header::-webkit-details-marker{display:none}
 summary.tab-section-header .acc-chevron{margin-left:6px;transition:transform .2s;font-size:10px;opacity:.7}
 details.setup-acc[open] > summary.tab-section-header .acc-chevron{transform:rotate(90deg)}
 summary.tab-section-header:hover{color:var(--text)}
+/* v8.2.0: Session-Tracking UI */
+.sess-head{background:var(--bg-2,rgba(255,255,255,.04));border-radius:10px;padding:10px 12px;margin-top:4px}
+.sess-head-dev{font-weight:700}
+.sess-head-sub{font-size:12px;color:var(--muted)}
+.sess-effects{display:flex;flex-wrap:wrap;gap:6px}
+.sess-effect{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
+.sess-effect.active{border-color:var(--accent,#5ab);background:rgba(90,170,187,.14);color:var(--accent,#5ab)}
+.sess-hint-card{display:flex;gap:8px;align-items:flex-start;background:rgba(90,170,187,.08);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:8px}
+.sess-hint-emoji{font-size:18px;line-height:1}
+.sess-open-banner{background:rgba(224,161,6,.1);border:1px solid rgba(224,161,6,.4);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}
+.linklike{background:none;border:none;color:var(--accent,#5ab);cursor:pointer;text-decoration:underline;font-size:inherit;padding:0}
+.sess-list{display:flex;flex-direction:column;gap:6px}
+.sess-item{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.sess-row{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:8px}
+.sess-when{font-weight:600;font-size:13px}
+.sess-sub{font-size:12px;color:var(--muted)}
+.sess-badges{display:flex;gap:4px;flex-shrink:0}
+.sess-pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--accent,#5ab);color:var(--accent,#5ab)}
+.sess-pill.alt{border-color:var(--line);color:var(--muted)}
+.sess-pill.warn{border-color:#e0a106;color:#e0a106}
+.sess-note-prev{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic}
+.sess-note-full{font-size:13px;margin-top:6px;white-space:pre-wrap}
+.sess-h4{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 6px}
+.sess-streak{font-size:13px;font-weight:600;margin-bottom:6px}
+.sess-pauses{margin:0;padding-left:18px;font-size:13px}
+.sess-pauses small{color:var(--muted)}
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ach-card{border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center;opacity:.45;filter:grayscale(1)}
+.ach-card.earned{opacity:1;filter:none;border-color:var(--accent,#5ab);background:rgba(90,170,187,.08)}
+.ach-ico{font-size:22px}
+.ach-name{font-size:11px;font-weight:600;margin-top:4px;line-height:1.2}
+.ach-meta{font-size:10px;color:var(--muted);margin-top:2px}
 
 /* ═══ v4.9: Polishing - hover + focus consistency ═══════════════ */
 .card{transition:border-color .15s}
@@ -2351,6 +2383,9 @@ button[data-sch-day].active{
 
   <!-- ═══ Werkzeuge ═══════════════════════════════════ -->
   </details>
+  <details class="setup-acc" data-acc="sessions" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📝</span><span>Sessions</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
+    <div class="card"><div id="sessionsBody"></div></div>
+  </details>
   <details class="setup-acc" data-acc="werkzeuge" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">🛠</span><span>Werkzeuge</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
   <!-- v4.7+v4.8: Tools-Sammlung -->
@@ -2478,6 +2513,38 @@ button[data-sch-day].active{
     <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen">Stop</button>
   </div>
   <div class="bar" role="progressbar" aria-label="Programm-Fortschritt" aria-valuemin="0" aria-valuemax="100"><div id="runBar"></div></div>
+</div>
+
+<!-- v8.2.0: Session-Notiz-Modal -->
+<div class="modal" id="modalSession" role="dialog" aria-modal="true" aria-label="Session erfassen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>📝 Session erfasst</h2>
+    <div class="sess-head">
+      <div id="sessHeadDev" class="sess-head-dev"></div>
+      <div id="sessHeadTime" class="sess-head-sub"></div>
+      <div id="sessHeadTemp" class="sess-head-sub"></div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Stärke (Pflicht): <span id="sessStrengthVal" class="mono">5/10</span></label>
+      <input type="range" id="sessStrength" min="1" max="10" step="1" value="5" style="width:100%"
+        oninput="document.getElementById('sessStrengthVal').textContent=this.value+'/10'">
+    </div>
+    <div class="field">
+      <label>Effekt (optional):</label>
+      <div id="sessEffects" class="sess-effects"></div>
+    </div>
+    <div class="field">
+      <label>Notiz (optional):</label>
+      <textarea class="input" id="sessNotes" rows="2" placeholder="z. B. Sorte, Setting, Wirkung…"></textarea>
+    </div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="sessBtnDiscard" style="flex:1">Verwerfen</button>
+      <button class="btn sm" id="sessBtnLater" style="flex:1">Später</button>
+      <button class="btn hot" id="sessBtnSave" style="flex:1">Speichern</button>
+    </div>
+  </div>
 </div>
 
 <!-- v5.1.0 Modul 3+4: Slides-Modal (Geraete-Tour + Migrations-Wizard) -->
@@ -5071,6 +5138,7 @@ function setHeatGlow(){
 }
 
 function renderStatus(){
+  if(typeof sessionTrackerTrackTemp==='function') sessionTrackerTrackTemp();   // v8.2.0 Modul 1: Max-Temp mitschreiben
   // v8.1.0 Modul 4: Quick-Actions nur bei Heizer-Wechsel neu rendern (nicht bei jedem Status-Poll)
   if(State.connected && State._qaHeaterSnapshot !== !!State.heater){
     State._qaHeaterSnapshot = !!State.heater;
@@ -5503,6 +5571,7 @@ async function cmdHeaterOn(){
     fireWebhook('heaterOn', {temp:State.target});
     mqttPublish('heater', 'on');
     broadcastShared('Heizer an');
+    sessionTrackerStart(false);   // v8.2.0 Modul 1: Session-Kandidat starten
   });
 }
 async function cmdHeaterOff(){
@@ -5516,6 +5585,7 @@ async function cmdHeaterOff(){
     fireWebhook('heaterOff');
     mqttPublish('heater', 'off');
     broadcastShared('Heizer aus');
+    sessionTrackerEnd(false);   // v8.2.0 Modul 1: Session-Kandidat beenden (+ Notiz-Modal wenn >60s)
     // v4.5: heat curve analyse
     const sec = analyzeHeatCurve();
     if(sec){
@@ -6511,6 +6581,11 @@ function wire(){
   $('#btnSettings').addEventListener('click', openSettings);
   $('#btnOpenSettings').addEventListener('click', openSettings);
   $('#btnSettingsClose').addEventListener('click', ()=>$('#modalSettings').classList.remove('open'));
+
+  // v8.2.0: Session-Notiz-Modal
+  $('#sessBtnSave')?.addEventListener('click', sessionModalSave);
+  $('#sessBtnLater')?.addEventListener('click', sessionModalLater);
+  $('#sessBtnDiscard')?.addEventListener('click', sessionModalDiscard);
 
   // Toggle helpers
   const wireToggle = (sel, get, set)=>{
@@ -8606,7 +8681,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.1.0';
+const SW_VERSION_LABEL='v8.2.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9761,6 +9836,11 @@ function quickActionDefs(){
   } else {
     A.push(DIRECT); A.push(TIMER); A.push(AROMA);
   }
+  // v8.2.0 Modul 2: manueller Session-Start/-Stopp
+  if(typeof sessionTrackerActive==='function'){
+    if(sessionTrackerActive()) A.push({id:'qaSessionEnd',ico:'⏹',lbl:'Session beenden',meta:'',fn:()=>sessionTrackerEnd(true)});
+    else A.push({id:'qaSessionStart',ico:'⏱',lbl:'Session beginnen',meta:'',fn:()=>sessionTrackerStart(true)});
+  }
   const pin=LS.get(QA_PIN_KEY,null);
   if(pin){ const i=A.findIndex(a=>a.id===pin); if(i>0){ const [p]=A.splice(i,1); A.unshift(p); } }
   return A;
@@ -9790,6 +9870,335 @@ function toggleQuickActionPin(id){
   LS.set(QA_PIN_KEY,next);
   toast(next?'📌 Schnellzugriff angepinnt':'Pin entfernt');
   renderQuickActions();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v8.2.0: SESSION-TRACKING (Minimal) — eigenständiges System,
+   parallel zur v5.1.0-Statistik. Nur localStorage, kein Tracking,
+   kein Cloud-Sync. Module 1-6.
+═══════════════════════════════════════════════════════════════ */
+const SESSIONS_KEY='sessions_notes_v1';
+const SESSION_ACH_KEY='sessions_achievements_v1';
+const SESSION_MIN_SEC=60;
+const SESSION_MAX=500;
+const SESSION_EFFECTS=[
+  {id:'relaxed',label:'Entspannt'},{id:'energetic',label:'Energetisch'},
+  {id:'creative',label:'Kreativ'},{id:'sleepy',label:'Schläfrig'},
+  {id:'focused',label:'Fokussiert'},{id:'social',label:'Sozial'},
+];
+const SESSION_EFFECT_LABEL=Object.fromEntries(SESSION_EFFECTS.map(e=>[e.id,e.label]));
+function sessionUid(){ return new Date().toISOString().slice(0,10)+'-'+Math.random().toString(36).slice(2,8); }
+function sessionsAll(){ const a=LS.get(SESSIONS_KEY,[]); return Array.isArray(a)?a:[]; }
+function sessionsPersist(arr){ if(arr.length>SESSION_MAX) arr=arr.slice(arr.length-SESSION_MAX); LS.set(SESSIONS_KEY,arr); }
+function sessionAdd(note){ const a=sessionsAll(); a.push(note); sessionsPersist(a); return note; }
+function sessionUpdate(id,patch){ const a=sessionsAll(); const i=a.findIndex(s=>s.id===id); if(i>=0){ a[i]=Object.assign({},a[i],patch); sessionsPersist(a); } }
+function sessionDelete(id){ sessionsPersist(sessionsAll().filter(s=>s.id!==id)); }
+const DAY_MS=86400000;
+function dayKey(ts){ const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtSessTime(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function fmtSessDate(d){ const t=new Date(); const isToday=d.toDateString()===t.toDateString(); const y=new Date(t-DAY_MS); const isYest=d.toDateString()===y.toDateString(); if(isToday)return 'Heute'; if(isYest)return 'Gestern'; return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+
+/* ── MODUL 1: Auto-Detect ── */
+function sessionTrackerStart(manual){
+  if(State.sessionCandidate) return;   // manuelle Session hat Vorrang; Heizer überschreibt nicht
+  State.sessionCandidate={
+    startedAt:Date.now(), endedAt:null,
+    device:(State.adapter&&State.adapter.constructor.deviceType)||'unknown',
+    deviceName:(State.adapter&&State.adapter.constructor.displayName)||(State.device&&State.device.name)||'Gerät',
+    targetTemp:isFinite(State.target)?Math.round(State.target):null,
+    maxTemp:isFinite(State.cur)?Math.round(State.cur):0,
+    auto:!manual,
+  };
+  if(manual){ toast('⏱ Session gestartet'); if(typeof renderQuickActions==='function') renderQuickActions(); }
+}
+function sessionTrackerTrackTemp(){
+  const c=State.sessionCandidate; if(!c) return;
+  if(isFinite(State.cur) && Math.round(State.cur)>c.maxTemp) c.maxTemp=Math.round(State.cur);
+  if(isFinite(State.target)) c.targetTemp=Math.round(State.target);
+}
+function sessionTrackerEnd(manual){
+  const c=State.sessionCandidate; if(!c) return;
+  c.endedAt=Date.now();
+  const durationSec=Math.round((c.endedAt-c.startedAt)/1000);
+  State.sessionCandidate=null;
+  if(typeof renderQuickActions==='function') renderQuickActions();
+  if(durationSec<SESSION_MIN_SEC){ if(typeof log==='function') log('Session verworfen (<60s, '+durationSec+'s)','warn'); return; }
+  openSessionNoteModal(Object.assign({}, c, {durationSec}));
+}
+function sessionTrackerActive(){ return !!State.sessionCandidate; }
+
+/* ── MODUL 2: Notiz-Modal ── */
+let _sessionDraft=null;
+function openSessionNoteModal(data, existingId){
+  _sessionDraft = Object.assign({ strength:5, effect:'', notes:'' }, data||{});
+  if(existingId) _sessionDraft.id=existingId;
+  const m=$('#modalSession'); if(!m) return;
+  const d=_sessionDraft;
+  const ds=new Date(d.startedAt), de=new Date(d.endedAt||Date.now());
+  const mins=Math.round((d.durationSec||0)/60);
+  $('#sessHeadDev').textContent = (d.deviceName||'Gerät')+' · '+(mins>=1?mins+' Min':(d.durationSec||0)+'s');
+  $('#sessHeadTime').textContent = fmtSessDate(ds)+' '+fmtSessTime(ds)+'–'+fmtSessTime(de);
+  $('#sessHeadTemp').textContent = [d.targetTemp?('Ziel '+d.targetTemp+'°C'):'', d.maxTemp?('Max '+d.maxTemp+'°C'):''].filter(Boolean).join(', ');
+  const str = d.strength==null?5:d.strength;
+  $('#sessStrength').value = str; $('#sessStrengthVal').textContent = str+'/10';
+  $('#sessNotes').value = d.notes||'';
+  renderSessEffects();
+  m.classList.add('open');
+}
+function renderSessEffects(){
+  const root=$('#sessEffects'); if(!root) return;
+  root.innerHTML='';
+  for(const e of SESSION_EFFECTS){
+    const b=document.createElement('button');
+    b.type='button'; b.className='sess-effect'+(_sessionDraft && _sessionDraft.effect===e.id?' active':'');
+    b.textContent=e.label; b.dataset.eff=e.id;
+    b.addEventListener('click',()=>{ _sessionDraft.effect = (_sessionDraft.effect===e.id?'':e.id); renderSessEffects(); });
+    root.appendChild(b);
+  }
+}
+function sessionModalBuild(strengthOverride){
+  const d=_sessionDraft;
+  const note={
+    id: d.id || sessionUid(),
+    startedAt: d.startedAt, endedAt: d.endedAt || Date.now(),
+    durationSec: d.durationSec || Math.round(((d.endedAt||Date.now())-d.startedAt)/1000),
+    device: d.device||'unknown', deviceName: d.deviceName||'Gerät',
+    targetTemp: d.targetTemp!=null?d.targetTemp:null, maxTemp: d.maxTemp||0,
+    strength: strengthOverride!==undefined ? strengthOverride : Number($('#sessStrength').value),
+    effect: d.effect||'', notes: ($('#sessNotes').value||'').trim(), auto: !!d.auto,
+  };
+  return note;
+}
+function sessionModalSave(){
+  const note=sessionModalBuild();
+  if(_sessionDraft.id) sessionUpdate(_sessionDraft.id, note); else sessionAdd(note);
+  $('#modalSession').classList.remove('open'); _sessionDraft=null;
+  checkSessionAchievements();
+  renderSessions();
+  toast('📝 Session gespeichert');
+}
+function sessionModalLater(){
+  // halb-gespeichert: strength=null -> erscheint unter "Offene Sessions"
+  const note=sessionModalBuild(null);
+  if(_sessionDraft.id) sessionUpdate(_sessionDraft.id, note); else sessionAdd(note);
+  $('#modalSession').classList.remove('open'); _sessionDraft=null;
+  renderSessions();
+  toast('Session zum späteren Ausfüllen gespeichert');
+}
+function sessionModalDiscard(){
+  $('#modalSession').classList.remove('open'); _sessionDraft=null;
+}
+
+/* ── MODUL 3: Liste + Filter + Export ── */
+function sessionFilterState(){ return State._sessFilter || (State._sessFilter={device:'all', days:30}); }
+function sessionsFiltered(){
+  const f=sessionFilterState(); const now=Date.now();
+  return sessionsAll().filter(s=>{
+    if(f.device!=='all' && s.device!==f.device) return false;
+    if(f.days>0 && (now - s.startedAt) > f.days*DAY_MS) return false;
+    return true;
+  }).sort((a,b)=>b.startedAt-a.startedAt);
+}
+function sessionsExport(){
+  const data=JSON.stringify(sessionsAll(),null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='sessions-export-'+dayKey(Date.now())+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Sessions als JSON exportiert');
+}
+function renderSessions(){
+  const root=$('#sessionsBody'); if(!root) return;
+  const all=sessionsAll();
+  const open=all.filter(s=>s.strength==null);
+  const f=sessionFilterState();
+  const list=sessionsFiltered();
+  // Geräte-Filter-Optionen
+  const devs=[...new Set(all.map(s=>s.device))];
+  const devOpts=['<option value="all">Alle Geräte</option>'].concat(devs.map(d=>`<option value="${d}"${f.device===d?' selected':''}>${escapeHtml(BETA_DEVNAMES[d]||d)}</option>`)).join('');
+  const dayOpts=[[7,'Letzte 7 Tage'],[30,'Letzte 30 Tage'],[90,'Letzte 90 Tage'],[0,'Alle']].map(([v,l])=>`<option value="${v}"${f.days===v?' selected':''}>${l}</option>`).join('');
+  let html='';
+  html += `<div id="sessHint" class="sess-hint"></div>`;
+  if(open.length) html += `<div class="sess-open-banner">⏳ ${open.length} offene Session${open.length>1?'s':''} — <button class="linklike" id="sessFillFirst">jetzt ausfüllen</button></div>`;
+  html += `<div class="row" style="gap:8px;margin:10px 0">
+      <select class="select" id="sessFilterDev" style="flex:1">${devOpts}</select>
+      <select class="select" id="sessFilterDays" style="flex:1">${dayOpts}</select>
+    </div>`;
+  if(!all.length){
+    html += `<p class="set-section-desc">Noch keine Sessions. Sobald du heizt (oder „Session beginnen" nutzt), wird sie hier erfasst.</p>`;
+  } else {
+    html += `<div class="sess-list">${list.map(sessionRowHtml).join('')||'<p class="set-section-desc">Keine Sessions im Filter.</p>'}</div>`;
+    html += `<div id="sessViz"></div>`;
+    html += `<div id="sessAch"></div>`;
+    html += `<div class="row" style="margin-top:10px"><button class="btn sm ghost" id="sessExport">📤 Als JSON exportieren</button></div>`;
+  }
+  root.innerHTML=html;
+  // Hint + Viz + Achievements
+  renderSessionHint();
+  renderSessionViz();
+  renderSessionAchievements();
+  // Wiring
+  $('#sessFilterDev')?.addEventListener('change',e=>{ sessionFilterState().device=e.target.value; renderSessions(); });
+  $('#sessFilterDays')?.addEventListener('change',e=>{ sessionFilterState().days=Number(e.target.value); renderSessions(); });
+  $('#sessExport')?.addEventListener('click', sessionsExport);
+  $('#sessFillFirst')?.addEventListener('click',()=>{ const o=sessionsAll().find(s=>s.strength==null); if(o) openSessionNoteModal(o, o.id); });
+  root.querySelectorAll('[data-sess-toggle]').forEach(el=>el.addEventListener('click',()=>{ const d=el.closest('.sess-item').querySelector('.sess-detail'); if(d) d.hidden=!d.hidden; }));
+  root.querySelectorAll('[data-sess-edit]').forEach(el=>el.addEventListener('click',e=>{ e.stopPropagation(); const id=el.dataset.sessEdit; const s=sessionsAll().find(x=>x.id===id); if(s) openSessionNoteModal(s, id); }));
+  root.querySelectorAll('[data-sess-del]').forEach(el=>el.addEventListener('click',e=>{ e.stopPropagation(); const id=el.dataset.sessDel; if(confirm('Diese Session löschen?')){ sessionDelete(id); renderSessions(); toast('Session gelöscht'); } }));
+}
+function sessionRowHtml(s){
+  const d=new Date(s.startedAt);
+  const mins=Math.round((s.durationSec||0)/60);
+  const strBadge = s.strength==null ? '<span class="sess-pill warn">offen</span>' : `<span class="sess-pill">${s.strength}/10</span>`;
+  const effBadge = s.effect ? `<span class="sess-pill alt">${escapeHtml(SESSION_EFFECT_LABEL[s.effect]||s.effect)}</span>` : '';
+  const notePrev = s.notes ? escapeHtml(s.notes.slice(0,50))+(s.notes.length>50?'…':'') : '';
+  return `<div class="sess-item">
+    <div class="sess-row" data-sess-toggle>
+      <div class="sess-main">
+        <div class="sess-when">${fmtSessDate(d)} ${fmtSessTime(d)}</div>
+        <div class="sess-sub">${escapeHtml(s.deviceName||s.device)} · ${mins>=1?mins+' Min':(s.durationSec||0)+'s'}</div>
+      </div>
+      <div class="sess-badges">${strBadge}${effBadge}</div>
+    </div>
+    ${notePrev?`<div class="sess-note-prev">${notePrev}</div>`:''}
+    <div class="sess-detail" hidden>
+      <div class="sess-sub">Ziel ${s.targetTemp!=null?s.targetTemp+'°C':'–'} · Max ${s.maxTemp||'–'}°C · ${s.auto?'auto':'manuell'}</div>
+      ${s.notes?`<div class="sess-note-full">${escapeHtml(s.notes)}</div>`:''}
+      <div class="row" style="gap:8px;margin-top:8px">
+        <button class="btn sm ghost" data-sess-edit="${s.id}">✏️ Bearbeiten</button>
+        <button class="btn sm danger" data-sess-del="${s.id}">🗑 Löschen</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── MODUL 4: Visualisierungen (Inline-SVG) ── */
+function sessionWeekBuckets(weeks){
+  // Array[weeks] mit Session-Anzahl je Woche (älteste zuerst), bezogen auf "jetzt"
+  const now=Date.now(); const buckets=new Array(weeks).fill(0);
+  for(const s of sessionsFiltered()){
+    const wAgo=Math.floor((now-s.startedAt)/(7*DAY_MS));
+    if(wAgo>=0 && wAgo<weeks) buckets[weeks-1-wAgo]++;
+  }
+  return buckets;
+}
+function renderSessionViz(){
+  const root=$('#sessViz'); if(!root) return;
+  const all=sessionsAll();
+  if(all.length<5){ root.innerHTML=`<p class="set-section-desc">Du hast erst ${all.length} Session${all.length===1?'':'s'} — Visualisierungen erscheinen ab 5.</p>`; return; }
+  root.innerHTML = `<h4 class="sess-h4">Trend (12 Wochen)</h4><div id="sessTrend"></div>`
+    + `<h4 class="sess-h4">Aktivität</h4><div id="sessHeat"></div>`
+    + `<h4 class="sess-h4">Pausen</h4><div id="sessPauses"></div>`;
+  renderSessTrend(); renderSessHeatmap(); renderSessPauses();
+}
+function renderSessTrend(){
+  const root=$('#sessTrend'); if(!root) return;
+  const data=sessionWeekBuckets(12); const W=300,H=70,pad=6;
+  const max=Math.max(1,...data); const bw=(W-2*pad)/data.length;
+  let bars='';
+  data.forEach((v,i)=>{ const h=(v/max)*(H-2*pad); const x=pad+i*bw; const y=H-pad-h;
+    bars+=`<rect x="${(x+1).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(--accent,#5ab)"><title>Woche -${11-i}: ${v} Session(s)</title></rect>`; });
+  root.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Sessions pro Woche">${bars}</svg>`;
+}
+function renderSessHeatmap(){
+  const root=$('#sessHeat'); if(!root) return;
+  const weeks=12; const counts={};
+  for(const s of sessionsFiltered()){ const k=dayKey(s.startedAt); counts[k]=(counts[k]||0)+1; }
+  // Spalten = Wochen, Zeilen = Wochentage (Mo=0..So=6). Anker: heute.
+  const today=new Date(); today.setHours(0,0,0,0);
+  const cells=[]; const cell=12, gap=3;
+  for(let w=0;w<weeks;w++){
+    for(let d=0;d<7;d++){
+      // Tag = heute - ((weeks-1-w)*7) ausgehend, ausgerichtet pro Wochentag
+      const daysBack=(weeks-1-w)*7 + (6-d);
+      const date=new Date(today - daysBack*DAY_MS);
+      const k=dayKey(date.getTime()); const n=counts[k]||0;
+      const lvl = n===0?0 : n<=2?1 : n<=4?2 : 3;
+      const op = [0.06,0.3,0.6,1][lvl];
+      const x=w*(cell+gap), y=d*(cell+gap);
+      cells.push(`<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="var(--accent,#5ab)" fill-opacity="${op}"><title>${k}: ${n} Session(s)</title></rect>`);
+    }
+  }
+  const W=weeks*(cell+gap), H=7*(cell+gap);
+  root.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Aktivitäts-Heatmap 12 Wochen">${cells.join('')}</svg>`;
+}
+function sessionPauses(){
+  const days=[...new Set(sessionsAll().map(s=>dayKey(s.startedAt)))].sort();
+  const gaps=[];
+  for(let i=1;i<days.length;i++){
+    const a=new Date(days[i-1]+'T00:00:00').getTime(), b=new Date(days[i]+'T00:00:00').getTime();
+    const gd=Math.round((b-a)/DAY_MS)-1;
+    if(gd>=1) gaps.push({days:gd, from:days[i-1], to:days[i]});
+  }
+  return gaps.sort((a,b)=>b.days-a.days).slice(0,5);
+}
+function sessionCurrentStreak(){
+  const all=sessionsAll(); if(!all.length) return {type:'none'};
+  const last=Math.max(...all.map(s=>s.startedAt));
+  const daysSince=Math.floor((Date.now()-last)/DAY_MS);
+  const todayCount=all.filter(s=>dayKey(s.startedAt)===dayKey(Date.now())).length;
+  if(todayCount>0) return {type:'today', count:todayCount};
+  return {type:'pause', days:daysSince};
+}
+function renderSessPauses(){
+  const root=$('#sessPauses'); if(!root) return;
+  const streak=sessionCurrentStreak();
+  let head='';
+  if(streak.type==='today') head=`<div class="sess-streak">Heute schon ${streak.count} Session${streak.count>1?'s':''} gehabt.</div>`;
+  else if(streak.type==='pause') head=`<div class="sess-streak">Du hast seit ${streak.days} Tag${streak.days===1?'':'en'} nicht konsumiert.</div>`;
+  const pauses=sessionPauses();
+  const list = pauses.length ? pauses.map(p=>`<li>${p.days} Tage Pause <small>(${p.from} → ${p.to})</small></li>`).join('') : '<li>Noch keine Pausen erfasst.</li>';
+  root.innerHTML=head+`<ul class="sess-pauses">${list}</ul>`;
+}
+
+/* ── MODUL 5: Sanfte Hinweise ── */
+function sessionsInLastDays(n){ const c=Date.now()-n*DAY_MS; return sessionsAll().filter(s=>s.startedAt>=c).length; }
+function sessionHintText(){
+  const all=sessionsAll(); if(!all.length) return null;
+  const last7=sessionsInLastDays(7);
+  const last3=sessionsInLastDays(3);
+  const streak=sessionCurrentStreak();
+  if(last7>15) return {emoji:'🤔', text:'Auffällig hoher Konsum diese Woche. Wenn du das reduzieren willst: schauen wir mal die Statistik?'};
+  if(last3===0) return {emoji:'🌱', text:'Du machst gerade Pause — super! Genieße den klaren Kopf.'};
+  if(last7>5 && streak.type==='today') return {emoji:'💚', text:'Eine Pause von 2-3 Tagen wäre eine gute Gewohnheit — hilft, die Toleranz niedrig zu halten.'};
+  if(last7<=2) return {emoji:'✨', text:'Bewusster Konsum — du nutzt es selten.'};
+  return {emoji:'📊', text:'Du konsumierst regelmäßig. Beobachte gerne, wie du dich dabei fühlst.'};
+}
+function renderSessionHint(){
+  const root=$('#sessHint'); if(!root) return;
+  const h=sessionHintText();
+  root.innerHTML = h ? `<div class="sess-hint-card"><span class="sess-hint-emoji">${h.emoji}</span><span>${escapeHtml(h.text)}</span></div>` : '';
+}
+
+/* ── MODUL 6: Achievements (basic) ── */
+const SESSION_ACHIEVEMENTS=[
+  {id:'mindful', icon:'📝', name:'Bewusster Konsument', desc:'7 Sessions mit ausgefüllten Notizen.',
+    check:()=>sessionsAll().filter(s=>s.strength!=null && s.notes && s.notes.length>0).length>=7},
+  {id:'first_pause', icon:'🌱', name:'Erste Pause', desc:'Eine 3-Tages-Pause vollendet.',
+    check:()=>sessionPauses().some(p=>p.days>=3)},
+  {id:'reflective_week', icon:'💭', name:'Reflektierende Woche', desc:'4 Sessions in einer Woche, alle mit Notizen.',
+    check:()=>{ // 7-Tage-Fenster mit >=4 Sessions, alle mit Notiz
+      const arr=sessionsAll().filter(s=>s.strength!=null).sort((a,b)=>a.startedAt-b.startedAt);
+      for(let i=0;i<arr.length;i++){ const win=arr.filter(s=>s.startedAt>=arr[i].startedAt && s.startedAt<arr[i].startedAt+7*DAY_MS); if(win.length>=4 && win.every(s=>s.notes && s.notes.length>0)) return true; } return false; }},
+];
+function sessionAchState(){ const a=LS.get(SESSION_ACH_KEY,{}); return (a&&typeof a==='object')?a:{}; }
+function checkSessionAchievements(){
+  const st=sessionAchState(); let changed=false;
+  for(const a of SESSION_ACHIEVEMENTS){
+    if(!st[a.id] && a.check()){ st[a.id]={earnedAt:Date.now()}; changed=true; toast(a.icon+' Achievement: '+a.name); }
+  }
+  if(changed) LS.set(SESSION_ACH_KEY, st);
+  return st;
+}
+function renderSessionAchievements(){
+  const root=$('#sessAch'); if(!root) return;
+  if(sessionsAll().length<5){ root.innerHTML=''; return; }
+  const st=sessionAchState();
+  root.innerHTML = `<h4 class="sess-h4">Achievements</h4><div class="ach-grid">`
+    + SESSION_ACHIEVEMENTS.map(a=>{ const earned=!!st[a.id]; const when=earned?new Date(st[a.id].earnedAt).toLocaleDateString('de-DE'):'';
+        return `<div class="ach-card${earned?' earned':''}" title="${escapeHtml(a.desc)}${earned?' — erreicht '+when:''}"><div class="ach-ico">${a.icon}</div><div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-meta">${earned?'✓ '+when:'noch nicht'}</div></div>`;
+      }).join('')
+    + `</div>`;
 }
 
 /* ═══ v8.1.0 MODUL 3: Setup-Tab Akkordeon-Persistenz ═══ */
@@ -13254,6 +13663,7 @@ async function init(){
   applyTheme();
   if(PREFS.themeAuto) bindThemeAutoListener();   // v8.1.0 Modul 1
   initSetupAccordion();                          // v8.1.0 Modul 3
+  if(typeof renderSessions==='function') renderSessions();   // v8.2.0 Session-Tracking
   // v4.6: apply font scale + high contrast early
   applyFontScale();
   applyHighContrast();
@@ -13367,7 +13777,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.1.0 bereit.','ok');
+  log('Sessions v8.2.0 bereit.','ok');
 
   setupPwaUpdate();
 
