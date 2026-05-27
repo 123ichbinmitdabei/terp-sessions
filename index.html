@@ -2043,7 +2043,7 @@ button[data-sch-day].active{
           <span class="val mono" id="tCurrent" aria-live="polite" aria-atomic="true">––</span>
           <span class="unit" aria-hidden="true">°C</span>
         </div>
-        <div class="t-target">Ziel: <b id="tTarget">––</b> °C<span class="t-eta" id="tEta" aria-live="polite"></span></div>
+        <div class="t-target">Ziel: <b id="tTarget">––</b> °C<span class="t-eta" id="tEta" aria-live="polite"></span> <span id="boostBadge" style="display:none;font-size:11px;font-weight:800;letter-spacing:.05em;color:#fff;background:var(--hot);border-radius:6px;padding:1px 6px"></span><span id="heatStatusLabel" style="display:none;font-size:13px;margin-left:8px;font-weight:600"></span></div>
       </div>
     </div>
     <div class="indicators" role="status" aria-label="Geräte-Status">
@@ -4117,11 +4117,32 @@ function renderStatus(){
   if(battEl){
     const bat = State.device && State.device.battery;
     // v5.0.2.2: bei Battery-Capability aber unbekanntem Wert "--" statt falscher Zahl
-    battEl.textContent = currentCapabilities().battery ? (bat!=null ? `🔋 ${bat}%` : '🔋 --') : '';
+    // v5.0.4 FIX1: Charging-Indikator (⚡) wenn am Netzteil
+    const ch = State.device && State.device.charging;
+    battEl.textContent = currentCapabilities().battery ? (bat!=null ? `🔋 ${bat}%${ch?' ⚡':''}` : '🔋 --') : '';
   }
   // v5.0.2.3: Firmware-Info anzeigen wenn vorhanden
   const fwEl = $('#fwBadge');
   if(fwEl){ const fw=State.device&&State.device.firmware; fwEl.textContent = fw ? `FW ${fw}${State.device.bootloader?(' / BL '+State.device.bootloader):''}` : ''; }
+  // v5.0.4 FIX3: Boost/SuperBoost-Badge (nur Venty/Veazy mit cap.boost)
+  const boostB = $('#boostBadge');
+  if(boostB){
+    let txt='';
+    if(currentCapabilities().boost){
+      if(State.device&&State.device.superBoost) txt='SUPER BOOST';
+      else if(State.device&&State.device.boost) txt='BOOST';
+    }
+    boostB.textContent = txt; boostB.style.display = txt ? '' : 'none';
+  }
+  // v5.0.4 FIX2: Heiz-/Bereit-Status (nur Venty/Veazy, da dort kein Ist-Temp-Wert sichtbar ist)
+  const hsl = $('#heatStatusLabel');
+  if(hsl){
+    if(State.device && State.device.type==='venty_veazy' && State.heater){
+      if(State.device.setpointReached){ hsl.textContent='✓ Bereit'; hsl.style.color='var(--ok)'; }
+      else { hsl.textContent='Heizt…'; hsl.style.color='var(--heat)'; }
+      hsl.style.display='';
+    } else { hsl.style.display='none'; }
+  }
   // v5.0.2: Boost-Button-Status (Venty/Veazy)
   const bb=$('#btnBoost'), sb=$('#btnSuperBoost');
   if(bb){ bb.classList.toggle('hot', !!(State.device&&State.device.boost)); bb.setAttribute('aria-pressed', String(!!(State.device&&State.device.boost))); }
@@ -11545,7 +11566,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.0.3 bereit.','ok');
+  log('Sessions v5.0.4 bereit.','ok');
 
   setupPwaUpdate();
 
