@@ -2,6 +2,10 @@
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern. Single-File HTML PWA, ~432 KB.
 
+## v5.2.0 — Sessions Pioneers (Beta-Tester-Framework)
+
+Foundation für die Multi-Brand-Roadmap: ein Beta-Status-System (`stable` / `mock_only` / `unverified`) pro Gerätefamilie, eine Pioneers-Karte im Setup (E-Mail- + GitHub-Issue-Vorlage, Status-Pills, Diagnose-Log-Export, Tester-Checkliste), ein Beta-Bestätigungs-Dialog vor dem ersten Heizen auf ungetesteten Geräten und ein Notfall-Stop-Button. Greift automatisch für künftige Beta-Adapter (PAX/Puffco/Firefly). Bestehende Geräte (Volcano stable, Venty/Veazy stable, Crafty/Mighty mock-validiert) unverändert.
+
 ## v5.1.0 — Polish-Features
 
 Vier nutzersichtbare Features, keine Adapter-Änderungen:

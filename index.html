@@ -2050,6 +2050,8 @@ button[data-sch-day].active{
       <div class="ind" id="indHeat" role="status" aria-label="Heizer: aus"><span class="dot" aria-hidden="true"></span><span>Heizer</span></div>
       <div class="ind" id="indPump" role="status" aria-label="Pumpe: aus"><span class="dot" aria-hidden="true"></span><span>Pumpe</span></div>
     </div>
+    <!-- v5.2.0 Phase 6a: Notfall-Stop bei unverified Beta-Geraeten -->
+    <button id="btnEmergencyStop" style="display:none;width:100%;margin-top:10px;background:#b30000;color:#fff;border:none;border-radius:10px;padding:14px;font-weight:800;font-size:15px;letter-spacing:.03em;cursor:pointer">🛑 NOTFALL-STOP (Heizer aus + trennen)</button>
     <div class="last-action" id="lastAction" role="status" aria-live="polite">
       <span class="label">Bereit</span>
       <span class="msg" id="lastActionMsg">Tippe „Verbinden" um zu starten</span>
@@ -2268,6 +2270,12 @@ button[data-sch-day].active{
     <button class="btn sm ghost block" id="btnResetTours" style="margin-top:10px">🎓 Geräte-Touren zurücksetzen</button>
   </div>
 
+  <!-- v5.2.0 Phase 6a: Sessions Pioneers -->
+  <div class="card" id="pioneersCard">
+    <h3>🚀 Sessions Pioneers</h3>
+    <div id="pioneersBody"></div>
+  </div>
+
   <!-- v5.1.0 Modul 2: Home Assistant Export -->
   <div class="card" id="haExportCard">
     <h3>Home Assistant Export</h3>
@@ -2439,6 +2447,26 @@ button[data-sch-day].active{
     <div class="row" style="gap:8px;margin-top:14px">
       <button class="btn ghost" id="slidesPrev" style="flex:1">← Zurück</button>
       <button class="btn primary" id="slidesNext" style="flex:2">Weiter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- v5.2.0 Phase 6a: Beta-Confirmation-Modal -->
+<div class="modal" id="modalBeta" role="alertdialog" aria-modal="true" aria-label="Beta-Bestätigung">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>🚀 Sessions Pioneers</h2>
+    <p class="wiz-text" style="white-space:pre-line">Du verbindest ein Gerät, das wir noch nicht selbst getestet haben: <b id="betaDeviceName">Gerät</b>. Das Protokoll ist aus Open-Source-Referenzen portiert und sollte funktionieren, 100% sicher können wir es aber erst sagen, wenn Tester wie du es bestätigen.
+
+⚠️ WICHTIG:
+• Lass das Gerät NIE unbeaufsichtigt
+• Sicherheits-Timer (8 Min) ist Pflicht und aktiv
+• Bei seltsamem Verhalten SOFORT Gerät ausschalten
+• Verwendung auf eigenes Risiko</p>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn ghost" id="btnBetaCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnBetaConfirm" style="flex:2">Verstanden, ich teste mit</button>
     </div>
   </div>
 </div>
@@ -4552,6 +4580,8 @@ async function cmdSetTemp(celsius){
 
 async function cmdHeaterOn(){
   if(!State.adapter) throw new Error('Kein Geraet verbunden.');
+  // v5.2.0 Phase 6a: Beta-Bestaetigung vor erstem Heizen auf unverified-Geraet (transparent fuer stable/mock_only)
+  if(!(await ensureBetaConfirmed())){ toast('Heizen abgebrochen (Beta nicht bestätigt)'); return; }
   return withBusy('Heizer EIN', async()=>{
     await State.adapter.heaterOn();
     log('Heizer EIN','ok');
@@ -7183,6 +7213,110 @@ function maybeMigrationWizard(){
   }catch(_){}
 }
 
+/* ═══ v5.2.0 PHASE 6a: SESSIONS PIONEERS (Beta-Tester-Framework) ═══
+   Reines UI/Status-Framework, KEIN Geraete-Protokoll (nichts geraten).
+   Greift automatisch fuer kuenftige unverified-Adapter (PAX/Puffco/Firefly). */
+const PIONEERS_EMAIL='andre@marianacannabis.de';
+const PIONEERS_REPO='MarianaCannabis/volcano';
+const BETA_STATUS = { volcano:'stable', crafty_mighty:'mock_only', venty_veazy:'stable', pax:'unverified', puffco:'unverified', firefly:'unverified' };
+const BETA_LABELS = { stable:{pill:'✓ Stable',color:'var(--ok)'}, mock_only:{pill:'🔬 Mock-validiert',color:'var(--accent,#5ab)'}, unverified:{pill:'🟡 Tester gesucht',color:'var(--hot)'} };
+const BETA_DEVNAMES = { volcano:'Volcano Hybrid', crafty_mighty:'Crafty / Mighty', venty_veazy:'Venty / Veazy', pax:'PAX', puffco:'Puffco', firefly:'Firefly' };
+function getBetaLevel(type){ return BETA_STATUS[type] || 'unverified'; }
+function getBetaInfo(type){ const level=getBetaLevel(type); const l=BETA_LABELS[level]||BETA_LABELS.unverified; return { level, label:l.pill, color:l.color, confirmKey:'sessions_beta_confirmed_'+type }; }
+
+// Modul B: Beta-Confirmation vor erstem Heizer-Befehl auf unverified-Geraet
+function betaNeedsConfirm(){
+  const t=State.adapter && State.adapter.constructor.deviceType;
+  if(!t || getBetaLevel(t)!=='unverified') return false;
+  try{ return !LS.get('sessions_beta_confirmed_'+t, false); }catch{ return true; }
+}
+let _betaResolve=null;
+function showBetaModal(){
+  return new Promise(res=>{
+    _betaResolve=res;
+    const t=State.adapter && State.adapter.constructor.deviceType;
+    const n=(State.adapter && State.adapter.constructor.displayName) || BETA_DEVNAMES[t] || 'Gerät';
+    const el=$('#betaDeviceName'); if(el) el.textContent=n;
+    $('#modalBeta')?.classList.add('open');
+  });
+}
+function resolveBeta(ok){
+  const t=State.adapter && State.adapter.constructor.deviceType;
+  if(ok && t){ try{ LS.set('sessions_beta_confirmed_'+t, new Date().toISOString()); }catch(_){} }
+  $('#modalBeta')?.classList.remove('open');
+  const r=_betaResolve; _betaResolve=null; if(r) r(!!ok);
+}
+async function ensureBetaConfirmed(){ if(!betaNeedsConfirm()) return true; return await showBetaModal(); }
+
+// Modul F: Notfall-Stop bei unverified-Geraeten
+async function emergencyStopBeta(){
+  log('NOTFALL-STOP ausgelöst','warn');
+  try{ if(State.adapter && State.adapter.heaterOff) await State.adapter.heaterOff(); }catch(_){}
+  try{ await cmdHeaterOff(); }catch(_){}
+  try{ if(State.adapter && State.adapter.constructor.capabilities.pump && State.adapter.pumpOff) await State.adapter.pumpOff(); }catch(_){}
+  try{ disconnectBLE(); }catch(_){}
+  toast('🛑 Notfall-Stop: Heizer aus + getrennt');
+}
+
+// Modul D: Diagnose-Log-Export
+function exportDiagnostics(){
+  const lines=[...document.querySelectorAll('#log div')].slice(-100).map(d=>d.textContent).join('\n');
+  const t=State.adapter && State.adapter.constructor.deviceType;
+  const info=[
+    'Sessions Diagnose-Export',
+    'Version: '+SW_VERSION_LABEL,
+    'Adapter: '+((State.adapter&&State.adapter.constructor.displayName)||'–')+' ('+(t||'–')+', Beta:'+(t?getBetaLevel(t):'–')+')',
+    'Gerät: '+((State.device&&State.device.name)||'–')+(State.device&&State.device.subtype?(' / '+State.device.subtype):''),
+    'Browser: '+navigator.userAgent,
+    'Zeit: '+new Date().toISOString(),
+    '--- letzte Log-Zeilen ---', lines,
+  ].join('\n');
+  navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
+}
+const SW_VERSION_LABEL='v5.2.0';
+
+// Modul E: Tester-Checklist (persistiert)
+const PIONEER_CHECKS=[
+  {id:'connect', t:'Verbindung wird stabil aufgebaut'},
+  {id:'detect', t:'Gerät korrekt erkannt (richtiger Name im Hero)'},
+  {id:'battery', t:'Akku-Anzeige zeigt plausiblen Wert'},
+  {id:'heater', t:'Heizer ein/aus reagiert'},
+  {id:'temp', t:'Zieltemperatur lässt sich setzen'},
+  {id:'safety', t:'Sicherheits-Timer aktiv (8 Min)'},
+  {id:'reconnect', t:'Reconnect nach kurzer Trennung'},
+];
+function getPioneerChecks(){ try{ return LS.get('sessions_pioneer_checks', {}) || {}; }catch{ return {}; } }
+function togglePioneerCheck(id){ const s=getPioneerChecks(); s[id]=!s[id]; try{ LS.set('sessions_pioneer_checks', s); }catch(_){} renderPioneersCard(); }
+
+// Modul C: Pioneers-Karte
+function pioneerMailto(){
+  const t=State.adapter && State.adapter.constructor.deviceType;
+  const dev=(State.adapter&&State.adapter.constructor.displayName)||(t&&BETA_DEVNAMES[t])||'Gerät';
+  const subj=encodeURIComponent('[Sessions Pioneers] Beta-Test '+dev);
+  const body=encodeURIComponent('Gerät: '+dev+'\nModell/Subtype: '+((State.device&&State.device.subtype)||'')+'\nBrowser: '+navigator.userAgent+'\n\nMein Feedback:\n');
+  return 'mailto:'+PIONEERS_EMAIL+'?subject='+subj+'&body='+body;
+}
+function pioneerIssueUrl(){
+  const t=State.adapter && State.adapter.constructor.deviceType;
+  const dev=(State.adapter&&State.adapter.constructor.displayName)||(t&&BETA_DEVNAMES[t])||'Gerät';
+  const title=encodeURIComponent('[Pioneers] Beta-Test '+dev);
+  const body=encodeURIComponent('Gerät: '+dev+'\nBrowser: '+navigator.userAgent+'\n\nBeobachtung:\n');
+  return 'https://github.com/'+PIONEERS_REPO+'/issues/new?title='+title+'&body='+body+'&labels=pioneers,beta-test';
+}
+function renderPioneersCard(){
+  const root=$('#pioneersBody'); if(!root) return;
+  const pills=Object.keys(BETA_STATUS).map(t=>{const i=getBetaInfo(t);return `<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid ${i.color};color:${i.color};margin:2px 4px 2px 0">${BETA_DEVNAMES[t]}: ${i.label}</span>`;}).join('');
+  const checks=getPioneerChecks();
+  const checkHtml=PIONEER_CHECKS.map(c=>`<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0;cursor:pointer"><input type="checkbox" data-pcheck="${c.id}" ${checks[c.id]?'checked':''}> ${c.t}</label>`).join('');
+  root.innerHTML = `<p class="wiz-text"><small>Wir testen neue Geräte gemeinsam mit der Community. Wenn du ein Gerät mit „🟡 Tester gesucht" besitzt, hilf mit: verbinde es, teste die Checkliste und schick uns Feedback. Du bekommst direkten Draht zur Entwicklung und Credits.</small></p>`
+    + `<div style="margin:8px 0">${pills}</div>`
+    + `<div class="row" style="gap:8px;margin:8px 0"><a class="btn sm ghost" style="flex:1;text-align:center" href="${pioneerMailto()}">📧 E-Mail</a><a class="btn sm ghost" style="flex:1;text-align:center" target="_blank" rel="noopener" href="${pioneerIssueUrl()}">🐙 GitHub-Issue</a></div>`
+    + `<button class="btn sm ghost block" id="btnDiagExport" style="margin-bottom:8px">📋 Diagnose-Log kopieren</button>`
+    + `<details><summary style="cursor:pointer;font-size:13px;font-weight:600">Tester-Checkliste</summary><div style="margin-top:6px">${checkHtml}</div></details>`;
+  root.querySelector('#btnDiagExport')?.addEventListener('click', exportDiagnostics);
+  root.querySelectorAll('[data-pcheck]').forEach(cb=>cb.addEventListener('change', e=>togglePioneerCheck(e.currentTarget.dataset.pcheck)));
+}
+
 /* ═══ v5.1.0 MODUL 2: Home Assistant Export (WebHook-basiert, kein Push-Server) ═══ */
 const HA_WEBHOOK_KEY='sessions_ha_webhook';
 function haGetWebhook(){ try{ return LS.get(HA_WEBHOOK_KEY,'') || ''; }catch{ return ''; } }
@@ -8229,6 +8363,9 @@ function applyCapabilitiesUI(){
   // v5.0.2: Boost-Visualization-Toggle nur bei Venty/Veazy
   const bvRow = $('#boostVizRow');
   if(bvRow) bvRow.style.display = (State.adapter && State.adapter.constructor.capabilities.boost && State.adapter.setBoostVisualization) ? '' : 'none';
+  // v5.2.0 Phase 6a: Notfall-Stop bei unverified Beta-Geraeten dauerhaft sichtbar
+  const es = $('#btnEmergencyStop');
+  if(es) es.style.display = (State.adapter && getBetaLevel(State.adapter.constructor.deviceType)==='unverified') ? '' : 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -11707,6 +11844,11 @@ async function init(){
   wireSlides();          // v5.1.0 Modul 3+4
   $('#btnResetTours')?.addEventListener('click', resetDeviceTours);
   maybeMigrationWizard();// v5.1.0 Modul 4: v4->v5 Wizard beim ersten Start
+  // v5.2.0 Phase 6a: Sessions Pioneers
+  renderPioneersCard();
+  $('#btnBetaConfirm')?.addEventListener('click', ()=>resolveBeta(true));
+  $('#btnBetaCancel')?.addEventListener('click', ()=>resolveBeta(false));
+  $('#btnEmergencyStop')?.addEventListener('click', emergencyStopBeta);
   loadNotes();
   renderBagCurrent();
   initVoice();
@@ -11786,7 +11928,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v5.1.0 bereit.','ok');
+  log('Sessions v5.2.0 bereit.','ok');
 
   setupPwaUpdate();
 
