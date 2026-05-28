@@ -7,3 +7,4 @@ UEBERGABE-*.md
 v5_0_PLAN*.md
 node_modules/
 *.zip
+csc-config.json

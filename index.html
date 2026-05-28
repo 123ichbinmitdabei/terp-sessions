@@ -4542,6 +4542,8 @@ const PREFS_DEFAULTS = {
   // v8.4.0 Modul 2/3: Voice-Erweiterung
   voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
   wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
+  // v8.5.0-prep: CSC-Mode (Cloud-Sync). DORMANT default off. Backend muss separat eingerichtet werden.
+  cscEnabled:false,       // Feature-Flag. UI/Funktionen bleiben aus, wenn false.
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
   pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
@@ -14479,6 +14481,152 @@ async function init(){
   // v8.4.0 Modul 3: Wake-Word starten falls vom Nutzer eingeschaltet
   setupWakeWord();
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.5.0-prep: CSC-MODE CLIENT (dormant, hinter PREFS.cscEnabled)
+
+   Sicherheitsmodell (siehe CSC-SECURITY.md + csc-backend.sql):
+   - KEIN direkter Tabellen-Zugriff. Nur RPC-Aufrufe gegen das eingerichtete
+     Supabase-Projekt; jede RPC verifiziert Code+PIN serverseitig.
+   - Config aus csc-config.json (gitignored). Fehlt sie → cscReady()=false.
+   - Default-OFF: cscEnabled-Toggle existiert in PREFS, UI ist NICHT verdrahtet.
+   - Storage: sessions_csc_code (Code), sessions_csc_pin (PIN, lokal nötig für
+     Auto-Sync). PIN ist im Server bcrypt-gehashed, lokal nur auf Geräten des
+     Users — Threat-Model: Cloud-Schutz, nicht lokales Tamper.
+═══════════════════════════════════════════════════════════════════════════ */
+let _cscConfig = null;
+let _cscConfigLoaded = false;
+async function cscLoadConfig(){
+  if(_cscConfigLoaded) return _cscConfig;
+  _cscConfigLoaded = true;
+  try{
+    const res = await fetch('csc-config.json', {cache:'no-store'});
+    if(!res.ok) return null;
+    const cfg = await res.json();
+    if(cfg && cfg.url && cfg.anonKey && /^https:\/\//.test(cfg.url) && cfg.anonKey.length > 20){
+      _cscConfig = { url: cfg.url.replace(/\/$/,''), anonKey: cfg.anonKey };
+      return _cscConfig;
+    }
+  }catch(_){}
+  return null;
+}
+async function cscReady(){
+  if(!PREFS.cscEnabled) return false;
+  return !!(await cscLoadConfig());
+}
+async function cscRPC(name, args){
+  const cfg = await cscLoadConfig();
+  if(!cfg) throw new Error('CSC_NOT_CONFIGURED');
+  const url = cfg.url + '/rest/v1/rpc/' + encodeURIComponent(name);
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey': cfg.anonKey,
+      'Authorization':'Bearer '+cfg.anonKey,
+      'Accept':'application/json',
+    },
+    body: JSON.stringify(args || {}),
+  });
+  let body = null; try{ body = await res.json(); }catch(_){}
+  if(!res.ok){
+    const msg = (body && (body.message || body.hint)) || res.statusText || 'RPC_ERROR';
+    const err = new Error(msg);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
+}
+/* ── öffentliche Client-Funktionen ─────────────────────────────────────── */
+const cscClient = {
+  async register(pin){
+    const r = await cscRPC('csc_register', { p_pin: String(pin||'') });
+    if(r && r.code){
+      try{ LS.set('sessions_csc_code', r.code); LS.set('sessions_csc_pin', String(pin)); }catch{}
+    }
+    return r;
+  },
+  async login(code, pin){
+    const r = await cscRPC('csc_verify', { p_code: code, p_pin: String(pin||'') });
+    if(r && r.ok){
+      try{ LS.set('sessions_csc_code', code); LS.set('sessions_csc_pin', String(pin)); }catch{}
+    }
+    return r;
+  },
+  logout(){
+    try{ LS.set('sessions_csc_code', null); LS.set('sessions_csc_pin', null); }catch{}
+  },
+  isLoggedIn(){
+    try{ return !!(LS.get('sessions_csc_code', null) && LS.get('sessions_csc_pin', null)); }catch{ return false; }
+  },
+  creds(){
+    try{ return { code: LS.get('sessions_csc_code', null), pin: LS.get('sessions_csc_pin', null) }; }catch{ return {code:null,pin:null}; }
+  },
+  async pushSession(session){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    return cscRPC('csc_push_session', {
+      p_code:      c.code,
+      p_pin:       c.pin,
+      p_client_id: String(session.id || ''),
+      p_started_at:session.startedAt ? new Date(session.startedAt).toISOString() : null,
+      p_duration_sec: session.durationSec || null,
+      p_device:    session.device || null,
+      p_strength:  (typeof session.strength === 'number') ? session.strength : null,
+      p_effect:    session.effect || null,
+      p_aroma:     session.aroma  || null,
+    });
+  },
+  async pullSessions(limit){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    return cscRPC('csc_pull_sessions', { p_code:c.code, p_pin:c.pin, p_limit: limit||500 });
+  },
+  async joinCircle(circleId){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    return cscRPC('csc_join_circle', { p_code:c.code, p_pin:c.pin, p_circle_id: String(circleId||'') });
+  },
+  async leaveCircle(){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    return cscRPC('csc_leave_circle', { p_code:c.code, p_pin:c.pin });
+  },
+  async circleStats(circleId, days){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    return cscRPC('csc_circle_stats', { p_code:c.code, p_pin:c.pin, p_circle_id:String(circleId||''), p_days: days||7 });
+  },
+  async deleteAccount(){
+    const c = this.creds(); if(!c.code || !c.pin) throw new Error('NOT_LOGGED_IN');
+    const r = await cscRPC('csc_delete_account', { p_code:c.code, p_pin:c.pin });
+    this.logout();
+    return r;
+  },
+};
+/* Welche Sessions sind „zum Teilen markiert"? localStorage-Set von Session-IDs. */
+function cscMarkShared(sessionId, shared){
+  const set = new Set(LS.get('sessions_csc_shared_v1', []));
+  if(shared) set.add(sessionId); else set.delete(sessionId);
+  LS.set('sessions_csc_shared_v1', [...set]);
+}
+function cscIsShared(sessionId){
+  try{ return (LS.get('sessions_csc_shared_v1', []) || []).indexOf(sessionId) !== -1; }catch{ return false; }
+}
+function cscSharedIds(){
+  try{ return LS.get('sessions_csc_shared_v1', []) || []; }catch{ return []; }
+}
+/* Push aller markierten Sessions die noch nicht im Cloud-Status sind. Triggert
+   sich NIE automatisch — explizit aufzurufen, sobald UI vorhanden ist. */
+async function cscSyncMarked(){
+  if(!await cscReady()) return { skipped:true, reason:'csc-not-ready' };
+  if(!cscClient.isLoggedIn()) return { skipped:true, reason:'not-logged-in' };
+  const shared = new Set(cscSharedIds());
+  const all = (typeof sessionsAll === 'function') ? sessionsAll() : [];
+  const todo = all.filter(s => shared.has(s.id));
+  const results = [];
+  for(const s of todo){
+    try{ const r = await cscClient.pushSession(s); results.push({id:s.id, ok:true, server_id:r.id}); }
+    catch(e){ results.push({id:s.id, ok:false, error:e.message}); }
+  }
+  return { skipped:false, count: results.length, results };
+}
+
 document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>

@@ -2,6 +2,19 @@
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
+## v8.5.0-prep — CSC-Mode (DORMANT, nicht für Endnutzer)
+
+**Sicherheitskritisch.** App-Version bleibt v8.4.0. Diese Vorbereitung committet:
+
+- `csc-backend.sql` — Schema + RLS-deny-all + SECURITY-DEFINER-RPCs (bcrypt-PIN-Hash via pgcrypto, Brute-Force-Lockout, k-anonymity auf Kreis-Aggregaten).
+- `cscClient` im Frontend — feature-flagged hinter `PREFS.cscEnabled` (default **false**), kein UI verdrahtet, keine Auto-Sync-Trigger. Ohne `csc-config.json` passiert nichts.
+- `CSC-SECURITY.md` — Threat-Model, logische Bewertung der 5 Pflicht-Selbst-Angriffe (Live-Lauf muss Andre nach Setup machen), DSGVO-Checkliste.
+- `csc-config.example.json` — Vorlage; `csc-config.json` ist gitignored.
+
+**Vor Aktivierung muss Andre:** Supabase-Projekt anlegen (EU-Region), `csc-backend.sql` ausführen, die 5 Live-Angriffe mit `curl` durchspielen, Einwilligungs-UI ergänzen, DPA + Privacy-Policy klären. Siehe `CSC-SECURITY.md` für Details. Nichts davon ist mit diesem Commit live.
+
+Tests: +28 (`v85csc.mjs`, fetch-mocked) → 345 / 345 über 16 Suiten grün. Keine Änderung an Adaptern, Voice, Onboarding, Heizkurven, Aroma oder lokalem Tracking.
+
 ## v8.4.0 — Onboarding + Voice
 
 Keine Änderung an Adaptern, Pioneers-Framework, UX-Polish, Session-Tracking, Heizkurven oder Aroma-Bibliothek.

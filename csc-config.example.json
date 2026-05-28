@@ -1,0 +1,5 @@
+{
+  "url": "https://<projekt-ref>.supabase.co",
+  "anonKey": "<aus Supabase → Settings → API → anon public>",
+  "_hinweis": "Datei umbenennen zu csc-config.json. Andre legt das Supabase-Projekt manuell an, fuehrt csc-backend.sql aus und traegt die zwei Werte ein. csc-config.json ist in .gitignore."
+}
