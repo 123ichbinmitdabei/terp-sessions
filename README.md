@@ -1,6 +1,35 @@
-# Sessions — Vape Controller (v8.3.0)
+# Sessions — Vape Controller (v8.4.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.4.0 — Onboarding + Voice
+
+Keine Änderung an Adaptern, Pioneers-Framework, UX-Polish, Session-Tracking, Heizkurven oder Aroma-Bibliothek.
+
+### Erst-Onboarding
+
+Frische Nutzer (kein `sessions_onboarded_v1`, `vol_tour_completed` oder `vol_onboarded` im Storage) sehen beim ersten Start einen 5-Slide-Welcome-Flow via dem bestehenden `showSlides`-Modal: Willkommen / Geräte / Verbinden / Features / Sicherheit. Nach Abschluss läuft die bestehende interaktive Schritt-für-Schritt-Tour (`startOnboardingTour`) automatisch weiter. Setup-Tab → „Onboarding nochmal zeigen" startet den Welcome-Flow erneut (unabhängig vom Tour-Reset-Button). Alt-Nutzer (vorhandenes `vol_tour_completed`) sehen weiterhin den bestehenden v5-Migrations-Wizard, nicht das Welcome.
+
+Zusätzlich: ein dezenter „👆 hier tippen"-Pill neben dem „Verbinden"-Button für noch nicht verbundene Frisch-Nutzer (verschwindet beim ersten Connect-Versuch, dauerhaft via `sessions_connect_hint_dismissed_v1`).
+
+### Voice-Steuerung — erweitert
+
+Der existierende Voice-Pfad wurde um einen reinen Parser (`parseVoiceCommand(text) → {action, value, raw}`) refaktoriert — testbar ohne Web-Speech-API. Neue Befehle: „wärmer / heißer / hotter" (+5 °C), „kälter / cooler" (−5 °C), „status / wie warm" (TTS-Statusantwort über bestehendes `speakStatus`), „trennen / disconnect", „boost". Deutsche Zahlwörter werden via `parseGermanNumber` aufgelöst — z. B. „auf hundertneunundachtzig grad" → 189. Englische Varianten (`heater on`, `stop heating`, `pump for 20 seconds`, `set temperature 200`) werden ebenfalls erkannt. Hardlimits (`tempRange`) und das Beta-Confirmation-Modal (für `unverified`-Adapter wie PAX) gelten unverändert auch für Voice — kein Bypass.
+
+### Wake-Word „Hey Sessions" 🧪 (experimentell)
+
+Optionaler Toggle im Setup (Default AUS). **Ehrliche Bewertung im UI und im Code:**
+
+- **Was es ist:** Web Speech API mit `continuous=true`, hört auf Prefix „Hey Sessions / Okay Sessions / Sessions". Nach Match spricht die App via TTS „Ja?" und der nächste Satz wird als Voice-Befehl ausgeführt. 10 s Dialog-Timeout. Auto-Restart über `onend`, da die Recognition periodisch von alleine stoppt.
+- **Was es NICHT ist:** kein lokales On-Device-Wake-Word wie Alexa/Hey-Siri. Chrome routet das Audio über die Google-Speech-Cloud — das ist im Setup-Label und in den Code-Kommentaren so dokumentiert.
+- **Wo es geht:** Chrome / Edge auf Android und Desktop. iOS Safari, Firefox: nicht unterstützt; der Toggle lehnt das ab und meldet das per Toast.
+- **Wo Vorsicht:** Mikrofon ist dauer-aktiv (Akku); Beta-Confirmation bleibt aktiv (Wake-Word kann keine ungelabelten Heiz-Befehle „durchrutschen" lassen).
+
+### Tests + Regression
+
+- +79 neue Tests: `v84onboarding.mjs` (19) + `v84voice.mjs` (60).
+- **317 / 317** über 15 Suiten grün.
+- Forward-compat: zwei Versionsasserts (`v51`, `v83aroma`) auf `^v8\.` gelockert; v51-Migration-Test prüft jetzt den Wizard-Titel (statt nur ob das Slides-Modal offen ist), damit der neue Welcome-Flow für frische Nutzer nicht fälschlich als Migration durchgeht.
 
 ## v8.3.0 — Heizkurven-Editor + Aroma-Bibliothek
 

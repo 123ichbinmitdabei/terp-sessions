@@ -1053,6 +1053,37 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
 }
 .voice-feedback.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
+/* v8.4.0: dezenter Verbinden-Hinweis für frische User */
+.connect-hint{
+  display:inline-flex;align-items:center;
+  margin-left:6px;padding:3px 8px;border-radius:999px;
+  background:rgba(255,140,40,.16);color:var(--hot);
+  border:1px solid rgba(255,140,40,.45);
+  font-size:11px;font-weight:600;white-space:nowrap;
+  animation:pulse 1.6s ease-in-out infinite;
+  pointer-events:none;
+}
+
+/* v8.4.0: Wake-Word-Indikator */
+.wake-indicator{
+  position:fixed;left:14px;
+  bottom:calc(108px + var(--safe-bot-padding));z-index:34;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(42,34,26,.92);color:var(--text);
+  border:1px solid var(--line);
+  padding:6px 12px;border-radius:999px;
+  font-size:11px;font-family:var(--font-mono);
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+.wake-indicator[hidden]{display:none}
+.wake-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--hot);
+  box-shadow:0 0 8px var(--hot);
+  animation:pulse 1.4s ease-in-out infinite;
+}
+.wake-indicator.dialog{border-color:var(--hot);background:rgba(255,87,34,.25)}
+
 /* ═══ Aroma cards (v4.4) ═══════════════════════════════════════ */
 .aroma-search{
   width:100%;padding:11px 14px;
@@ -2094,6 +2125,7 @@ button[data-sch-day].active{
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
     <button class="btn sm ghost" id="btnConnect" aria-label="Mit Volcano verbinden">Verbinden</button>
+    <span class="connect-hint" id="connectHint" hidden aria-hidden="true">👆 hier tippen</span>
     <button class="user-avatar" id="userAvatar" aria-label="Profil wechseln">👤</button>
     <button class="help-ico" id="btnHelp" aria-label="Hilfe und Anleitung öffnen">?</button>
     <button class="help-ico" id="btnSettings" aria-label="Einstellungen öffnen" style="margin-left:4px">⚙</button>
@@ -2624,6 +2656,12 @@ button[data-sch-day].active{
 <button class="voice-fab" id="voiceFab" aria-label="Sprachsteuerung aktivieren" style="display:none">🎤</button>
 <div class="voice-feedback" id="voiceFeedback" role="status" aria-live="polite"></div>
 
+<!-- v8.4.0: Wake-Word-Indikator (sichtbar wenn Wake-Word aktiv hört) -->
+<div class="wake-indicator" id="wakeIndicator" role="status" aria-live="polite" hidden>
+  <span class="wake-dot" aria-hidden="true"></span>
+  <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
+</div>
+
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
   <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" data-tip="Steuerung — Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
@@ -3033,6 +3071,15 @@ button[data-sch-day].active{
         <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
       </details>
 
+      <div class="toggle-row">
+        <div class="info"><b>Sprachausgabe (TTS)</b><small>Bestätigt Status-Abfragen vorlesen</small></div>
+        <button class="toggle" id="togVoiceTts" role="switch" aria-checked="true" aria-label="Sprachausgabe"></button>
+      </div>
+      <div class="toggle-row">
+        <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
+        <button class="toggle" id="togWakeWord" role="switch" aria-checked="false" aria-label="Wake-Word"></button>
+      </div>
+
       <h3 class="set-section-h">Siri / Google Assistant</h3>
       <p class="set-section-desc">Befehle per Sprache über Siri-Kurzbefehle oder Google-Routinen. URL-basiert.</p>
       <button class="btn sm ghost block" id="btnOpenShortcutsFromSettings">🎙 Anleitung & Befehl-URLs</button>
@@ -3087,7 +3134,8 @@ button[data-sch-day].active{
       </div>
 
       <h3 class="set-section-h">App zurücksetzen</h3>
-      <button class="btn sm ghost block" id="btnResetOnboarding" data-tip="Startet die geführte Tour neu — zeigt dir Schritt für Schritt die wichtigsten Funktionen">🎓 Tour neu starten</button>
+      <button class="btn sm ghost block" id="btnReplayWelcome" data-tip="Zeigt den Begrüßungs-Slidesatz für neue Nutzer erneut">👋 Onboarding nochmal zeigen</button>
+      <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px" data-tip="Startet die geführte Tour neu — zeigt dir Schritt für Schritt die wichtigsten Funktionen">🎓 Tour neu starten</button>
       <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
     </div>
 
@@ -4491,6 +4539,9 @@ const PREFS_DEFAULTS = {
   fontScale:100,          // 100=normal, 125=mittel, 150=groß
   highContrast:false,     // WCAG AAA Hochkontrast-Modus
   voiceReadout:false,     // automatischer TTS jede 30s
+  // v8.4.0 Modul 2/3: Voice-Erweiterung
+  voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
+  wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
   pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
@@ -6819,6 +6870,21 @@ function wire(){
     $('#voiceCmdSub').hidden = !v;
     initVoice();
   });
+  // v8.4.0 Modul 2/3: TTS- und Wake-Word-Toggles
+  wireToggle('#togVoiceTts', ()=>PREFS.voiceTts !== false, v=>{
+    PREFS.voiceTts = v; savePrefs();
+  });
+  wireToggle('#togWakeWord', ()=>!!PREFS.wakeWord, v=>{
+    if(v && !isWakeWordSupported()){
+      toast('Wake-Word in diesem Browser nicht unterstützt (Chrome/Edge auf Android/Desktop nötig)');
+      syncToggle('togWakeWord', false);
+      PREFS.wakeWord = false; savePrefs();
+      return;
+    }
+    PREFS.wakeWord = v; savePrefs();
+    setupWakeWord();
+    if(v) toast('Wake-Word aktiv — „Hey Sessions" sagen. Mikrofon dauer-an.');
+  });
   document.querySelectorAll('[data-vc]').forEach(b=>{
     b.addEventListener('click', ()=>{
       const k = b.dataset.vc;
@@ -6837,6 +6903,11 @@ function wire(){
     $('#modalSettings').classList.remove('open');
     setTimeout(()=>startOnboardingTour(true), 350);
   });
+  // v8.4.0: Welcome-Flow erneut zeigen (separat von der interaktiven Tour)
+  $('#btnReplayWelcome')?.addEventListener('click', ()=>{ resetWelcomeFlow(); });
+  // v8.4.0: Connect-Hinweis verschwindet beim ersten Connect-Versuch
+  $('#btnConnect')?.addEventListener('click', hideConnectHint);
+  $('#btnConnect2')?.addEventListener('click', hideConnectHint);
 
   // Bag fill
   // Bag fill (Quick-Action im Hero ist Trigger)
@@ -8777,6 +8848,65 @@ function wireSlides(){
   $('#slidesSkip')?.addEventListener('click', ()=>closeSlides(true)); // Skip zaehlt als gesehen
 }
 
+/* ═══ v8.4.0 MODUL 1: WELCOME-FLOW (frische Nutzer) ═══════════════
+   Eigenständiges 5-Slide-Erst-Onboarding, läuft VOR der bestehenden
+   Tour. Setzt `sessions_onboarded_v1` nach Abschluss; bestehende
+   alte-User-Migration (vol_tour_completed → maybeMigrationWizard)
+   bleibt unverändert. */
+const WELCOME_SLIDES = [
+  {h:'Willkommen bei Sessions', t:'Sessions ist dein Multi-Gerät-Vape-Controller von Mariana Cannabis — heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud.'},
+  {h:'Welche Geräte?', t:'• Storz & Bickel: Volcano, Crafty, Mighty, Venty, Veazy — voll unterstützt\n• PAX 3, Puffco Peak Pro — Beta (Tester gesucht)\n• Firefly — Probe-Only (Reverse-Engineering-Hilfe willkommen)'},
+  {h:'So verbindest du', t:'1. Bluetooth einschalten\n2. Oben rechts auf „Verbinden" tippen\n3. Dein Gerät aus der Liste wählen\n\nHinweis: Es geht nur in Chrome oder Edge (Android/Desktop). iOS Safari unterstützt Web-Bluetooth leider nicht.'},
+  {h:'Was Sessions kann', t:'• Temperatur + Heizer steuern\n• Programme und visueller Heizkurven-Editor\n• Aroma-Bibliothek mit Filter und Empfehlungen\n• Session-Tracking (optional, lokal)\n• Sprachsteuerung und Wake-Word (experimentell)'},
+  {h:'Sicherheit zuerst', t:'• Gerät nie unbeaufsichtigt heizen lassen\n• Sicherheits-Timer ist automatisch aktiv (Default 25 Min)\n• Bei Beta-Geräten: du testest mit — Vorsicht und Rückmeldung willkommen\n\nLos geht\'s!'},
+];
+function isFreshUser(){
+  try{
+    if(LS.get('sessions_onboarded_v1', false)) return false;
+    if(LS.get('vol_tour_completed', false)) return false;
+    if(LS.get('vol_onboarded', false)) return false;
+    return true;
+  }catch{ return false; }
+}
+function maybeWelcomeFlow(force, opts){
+  try{
+    if(!force && !isFreshUser()) return false;
+    setTimeout(()=>showSlides('Willkommen bei Sessions', WELCOME_SLIDES, ()=>{
+      try{ LS.set('sessions_onboarded_v1', true); }catch(_){}
+      if(opts && typeof opts.onDone==='function') opts.onDone();
+    }), (opts && opts.delay) || 700);
+    return true;
+  }catch(_){ return false; }
+}
+function resetWelcomeFlow(){
+  try{
+    LS.set('sessions_onboarded_v1', false);
+    $('#modalSettings')?.classList.remove('open');
+    maybeWelcomeFlow(true, {delay:350});
+  }catch(_){}
+}
+
+/* v8.4.0 MODUL 1: dezenter Verbinden-Hinweis für frische User. */
+let _connectHintShown = false;
+function maybeShowConnectHint(){
+  try{
+    if(_connectHintShown) return;
+    if(LS.get('sessions_connect_hint_dismissed_v1', false)) return;
+    if(!isFreshUser() && !LS.get('sessions_onboarded_v1', false)) return;
+    if(State && State.connected) return;
+    if(LS.get('vol_voice_used', false)) return; // schon mal erfolgreich verbunden o.ä.
+    const el = $('#connectHint'); if(!el) return;
+    el.hidden = false; _connectHintShown = true;
+  }catch(_){}
+}
+function hideConnectHint(){
+  try{
+    const el = $('#connectHint'); if(el){ el.hidden = true; }
+    _connectHintShown = false;
+    LS.set('sessions_connect_hint_dismissed_v1', true);
+  }catch(_){}
+}
+
 const DEVICE_TOURS = {
   volcano: { title:'🌋 Volcano', slides:[
     {h:'Willkommen, Volcano-User', t:'Sessions kann jetzt mehr, dein Volcano funktioniert weiterhin genau wie gewohnt.'},
@@ -8890,7 +9020,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.3.0';
+const SW_VERSION_LABEL='v8.4.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9398,91 +9528,234 @@ function toggleVoiceListening(){
   if(voiceListening) stopVoice(); else startVoice();
 }
 
+/* ═══ v8.4.0 MODUL 2: VOICE-PARSER (testbar, ohne Web-Speech) ═════
+   Reine Logik. Liefert {action, value, raw}. Hardlimits + Beta-Gate
+   greifen weiterhin in cmdSetTemp / cmdHeaterOn (nichts wird umgangen). */
+
+const _GERMAN_NUM = {
+  null:0, eins:1, eine:1, ein:1, zwei:2, drei:3, vier:4, fuenf:5, sechs:6, sieben:7, acht:8, neun:9,
+  zehn:10, elf:11, zwoelf:12, dreizehn:13, vierzehn:14, fuenfzehn:15, sechzehn:16, siebzehn:17, achtzehn:18, neunzehn:19,
+  zwanzig:20, dreissig:30, vierzig:40, fuenfzig:50, sechzig:60, siebzig:70, achtzig:80, neunzig:90,
+  hundert:100,
+};
+function _normalizeGerman(s){
+  return (s||'').toLowerCase()
+    .replace(/ß/g,'ss').replace(/ü/g,'ue').replace(/ö/g,'oe').replace(/ä/g,'ae');
+}
+function parseGermanNumber(text){
+  if(text==null) return null;
+  const norm = _normalizeGerman(String(text)).replace(/[^a-z]/g,'');
+  if(!norm) return null;
+  if(_GERMAN_NUM[norm] !== undefined) return _GERMAN_NUM[norm];
+  let val = 0; let rest = norm;
+  const hundredsMatch = rest.match(/^(ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)?hundert/);
+  if(hundredsMatch){
+    const mult = hundredsMatch[1] ? _GERMAN_NUM[hundredsMatch[1]] : 1;
+    val += mult * 100;
+    rest = rest.slice(hundredsMatch[0].length);
+  }
+  if(rest.length === 0) return val>0 ? val : null;
+  const compMatch = rest.match(/^(ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)und(zwanzig|dreissig|vierzig|fuenfzig|sechzig|siebzig|achtzig|neunzig)$/);
+  if(compMatch){
+    val += _GERMAN_NUM[compMatch[1]] + _GERMAN_NUM[compMatch[2]];
+    return val;
+  }
+  const tensMatch = rest.match(/^(zwanzig|dreissig|vierzig|fuenfzig|sechzig|siebzig|achtzig|neunzig|zehn|elf|zwoelf|dreizehn|vierzehn|fuenfzehn|sechzehn|siebzehn|achtzehn|neunzehn|ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)$/);
+  if(tensMatch){
+    val += _GERMAN_NUM[tensMatch[1]];
+    return val;
+  }
+  return null;
+}
+
+const _GER_HUNDREDS = '(?:ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)?hundert';
+const _GER_UNIT = '(?:ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)';
+const _GER_TEN = '(?:zwanzig|dreissig|vierzig|fuenfzig|sechzig|siebzig|achtzig|neunzig)';
+const _GER_TEEN = '(?:zehn|elf|zwoelf|dreizehn|vierzehn|fuenfzehn|sechzehn|siebzehn|achtzehn|neunzehn)';
+const _GER_NUM_RE = new RegExp(`(?:${_GER_HUNDREDS}(?:${_GER_UNIT}und${_GER_TEN}|${_GER_TEEN}|${_GER_TEN}|${_GER_UNIT})?|${_GER_UNIT}und${_GER_TEN}|${_GER_TEEN}|${_GER_TEN}|${_GER_UNIT})`);
+
+function parseVoiceCommand(txt){
+  const raw = String(txt||'');
+  const tOrig = raw.toLowerCase().trim();
+  if(!tOrig) return { action:null, raw };
+  const t = _normalizeGerman(tOrig);
+
+  // Status
+  if(/(\bstatus\b|wie\s*warm|wie\s*heiss|aktuelle\s*temp|how\s*(hot|warm)|temp(eratur)?\s*\?|whats?\s+the\s+temp)/.test(t)){
+    return { action:'status', raw };
+  }
+
+  // Disconnect
+  if(/(verbindung\s*trennen|trennen|disconnect|trenne\s*verbindung)/.test(t)){
+    return { action:'disconnect', raw };
+  }
+
+  // Boost
+  if(/\bboost\b/.test(t)) return { action:'boost', raw };
+
+  // Heater on/off (vor stopAll, sonst frisst „stop heating" das hier)
+  if(/(heize?r?\s*(an|ein|start|on)\b|aufheizen|anheizen|heizen\s*(start|an)|heat(?:er)?\s*on|start\s*heating)/.test(t)
+    && !/(wie|status|warmer|kaelter|hotter|colder)/.test(t)){
+    return { action:'heaterOn', raw };
+  }
+  if(/(heize?r?\s*(aus|stop|off)\b|heizen\s*(stop|aus)|heat(?:er)?\s*off|stop\s*heating)/.test(t)){
+    return { action:'heaterOff', raw };
+  }
+
+  // Stop everything (steht NACH heater, damit „stop heating" nicht hier gefangen wird)
+  if(/(\bstopp?\b|\bstop\b|alles\s*aus|alles\s*stoppen|abbrechen|notaus|emergency|all\s*stop|stop\s*all)/.test(t)){
+    return { action:'stopAll', raw };
+  }
+
+  // Wärmer / kälter — feste ±5°C
+  if(/(waermer|heisser|hotter|warmer|hoeher|increase|warmer\s*bitte)/.test(t)){
+    return { action:'tempUp', value:5, raw };
+  }
+  if(/(kaelter|kuehler|colder|cooler|niedriger|decrease|kuehler\s*bitte)/.test(t)){
+    return { action:'tempDown', value:5, raw };
+  }
+
+  // Pump for X seconds — DIGITS
+  const pf = t.match(/pumpe?\s+(?:fuer\s+|for\s+)?(\d+)\s*(?:sek|sekunden|s\b|seconds?|sec)/);
+  if(pf) return { action:'pumpFor', value: parseInt(pf[1]), raw };
+
+  // Bag/Ballon
+  if(/(ballon|bag)\s*(fuellen|fill|voll)/.test(t)) return { action:'fillBag', raw };
+  if(/pumpe?\s*(an|ein|start|on)\b/.test(t)) return { action:'pumpOn', raw };
+  if(/pumpe?\s*(aus|stop|off)\b/.test(t)) return { action:'pumpOff', raw };
+
+  // Set temperature — digits
+  const td = t.match(/(?:heize?|setze?|stelle?|auf|temp(?:eratur)?|set\s*temperature|temperature|set)\s*(?:auf\s*)?(\d{2,3})\s*(?:grad|degrees?|°c?|°)?/);
+  if(td){
+    const v = parseInt(td[1]);
+    return { action:'setTemp', value: v, raw };
+  }
+  // Just "180 grad" without prefix
+  const td2 = t.match(/(?:^|\s)(\d{2,3})\s*(grad|°c?|°|degrees?)\b/);
+  if(td2){
+    return { action:'setTemp', value: parseInt(td2[1]), raw };
+  }
+  // German number words: "auf hundertachtzig grad", "hundertachtzig grad", "temperatur hundertachtzig"
+  const tw = t.match(new RegExp(`(?:auf|heize?|setze?|stelle?|temperatur|temp|set)\\s*(?:auf\\s*)?(${_GER_NUM_RE.source})\\s*(?:grad|degrees?|°c?|°)?`));
+  if(tw){
+    const v = parseGermanNumber(tw[1]);
+    if(v !== null) return { action:'setTemp', value: v, raw };
+  }
+  const tw2 = t.match(new RegExp(`(?:^|\\s)(${_GER_NUM_RE.source})\\s*(grad|degrees?|°c?|°)\\b`));
+  if(tw2){
+    const v = parseGermanNumber(tw2[1]);
+    if(v !== null) return { action:'setTemp', value: v, raw };
+  }
+
+  // Run program: "starte X" (nach Heater-Match, damit "starte heizen" nicht hier landet)
+  const pr = t.match(/(?:starte?|spiele?|run|start|play)\s+(?:das\s+|the\s+)?(?:programm\s+|program\s+)?(.+)/);
+  if(pr){
+    const name = pr[1].trim();
+    if(name && !/^(heizen|pumpe|aufheizen|heating|pump)/.test(name)){
+      return { action:'runProgram', value: name, raw };
+    }
+  }
+
+  return { action:null, raw };
+}
+
+function _voiceCmdAllowed(action){
+  const map = {
+    setTemp:'setTemp', tempUp:'setTemp', tempDown:'setTemp',
+    heaterOn:'heatOn', heaterOff:'heatOff',
+    pumpOn:'pumpOn', pumpOff:'pumpOff', pumpFor:'pumpFor',
+    fillBag:'fillBag', stopAll:'stopAll', runProgram:'runProgram',
+  };
+  const key = map[action];
+  if(!key) return true; // status/disconnect/boost — immer erlaubt
+  try{ return !!PREFS.voiceCmds[key]; }catch{ return true; }
+}
+
+async function executeVoiceCommand(cmd){
+  if(!cmd || !cmd.action) return false;
+  if(!_voiceCmdAllowed(cmd.action)){
+    voiceFeedback('Befehl deaktiviert: '+cmd.action, 2500);
+    return false;
+  }
+  const ok = (msg)=>voiceFeedback('✓ '+msg);
+  try{
+    switch(cmd.action){
+      case 'stopAll':
+        if(State.running) State.running.stopFlag = true;
+        if(State.heater) await cmdHeaterOff();
+        if(State.pump)   await cmdPumpOff();
+        ok('Alles gestoppt'); return true;
+      case 'heaterOn':
+        await cmdHeaterOn(); ok('Heizer an'); return true;
+      case 'heaterOff':
+        await cmdHeaterOff(); ok('Heizer aus'); return true;
+      case 'setTemp':
+        await cmdSetTemp(cmd.value); ok(cmd.value+'°C'); return true;
+      case 'tempUp': {
+        const base = Math.round(State.target || PREFS.preferredTemp || 180);
+        const next = base + (cmd.value||5);
+        await cmdSetTemp(next); ok('+'+(cmd.value||5)+'°C → '+next+'°C'); return true;
+      }
+      case 'tempDown': {
+        const base = Math.round(State.target || PREFS.preferredTemp || 180);
+        const next = base - (cmd.value||5);
+        await cmdSetTemp(next); ok('−'+(cmd.value||5)+'°C → '+next+'°C'); return true;
+      }
+      case 'pumpFor':
+        await cmdPumpFor(clamp(cmd.value, 1, 120));
+        ok('Pumpe '+cmd.value+'s'); return true;
+      case 'pumpOn':
+        await cmdPumpOn(); ok('Pumpe an'); return true;
+      case 'pumpOff':
+        await cmdPumpOff(); ok('Pumpe aus'); return true;
+      case 'fillBag':
+        openBagModal(); setTimeout(startBagFill, 400);
+        ok('Ballon füllen'); return true;
+      case 'status': {
+        const txt = State.connected
+          ? `Aktuell ${Math.round(State.cur||0)}°C, Ziel ${Math.round(State.target||0)}°C, Heizer ${State.heater?'an':'aus'}`
+          : 'Nicht verbunden';
+        voiceFeedback('🔊 '+txt, 4000);
+        if(PREFS.voiceTts !== false) speakStatus();
+        return true;
+      }
+      case 'disconnect':
+        try{ disconnectBLE(); }catch{}
+        ok('Verbindung getrennt'); return true;
+      case 'boost':
+        if(State.adapter && typeof State.adapter.boost === 'function'){
+          await State.adapter.boost(); ok('Boost');
+        } else {
+          voiceFeedback('Boost an diesem Gerät nicht verfügbar', 2500);
+        }
+        return true;
+      case 'runProgram': {
+        const all = getAllPrograms();
+        const needle = String(cmd.value||'').toLowerCase();
+        const found = all.find(p => p.name.toLowerCase().includes(needle)
+          || needle.includes(p.name.toLowerCase().split(' ')[0]));
+        if(found){ ok('Starte: '+found.name); runProgram(found); }
+        else voiceFeedback('Programm "'+cmd.value+'" nicht gefunden', 3000);
+        return true;
+      }
+    }
+  }catch(e){
+    voiceFeedback('Fehler: '+(e&&e.message||'unbekannt'), 3000);
+    return false;
+  }
+  return false;
+}
+
 async function handleVoiceCommand(txt){
-  const t = txt.toLowerCase().trim();
-  log('🎤 Befehl: "'+txt+'"','ok');
+  log('🎤 Befehl: "'+txt+'"', 'ok');
   LS.set('vol_voice_used', true);
   checkAchievements();
-
-  // Stop everything
-  if(PREFS.voiceCmds.stopAll && /(stopp|alles aus|alles stoppen|abbrechen|notaus)/.test(t)){
-    try{
-      if(State.running){ State.running.stopFlag=true; }
-      if(State.heater) await cmdHeaterOff();
-      if(State.pump) await cmdPumpOff();
-      voiceFeedback('✓ Alles gestoppt');
-    }catch(e){ voiceFeedback('Fehler: '+e.message, 3000); }
+  const cmd = parseVoiceCommand(txt);
+  if(!cmd.action){
+    voiceFeedback('Befehl nicht verstanden: '+txt, 3500);
     return;
   }
-
-  // Heater on/off
-  if(PREFS.voiceCmds.heatOn && /(heize?r?\s*(an|ein|start)|aufheizen|heizen\s*starten)/.test(t)){
-    try{ await cmdHeaterOn(); voiceFeedback('✓ Heizer an'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-    return;
-  }
-  if(PREFS.voiceCmds.heatOff && /(heize?r?\s*(aus|stop|off)|heizen\s*(stop|aus))/.test(t)){
-    try{ await cmdHeaterOff(); voiceFeedback('✓ Heizer aus'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-    return;
-  }
-
-  // Pump for X seconds
-  if(PREFS.voiceCmds.pumpFor){
-    const m = t.match(/pumpe?\s+(?:für\s+)?(\d+)\s*(?:sek|sekunden|s)/);
-    if(m){
-      const sec = clamp(parseInt(m[1]),1,120);
-      try{ await cmdPumpFor(sec); voiceFeedback('✓ Pumpe '+sec+'s'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-      return;
-    }
-  }
-
-  // Pump on/off
-  if(PREFS.voiceCmds.pumpOn && /pumpe?\s*(an|ein|start)/.test(t)){
-    try{ await cmdPumpOn(); voiceFeedback('✓ Pumpe an'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-    return;
-  }
-  if(PREFS.voiceCmds.pumpOff && /pumpe?\s*(aus|stop|off)/.test(t)){
-    try{ await cmdPumpOff(); voiceFeedback('✓ Pumpe aus'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-    return;
-  }
-
-  // Set temperature: "Heize auf 185 Grad" or "Setze 185 Grad"
-  if(PREFS.voiceCmds.setTemp){
-    const m = t.match(/(?:heize?|setze?|stelle?|auf)\s*(?:auf\s*)?(\d{2,3})\s*(?:grad|°c?|°)?/);
-    if(m){
-      const c = parseInt(m[1]);
-      if(c>=40 && c<=230){
-        try{ await cmdSetTemp(c); voiceFeedback('✓ '+c+'°C'); }catch(e){ voiceFeedback('Fehler: '+e.message, 3000) }
-        return;
-      }
-    }
-  }
-
-  // Fill bag
-  if(PREFS.voiceCmds.fillBag && /(ballon|bag)\s*(füllen|fill|voll)/.test(t)){
-    openBagModal();
-    setTimeout(startBagFill, 400);
-    voiceFeedback('✓ Ballon füllen');
-    return;
-  }
-
-  // Run program: "starte Programm Aroma-Tour"
-  if(PREFS.voiceCmds.runProgram){
-    const m = t.match(/(?:starte?|spiele?|run)\s+(?:das\s+)?(?:programm\s+)?(.+)/);
-    if(m){
-      const name = m[1].trim();
-      const all = getAllPrograms();
-      const found = all.find(p => p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase().split(' ')[0]));
-      if(found){
-        voiceFeedback('✓ Starte: '+found.name);
-        runProgram(found);
-        return;
-      }
-      voiceFeedback('Programm "'+name+'" nicht gefunden', 3000);
-      return;
-    }
-  }
-
-  voiceFeedback('Befehl nicht erkannt', 3000);
+  await executeVoiceCommand(cmd);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -11456,6 +11729,138 @@ function setupVoiceReadoutInterval(){
   }
 }
 
+/* ═══ v8.4.0 MODUL 3: WAKE-WORD (experimentell, Chrome-only) ═════
+   EHRLICHE BEWERTUNG (im Code dokumentiert + im Setup gelabelt):
+   - Web Speech API hat KEIN echtes Wake-Word wie Alexa
+   - Workaround: continuous=true Recognition, hört auf „Hey Sessions"
+   - Audio geht über die Google-Speech-Cloud (Chrome-Implementierung),
+     ist also NICHT vollständig lokal — UI sagt das auch
+   - Akku: hoch (Mikrofon dauer-aktiv)
+   - Reliability: Chrome desktop/Android = ok; iOS Safari/Firefox = nein
+   - Recognition stoppt periodisch von alleine → onend startet neu
+   Default AUS, Toggle im Setup, klares Indicator-Pill wenn aktiv. */
+const WAKE_WORDS = ['hey sessions','okay sessions','ok sessions','sessions'];
+const WAKE_DIALOG_TIMEOUT_MS = 10000;
+let wakeRec = null;
+let wakeWordActive = false;
+let _wakeDialogActive = false;
+let _wakeDialogTimer = null;
+let _wakeRestartTimer = null;
+
+function isWakeWordSupported(){
+  try{
+    if(!voiceAvailable()) return false;
+    if(/iphone|ipad|ipod/i.test(navigator.userAgent || '')) return false;
+    return true;
+  }catch{ return false; }
+}
+function updateWakeIndicator(){
+  const el = $('#wakeIndicator'); if(!el) return;
+  el.hidden = !wakeWordActive;
+  if(!wakeWordActive) return;
+  el.classList.toggle('dialog', _wakeDialogActive);
+  const txt = $('#wakeIndicatorText');
+  if(txt) txt.textContent = _wakeDialogActive ? '🎤 Befehl bitte…' : '🎙 hört auf „Hey Sessions"';
+}
+function _wakeSay(msg){
+  if(PREFS.voiceTts === false) return;
+  try{
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(msg);
+    u.lang='de-DE'; u.rate=1.05; speechSynthesis.speak(u);
+  }catch{}
+}
+function _wakeStartDialog(initialCmd){
+  _wakeDialogActive = true;
+  updateWakeIndicator();
+  if(initialCmd && initialCmd.length >= 2){
+    _wakeSay('Ja');
+    setTimeout(()=>handleVoiceCommand(initialCmd), 100);
+    clearTimeout(_wakeDialogTimer);
+    _wakeDialogTimer = setTimeout(()=>{ _wakeDialogActive=false; updateWakeIndicator(); }, 1500);
+  } else {
+    _wakeSay('Ja?');
+    clearTimeout(_wakeDialogTimer);
+    _wakeDialogTimer = setTimeout(()=>{ _wakeDialogActive=false; updateWakeIndicator(); }, WAKE_DIALOG_TIMEOUT_MS);
+  }
+}
+function _wakeMatchPrefix(txt){
+  const t = (txt||'').toLowerCase().trim();
+  for(const w of WAKE_WORDS){
+    if(t.startsWith(w)){
+      return { matched: w, rest: t.slice(w.length).trim() };
+    }
+  }
+  return null;
+}
+function startWakeWord(){
+  if(!isWakeWordSupported()){ return false; }
+  stopWakeWord();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  try{
+    wakeRec = new SR();
+    wakeRec.lang = 'de-DE';
+    wakeRec.continuous = true;
+    wakeRec.interimResults = false;
+    wakeRec.maxAlternatives = 1;
+    wakeRec.onresult = (ev)=>{
+      for(let i=ev.resultIndex; i<ev.results.length; i++){
+        const txt = ev.results[i][0].transcript;
+        if(_wakeDialogActive){
+          clearTimeout(_wakeDialogTimer);
+          _wakeDialogActive = false;
+          updateWakeIndicator();
+          handleVoiceCommand(txt);
+        } else {
+          const m = _wakeMatchPrefix(txt);
+          if(m){ _wakeStartDialog(m.rest); }
+        }
+      }
+    };
+    wakeRec.onerror = (ev)=>{
+      if(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'){
+        stopWakeWord();
+        PREFS.wakeWord = false; savePrefs();
+        syncToggle('togWakeWord', false);
+        toast('Wake-Word abgeschaltet: Mikrofon-Berechtigung verweigert');
+      }
+      // 'no-speech' / 'network' / 'aborted' → einfach onend abwarten und neu starten
+    };
+    wakeRec.onend = ()=>{
+      if(wakeWordActive){
+        clearTimeout(_wakeRestartTimer);
+        _wakeRestartTimer = setTimeout(()=>{
+          if(wakeWordActive){ try{ wakeRec && wakeRec.start(); }catch{} }
+        }, 350);
+      }
+    };
+    wakeRec.start();
+    wakeWordActive = true;
+    updateWakeIndicator();
+    return true;
+  }catch(e){
+    wakeWordActive = false;
+    updateWakeIndicator();
+    return false;
+  }
+}
+function stopWakeWord(){
+  wakeWordActive = false;
+  _wakeDialogActive = false;
+  clearTimeout(_wakeDialogTimer);
+  clearTimeout(_wakeRestartTimer);
+  if(wakeRec){ try{ wakeRec.abort(); }catch{} wakeRec = null; }
+  updateWakeIndicator();
+}
+function setupWakeWord(){
+  if(PREFS.wakeWord && isWakeWordSupported()){
+    startWakeWord();
+  } else {
+    stopWakeWord();
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    v4.6: HAPTIC PATTERNS (differenziert)
 ═══════════════════════════════════════════════════════════════ */
@@ -12876,6 +13281,8 @@ function toggleBlindMode(){
   syncToggle('togHighContrast', PREFS.highContrast);
   syncToggle('togVoiceReadout', PREFS.voiceReadout);
   syncToggle('togTooltipsVoice', PREFS.tooltipsVoice);
+  syncToggle('togVoiceTts', PREFS.voiceTts !== false);
+  syncToggle('togWakeWord', !!PREFS.wakeWord);
   syncToggle('togHaptiCustom', PREFS.haptiCustom);
   syncToggle('togSound', PREFS.sound);
   syncToggle('togHaptic', PREFS.haptic);
@@ -14051,14 +14458,26 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.3.0 bereit.','ok');
+  log('Sessions v8.4.0 bereit.','ok');
 
   setupPwaUpdate();
 
-  // v4.9.6: Onboarding-Tour beim ersten Mal (1.2s nach Init damit alles gerendert ist)
-  if(!LS.get('vol_tour_completed', false)){
+  // v8.4.0: Welcome-Flow für frische Nutzer (vor der interaktiven Tour),
+  // gefolgt von der bestehenden Schritt-für-Schritt-Tour.
+  if(isFreshUser()){
+    maybeWelcomeFlow(false, { onDone:()=>{
+      if(!LS.get('vol_tour_completed', false)){
+        setTimeout(()=>startOnboardingTour(false), 400);
+      }
+    }});
+    setTimeout(maybeShowConnectHint, 1500);
+  } else if(!LS.get('vol_tour_completed', false)){
+    // v4.9.6: bestehender Tour-Trigger für Alt-Nutzer ohne abgeschlossene Tour
     setTimeout(()=>startOnboardingTour(false), 1200);
   }
+
+  // v8.4.0 Modul 3: Wake-Word starten falls vom Nutzer eingeschaltet
+  setupWakeWord();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
