@@ -1835,6 +1835,36 @@ summary.tab-section-header:hover{color:var(--text)}
 .ach-ico{font-size:22px}
 .ach-name{font-size:11px;font-weight:600;margin-top:4px;line-height:1.2}
 .ach-meta{font-size:10px;color:var(--muted);margin-top:2px}
+/* v8.3.0 Modul 1: Heizkurven-Editor */
+.curve-view{margin-top:8px}
+#curveSvgWrap{border:1px solid var(--line);border-radius:10px;padding:4px;background:var(--bg-2,rgba(255,255,255,.02))}
+.curve-pt{cursor:ns-resize}
+.curve-controls{display:flex;align-items:center;gap:8px;margin-top:8px}
+.curve-dur-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.curve-dur-ctl{display:flex;align-items:center;gap:6px}
+.curve-dur-ctl .btn{padding:2px 10px;min-height:auto}
+/* v8.3.0 Modul 2: Aroma-Bibliothek */
+.aroma-reco{margin-bottom:10px}
+.aroma-reco-h{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.aroma-reco-h small{text-transform:none;letter-spacing:0}
+.aroma-reco-chips{display:flex;flex-wrap:wrap;gap:6px}
+.aroma-reco-chip{padding:6px 12px;border-radius:999px;border:1px solid var(--accent,#5ab);background:rgba(90,170,187,.1);color:var(--accent,#5ab);font-size:12px;cursor:pointer}
+.aroma-filters{margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.aroma-pill-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.aroma-pill-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);min-width:42px}
+.aroma-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:12px;cursor:pointer}
+.aroma-pill.active{border-color:var(--accent,#5ab);background:rgba(90,170,187,.14);color:var(--accent,#5ab)}
+.aroma-count{font-size:11px;color:var(--muted);margin:6px 0}
+.aroma-effs{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.aroma-eff{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.aroma-thc{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;letter-spacing:.05em}
+.aroma-thc.thc-high{background:rgba(230,74,25,.15);color:var(--hot,#e64a19)}
+.aroma-thc.thc-mid{background:rgba(224,161,6,.15);color:#e0a106}
+.aroma-thc.thc-cbd{background:rgba(90,170,187,.15);color:var(--accent,#5ab)}
+.aroma-own{font-size:9px;letter-spacing:.1em;color:var(--cool,#4a90d9);text-transform:uppercase;margin-left:4px}
+.aroma-detail-meta{font-size:12px;color:var(--muted)}
+.aroma-detail-temp{font-size:13px;font-weight:600;margin:4px 0}
+.aroma-detail-stats{font-size:12px;background:var(--bg-2,rgba(255,255,255,.04));border-radius:8px;padding:8px 10px;margin-top:6px}
 
 /* ═══ v4.9: Polishing - hover + focus consistency ═══════════════ */
 .card{transition:border-color .15s}
@@ -2536,6 +2566,10 @@ button[data-sch-day].active{
       <div id="sessEffects" class="sess-effects"></div>
     </div>
     <div class="field">
+      <label>Sorte (optional):</label>
+      <select class="select" id="sessAroma"><option value="">— keine —</option></select>
+    </div>
+    <div class="field">
       <label>Notiz (optional):</label>
       <textarea class="input" id="sessNotes" rows="2" placeholder="z. B. Sorte, Setting, Wirkung…"></textarea>
     </div>
@@ -2611,9 +2645,20 @@ button[data-sch-day].active{
     <div class="editor-mode-toggle" role="tablist" aria-label="Ansicht wählen">
       <button data-edit-mode="list" class="active" role="tab" aria-selected="true">📋 Liste</button>
       <button data-edit-mode="timeline" role="tab" aria-selected="false">📊 Timeline</button>
+      <button data-edit-mode="curve" role="tab" aria-selected="false">🌡 Kurve</button>
     </div>
     <div class="builder" id="builder"></div>
     <div class="timeline-view" id="builderTimeline" hidden></div>
+    <!-- v8.3.0 Modul 1: visueller Heizkurven-Editor -->
+    <div class="curve-view" id="builderCurve" hidden>
+      <div id="curveSvgWrap"></div>
+      <div class="curve-controls">
+        <button class="btn sm ghost" id="curveAddPoint" type="button">+ Temp-Punkt</button>
+        <button class="btn sm ghost" id="curvePreview" type="button">▶ Simulation</button>
+        <span id="curveReadout" class="mono" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+      </div>
+      <div id="curveDurations"></div>
+    </div>
     <div id="builderDuration" class="mono" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:right" aria-live="polite"></div>
     <div class="row" style="margin-top:14px;gap:8px">
       <button class="btn block primary" id="btnAddStep">+ Schritt</button>
@@ -3097,6 +3142,18 @@ button[data-sch-day].active{
     <div class="aroma-list" id="aromaList"></div>
     <div class="row" style="margin-top:14px">
       <button class="btn ghost block" id="btnAromaClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.3.0 Modul 2: Aroma-Detail-Ansicht -->
+<div class="modal" id="modalAromaDetail" role="dialog" aria-modal="true" aria-label="Sorten-Detail">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div id="aromaDetailBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnAromaDetailClose">Schließen</button>
     </div>
   </div>
 </div>
@@ -6006,6 +6063,7 @@ function openEditor(id){
   $('#editorName').value = editorState.name;
   $('#btnEditorDelete').style.display = id ? '' : 'none';
   renderBuilder();
+  setEditorMode(LS.get('vol_editor_mode','list'));   // v8.3.0 Modul 1: gespeicherte Ansicht wiederherstellen
   $('#modalEditor').classList.add('open');
 }
 
@@ -6046,6 +6104,8 @@ function renderBuilder(){
   if(dEl) dEl.textContent = '~'+fmtDuration(est)+' Gesamtdauer';
   // Render timeline view
   renderTimelineView();
+  // v8.3.0 Modul 1: Kurven-Ansicht synchron halten
+  if(typeof renderCurve==='function') renderCurve();
 }
 
 function renderTimelineView(){
@@ -6074,17 +6134,162 @@ function renderTimelineView(){
   }
 }
 
+/* ═══ v8.3.0 MODUL 1: Visueller Heizkurven-Editor (SVG, Drag) ═══
+   Zeigt das Ziel-Temperatur-Profil über die (geschätzte) Zeit. Punkte =
+   set_temperature-Schritte; vertikales Ziehen ändert die Temp (Snap 5°C).
+   Dauer wird per +/- an wait/pump_for-Schritten geändert. Zeitmodell
+   spiegelt estimateDuration() — konsistent mit Liste/Timeline. */
+const CURVE_W=320, CURVE_H=180, CURVE_PADL=30, CURVE_PADR=10, CURVE_PADT=10, CURVE_PADB=26;
+function curveTempRange(){ const tr=(State.adapter&&State.adapter.constructor.tempRange)||{min:40,max:230}; return {min:tr.min,max:tr.max}; }
+function curveModel(){
+  const steps=editorState?editorState.steps:[];
+  let t=0, target=null, isHot=false;
+  const verts=[], points=[], pumps=[];
+  const hold=(tt)=>{ if(target!=null) verts.push({t:tt,temp:target}); };
+  for(let i=0;i<steps.length;i++){
+    const s=steps[i];
+    switch(s.action){
+      case 'heat_on': isHot=true; t+=1; break;
+      case 'heat_off': isHot=false; t+=1; break;
+      case 'pump_on': case 'pump_off': t+=1; break;
+      case 'set_temperature':
+        hold(t); target=s.value; hold(t);
+        points.push({stepIdx:i, t, temp:target});
+        break;
+      case 'wait_until': {
+        const v=s.value; const dT=Math.max(0,(v-(target==null?23:target)));
+        if(target==null) target=v;
+        hold(t); t+=Math.round(dT*(isHot?0.6:0.8)); target=v; hold(t);
+        break;
+      }
+      case 'wait': hold(t); t+=(s.seconds||0); hold(t); break;
+      case 'pump_for': hold(t); pumps.push({t0:t,t1:t+(s.seconds||0)}); t+=(s.seconds||0); hold(t); break;
+    }
+  }
+  const durSteps=[]; steps.forEach((s,i)=>{ if(s.action==='wait'||s.action==='pump_for') durSteps.push({i,action:s.action,seconds:s.seconds||0}); });
+  return {verts, points, pumps, durSteps, total:t};
+}
+function curveScaleX(t,total){ const span=CURVE_W-CURVE_PADL-CURVE_PADR; return CURVE_PADL + (total>0?(t/total):0.5)*span; }
+function curveScaleY(temp){ const tr=curveTempRange(); const span=CURVE_H-CURVE_PADT-CURVE_PADB; const f=(temp-tr.min)/Math.max(1,(tr.max-tr.min)); return (CURVE_H-CURVE_PADB) - clamp(f,0,1)*span; }
+function curveYToTemp(y){ const tr=curveTempRange(); const span=CURVE_H-CURVE_PADT-CURVE_PADB; const f=((CURVE_H-CURVE_PADB)-y)/span; return tr.min + clamp(f,0,1)*(tr.max-tr.min); }
+let _curveDrag=null, _curvePreviewRAF=null;
+function renderCurve(){
+  const wrap=$('#curveSvgWrap'); if(!wrap||!editorState) return;
+  const m=curveModel(); const tr=curveTempRange();
+  const total=m.total||1;
+  // Grid-Linien (Temp)
+  let grid='';
+  for(let temp=Math.ceil(tr.min/40)*40; temp<=tr.max; temp+=40){ const y=curveScaleY(temp).toFixed(1); grid+=`<line x1="${CURVE_PADL}" y1="${y}" x2="${CURVE_W-CURVE_PADR}" y2="${y}" stroke="var(--line)" stroke-width="0.5" opacity="0.5"/><text x="2" y="${(+y+3).toFixed(1)}" font-size="8" fill="var(--muted)">${temp}</text>`; }
+  // Pump-Bänder
+  let pumpBands='';
+  for(const p of m.pumps){ const x0=curveScaleX(p.t0,total), x1=curveScaleX(p.t1,total); pumpBands+=`<rect x="${x0.toFixed(1)}" y="${CURVE_H-CURVE_PADB+4}" width="${Math.max(2,(x1-x0)).toFixed(1)}" height="6" rx="2" fill="var(--cool,#4a90d9)"><title>Pumpe ${p.t1-p.t0}s</title></rect>`; }
+  // Ziel-Profil-Linie
+  let poly='';
+  if(m.verts.length){ poly='<polyline fill="none" stroke="var(--hot,#e64a19)" stroke-width="2" points="'+m.verts.map(v=>curveScaleX(v.t,total).toFixed(1)+','+curveScaleY(v.temp).toFixed(1)).join(' ')+'"/>'; }
+  // Live-Marker (verbunden)
+  let live='';
+  if(State.connected){
+    if(isFinite(State.cur)){ const y=curveScaleY(State.cur).toFixed(1); live+=`<line x1="${CURVE_PADL}" y1="${y}" x2="${CURVE_W-CURVE_PADR}" y2="${y}" stroke="var(--ok,#3a3)" stroke-width="1" stroke-dasharray="3 2"><title>Ist ${Math.round(State.cur)}°</title></line>`; }
+  }
+  // Drag-Punkte (set_temperature)
+  let pts='';
+  m.points.forEach((p,pi)=>{ const x=curveScaleX(p.t,total).toFixed(1), y=curveScaleY(p.temp).toFixed(1); pts+=`<circle class="curve-pt" data-step="${p.stepIdx}" data-pi="${pi}" cx="${x}" cy="${y}" r="8" fill="var(--hot,#e64a19)" stroke="#fff" stroke-width="1.5"><title>${p.temp}° (ziehen zum Ändern, lange drücken zum Löschen)</title></circle><text x="${x}" y="${(+y-11).toFixed(1)}" font-size="9" fill="var(--text)" text-anchor="middle">${p.temp}°</text>`; });
+  // Preview-Marker
+  const sweep=`<line id="curveSweep" x1="${CURVE_PADL}" y1="${CURVE_PADT}" x2="${CURVE_PADL}" y2="${CURVE_H-CURVE_PADB}" stroke="var(--accent,#5ab)" stroke-width="1.5" opacity="0"/>`;
+  wrap.innerHTML=`<svg id="curveSvg" viewBox="0 0 ${CURVE_W} ${CURVE_H}" width="100%" style="touch-action:none" role="img" aria-label="Heizkurve">${grid}${pumpBands}${poly}${live}${pts}${sweep}</svg>`;
+  // Drag-Wiring
+  const svg=$('#curveSvg');
+  svg.querySelectorAll('.curve-pt').forEach(c=>{
+    let lpTimer=null;
+    c.addEventListener('pointerdown',e=>{ e.preventDefault(); const idx=Number(c.dataset.step); _curveDrag={el:c, idx, moved:false};
+      lpTimer=setTimeout(()=>{ _curveDrag=null; curveDeletePoint(idx); }, 600);
+      try{ c.setPointerCapture && c.setPointerCapture(e.pointerId); }catch(_){}
+      c._lp=lpTimer;
+    });
+    c.addEventListener('pointermove',e=>{ if(!_curveDrag||_curveDrag.el!==c) return; if(c._lp){ clearTimeout(c._lp); c._lp=null; }
+      const rect=svg.getBoundingClientRect(); const vy=(e.clientY-rect.top)/rect.height*CURVE_H;
+      let temp=Math.round(curveYToTemp(vy)/5)*5; const tr=curveTempRange(); temp=clamp(temp,tr.min,tr.max);
+      _curveDrag.moved=true; curveSetPointTemp(_curveDrag.idx, temp, c);
+    });
+    const end=e=>{ if(c._lp){ clearTimeout(c._lp); c._lp=null; } if(_curveDrag&&_curveDrag.el===c){ const moved=_curveDrag.moved; _curveDrag=null; if(moved) renderBuilder(); } };
+    c.addEventListener('pointerup',end); c.addEventListener('pointercancel',end);
+  });
+  // Dauer-Liste (+/-)
+  const dur=$('#curveDurations');
+  if(dur){
+    dur.innerHTML = m.durSteps.length ? m.durSteps.map(d=>`<div class="curve-dur-row"><span>${d.action==='pump_for'?'💨 Pumpe':'⏱ Pause'} #${d.i+1}</span><div class="curve-dur-ctl"><button class="btn sm ghost" data-dur-dec="${d.i}" aria-label="weniger">−</button><span class="mono" style="min-width:42px;text-align:center">${d.seconds}s</span><button class="btn sm ghost" data-dur-inc="${d.i}" aria-label="mehr">+</button></div></div>`).join('') : '<p class="set-section-desc">Keine Dauer-Schritte (Pause/Pumpe) im Programm.</p>';
+    dur.querySelectorAll('[data-dur-inc]').forEach(b=>b.addEventListener('click',()=>curveAdjustDuration(Number(b.dataset.durInc),+5)));
+    dur.querySelectorAll('[data-dur-dec]').forEach(b=>b.addEventListener('click',()=>curveAdjustDuration(Number(b.dataset.durDec),-5)));
+  }
+  const ro=$('#curveReadout'); if(ro) ro.textContent='~'+fmtDuration(m.total);
+}
+function curveSetPointTemp(stepIdx, temp, circleEl){
+  const s=editorState.steps[stepIdx]; if(!s||s.action!=='set_temperature') return;
+  const old=s.value; s.value=temp;
+  // gekoppeltes wait_until mit gleichem alten Wert mitziehen (gängiges Muster set+wait_until)
+  const nxt=editorState.steps[stepIdx+1]; if(nxt && nxt.action==='wait_until' && nxt.value===old) nxt.value=temp;
+  // Live-Update ohne Full-Render (flüssiges Draggen)
+  if(circleEl){ const y=curveScaleY(temp); circleEl.setAttribute('cy',y.toFixed(1)); const tr=circleEl.nextElementSibling; }
+  const ro=$('#curveReadout'); if(ro) ro.textContent=temp+'°';
+}
+function curveAdjustDuration(stepIdx, delta){
+  const s=editorState.steps[stepIdx]; if(!s) return;
+  s.seconds=Math.max(s.action==='pump_for'?5:0, (s.seconds||0)+delta);
+  renderBuilder();
+}
+function curveDeletePoint(stepIdx){
+  const s=editorState.steps[stepIdx]; if(!s||s.action!=='set_temperature') return;
+  if(!confirm('Diesen Temperatur-Punkt löschen?')) return;
+  editorState.steps.splice(stepIdx,1);
+  // verwaistes folgendes wait_until des gleichen Punktes ebenfalls entfernen
+  const nxt=editorState.steps[stepIdx]; if(nxt && nxt.action==='wait_until') editorState.steps.splice(stepIdx,1);
+  renderBuilder();
+}
+function curveAddPoint(){
+  if(!editorState) return;
+  const m=curveModel(); const last=m.points.length?m.points[m.points.length-1].temp:185;
+  const ins={action:'set_temperature', value:clamp(last,curveTempRange().min,curveTempRange().max)};
+  const waitStep={action:'wait', seconds:30};
+  // vor abschließendem heat_off einfügen, sonst ans Ende
+  let pos=editorState.steps.length;
+  const offIdx=editorState.steps.findIndex(s=>s.action==='heat_off');
+  if(offIdx>=0) pos=offIdx;
+  editorState.steps.splice(pos,0,ins,waitStep);
+  renderBuilder();
+}
+function curvePreviewToggle(){
+  const svg=$('#curveSvg'); if(!svg) return;
+  const sweep=$('#curveSweep'); const btn=$('#curvePreview');
+  if(_curvePreviewRAF){ cancelAnimationFrame(_curvePreviewRAF); _curvePreviewRAF=null; if(sweep)sweep.setAttribute('opacity','0'); if(btn)btn.textContent='▶ Simulation'; return; }
+  const m=curveModel(); const total=m.total||1; const durMs=4000;   // komprimiert auf 4s
+  if(sweep) sweep.setAttribute('opacity','1'); if(btn) btn.textContent='⏹ Stop';
+  const t0=performance.now();
+  const step=(now)=>{
+    const f=Math.min(1,(now-t0)/durMs);
+    const x=curveScaleX(f*total, total);
+    if(sweep){ sweep.setAttribute('x1',x.toFixed(1)); sweep.setAttribute('x2',x.toFixed(1)); }
+    const ro=$('#curveReadout'); if(ro) ro.textContent=fmtDuration(Math.round(f*total))+' / '+fmtDuration(total);
+    if(f<1){ _curvePreviewRAF=requestAnimationFrame(step); }
+    else { _curvePreviewRAF=null; if(sweep)sweep.setAttribute('opacity','0'); if(btn)btn.textContent='▶ Simulation'; }
+  };
+  _curvePreviewRAF=requestAnimationFrame(step);
+}
+
 function setEditorMode(mode){
   editorMode = mode;
+  try{ LS.set('vol_editor_mode', mode); }catch(_){}   // v8.3.0 Modul 1: Toggle persistiert
   const builder = $('#builder');
   const tl = $('#builderTimeline');
-  if(builder) builder.hidden = (mode==='timeline');
-  if(tl) tl.hidden = (mode==='list');
+  const cv = $('#builderCurve');
+  if(builder) builder.hidden = (mode!=='list');
+  if(tl) tl.hidden = (mode!=='timeline');
+  if(cv) cv.hidden = (mode!=='curve');
   document.querySelectorAll('[data-edit-mode]').forEach(b=>{
     const active = b.dataset.editMode === mode;
     b.classList.toggle('active', active);
     b.setAttribute('aria-selected', String(active));
   });
+  if(mode==='curve' && typeof renderCurve==='function') renderCurve();
 }
 
 function openAddStep(){
@@ -6650,6 +6855,7 @@ function wire(){
 
   // Aroma (modal open from quick-action)
   $('#btnAromaClose').addEventListener('click', ()=>$('#modalAroma').classList.remove('open'));
+  $('#btnAromaDetailClose')?.addEventListener('click', ()=>$('#modalAromaDetail').classList.remove('open'));   // v8.3.0 Modul 2
   $('#aromaSearch').addEventListener('input', e=>renderAromaList(e.target.value));
 
   // QR
@@ -6837,6 +7043,9 @@ function wire(){
   document.querySelectorAll('[data-edit-mode]').forEach(b=>{
     b.addEventListener('click', ()=>setEditorMode(b.dataset.editMode));
   });
+  // v8.3.0 Modul 1: Kurven-Editor-Buttons
+  $('#curveAddPoint')?.addEventListener('click', curveAddPoint);
+  $('#curvePreview')?.addEventListener('click', curvePreviewToggle);
   $('#btnAddLoop')?.addEventListener('click', ()=>{
     const r = prompt('Wie oft wiederholen? (2-20)', '2');
     if(!r) return;
@@ -8681,7 +8890,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.2.0';
+const SW_VERSION_LABEL='v8.3.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -8942,95 +9151,152 @@ function fmtDuration(sec){
 /* ═══════════════════════════════════════════════════════════════
    AROMA / SORTEN MODAL (v4.4)
 ═══════════════════════════════════════════════════════════════ */
+/* ═══ v8.3.0 MODUL 2: Aroma-Bibliothek (Filter/Empfehlung/Detail) ═══
+   Erweitert die bestehende Aroma-DB nicht-destruktiv um abgeleitete Felder.
+   Bestehende Sorten + custom (vol_custom_aromas) + Usage bleiben unberührt. */
+const AROMA_EFFECT_BY_KIND={
+  sativa:['energetic','creative','focused'], indica:['relaxed','sleepy'],
+  hybrid:['relaxed','creative','social'], cbd:['relaxed','focused'],
+  hash:['relaxed','social'], terpen:['relaxed'], other:['relaxed'],
+};
+function aromaEffects(a){ if(Array.isArray(a.effects)&&a.effects.length) return a.effects; return AROMA_EFFECT_BY_KIND[a.kind]||['relaxed']; }
+function aromaThc(a){ if(a.thcLevel) return a.thcLevel; if(a.kind==='cbd') return 'cbd'; if(a.kind==='terpen'||/allgemein|Mikro-Dose/i.test(a.name)) return 'mid'; return 'high'; }
+function aromaType(a){ return (a.kind==='sativa'||a.kind==='indica'||a.kind==='hybrid')?a.kind:'other'; }
+function normAroma(a){ const temps=a.temps||[180,190,200]; return Object.assign({}, a, {
+  effects:aromaEffects(a), thcLevel:aromaThc(a),
+  recommendedTemp:{min:temps[0], max:temps[temps.length-1]},
+  description:a.desc||'', terpenes:a.terps||'', userAdded:!!a.custom }); }
+function allAromasNorm(){ return getAllAromas().map(normAroma); }
+function aromaShuffleTake(arr,n){ const c=arr.slice(); for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];} return c.slice(0,n); }
+function aromaRecommendations(n){
+  n=n||3;
+  const notes=(typeof sessionsAll==='function')?sessionsAll().filter(s=>s.strength!=null&&s.effect):[];
+  if(notes.length){
+    const score={}; for(const s of notes){ score[s.effect]=(score[s.effect]||0)+s.strength; }
+    const top=Object.entries(score).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,2);
+    const matches=allAromasNorm().filter(a=>a.effects.some(e=>top.includes(e)));
+    if(matches.length) return {basis:'sessions', items:aromaShuffleTake(matches,n), effects:top};
+  }
+  return {basis:'random', items:aromaShuffleTake(allAromasNorm(),n), effects:[]};
+}
+function aromaFilterState(){ return State._aromaFilter || (State._aromaFilter={q:'',effects:[],type:'all',thc:'all',sort:'az'}); }
+function aromaFiltered(){
+  const f=aromaFilterState(); const q=(f.q||'').toLowerCase().trim();
+  let arr=allAromasNorm().filter(a=>{
+    if(q && !(a.name.toLowerCase().includes(q)||a.description.toLowerCase().includes(q)||(a.terpenes||'').toLowerCase().includes(q)||(a.kind||'').includes(q))) return false;
+    if(f.type!=='all' && aromaType(a)!==f.type) return false;
+    if(f.thc!=='all' && a.thcLevel!==f.thc) return false;
+    if(f.effects.length && !f.effects.some(e=>a.effects.includes(e))) return false;
+    return true;
+  });
+  if(f.sort==='az') arr.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(f.sort==='pop'){ const used=LS.get('vol_aromas_used',[]); arr.sort((a,b)=>(used.includes(b.name)?1:0)-(used.includes(a.name)?1:0)); }
+  else if(f.sort==='rnd') arr=aromaShuffleTake(arr,arr.length);
+  return arr;
+}
+function aromaStatsFor(name){
+  if(typeof sessionsAll!=='function') return null;
+  const ns=sessionsAll().filter(s=>s.aroma===name && s.strength!=null);
+  if(!ns.length) return null;
+  const avg=ns.reduce((a,s)=>a+s.strength,0)/ns.length;
+  return {count:ns.length, avg:Math.round(avg*10)/10};
+}
 function openAroma(){
-  $('#aromaSearch').value='';
+  if($('#aromaSearch')) $('#aromaSearch').value='';
+  aromaFilterState().q='';
   renderAromaList('');
   $('#modalAroma').classList.add('open');
 }
+function aromaCardHtml(a){
+  const eff=a.effects.slice(0,3).map(e=>`<span class="aroma-eff">${escapeHtml(SESSION_EFFECT_LABEL&&SESSION_EFFECT_LABEL[e]||e)}</span>`).join('');
+  const customDel=a.userAdded?`<button class="btn sm ghost" data-act="del-custom" style="padding:3px 8px;min-height:auto;font-size:10px;color:var(--err)">Löschen</button>`:'';
+  const temps=a.temps||[180,190,200];
+  return `<div class="aroma-card" data-aroma="${escapeHtml(a.name)}">
+    <div class="name" data-act="detail" style="cursor:pointer">${escapeHtml(a.name)} ${a.userAdded?'<span class="aroma-own">eigene</span>':''} <span class="aroma-thc thc-${a.thcLevel}">${a.thcLevel.toUpperCase()}</span></div>
+    <div class="desc">${escapeHtml(a.description)}</div>
+    <div class="aroma-effs">${eff}</div>
+    <div class="aroma-temps">
+      <button class="aroma-temp" data-act="set" data-temp="${temps[0]}" aria-label="Auf ${temps[0]} Grad setzen">${temps[0]}°</button>
+      <button class="aroma-temp" data-act="set" data-temp="${temps[1]}" aria-label="Auf ${temps[1]} Grad setzen">${temps[1]}°</button>
+      <button class="aroma-temp" data-act="set" data-temp="${temps[2]}" aria-label="Auf ${temps[2]} Grad setzen">${temps[2]}°</button>
+    </div>
+    <div class="row" style="margin-top:8px;gap:6px">
+      <button class="btn sm ghost" data-act="detail" style="flex:1">ℹ Details</button>
+      <button class="btn sm hot" data-act="program" style="flex:1">▶ Programm</button>
+      ${customDel}
+    </div>
+  </div>`;
+}
 function renderAromaList(query){
   const list = $('#aromaList'); if(!list) return;
-  list.innerHTML='';
-
-  // "Eigene Sorte hinzufügen"-Card am Anfang
-  const addCard = document.createElement('div');
-  addCard.className='aroma-card';
-  addCard.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px';
-  addCard.innerHTML = `
-    <div>
-      <div class="name">+ Eigene Sorte hinzufügen</div>
-      <div class="desc" style="margin-bottom:0">Mit eigenen Temperaturen und Beschreibung</div>
+  const f=aromaFilterState();
+  if(query!==undefined) f.q=query;
+  const EFFS=['relaxed','energetic','creative','sleepy','focused','social'];
+  const effLbl=e=>(typeof SESSION_EFFECT_LABEL!=='undefined'&&SESSION_EFFECT_LABEL[e])||e;
+  // Empfehlungen
+  const rec=aromaRecommendations(3);
+  const recHtml=`<div class="aroma-reco"><div class="aroma-reco-h">Empfohlen für dich ${rec.basis==='sessions'?'<small>(aus deinen Sessions)</small>':'<small>(beliebte Auswahl)</small>'}</div><div class="aroma-reco-chips">${rec.items.map(a=>`<button class="aroma-reco-chip" data-reco="${escapeHtml(a.name)}">${escapeHtml(a.name)}</button>`).join('')}</div></div>`;
+  // Filter-Pills
+  const effPills=EFFS.map(e=>`<button class="aroma-pill${f.effects.includes(e)?' active':''}" data-eff="${e}">${escapeHtml(effLbl(e))}</button>`).join('');
+  const typePills=[['all','Alle'],['sativa','Sativa'],['indica','Indica'],['hybrid','Hybrid'],['other','Andere']].map(([v,l])=>`<button class="aroma-pill${f.type===v?' active':''}" data-type="${v}">${l}</button>`).join('');
+  const thcPills=[['all','Alle'],['mid','Mid'],['high','High'],['cbd','CBD']].map(([v,l])=>`<button class="aroma-pill${f.thc===v?' active':''}" data-thc="${v}">${l}</button>`).join('');
+  const sortSel=`<select class="select" id="aromaSort" style="font-size:12px;padding:4px 8px"><option value="az"${f.sort==='az'?' selected':''}>A-Z</option><option value="pop"${f.sort==='pop'?' selected':''}>Beliebtheit</option><option value="rnd"${f.sort==='rnd'?' selected':''}>Zufall</option></select>`;
+  const filterHtml=`<div class="aroma-filters">
+    <div class="aroma-pill-row"><span class="aroma-pill-lbl">Effekt</span>${effPills}</div>
+    <div class="aroma-pill-row"><span class="aroma-pill-lbl">Typ</span>${typePills}</div>
+    <div class="aroma-pill-row"><span class="aroma-pill-lbl">THC</span>${thcPills}<span style="margin-left:auto">${sortSel}</span></div>
+  </div>`;
+  const addHtml=`<div class="aroma-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><div class="name">+ Eigene Sorte hinzufügen</div><div class="desc" style="margin-bottom:0">Mit eigenen Temperaturen und Beschreibung</div></div><button class="btn sm primary" id="btnAddCustomAroma">Hinzufügen</button></div>`;
+  const results=aromaFiltered();
+  const cardsHtml = results.length ? results.map(aromaCardHtml).join('') : `<p class="wiz-text" style="text-align:center;color:var(--muted);margin-top:14px">Keine Treffer.</p>`;
+  list.innerHTML = recHtml + filterHtml + addHtml + `<div class="aroma-count">${results.length} Sorten</div>` + cardsHtml;
+  // Wiring
+  $('#btnAddCustomAroma')?.addEventListener('click', addCustomAromaPrompt);
+  $('#aromaSort')?.addEventListener('change',e=>{ f.sort=e.target.value; renderAromaList(); });
+  list.querySelectorAll('[data-eff]').forEach(b=>b.addEventListener('click',()=>{ const e=b.dataset.eff; const i=f.effects.indexOf(e); if(i>=0)f.effects.splice(i,1); else f.effects.push(e); renderAromaList(); }));
+  list.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{ f.type=b.dataset.type; renderAromaList(); }));
+  list.querySelectorAll('[data-thc]').forEach(b=>b.addEventListener('click',()=>{ f.thc=b.dataset.thc; renderAromaList(); }));
+  list.querySelectorAll('[data-reco]').forEach(b=>b.addEventListener('click',()=>{ const a=allAromasNorm().find(x=>x.name===b.dataset.reco); if(a) openAromaDetail(a); }));
+  // Karten-Aktionen (Delegation)
+  list.querySelectorAll('.aroma-card[data-aroma]').forEach(card=>{
+    const a=allAromasNorm().find(x=>x.name===card.dataset.aroma); if(!a) return;
+    card.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click', async(ev)=>{
+      ev.stopPropagation(); const act=b.dataset.act;
+      if(act==='detail'){ openAromaDetail(a); }
+      else if(act==='set'){ await aromaSetTemp(a, parseInt(b.dataset.temp)); }
+      else if(act==='program'){ const prog=buildProgramFromAroma(a); State.programs.unshift(prog); LS.set('vol_programs',State.programs); renderPrograms(); toast('Programm „'+a.name+'" angelegt'); $('#modalAroma').classList.remove('open'); switchTab('prog'); }
+      else if(act==='del-custom'){ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); renderAromaList(); toast('Gelöscht'); } }
+    }));
+  });
+}
+async function aromaSetTemp(a, t){
+  if(!State.connected){ toast('Erst verbinden'); return; }
+  try{
+    await cmdSetTemp(t);
+    const used=LS.get('vol_aromas_used',[]); if(!used.includes(a.name)){ used.push(a.name); LS.set('vol_aromas_used',used); if(typeof checkAchievements==='function') checkAchievements(); }
+    $('#modalAroma').classList.remove('open'); $('#modalAromaDetail')?.classList.remove('open');
+  }catch(e){ log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err'); }
+}
+function openAromaDetail(a){
+  const m=$('#modalAromaDetail'); if(!m) return;
+  const stats=aromaStatsFor(a.name);
+  const effLbl=e=>(typeof SESSION_EFFECT_LABEL!=='undefined'&&SESSION_EFFECT_LABEL[e])||e;
+  const rt=a.recommendedTemp;
+  $('#aromaDetailBody').innerHTML=`
+    <h2 style="margin:0 0 4px">${escapeHtml(a.name)} ${a.userAdded?'<span class="aroma-own">eigene</span>':''}</h2>
+    <div class="aroma-detail-meta">${escapeHtml(aromaType(a))} · <span class="aroma-thc thc-${a.thcLevel}">${a.thcLevel.toUpperCase()}</span>${a.terpenes?' · '+escapeHtml(a.terpenes):''}</div>
+    <p class="desc" style="margin:8px 0">${escapeHtml(a.description||'')}</p>
+    <div class="aroma-effs" style="margin:8px 0">${a.effects.map(e=>`<span class="aroma-eff">${escapeHtml(effLbl(e))}</span>`).join('')}</div>
+    <div class="aroma-detail-temp">Empfohlen ${rt.min}–${rt.max}°C</div>
+    <div class="row" style="gap:6px;margin:8px 0">
+      ${(a.temps||[]).map(t=>`<button class="btn sm hot" data-detail-temp="${t}" style="flex:1">${t}° setzen</button>`).join('')}
     </div>
-    <button class="btn sm primary" id="btnAddCustomAroma" aria-label="Eigene Sorte hinzufügen">Hinzufügen</button>
+    ${stats?`<div class="aroma-detail-stats">Du hast diese Sorte ${stats.count}× getestet, ⌀ Stärke ${stats.avg}/10</div>`:'<div class="aroma-detail-stats" style="color:var(--muted)">Noch keine Session mit dieser Sorte erfasst.</div>'}
+    ${a.userAdded?`<div class="row" style="gap:6px;margin-top:10px"><button class="btn sm danger" id="aromaDetailDel" style="flex:1">🗑 Löschen</button></div>`:''}
   `;
-  list.appendChild(addCard);
-  addCard.querySelector('#btnAddCustomAroma').addEventListener('click', addCustomAromaPrompt);
-
-  const results = findAromaSuggestions(query);
-  if(!results.length){
-    const empty = document.createElement('p');
-    empty.className='wiz-text';
-    empty.style.cssText='text-align:center;color:var(--muted);margin-top:14px';
-    empty.textContent = 'Keine Treffer für „'+query+'"';
-    list.appendChild(empty);
-    return;
-  }
-  for(const a of results){
-    const card = document.createElement('div');
-    card.className='aroma-card';
-    const kindBadge = a.kind ? `<span class="aroma-temp" style="cursor:default;background:transparent;font-size:9px;letter-spacing:.08em;text-transform:uppercase">${escapeHtml(a.kind)}</span>` : '';
-    const customDel = a.custom ? `<button class="btn sm ghost" data-act="del-custom" style="padding:3px 8px;min-height:auto;font-size:10px;color:var(--err)" aria-label="Eigene Sorte löschen">Löschen</button>` : '';
-    card.innerHTML = `
-      <div class="name">${escapeHtml(a.name)} ${a.custom ? '<span style="font-size:9px;letter-spacing:.1em;color:var(--cool);text-transform:uppercase;margin-left:6px">eigene</span>' : ''}</div>
-      <div class="desc">${escapeHtml(a.desc)}</div>
-      <div class="aroma-temps">
-        ${kindBadge}
-        <button class="aroma-temp" data-act="set" data-temp="${a.temps[0]}" aria-label="Auf ${a.temps[0]} Grad setzen">${a.temps[0]}°</button>
-        <button class="aroma-temp" data-act="set" data-temp="${a.temps[1]}" aria-label="Auf ${a.temps[1]} Grad setzen">${a.temps[1]}°</button>
-        <button class="aroma-temp" data-act="set" data-temp="${a.temps[2]}" aria-label="Auf ${a.temps[2]} Grad setzen">${a.temps[2]}°</button>
-      </div>
-      <div class="row" style="margin-top:8px;gap:6px">
-        <button class="btn sm hot" data-act="program" style="flex:1" aria-label="Programm mit 3-Stufen-Verlauf erzeugen">▶ Programm erzeugen</button>
-        ${customDel}
-      </div>
-    `;
-    card.querySelectorAll('button[data-act]').forEach(b=>{
-      b.addEventListener('click', async()=>{
-        const act = b.dataset.act;
-        if(act==='set'){
-          const t = parseInt(b.dataset.temp);
-          if(!State.connected){ toast('Erst verbinden'); return; }
-          try{
-            await cmdSetTemp(t);
-            // v4.6: track aroma usage
-            const used = LS.get('vol_aromas_used', []);
-            if(!used.includes(a.name)){
-              used.push(a.name);
-              LS.set('vol_aromas_used', used);
-              checkAchievements();
-            }
-            $('#modalAroma').classList.remove('open');
-          }catch(e){
-            log('Setze Temp '+t+' fehlgeschlagen: '+e.message,'err');
-          }
-        } else if(act==='program'){
-          const prog = buildProgramFromAroma(a);
-          State.programs.unshift(prog);
-          LS.set('vol_programs', State.programs);
-          renderPrograms();
-          toast('Programm „'+a.name+'" angelegt');
-          $('#modalAroma').classList.remove('open');
-          switchTab('prog');
-        } else if(act==='del-custom'){
-          if(confirm('Eigene Sorte „'+a.name+'" löschen?')){
-            removeCustomAroma(a.id);
-            renderAromaList(query);
-            toast('Gelöscht');
-          }
-        }
-      });
-    });
-    list.appendChild(card);
-  }
+  $('#aromaDetailBody').querySelectorAll('[data-detail-temp]').forEach(b=>b.addEventListener('click',()=>aromaSetTemp(a, parseInt(b.dataset.detailTemp))));
+  $('#aromaDetailDel')?.addEventListener('click',()=>{ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); m.classList.remove('open'); renderAromaList(); toast('Gelöscht'); } });
+  m.classList.add('open');
 }
 
 function addCustomAromaPrompt(){
@@ -9942,6 +10208,13 @@ function openSessionNoteModal(data, existingId){
   const str = d.strength==null?5:d.strength;
   $('#sessStrength').value = str; $('#sessStrengthVal').textContent = str+'/10';
   $('#sessNotes').value = d.notes||'';
+  // v8.3.0 Modul 2.6: optionales Aroma-Dropdown (einzige Integration ins v8.2.0-Modal)
+  const sel=$('#sessAroma');
+  if(sel && typeof getAllAromas==='function'){
+    const names=getAllAromas().map(a=>a.name);
+    sel.innerHTML='<option value="">— keine —</option>'+names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    sel.value = d.aroma||'';
+  }
   renderSessEffects();
   m.classList.add('open');
 }
@@ -9966,6 +10239,7 @@ function sessionModalBuild(strengthOverride){
     targetTemp: d.targetTemp!=null?d.targetTemp:null, maxTemp: d.maxTemp||0,
     strength: strengthOverride!==undefined ? strengthOverride : Number($('#sessStrength').value),
     effect: d.effect||'', notes: ($('#sessNotes').value||'').trim(), auto: !!d.auto,
+    aroma: ($('#sessAroma') && $('#sessAroma').value) || '',   // v8.3.0 Modul 2.6
   };
   return note;
 }
@@ -13777,7 +14051,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.2.0 bereit.','ok');
+  log('Sessions v8.3.0 bereit.','ok');
 
   setupPwaUpdate();
 

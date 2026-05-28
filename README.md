@@ -1,6 +1,33 @@
-# Sessions — Vape Controller (v8.2.0)
+# Sessions — Vape Controller (v8.3.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.3.0 — Heizkurven-Editor + Aroma-Bibliothek
+
+Zwei Power-User-Features. Keine Änderung an Adaptern, Pioneers-Framework, UX-Polish oder Session-Tracking (nur ein optionaler Aroma-Hook im Session-Notiz-Modal).
+
+### Heizkurven-Editor (visuell)
+
+Im Programm-Editor neue dritte Ansicht **🌡 Kurve** neben Liste/Timeline (toggle bleibt gespeichert).
+
+- **Inline-SVG** Ziel-Temperatur-Profil über die geschätzte Zeit (gleiches Zeitmodell wie `estimateDuration`).
+- **Vertikales Ziehen** an einem Punkt ändert die Set-Temperatur (Snap 5 °C, geclamped auf den Geräte-Bereich). Folgende `wait_until`-Schritte mit gleichem Wert werden automatisch mitgezogen.
+- **Dauer +/−** für jeden `wait`/`pump_for`-Schritt (±5 s).
+- **Punkt hinzufügen / löschen** (Long-Press = löschen mit Bestätigung).
+- **Live-Marker** für aktuellen Ist-Wert wenn verbunden; **Pump-Bänder** zeigen `pump_for`-Phasen.
+- **▶ Simulation**: animierter Sweep über die Kurve in ~4 s (rein visuell, schickt nichts ans Gerät).
+- Beide Editoren teilen dieselben Daten — eine Änderung in der Kurve erscheint sofort in der Liste.
+
+### Aroma-Bibliothek
+
+Bestehende DB mit 57 Sorten + Custom-Sorten **non-destruktiv erweitert** um abgeleitete Felder (`effects`, `thcLevel`, `recommendedTemp{min,max}`, `description`, `terpenes`, `userAdded`) via `normAroma()` — kein einziger DB-Eintrag wird verändert.
+
+- **Filter & Suche**: Effekt-Pills (Entspannt/Energetisch/Kreativ/Schläfrig/Fokussiert/Sozial, Multi-Select), Typ (Sativa/Indica/Hybrid/Andere), THC-Level (Mid/High/CBD), Sortierung (A-Z / Beliebtheit / Zufall), kombinierbar mit der bestehenden Volltext-Suche.
+- **„Empfohlen für dich"** oben: gewichtet die Effekt-Bewertungen aus deinen Session-Notizen (v8.2.0); ohne Sessions: drei zufällige Sorten als Einstieg.
+- **Detail-Modal** pro Sorte: Typ + THC, Effekte, empfohlener Temperatur-Bereich + Direkt-Buttons zum Setzen, Statistik aus deinen Sessions („Du hast diese Sorte 5× getestet, ⌀ Stärke 7,2/10") bei eigener Sorte: löschen.
+- **Custom-Sorten** weiterhin im bestehenden Key `vol_custom_aromas`; bestehende Einträge bleiben kompatibel.
+- **Session-Modal-Integration**: optionales Aroma-Dropdown im v8.2.0-Notiz-Modal → `SessionNote.aroma` (einziger Eingriff in v8.2.0).
+- **Tests**: +38 (v83curves 18 + v83aroma 20). Adapter/Pioneers/UX-Polish/Session-Tracking-Core unverändert.
 
 ## v8.2.0 — Session-Tracking (Minimal)
 
