@@ -8,3 +8,4 @@ v5_0_PLAN*.md
 node_modules/
 *.zip
 csc-config.json
+SUPABASE-SELFATTACK-REPORT.md
