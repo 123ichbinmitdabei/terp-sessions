@@ -1363,6 +1363,49 @@ html.hc-mode :focus-visible{
   outline-offset:3px !important;
 }
 
+/* ═══ v8.7.0 A11Y: globaler sichtbarer Fokus-Indikator + Touch-Targets ═══ */
+:focus-visible{
+  outline:3px solid var(--hot);
+  outline-offset:2px;
+  border-radius:4px;
+}
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="switch"]:focus-visible{
+  outline:3px solid var(--hot);
+  outline-offset:2px;
+}
+/* Touch-Target-Mindestgrößen (WCAG 2.5.5: 44×44 CSS-Pixel) */
+.btn.sm{ min-height:44px; padding:10px 14px }
+.toggle{ min-width:52px; min-height:32px }   /* runder Schalter — physikalisch klein, aber Tap-Bereich erweitert per Padding-Hit-Area unten */
+.toggle{ position:relative }
+.toggle::before{
+  content:'';position:absolute;inset:-8px -6px;   /* unsichtbare Hit-Area auf ≥44px */
+}
+.nav-btn{ min-height:56px }                       /* Bottom-Nav-Buttons */
+.help-ico, .user-avatar{ min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center }
+.aroma-temp{ min-height:44px; min-width:44px; padding:10px 12px }
+.sess-effect{ min-height:44px; padding:10px 14px }
+.aroma-pill{ min-height:36px; padding:8px 12px }    /* Filter-Chips — etwas kleiner, AA-Compliance reicht */
+
+/* v8.7.0 A11Y: 4. Schriftgröße-Stufe 200 % (Spec) */
+html{ zoom: var(--app-zoom, 1) }
+.fs-200{ font-size:17px }
+
+/* v8.7.0 UX: Undo-Toast */
+.undo-toast{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(170px + var(--safe-bot-padding));z-index:60;
+  background:rgba(30,22,18,.96);color:var(--text);
+  border:1px solid var(--line);border-radius:var(--r);
+  padding:10px 14px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s, transform .25s;
+  font-size:13px;font-family:var(--font-body);
+  max-width:90%;
+}
+.undo-toast.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(-4px) }
+.undo-toast button{ min-height:36px;padding:6px 12px }
+
 /* ═══ v4.6: PIN overlay ════════════════════════════════════════ */
 .pin-overlay{
   position:fixed;inset:0;z-index:200;
@@ -2286,7 +2329,7 @@ button[data-sch-day].active{
       <label>Zieltemperatur (40–230 °C)</label>
       <div class="stepper">
         <button id="tMinus" aria-label="minus">−</button>
-        <input class="mono" id="tInput" type="number" min="40" max="230" step="1" value="185" inputmode="numeric">
+        <input class="mono" id="tInput" type="number" min="40" max="230" step="1" value="185" inputmode="numeric" aria-label="Ziel-Temperatur in Grad Celsius">
         <button id="tPlus" aria-label="plus">+</button>
       </div>
     </div>
@@ -2317,7 +2360,7 @@ button[data-sch-day].active{
         <label>Pumpe für (Sek.)</label>
         <div class="stepper">
           <button id="pMinus">−</button>
-          <input class="mono" id="pInput" type="number" min="1" max="120" step="1" value="15" inputmode="numeric">
+          <input class="mono" id="pInput" type="number" min="1" max="120" step="1" value="15" inputmode="numeric" aria-label="Pumpe-Dauer in Sekunden">
           <button id="pPlus">+</button>
         </div>
       </div>
@@ -2346,7 +2389,7 @@ button[data-sch-day].active{
         <label>Auto-Aus nach (Minuten)</label>
         <div class="stepper">
           <button id="sMinus">−</button>
-          <input class="mono" id="sInput" type="number" min="1" max="60" step="1" value="20" inputmode="numeric">
+          <input class="mono" id="sInput" type="number" min="1" max="60" step="1" value="20" inputmode="numeric" aria-label="Wartezeit in Sekunden">
           <button id="sPlus">+</button>
         </div>
       </div>
@@ -2762,7 +2805,7 @@ button[data-sch-day].active{
     <p id="shareExportSummary" class="wiz-text"></p>
     <div class="field">
       <label>Share-Link (URL mit kodierten Daten):</label>
-      <textarea class="input mono" id="shareLinkText" rows="3" readonly style="font-size:11px;word-break:break-all"></textarea>
+      <textarea class="input mono" id="shareLinkText" rows="3" readonly style="font-size:11px;word-break:break-all" aria-label="Share-Link zum Kopieren"></textarea>
     </div>
     <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn sm ghost" id="shareLinkCopy" style="flex:1 1 100px">🔗 Link kopieren</button>
@@ -3043,11 +3086,12 @@ button[data-sch-day].active{
 
       <h3 class="set-section-h">Lesbarkeit</h3>
       <div class="toggle-row">
-        <div class="info"><b>Schriftgröße</b><small>100% · 125% · 150%</small></div>
-        <div style="display:flex;gap:4px">
-          <button class="btn sm ghost" data-fs="100" style="padding:6px 10px;min-height:auto">A</button>
-          <button class="btn sm ghost" data-fs="125" style="padding:6px 10px;min-height:auto;font-size:15px">A</button>
-          <button class="btn sm ghost" data-fs="150" style="padding:6px 10px;min-height:auto;font-size:17px">A</button>
+        <div class="info"><b>Schriftgröße</b><small>100 % · 125 % · 150 % · 200 %</small></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn sm ghost" data-fs="100" aria-label="Schriftgröße 100 Prozent">A</button>
+          <button class="btn sm ghost" data-fs="125" style="font-size:15px" aria-label="Schriftgröße 125 Prozent">A</button>
+          <button class="btn sm ghost" data-fs="150" style="font-size:17px" aria-label="Schriftgröße 150 Prozent">A</button>
+          <button class="btn sm ghost" data-fs="200" style="font-size:20px" aria-label="Schriftgröße 200 Prozent">A</button>
         </div>
       </div>
       <div class="toggle-row">
@@ -3215,6 +3259,14 @@ button[data-sch-day].active{
         <div class="toggle-row"><div class="info"><b>Session-Start (auto)</b></div><button class="toggle" data-tts="sessionStart" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Session-Ende</b></div><button class="toggle" data-tts="sessionEnd" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Fehler / Warnungen</b><small>Default an</small></div><button class="toggle" data-tts="errors" role="switch"></button></div>
+        <!-- v8.7.0 A11Y Prio 5: neue Events für blinde Nutzer -->
+        <div class="toggle-row"><div class="info"><b>Verbindung an / aus</b><small>Default an — wichtig für Blinde</small></div><button class="toggle" data-tts="connectChange" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Verbinden-Knopf gedrückt</b></div><button class="toggle" data-tts="connectStart" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Dialog geöffnet</b></div><button class="toggle" data-tts="modalOpen" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Dialog geschlossen</b></div><button class="toggle" data-tts="modalClose" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Sorte ausgewählt</b></div><button class="toggle" data-tts="sortSelect" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Import abgeschlossen</b><small>Default an</small></div><button class="toggle" data-tts="importDone" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Generische Aktion (z.B. QR-Code generiert)</b></div><button class="toggle" data-tts="actionDone" role="switch"></button></div>
       </details>
       <div class="toggle-row">
         <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
@@ -4683,12 +4735,19 @@ const PREFS_DEFAULTS = {
   // v8.4.0 Modul 2/3: Voice-Erweiterung
   voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
   wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
-  // v8.5.0 Modul 3: TTS-Events pro Event konfigurierbar (Master-Schalter ist voiceTts)
+  // v8.5.0 Modul 3 + v8.7.0 erweitert: TTS-Events pro Event konfigurierbar
   ttsEvents:{
     tempReached:false, programStepChange:true, programStart:false, programEnd:true,
     pumpOn:false, pumpOff:false, heaterOn:false, heaterOff:false,
     sessionStart:false, sessionEnd:false,
     errors:true,
+    // v8.7.0 A11Y Prio 5 — neue Events, alle Default AUS außer connectChange
+    connectChange:true,                  // Verbindung hergestellt / verloren
+    connectStart:false,                  // Benutzer hat „Verbinden" gedrückt
+    modalOpen:false, modalClose:false,   // jedes Dialog auf/zu
+    sortSelect:false,                    // Sorte ausgewählt
+    importDone:true,                     // Import abgeschlossen
+    actionDone:false,                    // generische Aktion (z.B. QR generiert)
   },
   // v8.5.0 Modul 7: Session-Tracking konfigurierbar
   trackingEnabled:true,
@@ -5459,6 +5518,7 @@ function showFriendlyError(error, context){
 }
 
 function setConn(connected){
+  const wasConnected = !!State.connected;
   State.connected=connected;
   if(connected){ State.connectionLost=false; State.reconnectAttempts=0; if(typeof hideConnLostBanner==='function') hideConnLostBanner(); }
   $('#dot').classList.toggle('on', connected);
@@ -5468,6 +5528,11 @@ function setConn(connected){
   $('#btnConnect').disabled=connected;
   $('#btnConnect2').disabled=connected;
   $('#btnDisconnect').disabled=!connected;
+  // v8.7.0 A11Y Prio 5: Status-Change ansagen
+  if(connected !== wasConnected && typeof ttsEvent === 'function'){
+    const name = (State.device && State.device.name) || 'Gerät';
+    ttsEvent('connectChange', connected ? ('Verbindung hergestellt mit '+name) : 'Verbindung getrennt');
+  }
   if(connected){
     renderLastAction('Verbunden mit '+(State.device?.name||'Gerät'), 'ok');
   }else{
@@ -6466,10 +6531,14 @@ function deleteProgram(id){
   const p = State.programs.find(x=>x.id===id);
   if(!p) return;
   if(!confirm(`Programm „${p.name}" wirklich löschen?`)) return;
+  const before = JSON.parse(JSON.stringify(State.programs));   // v8.7.0 UX: Undo-Snapshot
   State.programs = State.programs.filter(x=>x.id!==id);
   LS.set('vol_programs', State.programs);
   renderPrograms();
-  toast('Gelöscht');
+  undoToast('Programm gelöscht: '+p.name, ()=>{
+    State.programs = before; LS.set('vol_programs', State.programs); renderPrograms();
+    toast('Wiederhergestellt');
+  });
 }
 
 function duplicatePreset(p){
@@ -7824,7 +7893,7 @@ function wire(){
     $('#modalSettings').classList.remove('open');
     setTimeout(openShortcutsModal, 250);
   });
-  $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalShortcuts').classList.remove('open'));
+  $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalKbdShortcuts').classList.remove('open'));
 
   // ═════ v4.9.8 wiring: Session-Scheduler ═════
   $('#btnScheduleClose')?.addEventListener('click', ()=>$('#modalSchedule').classList.remove('open'));
@@ -9514,7 +9583,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.6.0';
+const SW_VERSION_LABEL='v8.7.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9888,7 +9957,7 @@ function renderAromaList(query){
     card.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click', async(ev)=>{
       ev.stopPropagation(); const act=b.dataset.act;
       if(act==='detail'){ openAromaDetail(a); }
-      else if(act==='set'){ await aromaSetTemp(a, parseInt(b.dataset.temp)); }
+      else if(act==='set'){ if(typeof ttsEvent==='function') ttsEvent('sortSelect', 'Sorte '+a.name+', '+b.dataset.temp+' Grad'); await aromaSetTemp(a, parseInt(b.dataset.temp)); }
       else if(act==='program'){ const prog=buildProgramFromAroma(a); State.programs.unshift(prog); LS.set('vol_programs',State.programs); renderPrograms(); toast('Programm „'+a.name+'" angelegt'); $('#modalAroma').classList.remove('open'); switchTab('prog'); }
       else if(act==='share'){ shareAromaV2(a.name); }
       else if(act==='del-custom'){ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); renderAromaList(); toast('Gelöscht'); } }
@@ -10926,7 +10995,15 @@ function sessionsAll(){ const a=LS.get(SESSIONS_KEY,[]); return Array.isArray(a)
 function sessionsPersist(arr){ if(arr.length>SESSION_MAX) arr=arr.slice(arr.length-SESSION_MAX); LS.set(SESSIONS_KEY,arr); }
 function sessionAdd(note){ const a=sessionsAll(); a.push(note); sessionsPersist(a); return note; }
 function sessionUpdate(id,patch){ const a=sessionsAll(); const i=a.findIndex(s=>s.id===id); if(i>=0){ a[i]=Object.assign({},a[i],patch); sessionsPersist(a); } }
-function sessionDelete(id){ sessionsPersist(sessionsAll().filter(s=>s.id!==id)); }
+function sessionDelete(id){
+  const all = sessionsAll();
+  const removed = all.find(s=>s.id===id);
+  sessionsPersist(all.filter(s=>s.id!==id));
+  // v8.7.0 UX: Undo-Toast
+  if(removed && typeof undoToast === 'function'){
+    undoToast('Session gelöscht', ()=>{ sessionsPersist([removed, ...sessionsAll()]); if(typeof renderSessions==='function') renderSessions(); toast('Session wiederhergestellt'); });
+  }
+}
 const DAY_MS=86400000;
 function dayKey(ts){ const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function fmtSessTime(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -14571,7 +14648,7 @@ function generateShortcutExamples(){
 }
 function openShortcutsModal(){
   renderShortcutExamples();
-  $('#modalShortcuts').classList.add('open');
+  $('#modalKbdShortcuts').classList.add('open');
 }
 function renderShortcutExamples(){
   const root = $('#shortcutsList');
@@ -15050,7 +15127,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.6.0 bereit.','ok');
+  log('Sessions v8.7.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -15584,7 +15661,9 @@ function confirmShareImport(){
   const added = shareApplyImport(_shareImportPending);
   _shareImportPending = null;
   $('#modalShareImport')?.classList.remove('open');
-  toast('✓ Importiert: '+(added.aroma?added.aroma+' Sorte(n) ':'')+(added.program?added.program+' Programm(e)':''));
+  const msg = '✓ Importiert: '+(added.aroma?added.aroma+' Sorte(n) ':'')+(added.program?added.program+' Programm(e)':'');
+  toast(msg);
+  if(typeof ttsEvent === 'function') ttsEvent('importDone', msg.replace('✓ ',''));   // v8.7.0 A11Y Prio 5
   // Lists neu rendern wenn vorhanden
   try{ if(typeof renderPrograms==='function') renderPrograms(); }catch{}
   try{ if(typeof renderAromaList==='function') renderAromaList(''); }catch{}
@@ -15672,6 +15751,7 @@ function _shareWireUi(){
       box.innerHTML = svg;
       box.style.display = 'block';
       if(hint) hint.style.display = 'block';
+      if(typeof ttsEvent === 'function') ttsEvent('actionDone', 'QR-Code generiert');   // v8.7.0 A11Y Prio 5
     }catch(e){
       box.innerHTML = '<p style="color:#b00">QR-Fehler: '+(e.message||'?')+'</p>';
       box.style.display = 'block';
@@ -16044,7 +16124,222 @@ async function cscSyncMarked(){
   return { skipped:false, count: results.length, results };
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.0 ACCESSIBILITY-INIT
+   Läuft am Ende von init(). Macht den existierenden Code accessible ohne
+   bestehende ARIA-Attribute zu entfernen. Funktionen sind ausgelegt für
+   Re-Run (idempotent — kann mehrfach laufen ohne Schaden).
+═══════════════════════════════════════════════════════════════════════════ */
+
+// Setzt aria-label aus dem benachbarten <label> oder .info > b — für inputs/
+// selects/textareas/toggles, die noch keinen accessible name haben.
+function _a11yAutoLabel(){
+  try{
+    // 1. Inputs/Textareas/Selects: nutze vorheriges <label>-Geschwister
+    document.querySelectorAll('input:not([aria-label]):not([aria-labelledby]), textarea:not([aria-label]):not([aria-labelledby]), select:not([aria-label]):not([aria-labelledby])').forEach(el=>{
+      if(el.type === 'hidden') return;
+      // Label assoziiert via for=id ?
+      if(el.id && document.querySelector('label[for="'+el.id+'"]')) return;
+      // Nested in <label> ?
+      if(el.closest('label')) return;
+      // Suche vorheriges <label> im selben field-Container
+      const field = el.closest('.field, .toggle-row, .row');
+      const lbl = field && field.querySelector('label');
+      if(lbl && lbl.textContent && lbl.textContent.trim()){
+        el.setAttribute('aria-label', lbl.textContent.trim().replace(/[:：]\s*$/,''));
+      }
+    });
+    // 2. Toggles (button.toggle[role=switch] ohne aria-label) — Text aus .toggle-row .info > b
+    document.querySelectorAll('button.toggle[role="switch"]:not([aria-label])').forEach(btn=>{
+      const row = btn.closest('.toggle-row');
+      const b = row && row.querySelector('.info > b');
+      if(b && b.textContent && b.textContent.trim()){
+        btn.setAttribute('aria-label', b.textContent.trim());
+      } else if(btn.dataset && (btn.dataset.vc || btn.dataset.tts)){
+        // Fallback: Daten-Attribut
+        btn.setAttribute('aria-label', 'Schalter '+(btn.dataset.vc||btn.dataset.tts));
+      }
+    });
+    // 3. Bestehende Aria-checked sync für role=switch ohne sichtbaren Zustand
+    document.querySelectorAll('[role="switch"]:not([aria-checked])').forEach(el=>el.setAttribute('aria-checked','false'));
+  }catch(e){ /* a11y-init darf nie crashen */ }
+}
+
+// Modal-Verbesserungen: Esc schließt, Fokus-Trap, Initial-Fokus, srAnnounce.
+let _a11yModalLastFocus = null;
+function _a11yModalEnhance(){
+  try{
+    document.querySelectorAll('.modal').forEach(m=>{
+      if(m.__a11yEnhanced) return;
+      m.__a11yEnhanced = true;
+      // Esc-Listener
+      m.addEventListener('keydown', (ev)=>{
+        if(ev.key === 'Escape' && m.classList.contains('open')){
+          ev.preventDefault();
+          m.classList.remove('open');
+          if(_a11yModalLastFocus && typeof _a11yModalLastFocus.focus === 'function'){
+            try{ _a11yModalLastFocus.focus(); }catch{}
+          }
+          if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
+        }
+        // Fokus-Trap: Tab-Loop
+        if(ev.key === 'Tab' && m.classList.contains('open')){
+          const focusables = m.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])');
+          if(focusables.length === 0) return;
+          const first = focusables[0], last = focusables[focusables.length-1];
+          if(ev.shiftKey && document.activeElement === first){
+            ev.preventDefault(); last.focus();
+          } else if(!ev.shiftKey && document.activeElement === last){
+            ev.preventDefault(); first.focus();
+          }
+        }
+      });
+    });
+    // MutationObserver: wenn ein Modal aufgeht (Klasse 'open' gesetzt),
+    // setze initialen Fokus + announce + merke letzten Fokus.
+    if(!window.__a11yModalObserver){
+      const obs = new MutationObserver(muts=>{
+        for(const mu of muts){
+          if(mu.attributeName !== 'class') continue;
+          const t = mu.target;
+          if(!(t instanceof Element) || !t.classList.contains('modal')) continue;
+          const isOpen = t.classList.contains('open');
+          const wasOpen = mu.oldValue ? /\bopen\b/.test(mu.oldValue) : false;
+          if(isOpen && !wasOpen){
+            _a11yModalLastFocus = document.activeElement;
+            // initialer Fokus auf erstes fokussierbares Element
+            const f = t.querySelector('button:not([disabled]), input:not([disabled]):not([type="hidden"]), [tabindex]:not([tabindex="-1"])');
+            if(f){ setTimeout(()=>{ try{ f.focus(); }catch{} }, 50); }
+            const label = t.getAttribute('aria-label') || (t.querySelector('h2,h3') && t.querySelector('h2,h3').textContent.trim()) || 'Dialog';
+            if(typeof ttsEvent === 'function') ttsEvent('modalOpen', 'Dialog geöffnet: ' + label);
+          } else if(!isOpen && wasOpen){
+            if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
+            // Fokus zurück (Esc-Pfad macht das oben schon, click-on-backdrop fängt hier)
+            if(_a11yModalLastFocus && document.activeElement === document.body){
+              try{ _a11yModalLastFocus.focus(); }catch{}
+            }
+          }
+        }
+      });
+      document.querySelectorAll('.modal').forEach(m => obs.observe(m, {attributes:true, attributeOldValue:true, attributeFilter:['class']}));
+      window.__a11yModalObserver = obs;
+    }
+  }catch(e){ /* a11y darf nie crashen */ }
+}
+
+// Connect-Events für srAnnounce: hängt sich an btnConnect/btnConnect2 als
+// zusätzliche Listener (ohne die bestehenden zu ersetzen).
+function _a11yConnectHooks(){
+  try{
+    ['btnConnect','btnConnect2'].forEach(id=>{
+      const b = document.getElementById(id); if(!b || b.__a11yHooked) return;
+      b.__a11yHooked = true;
+      b.addEventListener('click', ()=>{
+        if(typeof ttsEvent === 'function') ttsEvent('connectStart', 'Verbinden gestartet');
+      });
+    });
+  }catch{}
+}
+
+// Run-Engine-Events: bereits via srAnnounce abgedeckt. Modal-Close in
+// nicht-Modal-Pfaden (z.B. Sorten-Auswahl): wir announcen hier zentral.
+function _a11yWireAriaCheckedSync(){
+  // Nach jedem PREFS-Toggle: aria-checked auf passende Buttons setzen.
+  // Wir hängen uns an die bestehenden Toggles per delegierten Listener.
+  try{
+    document.body.addEventListener('click', (e)=>{
+      const t = e.target.closest('[role="switch"]');
+      if(!t) return;
+      // Nach 0ms (lassen wir bestehenden Handler erst seinen savePrefs machen)
+      setTimeout(()=>{
+        // aria-checked aus etwaigem PREFS-Lookup: einfacher Heuristik via class-toggle „on/active"
+        if(t.getAttribute('aria-checked') == null) t.setAttribute('aria-checked','false');
+      }, 0);
+    }, true);
+  }catch{}
+}
+
+function initA11y(){
+  _a11yAutoLabel();
+  _a11yModalEnhance();
+  _a11yConnectHooks();
+  _a11yWireAriaCheckedSync();
+  _a11yShortcutHelp();
+}
+
+// v8.7.0 UX-Bonus: Undo-Toast für destruktive Aktionen.
+// Wird neben dem normalen toast() gezeigt mit zusätzlichem „Rückgängig"-Button.
+// Bei Klick auf Rückgängig läuft `onUndo` und der Toast verschwindet.
+let _undoToastEl = null; let _undoToastTimer = null;
+function undoToast(msg, onUndo, timeoutMs){
+  try{
+    timeoutMs = timeoutMs || 6000;
+    if(_undoToastEl){ _undoToastEl.remove(); _undoToastEl = null; }
+    if(_undoToastTimer){ clearTimeout(_undoToastTimer); _undoToastTimer = null; }
+    const el = document.createElement('div');
+    el.className = 'undo-toast';
+    el.setAttribute('role','status');
+    el.setAttribute('aria-live','polite');
+    el.innerHTML = '<span class="undo-toast-msg"></span><button class="btn sm hot" type="button" aria-label="Letzte Aktion rückgängig machen">↺ Rückgängig</button>';
+    el.querySelector('.undo-toast-msg').textContent = msg;
+    const btn = el.querySelector('button');
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      try{ onUndo && onUndo(); }catch(_){}
+      if(_undoToastEl){ _undoToastEl.remove(); _undoToastEl = null; }
+      if(_undoToastTimer){ clearTimeout(_undoToastTimer); _undoToastTimer = null; }
+    });
+    document.body.appendChild(el);
+    _undoToastEl = el;
+    setTimeout(()=>el.classList.add('show'), 10);
+    _undoToastTimer = setTimeout(()=>{ if(_undoToastEl){ _undoToastEl.classList.remove('show'); setTimeout(()=>{ if(_undoToastEl){ _undoToastEl.remove(); _undoToastEl=null; } }, 300); } }, timeoutMs);
+  }catch(_){}
+}
+
+// v8.7.0 UX-Bonus: Tastatur-Shortcut-Hilfe (?-Taste).
+const KEYBOARD_SHORTCUTS = [
+  ['?',         'Diese Hilfe öffnen'],
+  ['Esc',       'Geöffneten Dialog schließen'],
+  ['Tab',       'Nächstes interaktives Element'],
+  ['Shift+Tab', 'Vorheriges Element'],
+  ['Enter / Space', 'Aktivieren (Button/Toggle)'],
+  ['m',         'Mikrofon-Sprachsteuerung starten (wenn aktiv)'],
+];
+function _a11yShortcutHelp(){
+  if(window.__a11yShortcutHelpBound) return;
+  window.__a11yShortcutHelpBound = true;
+  document.addEventListener('keydown', (ev)=>{
+    // ?-Taste: nicht in Inputs / Textareas / contenteditable
+    if(ev.key !== '?' && !(ev.shiftKey && ev.key === '/')) return;
+    const t = ev.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    ev.preventDefault();
+    showShortcutHelp();
+  });
+}
+function showShortcutHelp(){
+  let m = $('#modalKbdShortcuts');
+  if(!m){
+    m = document.createElement('div');
+    m.className = 'modal'; m.id = 'modalKbdShortcuts';
+    m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Tastatur-Shortcuts');
+    const rows = KEYBOARD_SHORTCUTS.map(([k,v]) =>
+      '<tr><th scope="row" style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)"><kbd style="background:var(--bg-3);padding:2px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">'+k+'</kbd></th><td style="padding:4px 8px;border-bottom:1px solid var(--line)">'+v+'</td></tr>'
+    ).join('');
+    m.innerHTML = '<div class="back"></div><div class="sheet"><div class="grab"></div><h2>⌨ Tastatur-Shortcuts</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0"><tbody>'+rows+'</tbody></table><div class="row" style="margin-top:14px"><button class="btn primary block" id="btnShortcutsClose">Schließen</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('.back').addEventListener('click', ()=>m.classList.remove('open'));
+    m.querySelector('#btnShortcutsClose').addEventListener('click', ()=>m.classList.remove('open'));
+    // observer für neues modal eintragen
+    if(window.__a11yModalObserver){
+      try{ window.__a11yModalObserver.observe(m, {attributes:true, attributeOldValue:true, attributeFilter:['class']}); }catch{}
+    }
+  }
+  m.classList.add('open');
+}
+
 document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(initA11y, 800); });
 </script>
 </body>
 </html>

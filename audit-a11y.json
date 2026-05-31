@@ -1,0 +1,492 @@
+{
+  "generatedAt": "2026-05-31T17:08:57.779Z",
+  "summary": {
+    "interactiveWithoutName": 72,
+    "divOnclickPotentialIssues": 0,
+    "hasSkipLink": true,
+    "hasMainRole": true,
+    "hasFocusTrap": true,
+    "modalCount": 29,
+    "cssVarPairsChecked": 9,
+    "contrastBelowAA": 0,
+    "touchTargetsBelow44": 8,
+    "srAnnounceCalls": 10,
+    "ttsEventsRegistered": 12
+  },
+  "details": {
+    "interactiveWithoutName": [
+      {
+        "tag": "input",
+        "id": "tInput",
+        "role": "",
+        "attrs": "class=\"mono\" id=\"tInput\" type=\"number\" min=\"40\" max=\"230\" step=\"1\" value=\"185\" inputmode=\"numeric\"",
+        "src": "<input class=\"mono\" id=\"tInput\" type=\"number\" min=\"40\" max=\"230\" step=\"1\" value="
+      },
+      {
+        "tag": "input",
+        "id": "pInput",
+        "role": "",
+        "attrs": "class=\"mono\" id=\"pInput\" type=\"number\" min=\"1\" max=\"120\" step=\"1\" value=\"15\" inputmode=\"numeric\"",
+        "src": "<input class=\"mono\" id=\"pInput\" type=\"number\" min=\"1\" max=\"120\" step=\"1\" value=\""
+      },
+      {
+        "tag": "input",
+        "id": "sInput",
+        "role": "",
+        "attrs": "class=\"mono\" id=\"sInput\" type=\"number\" min=\"1\" max=\"60\" step=\"1\" value=\"20\" inputmode=\"numeric\"",
+        "src": "<input class=\"mono\" id=\"sInput\" type=\"number\" min=\"1\" max=\"60\" step=\"1\" value=\"2"
+      },
+      {
+        "tag": "input",
+        "id": "fileImport",
+        "role": "",
+        "attrs": "type=\"file\" id=\"fileImport\" accept=\"application/json\" hidden",
+        "src": "<input type=\"file\" id=\"fileImport\" accept=\"application/json\" hidden>"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"strength\"",
+        "src": "<input type=\"checkbox\" data-tf=\"strength\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"effect\"",
+        "src": "<input type=\"checkbox\" data-tf=\"effect\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"aroma\"",
+        "src": "<input type=\"checkbox\" data-tf=\"aroma\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"moodBefore\"",
+        "src": "<input type=\"checkbox\" data-tf=\"moodBefore\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"moodAfter\"",
+        "src": "<input type=\"checkbox\" data-tf=\"moodAfter\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"purpose\"",
+        "src": "<input type=\"checkbox\" data-tf=\"purpose\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"tags\"",
+        "src": "<input type=\"checkbox\" data-tf=\"tags\">"
+      },
+      {
+        "tag": "input",
+        "id": "",
+        "role": "",
+        "attrs": "type=\"checkbox\" data-tf=\"notes\"",
+        "src": "<input type=\"checkbox\" data-tf=\"notes\">"
+      },
+      {
+        "tag": "input",
+        "id": "uuidServiceState",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidServiceState\" value=\"10100000-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidServiceState\" value=\"10100000-5354-4f52-5a26-4"
+      },
+      {
+        "tag": "input",
+        "id": "uuidServiceControl",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidServiceControl\" value=\"10110000-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidServiceControl\" value=\"10110000-5354-4f52-5a26"
+      },
+      {
+        "tag": "input",
+        "id": "uuidSetTemp",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidSetTemp\" value=\"10110003-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidSetTemp\" value=\"10110003-5354-4f52-5a26-424943"
+      },
+      {
+        "tag": "input",
+        "id": "uuidCurTemp",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidCurTemp\" value=\"10110001-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidCurTemp\" value=\"10110001-5354-4f52-5a26-424943"
+      },
+      {
+        "tag": "input",
+        "id": "uuidActivity",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidActivity\" value=\"1010000c-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidActivity\" value=\"1010000c-5354-4f52-5a26-42494"
+      },
+      {
+        "tag": "input",
+        "id": "uuidHeaterOn",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidHeaterOn\" value=\"1011000f-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidHeaterOn\" value=\"1011000f-5354-4f52-5a26-42494"
+      },
+      {
+        "tag": "input",
+        "id": "uuidHeaterOff",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidHeaterOff\" value=\"10110010-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidHeaterOff\" value=\"10110010-5354-4f52-5a26-4249"
+      },
+      {
+        "tag": "input",
+        "id": "uuidPumpOn",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidPumpOn\" value=\"10110013-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidPumpOn\" value=\"10110013-5354-4f52-5a26-4249434"
+      },
+      {
+        "tag": "input",
+        "id": "uuidPumpOff",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"uuidPumpOff\" value=\"10110014-5354-4f52-5a26-4249434b454c\"",
+        "src": "<input class=\"input mono\" id=\"uuidPumpOff\" value=\"10110014-5354-4f52-5a26-424943"
+      },
+      {
+        "tag": "input",
+        "id": "sessStrength",
+        "role": "",
+        "attrs": "type=\"range\" id=\"sessStrength\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" style=\"width:100%\" oninput=\"document.getElementById('",
+        "src": "<input type=\"range\" id=\"sessStrength\" min=\"1\" max=\"10\" step=\"1\" value=\"5\" style="
+      },
+      {
+        "tag": "input",
+        "id": "sessMoodBefore",
+        "role": "",
+        "attrs": "type=\"range\" id=\"sessMoodBefore\" min=\"1\" max=\"5\" step=\"1\" value=\"3\" style=\"width:100%\" oninput=\"document.getElementById(",
+        "src": "<input type=\"range\" id=\"sessMoodBefore\" min=\"1\" max=\"5\" step=\"1\" value=\"3\" style"
+      },
+      {
+        "tag": "input",
+        "id": "sessMoodAfter",
+        "role": "",
+        "attrs": "type=\"range\" id=\"sessMoodAfter\" min=\"1\" max=\"5\" step=\"1\" value=\"3\" style=\"width:100%\" oninput=\"document.getElementById('",
+        "src": "<input type=\"range\" id=\"sessMoodAfter\" min=\"1\" max=\"5\" step=\"1\" value=\"3\" style="
+      },
+      {
+        "tag": "textarea",
+        "id": "shareLinkText",
+        "role": "",
+        "attrs": "class=\"input mono\" id=\"shareLinkText\" rows=\"3\" readonly style=\"font-size:11px;word-break:break-all\"",
+        "src": "<textarea class=\"input mono\" id=\"shareLinkText\" rows=\"3\" readonly style=\"font-si"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"setTemp\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"setTemp\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"heatOn\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"heatOn\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"heatOff\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"heatOff\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"pumpOn\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"pumpOn\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"pumpOff\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"pumpOff\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"pumpFor\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"pumpFor\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"runProgram\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"runProgram\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"stopAll\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"stopAll\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-vc=\"fillBag\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-vc=\"fillBag\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"tempReached\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"tempReached\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"programStepChange\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"programStepChange\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"programStart\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"programStart\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"programEnd\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"programEnd\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"heaterOn\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"heaterOn\" role=\"switch\"></button>"
+      },
+      {
+        "tag": "button",
+        "id": "",
+        "role": "switch",
+        "attrs": "class=\"toggle\" data-tts=\"heaterOff\" role=\"switch\"",
+        "src": "<button class=\"toggle\" data-tts=\"heaterOff\" role=\"switch\"></button>"
+      }
+    ],
+    "divOnclickIssues": [],
+    "modalIds": [
+      "modalSession",
+      "modalSlides",
+      "modalBeta",
+      "modalShareExport",
+      "modalShareImport",
+      "modalEditor",
+      "modalAddStep",
+      "modalStepEdit",
+      "modalWizard",
+      "modalDevice",
+      "modalHelp",
+      "modalSettings",
+      "modalBag",
+      "modalAroma",
+      "modalAromaDetail",
+      "modalQR",
+      "modalStepTpl",
+      "modalAch",
+      "modalAudio",
+      "modalLearn",
+      "modalSymptoms",
+      "modalUsers",
+      "modalManual",
+      "modalDsl",
+      "modalBleConsole",
+      "modalBagEditor",
+      "modalShortcuts",
+      "modalSchedule",
+      "modalScheduleEditor"
+    ],
+    "contrastFindings": [
+      {
+        "fg": "text",
+        "bg": "bg",
+        "fgVal": "#f5ede0",
+        "bgVal": "#0c0a08",
+        "ratio": 17.01,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      },
+      {
+        "fg": "muted",
+        "bg": "bg",
+        "fgVal": "#998873",
+        "bgVal": "#0c0a08",
+        "ratio": 5.76,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": false
+      },
+      {
+        "fg": "hot",
+        "bg": "bg",
+        "fgVal": "#ff5722",
+        "bgVal": "#0c0a08",
+        "ratio": 6.25,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": false
+      },
+      {
+        "fg": "text",
+        "bg": "bg-2",
+        "fgVal": "#f5ede0",
+        "bgVal": "#1d1813",
+        "ratio": 15.16,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      },
+      {
+        "fg": "muted",
+        "bg": "bg-2",
+        "fgVal": "#998873",
+        "bgVal": "#1d1813",
+        "ratio": 5.14,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": false
+      },
+      {
+        "fg": "text",
+        "bg": "bg-3",
+        "fgVal": "#f5ede0",
+        "bgVal": "#2a221a",
+        "ratio": 13.47,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      },
+      {
+        "fg": "ok",
+        "bg": "bg",
+        "fgVal": "#34d399",
+        "bgVal": "#0c0a08",
+        "ratio": 10.28,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      },
+      {
+        "fg": "warn",
+        "bg": "bg",
+        "fgVal": "#fbbf24",
+        "bgVal": "#0c0a08",
+        "ratio": 11.84,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      },
+      {
+        "fg": "err",
+        "bg": "bg",
+        "fgVal": "#f87171",
+        "bgVal": "#0c0a08",
+        "ratio": 7.14,
+        "aaText": true,
+        "aaLarge": true,
+        "aaaText": true
+      }
+    ],
+    "touchFindings": [
+      {
+        "selector": ".btn.sm",
+        "height": 36
+      },
+      {
+        "selector": ".btn",
+        "height": 48
+      },
+      {
+        "selector": ".toggle",
+        "height": 24
+      },
+      {
+        "selector": ".nav-btn",
+        "height": 16
+      },
+      {
+        "selector": ".quick-action",
+        "height": 80
+      },
+      {
+        "selector": ".help-ico",
+        "height": 24
+      },
+      {
+        "selector": ".user-avatar",
+        "height": 24
+      },
+      {
+        "selector": ".aroma-temp",
+        "height": 10
+      },
+      {
+        "selector": ".sess-effect",
+        "height": 12
+      },
+      {
+        "selector": ".aroma-pill",
+        "height": 8
+      }
+    ],
+    "srAnnounceSample": [
+      "msg",
+      "msg, urgent=false",
+      "`Zieltemperatur ${temp} Grad erreicht`, true",
+      "'Verbindung verloren, versuche Reconnect', true",
+      "`Programm gestartet: ${p.name}`",
+      "'Ballon gefüllt', true",
+      "'Bereit zum Ziehen', false",
+      "`Pre-Heat geplant in ${min} Minuten auf ${temp} Grad`, false",
+      "'Pre-Heat Zeit erreicht. Bitte manuell verbinden und starten.', true",
+      "`Pre-Heat aktiv. Heizer an, Ziel ${preheatTargetTemp} Grad`, true"
+    ],
+    "ttsEventNames": [
+      "heaterOn",
+      "heaterOff",
+      "pumpOn",
+      "pumpOff",
+      "programStart",
+      "programStepChange",
+      "programEnd",
+      "errors",
+      "sessionStart",
+      "sessionEnd",
+      "name",
+      "tempReached"
+    ]
+  }
+}

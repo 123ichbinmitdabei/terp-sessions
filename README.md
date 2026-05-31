@@ -1,6 +1,57 @@
-# Sessions — Vape Controller (v8.6.0)
+# Sessions — Vape Controller (v8.7.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.0 — Accessibility-Update
+
+Sessions PWA wurde für die blinden und behinderten Test-Nutzer aus der Mariana-Community zugänglich gemacht. Keine Änderung an Adaptern, Voice-Parser, CSC-Backend / cscClient (dormant) oder cscCrypto-Modul.
+
+### Phase A — Audit
+Statisches A11Y-Audit über alle interaktiven Elemente. Befunde dokumentiert in `A11Y-AUDIT.md` (Vorher-Zustand): 72 interaktive Elemente ohne accessible-name (40 davon echt — die anderen waren über `<label for=>` oder verschachtelte `<label>`-Pattern bereits korrekt), 8 Touch-Targets unter 44 px. Skip-Link, `<main>`-Element und Focus-Trap-Pattern waren bereits vorhanden. Kontrast: 9 geprüfte Paarungen, **0 unter WCAG AA**.
+
+### Prio 1 — Kritisch für blinde Nutzer
+- 3 Number-Inputs (tInput / pInput / sInput) + 1 Textarea (shareLinkText) bekommen direktes `aria-label`.
+- `_a11yAutoLabel()`-Init labelt automatisch alle restlichen Inputs/Selects/Textareas/Toggles über das benachbarte `<label>` oder den `.info > b`-Text. Damit sind UUID-Inputs, Voice-Cmd-Toggles und TTS-Event-Toggles per Screen-Reader bedienbar.
+- Skip-Link „Zum Hauptinhalt", `<main>`-Element und `aria-live`-Regionen bestätigt vorhanden.
+- Neue srAnnounce-/TTS-Hooks an Verbinden-Events.
+
+### Prio 2 — Tastatur-Navigation
+- `_a11yModalEnhance()`: Esc schließt jedes offene Modal, Tab/Shift+Tab wird im offenen Modal getrappt (Fokus läuft im Kreis), Initial-Fokus wird automatisch auf das erste fokussierbare Element gesetzt, vorheriger Fokus wird beim Schließen wiederhergestellt. `MutationObserver` registriert das auch für Modals, die später per `createElement` hinzukommen (Shortcut-Hilfe).
+- Globale `:focus-visible`-CSS-Regel: 3 px solid in `--hot` mit 2 px Offset auf alle interaktiven Elemente.
+
+### Prio 3 — Sehbehinderte
+- `Schriftgröße`-Buttons erweitert um **200 %** (zusätzlich zu 100/125/150). Skaliert über `--app-zoom` auf `<html>`.
+- Hochkontrast-Modus war bereits da (`html.hc-mode` → schwarz/weiß, 21:1-Kontrast, 2px-Borders, 3px Focus-Outline) — Tests verifizieren jetzt das Verhalten.
+
+### Prio 4 — Touch-Targets ≥44 px (WCAG 2.5.5)
+- `.btn.sm` → `min-height:44px`, `.nav-btn` → 56 px, `.help-ico` + `.user-avatar` → 44 px, `.aroma-temp` + `.sess-effect` → 44 px, `.aroma-pill` → 36 px (Filter-Chips, AA reicht).
+- Der runde `.toggle`-Switch bleibt 32 px sichtbar, bekommt aber eine unsichtbare Hit-Area über `::before` (`inset:-8px -6px`) → effektiv ≥44 px tappbar ohne Layout-Bruch.
+
+### Prio 5 — TTS-Events erweitert
+`PREFS.ttsEvents` bekommt 7 neue Per-Event-Toggles (UI im Setup → Sprachsteuerung → Welche Events vorlesen):
+- `connectChange` (Verbindung an/aus) — **default an** (wichtig für Blinde)
+- `connectStart`, `modalOpen`, `modalClose`, `sortSelect`, `actionDone` — default aus
+- `importDone` — **default an** (kritisches Feedback nach Sharing-Import)
+
+Hooks: `setConn()` triggert `connectChange`, der A11Y-Modal-Observer triggert `modalOpen`/`modalClose`, Aroma-Karten triggern `sortSelect`, Share-Import triggert `importDone`, QR-Generierung triggert `actionDone`.
+
+### UX-Bonus
+- **`?`-Taste öffnet eine Tastatur-Shortcut-Hilfe** (`#modalKbdShortcuts`) mit 6 Einträgen. In Inputs/Textareas wird die Taste bewusst ignoriert.
+- **`undoToast()`-Helper** + Integration in Programm-Löschen und Session-Löschen: 6 Sekunden langer Toast mit „↺ Rückgängig"-Button, der die Aktion wiederherstellt.
+- (Auto-Save-Indikator bewusst ausgelassen — kein konkreter Nutzen ohne genauere Spezifikation.)
+
+### Tests + Regression
+- +28 neue Tests in `v87a11y.mjs` (Skip-Link, Auto-Label, Touch-Targets, TTS-Events, Schriftgröße, Hochkontrast, Modal-Esc, Shortcut-Hilfe, Undo-Toast, Connect-Hook).
+- **508 / 508** grün über 24 Suiten.
+- Forward-compat: `v85tts.mjs` Toggle-Count-Assert auf `≥11` gelockert (v8.7.0 hat 18 Toggles).
+
+### Was Andre seinen Test-Nutzern sagen kann
+- **Hochkontrast** + **Schriftgröße bis 200 %**: Settings → Inklusion.
+- **Tastatur-Shortcut-Hilfe** mit `?`-Taste aufrufen.
+- **Esc** schließt jedes offene Dialog-Fenster zuverlässig.
+- **Mehr Sprachausgabe-Events** im Setup → Sprachsteuerung → Welche Events vorlesen (7 neue Optionen).
+- **„Rückgängig"-Toast** nach versehentlichem Löschen einer Session oder eines Programms — 6 Sekunden Zeit zum Klicken.
+- **Mikro-/Avatar-Buttons** sind während laufender Programme weiter bedienbar (v8.5.0-Fix, in v8.7.0 bestätigt).
 
 ## v8.7.0-prep — CSC E2EE Krypto-Modul (DORMANT, nicht aktiv)
 
