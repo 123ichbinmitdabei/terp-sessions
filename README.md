@@ -1,6 +1,45 @@
-# Sessions — Vape Controller (v8.4.0)
+# Sessions — Vape Controller (v8.5.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.5.0 — Praxis-Feedback
+
+Sieben Module nach Andres Praxis-Nutzung von v8.4.0 mit dem Volcano. Keine Änderung an Adaptern, am CSC-Backend/-Client (bleibt dormant), an Voice-Parser oder Onboarding.
+
+### Modul 1+2 — Programm-Anzeige Fix + Split-Screen
+- `runCard` z-index auf 33 gesenkt, `voiceFab`/`wakeIndicator`/`connectHint` auf 41 gehoben → Header-Buttons (Mikro, Avatar, Hilfe, Settings) bleiben klickbar während Programm läuft. Bei aktivem Programm rutschen voiceFab und wake-indicator zusätzlich hoch (`bottom: 220px`), damit sie nicht unter dem expandierten Run-Panel verschwinden.
+- Run-Panel zeigt jetzt die komplette Schritt-Liste mit aktuellem Schritt-Highlight, Restzeit pro Schritt (mm:ss) und Gesamt-Restzeit. Per-Step-Dauer per `_stepDurations()` aus der gleichen Logik wie `estimateDuration()`. Automatischer Switch auf Steuerungs-Tab beim Programm-Start, damit die Hero-Temperatur-Anzeige sichtbar bleibt → das ist die "untere Hälfte" des Splits.
+
+### Modul 3 — TTS-Events konfigurierbar
+- Neuer Master + Per-Event-Toggle-Map (`PREFS.ttsEvents`): `tempReached`, `programStart/StepChange/End`, `heaterOn/Off`, `pumpOn/Off`, `sessionStart/End`, `errors`.
+- `ttsEvent(name, text)` als zentrale Sprech-Funktion; respektiert Master `PREFS.voiceTts`.
+- Hooks in `cmdHeaterOn/Off`, `cmdPumpOn/Off`, `runProgram` (Step-Change + Start + End), `sessionTracker*`, `renderStatus` (`tempReached` mit ±2 °C Hysterese + einmal-pro-Heiz-Zyklus-Lockout).
+- UI: `<details>`-Sub-Block unter „Sprachsteuerung" mit 11 Per-Event-Toggles.
+
+### Modul 4 — Sorten-DB +70 (additiv)
+- Von 57 auf **127** Sorten. Bestehende unverändert. Neu hinzugefügt: Sativa-/Indica-/Hybrid-Klassiker (Sour Diesel, Northern Lights, OG Kush, Pineapple Express, …), moderne hochpotente (Runtz, Zkittlez, Gelato, Wedding Cake, …), CBD/medizinisch (Harlequin, ACDC, Cannatonic, Bediol, …), Landrace (Acapulco Gold, Hindu Kush, Durban Poison, …), Hash (Bubble Hash, Dry Sift) und drei Temperatur-Profile (Niedertemp 160 °C / Mittel 180 °C / Hoch 210 °C).
+
+### Modul 5 — Programm-Vorlagen +12 (additiv mit Tags)
+- Bestehende 6 PRESETS unverändert. Neu: Aroma-Sweep 4 Stufen, Doppel-Ballon 185°, Easy-Valve-Refill 195°, Smooth-Ramp 165→195, Power-Ramp 180→215, CBD-Modus 160-175°, Abend-Indica 200°, Mighty Step-Session 180→205, Mighty Microdose 165°, Portable Power 195°, Schlaf-Programm 200° tief, Schmerz-Stütze 1:1, Microdose-Reihe (3× Mini). Jedes mit `tags`-Array (z. B. `['volcano','aroma']`, `['mighty','crafty','portable','microdose']`).
+
+### Modul 6 — Offline-Teilen (JSON + Share-Link)
+- Schema-validierte Share-Payloads (`{v:1, kind, items}`) für `aroma` / `program` / `bundle`. Hard limits: 100 Items, 200 Schritte pro Programm, 500 Zeichen pro Textfeld. Whitelist erlaubter Step-Actions (kein `eval`, kein Code).
+- Share-Link: URL-Hash mit base64url-codiertem JSON, App liest beim Start aus dem Hash und öffnet **Vorschau-Modal** vor jedem Import.
+- JSON-Datei-Download/-Upload via Blob + FileReader.
+- Import vergibt **immer neue IDs**, überschreibt nichts.
+- **QR-Code vertagt auf v8.5.1** — Inline-QR-Encoder (~700 LoC Reed-Solomon) sprengt den Session-Rahmen. Spec erlaubte das ausdrücklich. `openQRShare` (pre-v8.5.0) nutzt weiterhin `api.qrserver.com`-CDN; auch das wird in v8.5.1 auf inline umgestellt.
+
+### Modul 7 — Tracking konfigurierbar + erweitert
+- `PREFS.trackingEnabled` (Default an): aus → keine Auto-Notiz-Modale mehr nach Sessions.
+- `PREFS.trackingFields` (8 Felder): `strength`, `effect`, `aroma`, `moodBefore`, `moodAfter`, `purpose`, `tags`, `notes`. Modal blendet nicht-aktivierte Felder aus (`data-track-field`-Attribut + `style.display`).
+- Neue Felder: Stimmung vorher/nachher (1-5 Skala mit 😢😕😐🙂😊), Zweck (Schlaf/Schmerz/Genuss/Sozial/Kreativität/Sport/Anderes), Tags (Komma-getrennt mit `<datalist>`-Auto-Vervollständigung aus früheren Sessions). Aroma-Dropdown war bereits v8.3.0.
+- **⚡ Schnell-Speichern**-Button: speichert mit `PREFS.trackingDefaults`-Werten, kein Ausfüllen nötig — direkte Antwort auf Andres „nervig"-Feedback bei Routine-Sessions.
+- Setup-Akkordeon „📝 Sessions" hat jetzt eine zweite Karte „Tracking-Einstellungen" mit Master-Toggle + 8 Feld-Checkboxen.
+
+### Tests + Regression
+- +68 neue Tests: `v85uifix.mjs` (13) + `v85tts.mjs` (13) + `v85sharing.mjs` (25) + `v85tracking.mjs` (17).
+- **413 / 413** grün über 19 Suiten.
+- Keine forward-compat-Patches an älteren Suiten nötig.
 
 ## v8.5.0-prep — CSC-Mode (DORMANT, nicht für Endnutzer)
 

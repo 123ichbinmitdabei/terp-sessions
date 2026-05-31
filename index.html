@@ -508,7 +508,7 @@ body:has(.run-card.show){padding-bottom:calc(300px + var(--safe-bot-padding))}
 .run-card{
   position:fixed;left:14px;right:14px;
   bottom:calc(96px + var(--safe-bot-padding));
-  z-index:35;
+  z-index:33;                              /* v8.5.0: unter voiceFab/wakeIndicator (z-41), unter header (z-30+) */
   background:linear-gradient(180deg,#221610,#15110c);
   border:1px solid rgba(255,87,34,.45);
   border-radius:var(--r);
@@ -516,6 +516,7 @@ body:has(.run-card.show){padding-bottom:calc(300px + var(--safe-bot-padding))}
   display:none;
   box-shadow:0 14px 50px rgba(0,0,0,.6), 0 0 30px rgba(255,87,34,.2);
   max-width:560px;margin:0 auto;
+  max-height:60vh;overflow-y:auto;
 }
 .run-card.show{display:block;animation:slideUp .35s ease}
 @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
@@ -533,6 +534,42 @@ body:has(.run-card.show){padding-bottom:calc(300px + var(--safe-bot-padding))}
   transition:width .4s;width:0%;
   box-shadow:0 0 12px var(--hot);
 }
+/* v8.5.0 Modul 2: Step-Liste + Countdown im Run-Panel */
+.run-steps{
+  list-style:none;margin:10px 0 8px;padding:0;
+  display:flex;flex-direction:column;gap:4px;
+  font-size:12px;font-family:var(--font-mono);
+  max-height:32vh;overflow-y:auto;
+}
+.run-steps li{
+  padding:5px 8px;border-radius:6px;
+  background:rgba(255,255,255,.03);
+  color:var(--muted);
+  display:flex;gap:8px;align-items:center;
+  border-left:2px solid transparent;
+}
+.run-steps li.done{opacity:.55;text-decoration:line-through;text-decoration-color:rgba(150,200,150,.4)}
+.run-steps li.current{
+  background:rgba(255,87,34,.18);
+  color:var(--text);font-weight:600;
+  border-left-color:var(--hot);
+  animation:pulse 1.6s ease-in-out infinite;
+}
+.run-steps li .ix{font-size:10px;color:var(--muted);min-width:22px}
+.run-countdown{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin:8px 0 4px;font-family:var(--font-mono);font-size:12px;
+}
+.run-countdown b{font-size:16px;display:block;color:var(--hot);font-weight:700}
+.run-countdown small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+
+/* v8.5.0 Modul 1: Header/voiceFab/wakeIndicator/Hint sicher über runCard halten.
+   runCard ist z-33; alles was klickbar bleiben muss → z-41 (über bottom-nav z-40). */
+.voice-fab{z-index:41 !important}
+.wake-indicator{z-index:41 !important}
+.connect-hint{z-index:41 !important}
+body:has(.run-card.show) .voice-fab{ bottom:calc(220px + var(--safe-bot-padding)) }
+body:has(.run-card.show) .wake-indicator{ bottom:calc(220px + var(--safe-bot-padding)) }
 
 .modal{position:fixed;inset:0;z-index:50;display:none}
 .modal.open{display:block}
@@ -2447,6 +2484,25 @@ button[data-sch-day].active{
   </details>
   <details class="setup-acc" data-acc="sessions" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📝</span><span>Sessions</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
     <div class="card"><div id="sessionsBody"></div></div>
+    <!-- v8.5.0 Modul 7: Tracking-Einstellungen -->
+    <div class="card">
+      <h3>Tracking-Einstellungen</h3>
+      <div class="toggle-row">
+        <div class="info"><b>Session-Tracking aktiviert</b><small>Wenn aus: kein Auto-Notiz-Modal nach Sessions</small></div>
+        <button class="toggle" id="togTrackingEnabled" role="switch" aria-checked="true" aria-label="Session-Tracking aktiviert"></button>
+      </div>
+      <div id="trackingFieldsSub" style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <label><input type="checkbox" data-tf="strength"> Stärke (Pflicht)</label>
+        <label><input type="checkbox" data-tf="effect"> Effekt</label>
+        <label><input type="checkbox" data-tf="aroma"> Sorte (Aroma)</label>
+        <label><input type="checkbox" data-tf="moodBefore"> Stimmung vorher</label>
+        <label><input type="checkbox" data-tf="moodAfter"> Stimmung nachher</label>
+        <label><input type="checkbox" data-tf="purpose"> Zweck</label>
+        <label><input type="checkbox" data-tf="tags"> Tags</label>
+        <label><input type="checkbox" data-tf="notes"> Notiz (Freitext)</label>
+      </div>
+      <small style="color:var(--muted);display:block;margin-top:8px">Aktivierte Felder erscheinen im Notiz-Modal. „⚡ Schnell speichern" benutzt die Default-Werte.</small>
+    </div>
   </details>
   <details class="setup-acc" data-acc="werkzeuge" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">🛠</span><span>Werkzeuge</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
@@ -2565,7 +2621,7 @@ button[data-sch-day].active{
 
 </main>
 
-<!-- ── Run progress bar ─────────────────────────────────────── -->
+<!-- ── Run progress panel (v8.5.0 Modul 2: Split-Screen) ──── -->
 <div class="run-card" id="runCard" role="region" aria-label="Laufendes Programm" aria-live="polite">
   <div class="head">
     <div>
@@ -2575,6 +2631,11 @@ button[data-sch-day].active{
     <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen">Stop</button>
   </div>
   <div class="bar" role="progressbar" aria-label="Programm-Fortschritt" aria-valuemin="0" aria-valuemax="100"><div id="runBar"></div></div>
+  <div class="run-countdown" id="runCountdown">
+    <div><small>Schritt-Restzeit</small><b id="runStepRemain">--:--</b></div>
+    <div><small>Gesamt-Restzeit</small><b id="runTotalRemain">--:--</b></div>
+  </div>
+  <ul class="run-steps" id="runSteps" aria-label="Programm-Schritte"></ul>
 </div>
 
 <!-- v8.2.0: Session-Notiz-Modal -->
@@ -2588,27 +2649,57 @@ button[data-sch-day].active{
       <div id="sessHeadTime" class="sess-head-sub"></div>
       <div id="sessHeadTemp" class="sess-head-sub"></div>
     </div>
-    <div class="field" style="margin-top:12px">
+    <div class="field" data-track-field="strength" style="margin-top:12px">
       <label>Stärke (Pflicht): <span id="sessStrengthVal" class="mono">5/10</span></label>
       <input type="range" id="sessStrength" min="1" max="10" step="1" value="5" style="width:100%"
         oninput="document.getElementById('sessStrengthVal').textContent=this.value+'/10'">
     </div>
-    <div class="field">
+    <div class="field" data-track-field="effect">
       <label>Effekt (optional):</label>
       <div id="sessEffects" class="sess-effects"></div>
     </div>
-    <div class="field">
+    <div class="field" data-track-field="aroma">
       <label>Sorte (optional):</label>
       <select class="select" id="sessAroma"><option value="">— keine —</option></select>
     </div>
-    <div class="field">
+    <!-- v8.5.0 Modul 7: neue optionale Felder -->
+    <div class="field" data-track-field="moodBefore">
+      <label>Stimmung vorher: <span id="sessMoodBeforeIco" class="mono">😐</span></label>
+      <input type="range" id="sessMoodBefore" min="1" max="5" step="1" value="3" style="width:100%"
+        oninput="document.getElementById('sessMoodBeforeIco').textContent=['😢','😕','😐','🙂','😊'][this.value-1]||'😐'">
+    </div>
+    <div class="field" data-track-field="moodAfter">
+      <label>Stimmung nachher: <span id="sessMoodAfterIco" class="mono">😐</span></label>
+      <input type="range" id="sessMoodAfter" min="1" max="5" step="1" value="3" style="width:100%"
+        oninput="document.getElementById('sessMoodAfterIco').textContent=['😢','😕','😐','🙂','😊'][this.value-1]||'😐'">
+    </div>
+    <div class="field" data-track-field="purpose">
+      <label>Zweck (optional):</label>
+      <select class="select" id="sessPurpose">
+        <option value="">— offen —</option>
+        <option value="sleep">😴 Schlaf</option>
+        <option value="pain">🩹 Schmerz</option>
+        <option value="enjoy">🌿 Genuss</option>
+        <option value="social">🫂 Sozial</option>
+        <option value="creative">🎨 Kreativität</option>
+        <option value="sport">🏃 Sport</option>
+        <option value="other">… Anderes</option>
+      </select>
+    </div>
+    <div class="field" data-track-field="tags">
+      <label>Tags (Komma-getrennt):</label>
+      <input class="input" id="sessTags" type="text" list="sessTagsList" placeholder="z. B. abends, microdose, bauchschmerzen">
+      <datalist id="sessTagsList"></datalist>
+    </div>
+    <div class="field" data-track-field="notes">
       <label>Notiz (optional):</label>
       <textarea class="input" id="sessNotes" rows="2" placeholder="z. B. Sorte, Setting, Wirkung…"></textarea>
     </div>
-    <div class="row" style="gap:8px;margin-top:14px">
-      <button class="btn sm ghost" id="sessBtnDiscard" style="flex:1">Verwerfen</button>
-      <button class="btn sm" id="sessBtnLater" style="flex:1">Später</button>
-      <button class="btn hot" id="sessBtnSave" style="flex:1">Speichern</button>
+    <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn sm ghost" id="sessBtnDiscard" style="flex:1 1 100px">Verwerfen</button>
+      <button class="btn sm" id="sessBtnLater" style="flex:1 1 100px">Später</button>
+      <button class="btn sm" id="sessBtnQuick" style="flex:1 1 100px" title="Mit Defaults speichern, ohne Felder ausfüllen">⚡ Schnell</button>
+      <button class="btn hot" id="sessBtnSave" style="flex:2 1 120px">Speichern</button>
     </div>
   </div>
 </div>
@@ -2660,6 +2751,40 @@ button[data-sch-day].active{
 <div class="wake-indicator" id="wakeIndicator" role="status" aria-live="polite" hidden>
   <span class="wake-dot" aria-hidden="true"></span>
   <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
+</div>
+
+<!-- v8.5.0 Modul 6: Share-Modal (JSON-Download + Link-Kopie) -->
+<div class="modal" id="modalShareExport" role="dialog" aria-modal="true" aria-label="Teilen">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>📤 Teilen</h2>
+    <p id="shareExportSummary" class="wiz-text"></p>
+    <div class="field">
+      <label>Share-Link (URL mit kodierten Daten):</label>
+      <textarea class="input mono" id="shareLinkText" rows="3" readonly style="font-size:11px;word-break:break-all"></textarea>
+    </div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn sm ghost" id="shareLinkCopy" style="flex:1 1 100px">🔗 Link kopieren</button>
+      <button class="btn sm ghost" id="shareJsonDownload" style="flex:1 1 100px">📥 JSON-Datei</button>
+      <button class="btn sm" id="shareExportClose" style="flex:1 1 100px">Schließen</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">QR-Code-Rendering folgt in v8.5.1 (lokal, ohne externe Lib).</p>
+  </div>
+</div>
+
+<!-- v8.5.0 Modul 6: Import-Vorschau-Modal -->
+<div class="modal" id="modalShareImport" role="dialog" aria-modal="true" aria-label="Import-Vorschau">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>📥 Import-Vorschau</h2>
+    <div id="shareImportSummary" class="wiz-text" style="white-space:pre-line"></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="shareImportCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="shareImportConfirm" style="flex:2">Importieren</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
@@ -3072,9 +3197,23 @@ button[data-sch-day].active{
       </details>
 
       <div class="toggle-row">
-        <div class="info"><b>Sprachausgabe (TTS)</b><small>Bestätigt Status-Abfragen vorlesen</small></div>
+        <div class="info"><b>Sprachausgabe (TTS)</b><small>Bestätigt Status-Abfragen vorlesen + Event-Ansagen unten</small></div>
         <button class="toggle" id="togVoiceTts" role="switch" aria-checked="true" aria-label="Sprachausgabe"></button>
       </div>
+      <details id="ttsEventsSub" class="sub-toggles-details">
+        <summary>Welche Events vorlesen?</summary>
+        <div class="toggle-row"><div class="info"><b>Ziel-Temperatur erreicht</b><small>einmalig pro Heiz-Zyklus, ±2 °C Hysterese</small></div><button class="toggle" data-tts="tempReached" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Programm-Schritt-Wechsel</b></div><button class="toggle" data-tts="programStepChange" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Programm-Start</b></div><button class="toggle" data-tts="programStart" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Programm-Ende</b></div><button class="toggle" data-tts="programEnd" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Heizer an</b></div><button class="toggle" data-tts="heaterOn" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Heizer aus</b></div><button class="toggle" data-tts="heaterOff" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Pumpe an</b></div><button class="toggle" data-tts="pumpOn" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Pumpe aus</b></div><button class="toggle" data-tts="pumpOff" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Session-Start (auto)</b></div><button class="toggle" data-tts="sessionStart" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Session-Ende</b></div><button class="toggle" data-tts="sessionEnd" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Fehler / Warnungen</b><small>Default an</small></div><button class="toggle" data-tts="errors" role="switch"></button></div>
+      </details>
       <div class="toggle-row">
         <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
         <button class="toggle" id="togWakeWord" role="switch" aria-checked="false" aria-label="Wake-Word"></button>
@@ -4542,6 +4681,17 @@ const PREFS_DEFAULTS = {
   // v8.4.0 Modul 2/3: Voice-Erweiterung
   voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
   wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
+  // v8.5.0 Modul 3: TTS-Events pro Event konfigurierbar (Master-Schalter ist voiceTts)
+  ttsEvents:{
+    tempReached:false, programStepChange:true, programStart:false, programEnd:true,
+    pumpOn:false, pumpOff:false, heaterOn:false, heaterOff:false,
+    sessionStart:false, sessionEnd:false,
+    errors:true,
+  },
+  // v8.5.0 Modul 7: Session-Tracking konfigurierbar
+  trackingEnabled:true,
+  trackingFields:{ strength:true, effect:true, aroma:false, moodBefore:false, moodAfter:false, purpose:false, tags:false, notes:true },
+  trackingDefaults:{ strength:5, effect:'', purpose:'', moodBefore:3, moodAfter:3 },
   // v8.5.0-prep: CSC-Mode (Cloud-Sync). DORMANT default off. Backend muss separat eingerichtet werden.
   cscEnabled:false,       // Feature-Flag. UI/Funktionen bleiben aus, wenn false.
   haptiCustom:true,       // differenzierte Patterns
@@ -4608,6 +4758,10 @@ const PREFS = Object.assign({}, PREFS_DEFAULTS, LS.get('vol_prefs',{}));
 PREFS.voiceCmds = Object.assign({}, PREFS_DEFAULTS.voiceCmds, PREFS.voiceCmds||{});
 PREFS.bagTimes  = Object.assign({}, PREFS_DEFAULTS.bagTimes, PREFS.bagTimes||{});
 PREFS.stats     = Object.assign({}, PREFS_DEFAULTS.stats, PREFS.stats||{});
+// v8.5.0: nested defaults für neue Maps
+PREFS.ttsEvents       = Object.assign({}, PREFS_DEFAULTS.ttsEvents, PREFS.ttsEvents||{});
+PREFS.trackingFields  = Object.assign({}, PREFS_DEFAULTS.trackingFields, PREFS.trackingFields||{});
+PREFS.trackingDefaults= Object.assign({}, PREFS_DEFAULTS.trackingDefaults, PREFS.trackingDefaults||{});
 // v4.9.3: bagProfilesV2 + Migration aus alter bagTimes-Struktur
 if(!Array.isArray(PREFS.bagProfilesV2) || !PREFS.bagProfilesV2.length){
   PREFS.bagProfilesV2 = PREFS_DEFAULTS.bagProfilesV2.map(p=>({
@@ -4720,6 +4874,87 @@ const AROMA_DB = [
   {name:'Erdig/moschus (Myrcen)', temps:[170,185,200], desc:'Myrcen-dominant, beruhigend', kind:'terpen', terps:'myrcene'},
   {name:'Hopfen/würzig (Humulen)', temps:[180,195,210], desc:'Humulen, appetithemmend', kind:'terpen', terps:'humulene'},
   {name:'Mango/tropisch (Terpinolen)', temps:[170,185,195], desc:'Terpinolen, frisch-fruchtig', kind:'terpen', terps:'terpinolene'},
+
+  // ═══════ v8.5.0 Modul 4: Sorten-DB-Erweiterung (additiv, ~70 neue Sorten) ═══════
+  // Klassiker (Sativa)
+  {name:'Sour Diesel', temps:[180,195,210], desc:'Klassischer Diesel-Sativa, energiereich', kind:'sativa', terps:'caryophyllene/limonene'},
+  {name:'Jack Herer', temps:[175,190,205], desc:'Würzig-piney, klar im Kopf', kind:'sativa', terps:'pinene/terpinolene'},
+  {name:'Durban Poison', temps:[175,190,200], desc:'Pure südafrikanische Sativa, anise-würzig', kind:'sativa', terps:'terpinolene/myrcene'},
+  {name:'Super Lemon Haze', temps:[175,185,200], desc:'Zitrus dominant, uplifting', kind:'sativa', terps:'limonene/terpinolene'},
+  {name:'Green Crack', temps:[180,190,205], desc:'Energetisch, mango-süß', kind:'sativa', terps:'myrcene/caryophyllene'},
+  {name:'Tangie', temps:[175,185,200], desc:'Mandarinen-süß, kreativ', kind:'sativa', terps:'limonene/myrcene'},
+  {name:'Lemon Haze', temps:[175,185,200], desc:'Frisch zitronig', kind:'sativa', terps:'limonene/pinene'},
+  // Klassiker (Indica)
+  {name:'Northern Lights', temps:[180,195,210], desc:'Legendäre tiefe Indica, schlaffördernd', kind:'indica', terps:'myrcene/pinene'},
+  {name:'Granddaddy Purple', temps:[180,195,210], desc:'Beeren-süß, schwere Körperwirkung', kind:'indica', terps:'myrcene/caryophyllene'},
+  {name:'Bubba Kush', temps:[185,200,215], desc:'Erdig-kaffeeartig, stark sedierend', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'Hindu Kush', temps:[180,195,210], desc:'Reine Landrasse, erdig-sandalwürzig', kind:'indica', terps:'caryophyllene/myrcene'},
+  {name:'Skywalker OG', temps:[185,195,210], desc:'OG-Linie mit Skywalker-Crossing, körperlastig', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'Purple Punch', temps:[185,195,210], desc:'Traube-Kirsch, abendgeeignet', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'9 Pound Hammer', temps:[185,200,215], desc:'Trauben-aromatisch, sehr stark sedierend', kind:'indica', terps:'myrcene/pinene'},
+  {name:'Master Kush', temps:[180,195,210], desc:'Erdig-würzig, balanced Indica', kind:'indica', terps:'myrcene/caryophyllene'},
+  // Klassiker (Hybrid)
+  {name:'OG Kush', temps:[180,195,210], desc:'Ikonisch erdig-zitronig, vielseitig', kind:'hybrid', terps:'myrcene/limonene/caryophyllene'},
+  {name:'Pineapple Express', temps:[175,190,205], desc:'Tropisch fruchtig, ausgewogen', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Girl Scout Cookies', temps:[180,195,205], desc:'Süß-erdig, vielseitig wirkend', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Wedding Cake', temps:[180,195,210], desc:'Vanille-süß, ausgewogen-stark', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Cherry Pie', temps:[180,190,205], desc:'Süß-fruchtig, ausgleichend', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Cookies & Cream', temps:[180,195,205], desc:'Cremig-süß, ausgleichend', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Headband', temps:[180,195,210], desc:'Zitrus-Diesel, deutliche Wirkung im Kopf', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Trainwreck', temps:[180,195,210], desc:'Zitrus-Kiefer, schnell wirkend', kind:'hybrid', terps:'terpinolene/pinene'},
+  {name:'White Widow', temps:[180,195,205], desc:'Klassischer harzreicher Hybrid', kind:'hybrid', terps:'myrcene/pinene'},
+  {name:'AK-47', temps:[180,190,205], desc:'Erdig-süß, langanhaltend', kind:'hybrid', terps:'myrcene/caryophyllene'},
+  {name:'Pineapple Chunk', temps:[180,195,205], desc:'Ananas-erdig', kind:'hybrid', terps:'pinene/myrcene'},
+  // Moderne / hochpotent
+  {name:'Runtz', temps:[180,195,210], desc:'Süß-fruchtig, hohe Potenz', kind:'hybrid', terps:'limonene/caryophyllene'},
+  {name:'Zkittlez', temps:[180,195,205], desc:'Beerenmix-süß, entspannend', kind:'hybrid', terps:'caryophyllene/humulene'},
+  {name:'Gelato', temps:[180,195,210], desc:'Dessert-süß, ausbalanciert', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Sherbert', temps:[180,195,205], desc:'Cremig-fruchtig', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Biscotti', temps:[180,195,210], desc:'Erdig-kaffeesüß, kräftig', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Apple Fritter', temps:[180,195,210], desc:'Süß-erdig, gut für den Abend', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Mimosa', temps:[175,190,200], desc:'Zitrus-spritzig, tageslicht-Sativa-leaning', kind:'sativa', terps:'limonene/myrcene'},
+  {name:'Dosidos', temps:[185,200,210], desc:'Tief erdig-süß, körperlich', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'Khalifa Kush', temps:[180,195,210], desc:'OG-Linie, kräftiger Kopf-Hit', kind:'hybrid', terps:'myrcene/limonene'},
+  {name:'Sunset Sherbet', temps:[180,195,210], desc:'Cremig mit Frucht-Anklang', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Donny Burger', temps:[185,200,210], desc:'Gas-würzig, schwer', kind:'indica', terps:'caryophyllene/myrcene'},
+  {name:'Slurricane', temps:[185,195,210], desc:'Traubig-süß, lange Wirkung', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'Pink Rozay', temps:[185,195,210], desc:'Süß-blumig, body-load', kind:'indica', terps:'caryophyllene/limonene'},
+  {name:'Black Cherry Gelato', temps:[180,195,210], desc:'Beerig, ausbalanciert', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Banana OG', temps:[185,195,210], desc:'Bananig-süß, stark körperlich', kind:'indica', terps:'caryophyllene/limonene'},
+  // Medizinisch / CBD-betont
+  {name:'Harlequin (5:2 CBD:THC)', temps:[160,175,185], desc:'CBD-betont, klarer Kopf, schmerzlindernd', kind:'cbd', terps:'myrcene/pinene'},
+  {name:'ACDC (~20:1 CBD:THC)', temps:[160,175,185], desc:'Sehr hohes CBD, kaum Rausch', kind:'cbd', terps:'myrcene/pinene'},
+  {name:'Cannatonic (1:1)', temps:[160,175,185], desc:'1:1 CBD:THC, ausgewogen', kind:'cbd', terps:'myrcene/pinene'},
+  {name:'Charlotte’s Web', temps:[160,170,185], desc:'CBD-Klassiker, sehr entspannend', kind:'cbd', terps:'myrcene/caryophyllene'},
+  {name:'CBD Critical Mass', temps:[160,175,185], desc:'CBD-betont, beruhigend', kind:'cbd', terps:'myrcene'},
+  {name:'Stephen Hawking Kush', temps:[170,180,195], desc:'CBD:THC ~1:1, klar entspannend', kind:'cbd', terps:'myrcene/caryophyllene'},
+  {name:'Ringo’s Gift', temps:[160,175,185], desc:'CBD-dominant, klar im Kopf', kind:'cbd', terps:'myrcene/pinene'},
+  {name:'Remedy', temps:[160,175,185], desc:'Reines CBD, kaum THC', kind:'cbd', terps:'myrcene'},
+  // Mariana-typisch (Mid-Potent / Balanced / Mikro)
+  {name:'Bedrocan (medizinisch Sativa)', temps:[180,195,205], desc:'Standardisierte medizinische Sativa', kind:'sativa', terps:'myrcene/pinene'},
+  {name:'Bediol (1:1 CBD:THC)', temps:[160,175,185], desc:'Medizinisch ausgewogen', kind:'cbd', terps:'myrcene/caryophyllene'},
+  {name:'Bedrolite (CBD-hoch)', temps:[160,175,185], desc:'Sehr hohes CBD, kaum Rausch', kind:'cbd', terps:'myrcene'},
+  {name:'Pedanios 22/1', temps:[180,195,210], desc:'Hochpotente medizinische Sorte', kind:'hybrid', terps:'caryophyllene/myrcene'},
+  {name:'Pedanios 14/1', temps:[180,190,205], desc:'Mittlere Potenz, medizinisch', kind:'hybrid', terps:'myrcene/caryophyllene'},
+  {name:'Princeton', temps:[180,195,205], desc:'Balanced Hybrid, medizinisch', kind:'hybrid', terps:'caryophyllene/limonene'},
+  {name:'Mikro-Dose / Balanced 5:5', temps:[160,175,190], desc:'1:1 zum sehr leichten Tagestest', kind:'terpen', terps:'mixed'},
+  // Exotisch / Landrace
+  {name:'Acapulco Gold', temps:[180,195,205], desc:'Mexikanische Landrasse, hellsativa', kind:'sativa', terps:'pinene/caryophyllene'},
+  {name:'Panama Red', temps:[180,195,205], desc:'Klassische rote Landrasse', kind:'sativa', terps:'caryophyllene/myrcene'},
+  {name:'Thai Stick', temps:[180,195,205], desc:'Thailändische Landrasse, klar', kind:'sativa', terps:'terpinolene/myrcene'},
+  {name:'Afghan Kush', temps:[185,195,210], desc:'Landrasse, klassisch sedierend', kind:'indica', terps:'myrcene/caryophyllene'},
+  {name:'Lamb’s Bread', temps:[180,195,205], desc:'Jamaikanische Sativa, uplifting', kind:'sativa', terps:'pinene/limonene'},
+  {name:'Malawi Gold', temps:[180,195,205], desc:'Reine afrikanische Sativa', kind:'sativa', terps:'pinene/terpinolene'},
+  {name:'Hawaiian Snow', temps:[175,190,205], desc:'Süß-tropisch, sativa-leaning', kind:'sativa', terps:'limonene/terpinolene'},
+  // Hash & Trichome-Konzentrate (Vape-tauglich bei höheren Temps)
+  {name:'Bubble Hash', temps:[190,205,215], desc:'Eishash, sauber, sehr kraftvoll', kind:'hash', terps:'caryophyllene/myrcene'},
+  {name:'Dry Sift Hash', temps:[190,205,215], desc:'Trockensiebung, klassisch', kind:'hash', terps:'humulene/myrcene'},
+  {name:'Libanese Red', temps:[190,205,215], desc:'Libanesischer Roter, würzig', kind:'hash', terps:'humulene'},
+  {name:'Afghan Black', temps:[190,205,215], desc:'Klassisches schwarzes Hash', kind:'hash', terps:'caryophyllene/myrcene'},
+  // Spezial-Temperaturen / Microdose-Profile
+  {name:'Niedertemp 160 °C (CBD-Modus)', temps:[150,160,170], desc:'Klares CBD-Profil, kaum Psychoaktivität', kind:'cbd', terps:'mixed'},
+  {name:'Mitteltemp 180 °C (ausgewogen)', temps:[170,180,190], desc:'Ausgewogen für täglichen Gebrauch', kind:'terpen', terps:'mixed'},
+  {name:'Hochtemp 210 °C (stark)', temps:[195,205,215], desc:'Volle Cannabinoid-Extraktion', kind:'terpen', terps:'mixed'},
 ];
 
 // User kann eigene Aromas hinzufügen
@@ -5249,6 +5484,7 @@ function setHeatGlow(){
 
 function renderStatus(){
   if(typeof sessionTrackerTrackTemp==='function') sessionTrackerTrackTemp();   // v8.2.0 Modul 1: Max-Temp mitschreiben
+  if(typeof ttsCheckTempReached==='function') ttsCheckTempReached();           // v8.5.0 Modul 3: Ziel-erreicht-Ansage
   // v8.1.0 Modul 4: Quick-Actions nur bei Heizer-Wechsel neu rendern (nicht bei jedem Status-Poll)
   if(State.connected && State._qaHeaterSnapshot !== !!State.heater){
     State._qaHeaterSnapshot = !!State.heater;
@@ -5682,6 +5918,8 @@ async function cmdHeaterOn(){
     mqttPublish('heater', 'on');
     broadcastShared('Heizer an');
     sessionTrackerStart(false);   // v8.2.0 Modul 1: Session-Kandidat starten
+    ttsResetTempReached();        // v8.5.0: neuer Heiz-Zyklus → Ziel-Ankündigung wieder scharf
+    ttsEvent('heaterOn', 'Heizer an');
   });
 }
 async function cmdHeaterOff(){
@@ -5696,6 +5934,8 @@ async function cmdHeaterOff(){
     mqttPublish('heater', 'off');
     broadcastShared('Heizer aus');
     sessionTrackerEnd(false);   // v8.2.0 Modul 1: Session-Kandidat beenden (+ Notiz-Modal wenn >60s)
+    ttsResetTempReached();
+    ttsEvent('heaterOff', 'Heizer aus');
     // v4.5: heat curve analyse
     const sec = analyzeHeatCurve();
     if(sec){
@@ -5721,6 +5961,7 @@ async function cmdPumpOn(){
     log('Pumpe EIN','ok');
     devStatPump();   // v5.1.0: Geraete-Stats
     toast('💨 Pumpe EIN');
+    ttsEvent('pumpOn', 'Pumpe an');
   });
 }
 async function cmdPumpOff(){
@@ -5729,6 +5970,7 @@ async function cmdPumpOff(){
     await State.adapter.pumpOff();
     log('Pumpe AUS','ok');
     toast('⭘ Pumpe AUS');
+    ttsEvent('pumpOff', 'Pumpe aus');
   });
 }
 // Compat wrappers for workflow engine
@@ -5963,7 +6205,145 @@ const PRESETS = [
       {action:'pump_for', seconds:40},
       {action:'heat_off'},
     ]
-  }
+  },
+  // ═════ v8.5.0 Modul 5: zusätzliche Programm-Vorlagen (additiv) ═════
+  // Tags: ['volcano'|'mighty'|'crafty'|'portable'|'aroma'|'medical'|'recreational'|'microdose'|'sweep']
+  {
+    name:'Aroma-Sweep 4 Stufen', desc:'4-Stufen-Verkostung 170→200°', tags:['volcano','aroma'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:170}, {action:'wait_until', value:170}, {action:'pump_for', seconds:20}, {action:'wait', seconds:15},
+      {action:'set_temperature', value:180}, {action:'wait_until', value:180}, {action:'pump_for', seconds:20}, {action:'wait', seconds:15},
+      {action:'set_temperature', value:190}, {action:'wait_until', value:190}, {action:'pump_for', seconds:25}, {action:'wait', seconds:15},
+      {action:'set_temperature', value:200}, {action:'wait_until', value:200}, {action:'pump_for', seconds:30},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Doppel-Ballon 185°', desc:'Zwei volle Ballons bei 185°', tags:['volcano','recreational'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:185}, {action:'wait_until', value:185},
+      {action:'pump_for', seconds:42}, {action:'wait', seconds:90},
+      {action:'pump_for', seconds:42},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Easy Valve Refill 195°', desc:'3 mittlere Ballons mit Pause zum Atmen', tags:['volcano','aroma'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:195}, {action:'wait_until', value:195},
+      {action:'pump_for', seconds:32}, {action:'wait', seconds:60},
+      {action:'pump_for', seconds:32}, {action:'wait', seconds:60},
+      {action:'pump_for', seconds:32},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Smooth-Ramp 165→195', desc:'Sanfter Aufwärmverlauf, gut für Anfänger', tags:['volcano','aroma','microdose'],
+    steps:[
+      {action:'heat_on'},
+      ...rampSteps(165,195,5,10,18),
+      {action:'pump_off'},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Power-Ramp 180→215', desc:'Aggressive Ramp für maximale Extraktion', tags:['volcano','recreational'],
+    steps:[
+      {action:'heat_on'},
+      ...rampSteps(180,215,5,5,25),
+      {action:'pump_off'},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'CBD-Modus 160-175°', desc:'Niedertemperatur, klares CBD-Profil ohne Rausch', tags:['volcano','medical'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:160}, {action:'wait_until', value:160},
+      {action:'pump_for', seconds:25}, {action:'wait', seconds:60},
+      {action:'set_temperature', value:175}, {action:'wait_until', value:175},
+      {action:'pump_for', seconds:30},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Abend-Indica 200°', desc:'Hochtemperatur-Indica-Run für den Abend', tags:['volcano','recreational'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:200}, {action:'wait_until', value:200},
+      {action:'pump_for', seconds:38}, {action:'wait', seconds:90},
+      {action:'pump_for', seconds:38},
+      {action:'heat_off'},
+    ],
+  },
+  // Mighty / Crafty (portable, KEIN Pump)
+  {
+    name:'Mighty Step-Session 180→205', desc:'Step-Programm für Mighty/Crafty (kein Pump-Step)', tags:['mighty','crafty','portable','aroma'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:180}, {action:'wait_until', value:180}, {action:'wait', seconds:60},
+      {action:'set_temperature', value:190}, {action:'wait_until', value:190}, {action:'wait', seconds:60},
+      {action:'set_temperature', value:200}, {action:'wait_until', value:200}, {action:'wait', seconds:60},
+      {action:'set_temperature', value:205}, {action:'wait_until', value:205}, {action:'wait', seconds:60},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Mighty Microdose 165°', desc:'Niedrige Dauerheizung für sanfte Direct-Draws', tags:['mighty','crafty','portable','microdose'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:165}, {action:'wait_until', value:165},
+      {action:'wait', seconds:180},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Portable Power 195°', desc:'Dauerheizung 195° für Mighty/Crafty/Venty/Veazy', tags:['mighty','crafty','venty','portable','recreational'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:195}, {action:'wait_until', value:195},
+      {action:'wait', seconds:240},
+      {action:'heat_off'},
+    ],
+  },
+  // Medical & balanced
+  {
+    name:'Schlaf-Programm 200° tief', desc:'Lange Indica-Session am Abend, sedierend', tags:['volcano','medical','recreational'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:200}, {action:'wait_until', value:200},
+      {action:'pump_for', seconds:35}, {action:'wait', seconds:120},
+      {action:'set_temperature', value:210}, {action:'wait_until', value:210},
+      {action:'pump_for', seconds:30},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Schmerz-Stütze 1:1 Modus', desc:'CBD-betont, mehrere mittlere Züge', tags:['volcano','medical'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:170}, {action:'wait_until', value:170},
+      {action:'pump_for', seconds:25}, {action:'wait', seconds:90},
+      {action:'set_temperature', value:185}, {action:'wait_until', value:185},
+      {action:'pump_for', seconds:30}, {action:'wait', seconds:90},
+      {action:'pump_for', seconds:25},
+      {action:'heat_off'},
+    ],
+  },
+  {
+    name:'Microdose-Reihe (3× Mini)', desc:'Drei kleine Züge bei 165° — Tageseinsatz', tags:['volcano','microdose','medical'],
+    steps:[
+      {action:'heat_on'},
+      {action:'set_temperature', value:165}, {action:'wait_until', value:165},
+      {action:'pump_for', seconds:12}, {action:'wait', seconds:30},
+      {action:'pump_for', seconds:12}, {action:'wait', seconds:30},
+      {action:'pump_for', seconds:12},
+      {action:'heat_off'},
+    ],
+  },
 ];
 
 function rampSteps(start,end,step,waitSec,pumpSec){
@@ -6450,6 +6830,64 @@ function deleteEditor(){
 }
 
 /* ── Run engine ─────────────────────────────────────────────── */
+let _runCountdownTimer = null;
+function _stepDurations(steps, startTemp){
+  // v8.5.0 Modul 2: pro Schritt Soll-Dauer (Sekunden) — gleiche Logik wie estimateDuration
+  const out=[]; let curTemp = (typeof startTemp==='number') ? startTemp : 23; let isHot=false;
+  for(const s of (steps||[])){
+    let d=0;
+    switch(s.action){
+      case 'heat_on':  d=1; isHot=true; break;
+      case 'heat_off': d=1; isHot=false; break;
+      case 'pump_on': case 'pump_off': d=1; break;
+      case 'set_temperature': d=0; curTemp = s.value; break;
+      case 'wait_until': d = Math.max(1, Math.round(Math.max(0, s.value - curTemp) * (isHot?0.6:0.8))); curTemp = s.value; break;
+      case 'wait':     d = s.seconds||0; break;
+      case 'pump_for': d = s.seconds||0; break;
+      default: d=0;
+    }
+    out.push(d);
+  }
+  return out;
+}
+function _fmtMMSS(sec){
+  sec = Math.max(0, Math.round(sec||0));
+  const m = Math.floor(sec/60), s = sec - m*60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function _renderRunSteps(){
+  const r = State.running; const ul = $('#runSteps'); if(!r || !ul) return;
+  const items = (r.expandedSteps||[]).map((s,i)=>{
+    const cls = i<r.idx ? 'done' : (i===r.idx ? 'current' : '');
+    return `<li class="${cls}"><span class="ix">${i+1}.</span><span>${escapeHtml(stepLabel(s).replace(/<[^>]+>/g,''))}</span></li>`;
+  }).join('');
+  ul.innerHTML = items;
+  // current sichtbar halten
+  const cur = ul.querySelector('li.current');
+  if(cur && typeof cur.scrollIntoView==='function'){ try{ cur.scrollIntoView({block:'nearest'}); }catch{} }
+}
+function _updateRunCountdown(){
+  const r = State.running; if(!r) return;
+  const now = Date.now();
+  const stepDur = r.stepDurations[r.idx] || 0;
+  const elapsedSec = r._stepStartedAt ? Math.floor((now - r._stepStartedAt)/1000) : 0;
+  const stepRemain = Math.max(0, stepDur - elapsedSec);
+  let totalRemain = stepRemain;
+  for(let j=r.idx+1; j<r.stepDurations.length; j++) totalRemain += r.stepDurations[j];
+  const sr = $('#runStepRemain'); if(sr) sr.textContent = _fmtMMSS(stepRemain);
+  const tr = $('#runTotalRemain'); if(tr) tr.textContent = _fmtMMSS(totalRemain);
+}
+function _startRunCountdown(){
+  if(_runCountdownTimer){ clearInterval(_runCountdownTimer); _runCountdownTimer=null; }
+  _updateRunCountdown();
+  _runCountdownTimer = setInterval(_updateRunCountdown, 1000);
+}
+function _stopRunCountdown(){
+  if(_runCountdownTimer){ clearInterval(_runCountdownTimer); _runCountdownTimer=null; }
+  const sr=$('#runStepRemain'); if(sr) sr.textContent='--:--';
+  const tr=$('#runTotalRemain'); if(tr) tr.textContent='--:--';
+}
+
 async function runProgram(p){
   if(!State.connected){
     toast('Erst verbinden');
@@ -6472,30 +6910,43 @@ async function runProgram(p){
   }
   // v4.6: Loops expandieren
   const expanded = expandLoops(runSteps);
+  const stepDurations = _stepDurations(expanded, isFinite(State.cur) ? State.cur : 23);
 
-  State.running = {programName:p.name, idx:0, total:expanded.length, stopFlag:false};
+  State.running = {
+    programName:p.name, idx:0, total:expanded.length, stopFlag:false,
+    expandedSteps:expanded, stepDurations, _stepStartedAt: Date.now(),
+  };
   $('#runTitle').textContent = p.name;
   $('#runCard').classList.add('show');
   $('#connChip').classList.add('run');
+  // v8.5.0 Modul 2: Steuerung-Tab anzeigen, damit Hero/Temp live sichtbar bleibt
+  try{ if(typeof switchTab==='function') switchTab('ctl'); }catch{}
+  _startRunCountdown();
   log(`▶ Start: ${p.name} (${expanded.length} Schritte expandiert)`,'ok');
   await requestWakeLock();
   srAnnounce(`Programm gestartet: ${p.name}`);
+  ttsEvent('programStart', p.name+' gestartet');
   rememberLastProgram(p);
   try{
     for(let i=0;i<expanded.length;i++){
       if(State.running.stopFlag) throw new Error('Abgebrochen');
       State.running.idx=i;
+      State.running._stepStartedAt = Date.now();
       updateRunUI(expanded[i]);
+      ttsEvent('programStepChange', `Schritt ${i+1} von ${expanded.length}: ${stepLabel(expanded[i]).replace(/<[^>]+>/g,'')}`);
       await runStep(expanded[i]);
     }
     log(`✓ Fertig: ${p.name}`,'ok');
     toast('Programm fertig');
+    ttsEvent('programEnd', 'Programm beendet');
   }catch(e){
     log('Programmfehler: '+e.message,'err');
+    ttsEvent('errors', 'Programmfehler: '+e.message);
     // Safety: heater + pump off
     try{ await cmdPump(false); }catch{}
     try{ await cmdHeater(false); }catch{}
   }finally{
+    _stopRunCountdown();
     State.running=null;
     $('#runCard').classList.remove('show');
     $('#connChip').classList.remove('run');
@@ -6510,6 +6961,8 @@ function updateRunUI(currentStep){
   $('#runBar').style.width = `${pct}%`;
   const barParent = $('#runBar').parentElement;
   if(barParent){ barParent.setAttribute('aria-valuenow', String(Math.round(pct))); }
+  _renderRunSteps();
+  _updateRunCountdown();
 }
 
 async function runStep(s){
@@ -6844,6 +7297,7 @@ function wire(){
   $('#sessBtnSave')?.addEventListener('click', sessionModalSave);
   $('#sessBtnLater')?.addEventListener('click', sessionModalLater);
   $('#sessBtnDiscard')?.addEventListener('click', sessionModalDiscard);
+  $('#sessBtnQuick')?.addEventListener('click', sessionModalQuick);   // v8.5.0 Modul 7
 
   // Toggle helpers
   const wireToggle = (sel, get, set)=>{
@@ -6875,7 +7329,41 @@ function wire(){
   // v8.4.0 Modul 2/3: TTS- und Wake-Word-Toggles
   wireToggle('#togVoiceTts', ()=>PREFS.voiceTts !== false, v=>{
     PREFS.voiceTts = v; savePrefs();
+    if(typeof syncTtsEventsUi==='function') syncTtsEventsUi();
   });
+  // v8.5.0 Modul 7: Tracking-Settings (jetzt im Wirebereich nach wireToggle-Definition)
+  wireToggle('#togTrackingEnabled', ()=>PREFS.trackingEnabled !== false, v=>{
+    PREFS.trackingEnabled = v; savePrefs();
+    const sub = $('#trackingFieldsSub'); if(sub) sub.style.opacity = v ? '1' : '.4';
+  });
+  document.querySelectorAll('[data-tf]').forEach(cb=>{
+    const k = cb.dataset.tf;
+    cb.checked = !!PREFS.trackingFields[k];
+    cb.addEventListener('change', ()=>{
+      PREFS.trackingFields[k] = cb.checked;
+      savePrefs();
+    });
+  });
+  if(typeof syncToggle==='function') syncToggle('togTrackingEnabled', PREFS.trackingEnabled !== false);
+  // v8.5.0 Modul 3: Per-Event-Toggles für TTS
+  document.querySelectorAll('[data-tts]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const k = b.dataset.tts;
+      PREFS.ttsEvents[k] = !PREFS.ttsEvents[k];
+      savePrefs();
+      b.setAttribute('aria-checked', String(!!PREFS.ttsEvents[k]));
+    });
+  });
+  function syncTtsEventsUi(){
+    document.querySelectorAll('[data-tts]').forEach(b=>{
+      const k = b.dataset.tts;
+      b.setAttribute('aria-checked', String(!!PREFS.ttsEvents[k]));
+    });
+    const sub = $('#ttsEventsSub');
+    if(sub) sub.hidden = (PREFS.voiceTts === false);
+  }
+  window.syncTtsEventsUi = syncTtsEventsUi;
+  syncTtsEventsUi();
   wireToggle('#togWakeWord', ()=>!!PREFS.wakeWord, v=>{
     if(v && !isWakeWordSupported()){
       toast('Wake-Word in diesem Browser nicht unterstützt (Chrome/Edge auf Android/Desktop nötig)');
@@ -9022,7 +9510,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.4.0';
+const SW_VERSION_LABEL='v8.5.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -10451,6 +10939,7 @@ function sessionTrackerStart(manual){
     auto:!manual,
   };
   if(manual){ toast('⏱ Session gestartet'); if(typeof renderQuickActions==='function') renderQuickActions(); }
+  if(typeof ttsEvent==='function') ttsEvent('sessionStart', manual?'Session gestartet':'Session erkannt');
 }
 function sessionTrackerTrackTemp(){
   const c=State.sessionCandidate; if(!c) return;
@@ -10464,14 +10953,47 @@ function sessionTrackerEnd(manual){
   State.sessionCandidate=null;
   if(typeof renderQuickActions==='function') renderQuickActions();
   if(durationSec<SESSION_MIN_SEC){ if(typeof log==='function') log('Session verworfen (<60s, '+durationSec+'s)','warn'); return; }
+  if(typeof ttsEvent==='function') ttsEvent('sessionEnd', `Session beendet, ${Math.round(durationSec/60)} Minuten`);
+  // v8.5.0 Modul 7: Tracking ggf. komplett deaktiviert → kein Auto-Modal
+  if(PREFS.trackingEnabled === false){ if(typeof log==='function') log('Tracking deaktiviert: Notiz-Modal übersprungen'); return; }
   openSessionNoteModal(Object.assign({}, c, {durationSec}));
 }
 function sessionTrackerActive(){ return !!State.sessionCandidate; }
 
 /* ── MODUL 2: Notiz-Modal ── */
 let _sessionDraft=null;
+/* v8.5.0 Modul 7: bekannte Tags für Auto-Vervollstaendigung */
+function sessionAllKnownTags(){
+  const set = new Set();
+  try{
+    const all = (typeof sessionsAll==='function')?sessionsAll():[];
+    for(const s of all){
+      if(Array.isArray(s.tags)) for(const t of s.tags) if(t) set.add(String(t));
+    }
+  }catch{}
+  return [...set].sort();
+}
+function _renderSessTagsList(){
+  const list = $('#sessTagsList'); if(!list) return;
+  list.innerHTML = sessionAllKnownTags().map(t=>`<option value="${escapeHtml(t)}">`).join('');
+}
+function _applyTrackingVisibility(){
+  const fields = (PREFS && PREFS.trackingFields) || {};
+  document.querySelectorAll('#modalSession [data-track-field]').forEach(el=>{
+    const k = el.dataset.trackField;
+    el.style.display = (fields[k] === false) ? 'none' : '';
+  });
+}
 function openSessionNoteModal(data, existingId){
-  _sessionDraft = Object.assign({ strength:5, effect:'', notes:'' }, data||{});
+  const dfs = (PREFS && PREFS.trackingDefaults) || {};
+  _sessionDraft = Object.assign({
+    strength: (dfs.strength!=null?dfs.strength:5),
+    effect: dfs.effect||'',
+    purpose: dfs.purpose||'',
+    moodBefore: dfs.moodBefore||3,
+    moodAfter:  dfs.moodAfter||3,
+    tags: [], notes: '',
+  }, data||{});
   if(existingId) _sessionDraft.id=existingId;
   const m=$('#modalSession'); if(!m) return;
   const d=_sessionDraft;
@@ -10490,6 +11012,13 @@ function openSessionNoteModal(data, existingId){
     sel.innerHTML='<option value="">— keine —</option>'+names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
     sel.value = d.aroma||'';
   }
+  // v8.5.0 Modul 7: neue optionale Felder
+  if($('#sessMoodBefore')){ $('#sessMoodBefore').value = d.moodBefore||3; $('#sessMoodBeforeIco').textContent=['😢','😕','😐','🙂','😊'][((d.moodBefore||3)-1)]||'😐'; }
+  if($('#sessMoodAfter')) { $('#sessMoodAfter').value  = d.moodAfter||3;  $('#sessMoodAfterIco').textContent =['😢','😕','😐','🙂','😊'][((d.moodAfter||3)-1)]||'😐'; }
+  if($('#sessPurpose')) $('#sessPurpose').value = d.purpose||'';
+  if($('#sessTags')) $('#sessTags').value = Array.isArray(d.tags)?d.tags.join(', '):(d.tags||'');
+  _renderSessTagsList();
+  _applyTrackingVisibility();
   renderSessEffects();
   m.classList.add('open');
 }
@@ -10506,6 +11035,11 @@ function renderSessEffects(){
 }
 function sessionModalBuild(strengthOverride){
   const d=_sessionDraft;
+  const fields = (PREFS && PREFS.trackingFields) || {};
+  const tagsRaw = ($('#sessTags') && $('#sessTags').value) || '';
+  const tagsArr = tagsRaw.split(',').map(s=>s.trim()).filter(Boolean).slice(0, 16);
+  const moodBefore = $('#sessMoodBefore') ? Number($('#sessMoodBefore').value) : null;
+  const moodAfter  = $('#sessMoodAfter')  ? Number($('#sessMoodAfter').value)  : null;
   const note={
     id: d.id || sessionUid(),
     startedAt: d.startedAt, endedAt: d.endedAt || Date.now(),
@@ -10515,6 +11049,11 @@ function sessionModalBuild(strengthOverride){
     strength: strengthOverride!==undefined ? strengthOverride : Number($('#sessStrength').value),
     effect: d.effect||'', notes: ($('#sessNotes').value||'').trim(), auto: !!d.auto,
     aroma: ($('#sessAroma') && $('#sessAroma').value) || '',   // v8.3.0 Modul 2.6
+    // v8.5.0 Modul 7: neue Felder — nur wenn aktiviert speichern
+    moodBefore: (fields.moodBefore && moodBefore) ? moodBefore : null,
+    moodAfter:  (fields.moodAfter  && moodAfter)  ? moodAfter  : null,
+    purpose:    (fields.purpose && $('#sessPurpose') && $('#sessPurpose').value) || '',
+    tags:       (fields.tags ? tagsArr : []),
   };
   return note;
 }
@@ -10525,6 +11064,18 @@ function sessionModalSave(){
   checkSessionAchievements();
   renderSessions();
   toast('📝 Session gespeichert');
+}
+/* v8.5.0 Modul 7: Schnell-Speichern — Defaults aus PREFS.trackingDefaults */
+function sessionModalQuick(){
+  if(!_sessionDraft) return;
+  const dfs = (PREFS && PREFS.trackingDefaults) || {};
+  // Übernehmen wenn aktuell der Default-Wert (User hat nichts geaendert): reicht so.
+  const note=sessionModalBuild(dfs.strength!=null?dfs.strength:5);
+  if(_sessionDraft.id) sessionUpdate(_sessionDraft.id, note); else sessionAdd(note);
+  $('#modalSession').classList.remove('open'); _sessionDraft=null;
+  checkSessionAchievements();
+  if(typeof renderSessions==='function') renderSessions();
+  toast('⚡ Schnell gespeichert');
 }
 function sessionModalLater(){
   // halb-gespeichert: strength=null -> erscheint unter "Offene Sessions"
@@ -11695,6 +12246,40 @@ function installKeyboardShortcuts(){
 /* ═══════════════════════════════════════════════════════════════
    v4.6: VOICE STATUS READOUT (TTS)
 ═══════════════════════════════════════════════════════════════ */
+/* ═══ v8.5.0 MODUL 3: TTS-Events (konfigurierbar pro Event) ════════
+   Master-Schalter: PREFS.voiceTts. Per-Event: PREFS.ttsEvents[name].
+   Aufrufer (cmdHeaterOn, runProgram-Steps, etc.) rufen ttsEvent('name', text). */
+function ttsEvent(eventName, text){
+  try{
+    if(!text) return;
+    if(PREFS.voiceTts === false) return; // Master aus → keine TTS
+    const ev = PREFS.ttsEvents || {};
+    if(!(eventName in ev)) return;        // unbekannter Event-Name → ignorieren
+    if(!ev[eventName]) return;            // Event deaktiviert
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang='de-DE'; u.rate=1.05;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+/* tempReached: nur 1× pro Heiz-Zyklus, mit Hysterese ±2°C. */
+let _ttsTempReachedAnnounced = false;
+function ttsResetTempReached(){ _ttsTempReachedAnnounced = false; }
+function ttsCheckTempReached(){
+  try{
+    if(!State || !State.connected) return;
+    if(!State.heater){ _ttsTempReachedAnnounced = false; return; }
+    if(!isFinite(State.target) || !isFinite(State.cur)) return;
+    if(_ttsTempReachedAnnounced) return;
+    const dT = Math.abs((State.cur||0) - (State.target||0));
+    if(dT <= 2){
+      _ttsTempReachedAnnounced = true;
+      ttsEvent('tempReached', `Ziel ${Math.round(State.target)} Grad erreicht`);
+    }
+  }catch{}
+}
+
 function speakStatus(){
   if(!('speechSynthesis' in window)){
     toast('TTS nicht verfügbar');
@@ -14460,7 +15045,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.4.0 bereit.','ok');
+  log('Sessions v8.5.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -14480,7 +15065,225 @@ async function init(){
 
   // v8.4.0 Modul 3: Wake-Word starten falls vom Nutzer eingeschaltet
   setupWakeWord();
+  // v8.5.0 Modul 6: #share=... aus Hash importieren falls vorhanden
+  setTimeout(()=>{ try{ if(typeof shareCheckHashImport==='function') shareCheckHashImport(); }catch{} }, 1000);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   v8.5.0 MODUL 6: OFFLINE-TEILEN (JSON + Share-Link)
+   QR-Code-Rendering vertagt auf v8.5.1 (Inline-Encoder zu groß für
+   diese Session — siehe README). Bestehender openQRShare bleibt
+   unverändert (externer CDN-Fetch, pre-v8.5.0 Code-Schuld).
+
+   Schema: { v:1, kind:'aroma'|'program'|'bundle', items:[...] }
+═══════════════════════════════════════════════════════════════ */
+const SHARE_VERSION = 1;
+const SHARE_MAX_ITEMS = 100;
+const SHARE_PROGRAM_MAX_STEPS = 200;
+const SHARE_TEXT_MAX = 500;
+
+function _b64UrlEncode(str){
+  const bin = unescape(encodeURIComponent(str));
+  let s = btoa(bin);
+  return s.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function _b64UrlDecode(str){
+  let s = String(str||'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length % 4) s += '=';
+  try{ return decodeURIComponent(escape(atob(s))); }catch{ return null; }
+}
+
+function _shareValidateAroma(a){
+  if(!a || typeof a!=='object') return null;
+  if(typeof a.name!=='string' || a.name.length<1 || a.name.length>SHARE_TEXT_MAX) return null;
+  const kind = typeof a.kind==='string' && /^(sativa|indica|hybrid|cbd|hash|terpen|other)$/.test(a.kind) ? a.kind : 'other';
+  const temps = Array.isArray(a.temps) ? a.temps.slice(0,5).filter(t=>typeof t==='number' && t>=40 && t<=240) : [];
+  if(temps.length < 1) return null;
+  const desc = (typeof a.desc==='string') ? a.desc.slice(0, SHARE_TEXT_MAX) : '';
+  const terps = (typeof a.terps==='string') ? a.terps.slice(0, SHARE_TEXT_MAX) : '';
+  return { name:a.name.slice(0,SHARE_TEXT_MAX), kind, temps, desc, terps };
+}
+function _shareValidateProgram(p){
+  if(!p || typeof p!=='object') return null;
+  if(typeof p.name!=='string' || p.name.length<1 || p.name.length>SHARE_TEXT_MAX) return null;
+  if(!Array.isArray(p.steps) || p.steps.length<1 || p.steps.length>SHARE_PROGRAM_MAX_STEPS) return null;
+  const validActions = new Set(['heat_on','heat_off','pump_on','pump_off','set_temperature','wait_until','wait','pump_for','loop_start','loop_end']);
+  const steps = [];
+  for(const s of p.steps){
+    if(!s || !validActions.has(s.action)) return null;
+    const out = { action: s.action };
+    if(s.value != null){ const v=Number(s.value); if(!isFinite(v)||v<-100||v>500) return null; out.value=v; }
+    if(s.seconds != null){ const sec=Number(s.seconds); if(!isFinite(sec)||sec<0||sec>3600) return null; out.seconds=sec; }
+    if(s.repeat != null){ const r=Number(s.repeat); if(!isFinite(r)||r<1||r>20) return null; out.repeat=r; }
+    steps.push(out);
+  }
+  const tags = Array.isArray(p.tags) ? p.tags.filter(t=>typeof t==='string'&&t.length<=32).slice(0,16) : [];
+  const desc = (typeof p.desc==='string') ? p.desc.slice(0, SHARE_TEXT_MAX) : '';
+  return { name:p.name.slice(0,SHARE_TEXT_MAX), desc, steps, tags };
+}
+function shareValidatePayload(obj){
+  if(!obj || typeof obj !== 'object') return {valid:false, error:'Kein Objekt'};
+  if(Number(obj.v) !== SHARE_VERSION) return {valid:false, error:'Unbekannte Schema-Version ('+obj.v+')'};
+  const kind = obj.kind;
+  if(!['aroma','program','bundle'].includes(kind)) return {valid:false, error:'Unbekannter Typ ('+kind+')'};
+  if(!Array.isArray(obj.items) || obj.items.length<1) return {valid:false, error:'Keine items'};
+  if(obj.items.length > SHARE_MAX_ITEMS) return {valid:false, error:'Zu viele items (>'+SHARE_MAX_ITEMS+')'};
+  const out = [];
+  for(let i=0;i<obj.items.length;i++){
+    const raw = obj.items[i];
+    let v = null; let t = (kind==='bundle') ? raw && raw._type : kind;
+    if(t==='aroma')   v = _shareValidateAroma(raw);
+    else if(t==='program') v = _shareValidateProgram(raw);
+    else return {valid:false, error:`Item ${i+1}: unbekannter type "${t}"`};
+    if(!v) return {valid:false, error:`Item ${i+1}: ungültiges Schema`};
+    out.push(Object.assign(v, kind==='bundle' ? {_type:t} : {}));
+  }
+  return {valid:true, kind, items:out};
+}
+
+function shareBuildPayload(kind, rawItems){ return { v: SHARE_VERSION, kind, items: rawItems }; }
+function shareToLink(payload){
+  const json = JSON.stringify(payload);
+  return location.origin + location.pathname + '#share=' + _b64UrlEncode(json);
+}
+function shareToJsonBlob(payload){ return new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'}); }
+function shareDownloadJson(payload, filename){
+  try{
+    const url = URL.createObjectURL(shareToJsonBlob(payload));
+    const a = document.createElement('a');
+    a.href = url; a.download = filename || ('sessions-share-'+Date.now()+'.json');
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+    return true;
+  }catch{ return false; }
+}
+function shareParseLinkFromHash(hash){
+  const h = String(hash||location.hash||'');
+  if(!h.startsWith('#share=')) return null;
+  const dec = _b64UrlDecode(h.slice(7));
+  if(!dec) return null;
+  try{ return JSON.parse(dec); }catch{ return null; }
+}
+function shareParseJson(text){ try{ return JSON.parse(String(text||'')); }catch{ return null; } }
+
+function shareApplyImport(validated){
+  const added = { aroma:0, program:0 };
+  for(const it of validated.items){
+    const t = it._type || validated.kind;
+    if(t==='aroma'){
+      const custom = LS.get('vol_custom_aromas', []) || [];
+      custom.push({ name:it.name, kind:it.kind, temps:it.temps, desc:it.desc, terps:it.terps, custom:true, id:'aroma_import_'+Date.now()+'_'+added.aroma });
+      LS.set('vol_custom_aromas', custom);
+      added.aroma++;
+    } else if(t==='program'){
+      const np = { id:'p'+Date.now()+'_'+added.program+Math.random().toString(36).slice(2,5), name:it.name, desc:it.desc, steps:it.steps, isPreset:false, tags:it.tags||[] };
+      if(typeof State !== 'undefined' && Array.isArray(State.programs)){ State.programs.push(np); LS.set('vol_programs', State.programs); added.program++; }
+    }
+  }
+  return added;
+}
+
+/* Import-Preview-Modal: zeigt zusammenfassende Vorschau, User bestätigt → apply. */
+let _shareImportPending = null;
+function openShareImportPreview(validated){
+  _shareImportPending = validated;
+  const m = $('#modalShareImport'); if(!m) return;
+  const counts = { aroma:0, program:0 };
+  for(const it of validated.items){ const t = it._type || validated.kind; counts[t] = (counts[t]||0)+1; }
+  const sample = validated.items.slice(0,5).map(it=>{
+    const t = it._type || validated.kind;
+    return `<li><b>${escapeHtml(it.name)}</b> <small style="color:var(--muted)">${t}</small></li>`;
+  }).join('');
+  $('#shareImportSummary').innerHTML =
+    `<p>Typ: <b>${validated.kind}</b> · ${validated.items.length} Item(s).</p>`
+    + (counts.aroma?`<p>${counts.aroma}× Sorte → wird als „eigene Sorte" hinzugefügt (bestehende bleiben unberührt).</p>`:'')
+    + (counts.program?`<p>${counts.program}× Programm → wird als neues Programm gespeichert.</p>`:'')
+    + `<ul style="margin:8px 0 0 16px;padding:0">${sample}${validated.items.length>5?`<li><small>… und ${validated.items.length-5} weitere</small></li>`:''}</ul>`;
+  m.classList.add('open');
+}
+function confirmShareImport(){
+  if(!_shareImportPending) return;
+  const added = shareApplyImport(_shareImportPending);
+  _shareImportPending = null;
+  $('#modalShareImport')?.classList.remove('open');
+  toast('✓ Importiert: '+(added.aroma?added.aroma+' Sorte(n) ':'')+(added.program?added.program+' Programm(e)':''));
+  // Lists neu rendern wenn vorhanden
+  try{ if(typeof renderPrograms==='function') renderPrograms(); }catch{}
+  try{ if(typeof renderAromaList==='function') renderAromaList(''); }catch{}
+}
+function cancelShareImport(){
+  _shareImportPending = null;
+  $('#modalShareImport')?.classList.remove('open');
+}
+
+function shareCheckHashImport(){
+  const obj = shareParseLinkFromHash();
+  if(!obj) return false;
+  const v = shareValidatePayload(obj);
+  if(!v.valid){ toast('Share-Link ungültig: '+v.error, 5000); history.replaceState(null,'',location.pathname); return false; }
+  openShareImportPreview(v);
+  history.replaceState(null,'',location.pathname);
+  return true;
+}
+
+/* Datei-Upload-Helper für Import */
+function shareImportFromFile(file){
+  return new Promise((resolve)=>{
+    if(!file){ resolve({valid:false,error:'keine Datei'}); return; }
+    if(file.size > 500*1024){ resolve({valid:false,error:'Datei zu groß (>500 KB)'}); return; }
+    const r = new FileReader();
+    r.onload = ()=>{
+      const obj = shareParseJson(r.result);
+      const v = shareValidatePayload(obj);
+      if(v.valid) openShareImportPreview(v);
+      resolve(v);
+    };
+    r.onerror = ()=>resolve({valid:false,error:'Lese-Fehler'});
+    r.readAsText(file);
+  });
+}
+
+/* Programm/Sorte teilen via Modul-6-Pfad (neu, ohne externes CDN) */
+function shareProgramV2(programId){
+  const p = (State.programs||[]).find(x=>x.id===programId);
+  if(!p){ toast('Programm nicht gefunden'); return; }
+  const payload = shareBuildPayload('program', [{name:p.name, desc:p.desc, steps:p.steps, tags:p.tags||[]}]);
+  _openShareExportModal(payload, p.name);
+}
+function shareAromaV2(name){
+  const a = (typeof getAllAromas==='function'?getAllAromas():[]).find(x=>x.name===name);
+  if(!a){ toast('Sorte nicht gefunden'); return; }
+  const payload = shareBuildPayload('aroma', [{name:a.name, kind:a.kind, temps:a.temps, desc:a.desc||'', terps:a.terps||''}]);
+  _openShareExportModal(payload, a.name);
+}
+function _openShareExportModal(payload, title){
+  const m = $('#modalShareExport'); if(!m) return;
+  const link = shareToLink(payload);
+  $('#shareExportSummary').textContent = `${payload.items.length} Item(s) · Typ: ${payload.kind} · ${title?'„'+title+'"':''}`;
+  $('#shareLinkText').value = link;
+  m.classList.add('open');
+  m.dataset.payload = JSON.stringify(payload);
+  m.dataset.title = title || 'sessions-share';
+}
+function _shareWireUi(){
+  $('#shareImportConfirm')?.addEventListener('click', confirmShareImport);
+  $('#shareImportCancel')?.addEventListener('click', cancelShareImport);
+  $('#shareExportClose')?.addEventListener('click', ()=>$('#modalShareExport')?.classList.remove('open'));
+  $('#shareLinkCopy')?.addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText($('#shareLinkText').value); toast('Link kopiert'); }
+    catch{ toast('Kopieren nicht möglich'); }
+  });
+  $('#shareJsonDownload')?.addEventListener('click', ()=>{
+    const m = $('#modalShareExport'); if(!m) return;
+    try{
+      const payload = JSON.parse(m.dataset.payload || 'null');
+      const title = (m.dataset.title || 'share').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,40) || 'share';
+      shareDownloadJson(payload, 'sessions-'+payload.kind+'-'+title+'.json');
+    }catch(e){ toast('Download-Fehler'); }
+  });
+}
+document.addEventListener('DOMContentLoaded', _shareWireUi);
+
 /* ═══════════════════════════════════════════════════════════════════════════
    v8.5.0-prep: CSC-MODE CLIENT (dormant, hinter PREFS.cscEnabled)
 
