@@ -1,6 +1,37 @@
-# Sessions — Vape Controller (v8.5.0)
+# Sessions — Vape Controller (v8.6.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.6.0 — Teilen vervollständigt (QR-Code inline, Buttons, CDN-Fix)
+
+Drei fokussierte Module, keine neuen Features sonst. Keine Änderung an Adaptern, CSC-Backend/-Client, Voice oder Tracking-Logik.
+
+### Modul 1 — Inline-QR-Encoder
+- Eigener QR-Code-Encoder im index.html als IIFE: `qrEncode(text, eclName)` → `{size, modules, version, mask}` und `qrRender(text, opts)` → SVG-String.
+- Basis: **Nayuki QR Code Generator** (MIT-Lizenz, Header im Source); slimmed JS-Port (byte-mode only, auto-version-Auswahl 1..40, alle 4 EC-Levels L/M/Q/H, 8 Masken werden penalty-evaluiert).
+- Kein externes CDN, keine Network-Fetch, keine npm-Dependency. ~350 LoC inline.
+- Render: einfaches `<svg>` mit `<path>` (run-length-encoded Rechtecke pro horizontalem Modul-Run), skaliert sauber. SVG-Hash deterministisch für gleichen Input.
+- Test-Vektoren: "hi" → v1/21px; "https://...x×200" → v11/61px; "x×800" mit EC=L → v20/97px; UTF-8 + Emoji + Surrogate-Pairs funktionieren; Fallback-SVG bei Überlänge (>2,9 KB) statt Exception.
+
+### Modul 2 — Teilen-Buttons in Listen + QR im Share-Modal
+- **Programm-Karten** (eigene + Werks) haben jetzt zwei Share-Buttons: `📤` öffnet das v8.5.0-Modal (Link + JSON + neu QR), `🔗` bleibt der klassische `openQRShare`-Pfad (für Rückwärtskompatibilität mit dem alten `#prog=`-Format).
+- **Sorten-Karten** (Aroma-Liste, Werks + User-eigene) bekommen einen `📤`-Button → öffnet das v8.5.0-Modal mit `kind:'aroma'`.
+- **Share-Modal #modalShareExport** erweitert: neuer `🔲 QR-Code`-Button rendert SVG inline in einer weißen Karte unter den Buttons mit Hinweis „lokal generiert, kein externer Service". Bei Modal-Open wird der QR-Container zurückgesetzt.
+
+### Modul 3 — Externe CDN-Schuld abgeräumt
+- **`openQRShare` (pre-v8.5.0)** nutzte `api.qrserver.com` als `<img src>`-Fetch. Jetzt: `qrRender()` inline, gleiches `#qrBox` zeigt das SVG.
+- **Grep-Audit** aller HTTPS-URLs in index.html: keine unbekannten externen Hosts mehr. Whitelist (dokumentierte intentional-Externe): `fonts.googleapis.com` + `fonts.gstatic.com` (Google Fonts, sw.js skipt bewusst), `api.open-meteo.com` + `geocoding-api.open-meteo.com` (Wetter-Feature, vom User opt-in), `github.com` + `apps.apple.com` + `marianacannabis.github.io` (alle nur `<a href>`-Links, kein Fetch), `nayuki.io` (Lizenz-Header-URL im Kommentar), `www.w3.org` (SVG-xmlns, kein Fetch). Webhook/MQTT-Felder bleiben User-konfigurierbar (`webhook.example.com`, `your-webhook-url` sind Placeholder).
+- **Service Worker** `sw.js` SHELL-Array enthält ausschließlich relative Pfade (`./`, `./index.html`, …). Google-Fonts-Domains werden im Fetch-Handler explizit übersprungen (kein Cache, kein Intercept).
+
+### Tests + Regression
+- +36 neue Tests: `v86qr.mjs` (17, davon UTF-8/Emoji/EC-Levels/Determinismus/Lizenz-Header) + `v86sharebuttons.mjs` (10) + `v86nocdn.mjs` (9, davon Grep gegen Whitelist + sw.js SHELL-Audit).
+- **449 / 449** grün über 22 Suiten.
+- Forward-compat-Patch: `v84voice.mjs` SW_VERSION_LABEL-Assert auf `/^v8\./` gelockert (war hart auf `'v8.4.0'`).
+
+### Was NICHT in v8.6.0 ist (bewusst)
+- Kein Bulk-Teilen-Mehrfachauswahl (Modul-2.4 war optional, ausgelassen für Fokus).
+- Keine CSC-Mode-Aktivierung — Backend bleibt dormant; Supabase-Setup steht weiterhin bei Andre.
+- Keine UI-Änderung am Quick-Action-Bereich oder am bestehenden Inline-Help-System.
 
 ## v8.5.0 — Praxis-Feedback
 

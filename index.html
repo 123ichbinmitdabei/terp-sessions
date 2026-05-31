@@ -2753,7 +2753,7 @@ button[data-sch-day].active{
   <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
 </div>
 
-<!-- v8.5.0 Modul 6: Share-Modal (JSON-Download + Link-Kopie) -->
+<!-- v8.5.0 Modul 6 / v8.6.0 erweitert: Share-Modal (JSON-Download + Link + QR-Code) -->
 <div class="modal" id="modalShareExport" role="dialog" aria-modal="true" aria-label="Teilen">
   <div class="back"></div>
   <div class="sheet">
@@ -2767,9 +2767,11 @@ button[data-sch-day].active{
     <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn sm ghost" id="shareLinkCopy" style="flex:1 1 100px">🔗 Link kopieren</button>
       <button class="btn sm ghost" id="shareJsonDownload" style="flex:1 1 100px">📥 JSON-Datei</button>
+      <button class="btn sm ghost" id="shareQrShow" style="flex:1 1 100px">🔲 QR-Code</button>
       <button class="btn sm" id="shareExportClose" style="flex:1 1 100px">Schließen</button>
     </div>
-    <p style="font-size:11px;color:var(--muted);margin-top:10px">QR-Code-Rendering folgt in v8.5.1 (lokal, ohne externe Lib).</p>
+    <div id="shareQrBox" style="margin-top:14px;text-align:center;background:#fff;border-radius:8px;padding:10px;display:none"></div>
+    <p id="shareQrHint" style="font-size:11px;color:var(--muted);margin-top:8px;display:none">Mit der Kamera des Telefons scannen oder Foto schicken (lokal generiert, kein externer Service).</p>
   </div>
 </div>
 
@@ -6439,7 +6441,8 @@ function progCard(p, kind){
     <div class="prog-actions">
       <button class="btn sm hot" data-act="run" data-tip="Programm jetzt starten — automatischer Ablauf der Schritte" style="flex:1" aria-label="Programm starten">▶ Starten</button>
       <button class="btn sm ghost" data-act="edit" data-tip="Schritte und Einstellungen bearbeiten" aria-label="Programm bearbeiten">Bearbeiten</button>
-      <button class="btn sm ghost" data-act="share" data-tip="QR-Code erzeugen zum Teilen per Handy-Scan" aria-label="Programm per QR teilen">🔗</button>
+      <button class="btn sm ghost" data-act="share2" data-tip="Teilen: Link / JSON / QR-Code (alles lokal)" aria-label="Programm teilen">📤</button>
+      <button class="btn sm ghost" data-act="share" data-tip="QR-Code (klassisch, kurzes Hash-Format)" aria-label="Programm per QR teilen">🔗</button>
       <button class="btn sm ghost" data-act="ha" data-tip="Als Home-Assistant-Script-YAML herunterladen (Phase 2)" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
       ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" data-tip="Programm dauerhaft löschen" aria-label="Programm löschen">🗑</button>` : ''}
     </div>
@@ -6451,6 +6454,7 @@ function progCard(p, kind){
       if(a==='run') runProgram(p);
       else if(a==='edit') openEditor(p.id);
       else if(a==='share') openQRShare(p);
+      else if(a==='share2') shareProgramV2(p.id);
       else if(a==='ha') downloadHaYaml(p);
       else if(a==='del') deleteProgram(p.id);
     });
@@ -9510,7 +9514,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.5.0';
+const SW_VERSION_LABEL='v8.6.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -9843,6 +9847,7 @@ function aromaCardHtml(a){
     <div class="row" style="margin-top:8px;gap:6px">
       <button class="btn sm ghost" data-act="detail" style="flex:1">ℹ Details</button>
       <button class="btn sm hot" data-act="program" style="flex:1">▶ Programm</button>
+      <button class="btn sm ghost" data-act="share" aria-label="Sorte teilen" data-tip="Teilen: Link / JSON / QR-Code">📤</button>
       ${customDel}
     </div>
   </div>`;
@@ -9885,6 +9890,7 @@ function renderAromaList(query){
       if(act==='detail'){ openAromaDetail(a); }
       else if(act==='set'){ await aromaSetTemp(a, parseInt(b.dataset.temp)); }
       else if(act==='program'){ const prog=buildProgramFromAroma(a); State.programs.unshift(prog); LS.set('vol_programs',State.programs); renderPrograms(); toast('Programm „'+a.name+'" angelegt'); $('#modalAroma').classList.remove('open'); switchTab('prog'); }
+      else if(act==='share'){ shareAromaV2(a.name); }
       else if(act==='del-custom'){ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); renderAromaList(); toast('Gelöscht'); } }
     }));
   });
@@ -10263,15 +10269,14 @@ function programToShareUrl(p){
   return base + '#prog=' + b64;
 }
 function openQRShare(p){
+  // v8.6.0 Modul 3: externer CDN-Aufruf entfernt; nutzt jetzt inline qrRender().
+  // Bestehende #modalQR-Oberfläche unverändert.
   const url = programToShareUrl(p);
   $('#qrTitle').textContent = 'Teilen: '+p.name;
   $('#qrUrl').textContent = url;
-  const qrSize = 240;
-  // Use external QR-API (free, no account)
-  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size='+qrSize+'x'+qrSize+'&data='+encodeURIComponent(url)+'&margin=12';
-  $('#qrBox').innerHTML = `<img src="${qrSrc}" alt="QR-Code für ${escapeHtml(p.name)}" width="${qrSize}" height="${qrSize}">`;
+  const svg = qrRender(url, { ecLevel:'M', moduleSize:6, margin:4 });
+  $('#qrBox').innerHTML = svg;
   $('#modalQR').classList.add('open');
-  // Store current URL for copy/share buttons
   $('#modalQR').dataset.url = url;
   $('#modalQR').dataset.name = p.name;
 }
@@ -15045,7 +15050,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.5.0 bereit.','ok');
+  log('Sessions v8.6.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -15069,11 +15074,384 @@ async function init(){
   setTimeout(()=>{ try{ if(typeof shareCheckHashImport==='function') shareCheckHashImport(); }catch{} }, 1000);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.6.0 MODUL 1: INLINE-QR-ENCODER
+
+   Portion of QR Code generator (Nayuki) — adapted from the MIT-licensed
+   reference implementation at https://www.nayuki.io/page/qr-code-generator-library
+   ── Copyright (c) Project Nayuki. (MIT License) ──
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   - The above copyright notice and this permission notice shall be included
+     in all copies or substantial portions of the Software.
+   - The Software is provided "as is", without warranty of any kind, express or
+     implied, including but not limited to the warranties of merchantability,
+     fitness for a particular purpose and noninfringement. In no event shall the
+     authors or copyright holders be liable for any claim, damages or other
+     liability, whether in an action of contract, tort or otherwise, arising
+     from, out of or in connection with the Software or the use or other
+     dealings in the Software.
+
+   This is a slimmed JS port: byte-mode only (covers arbitrary URLs / JSON),
+   automatic version selection 1..40, EC levels L/M/Q/H, all 8 masks evaluated.
+   No external dependencies, no network. Used by openQRShare + Share-Modal. */
+(function(global){
+  'use strict';
+
+  const QR_ECL = { L:0, M:1, Q:2, H:3 };
+  // Codewords per block, indexed by [ecl][version]
+  const _ECC_CW = [
+    [-1, 7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+    [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [-1,13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+    [-1,17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+  ];
+  // Number of EC blocks, indexed by [ecl][version]
+  const _NUM_BLOCKS = [
+    [-1,1,1,1,1,1,2,2,2,2,4, 4, 4, 4, 4, 6, 6, 6, 6, 7, 8, 8, 9, 9,10,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25,25],
+    [-1,1,1,1,2,2,4,4,4,5,5, 5, 8, 9, 9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+    [-1,1,1,2,2,4,4,6,6,8,8, 8,10,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+    [-1,1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81],
+  ];
+
+  // ── Reed-Solomon Generator (GF(256), primitive 0x11D) ─────────────
+  function _rsMul(x,y){
+    let z=0;
+    for(let i=7;i>=0;i--){ z=(z<<1)^((z>>>7)*0x11D); z^=((y>>>i)&1)*x; }
+    return z & 0xFF;
+  }
+  function _rsGen(degree){
+    const out = new Uint8Array(degree); out[degree-1]=1;
+    let root=1;
+    for(let i=0;i<degree;i++){
+      for(let j=0;j<degree;j++){
+        out[j] = _rsMul(out[j], root) ^ (j+1<degree ? out[j+1] : 0);
+      }
+      root = _rsMul(root, 2);
+    }
+    return out;
+  }
+  function _rsRemainder(data, gen){
+    const result = new Uint8Array(gen.length);
+    for(const b of data){
+      const factor = b ^ result[0];
+      result.copyWithin(0,1); result[result.length-1]=0;
+      for(let i=0;i<gen.length;i++) result[i] ^= _rsMul(gen[i], factor);
+    }
+    return result;
+  }
+
+  // ── Bit buffer helper ─────────────────────────────────────────────
+  function _appendBits(arr, val, len){
+    for(let i=len-1;i>=0;i--) arr.push((val>>>i)&1);
+  }
+
+  // ── Version capacity (data codewords) ─────────────────────────────
+  function _numRawDataModules(ver){
+    let result = (16*ver + 128) * ver + 64;
+    if(ver >= 2){
+      const numAlign = Math.floor(ver/7) + 2;
+      result -= (25*numAlign - 10)*numAlign - 55;
+      if(ver >= 7) result -= 36;
+    }
+    return result;
+  }
+  function _numDataCodewords(ver, ecl){
+    return Math.floor(_numRawDataModules(ver)/8) - _ECC_CW[ecl][ver] * _NUM_BLOCKS[ecl][ver];
+  }
+
+  // ── Build data segment from byte-array ────────────────────────────
+  function _utf8Bytes(str){
+    const out = [];
+    for(let i=0;i<str.length;i++){
+      let c = str.charCodeAt(i);
+      if(c < 0x80) out.push(c);
+      else if(c < 0x800){ out.push(0xC0|(c>>>6)); out.push(0x80|(c&0x3F)); }
+      else if(c < 0xD800 || c >= 0xE000){ out.push(0xE0|(c>>>12)); out.push(0x80|((c>>>6)&0x3F)); out.push(0x80|(c&0x3F)); }
+      else {
+        // surrogate pair
+        i++; const lo = str.charCodeAt(i);
+        const cp = 0x10000 + (((c&0x3FF)<<10) | (lo&0x3FF));
+        out.push(0xF0|(cp>>>18)); out.push(0x80|((cp>>>12)&0x3F)); out.push(0x80|((cp>>>6)&0x3F)); out.push(0x80|(cp&0x3F));
+      }
+    }
+    return out;
+  }
+
+  // ── Encode bytes into version+matrix ──────────────────────────────
+  function _encodeBytes(bytes, ecl){
+    // 1) pick minimal version
+    let version = 0;
+    for(let v=1; v<=40; v++){
+      const ch = (v<10) ? 8 : 16;
+      const capBits = _numDataCodewords(v, ecl) * 8;
+      const needed = 4 + ch + bytes.length*8;
+      if(needed <= capBits){ version=v; break; }
+    }
+    if(!version) throw new Error('QR: data too long (>'+bytes.length+' bytes)');
+
+    // 2) build bitstream
+    const bits = [];
+    _appendBits(bits, 0x4, 4);              // byte-mode indicator
+    const ch = (version<10) ? 8 : 16;
+    _appendBits(bits, bytes.length, ch);    // char count
+    for(const b of bytes) _appendBits(bits, b, 8);
+
+    const dataCWs = _numDataCodewords(version, ecl);
+    const totalDataBits = dataCWs * 8;
+    // Terminator + pad to byte
+    _appendBits(bits, 0, Math.min(4, totalDataBits - bits.length));
+    while(bits.length % 8 !== 0) bits.push(0);
+    // Pad bytes 0xEC, 0x11
+    for(let pad=0xEC; bits.length < totalDataBits; pad ^= 0xEC ^ 0x11){
+      _appendBits(bits, pad, 8);
+    }
+    // bits -> bytes
+    const dataBytes = new Uint8Array(dataCWs);
+    for(let i=0;i<bits.length;i++) dataBytes[i>>>3] |= bits[i] << (7 - (i&7));
+
+    // 3) Split into blocks + add Reed-Solomon EC
+    const numBlocks = _NUM_BLOCKS[ecl][version];
+    const blockEcLen = _ECC_CW[ecl][version];
+    const rawCodewords = Math.floor(_numRawDataModules(version)/8);
+    const numShortBlocks = numBlocks - rawCodewords % numBlocks;
+    const shortBlockLen = Math.floor(rawCodewords / numBlocks);
+    const blocks = [];
+    const gen = _rsGen(blockEcLen);
+    let k=0;
+    for(let i=0;i<numBlocks;i++){
+      const dataLen = shortBlockLen - blockEcLen + (i < numShortBlocks ? 0 : 1);
+      const dat = dataBytes.slice(k, k+dataLen);
+      k += dataLen;
+      const ecBytes = _rsRemainder(dat, gen);
+      const block = new Uint8Array(shortBlockLen + 1);
+      block.set(dat,0);
+      // short blocks: add a "0" padding so all blocks have shortBlockLen+1 size for interleaving
+      if(i < numShortBlocks) block[shortBlockLen] = 0;
+      block.set(ecBytes, dataLen + (i<numShortBlocks?1:0));
+      blocks.push({data:dat, ec:ecBytes, dataLen});
+    }
+    // Interleave: data bytes column-wise, then ec bytes column-wise
+    const result = [];
+    const maxData = shortBlockLen - blockEcLen + 1;
+    for(let col=0; col<maxData; col++){
+      for(let bi=0; bi<numBlocks; bi++){
+        const b = blocks[bi];
+        // skip the missing data byte of short blocks at the last data column
+        if(!(col === b.dataLen && bi < numShortBlocks)){
+          result.push(b.data[col]);
+        }
+      }
+    }
+    for(let col=0; col<blockEcLen; col++){
+      for(let bi=0; bi<numBlocks; bi++){
+        result.push(blocks[bi].ec[col]);
+      }
+    }
+    // result-bytes -> bit array
+    const finalBits = [];
+    for(const b of result) _appendBits(finalBits, b, 8);
+
+    // 4) Build matrix
+    const size = 17 + 4*version;
+    const modules = Array.from({length:size}, ()=>new Uint8Array(size));   // 0/1
+    const reserved = Array.from({length:size}, ()=>new Uint8Array(size));  // 1 = function
+
+    function setFn(x,y,v){ modules[y][x] = v?1:0; reserved[y][x] = 1; }
+    // Finder patterns
+    function placeFinder(cx,cy){
+      for(let dy=-4;dy<=4;dy++) for(let dx=-4;dx<=4;dx++){
+        const x=cx+dx, y=cy+dy;
+        if(x<0||y<0||x>=size||y>=size) continue;
+        const d = Math.max(Math.abs(dx),Math.abs(dy));
+        setFn(x,y, d!==2 && d!==4);
+      }
+    }
+    placeFinder(3,3); placeFinder(size-4,3); placeFinder(3,size-4);
+    // Timing patterns
+    for(let i=8;i<size-8;i++){ setFn(6,i, (i&1)===0); setFn(i,6, (i&1)===0); }
+    // Dark module
+    setFn(8, size-8, true);
+    // Alignment patterns (v>=2)
+    function alignPositions(v){
+      if(v===1) return [];
+      const num = Math.floor(v/7)+2;
+      const step = (v===32) ? 26 : Math.ceil((v*4+4)/(2*num-2))*2;
+      const out = [6];
+      for(let pos = size - 7; out.length < num; pos -= step) out.splice(1,0,pos);
+      return out;
+    }
+    const aligns = alignPositions(version);
+    for(let i=0;i<aligns.length;i++){
+      for(let j=0;j<aligns.length;j++){
+        if((i===0 && j===0) || (i===0 && j===aligns.length-1) || (i===aligns.length-1 && j===0)) continue;
+        const cx = aligns[i], cy = aligns[j];
+        for(let dy=-2;dy<=2;dy++) for(let dx=-2;dx<=2;dx++){
+          const x=cx+dx, y=cy+dy;
+          const d = Math.max(Math.abs(dx), Math.abs(dy));
+          setFn(x,y, d!==1);
+        }
+      }
+    }
+    // Reserve format info area (will be filled after mask)
+    for(let i=0;i<=8;i++){ reserved[8][i]=1; reserved[i][8]=1; reserved[8][size-1-i]=1; reserved[size-1-i][8]=1; }
+    // Reserve version info (v>=7): 6x3 in top-right and bottom-left
+    if(version >= 7){
+      for(let i=0;i<6;i++) for(let j=size-11;j<size-8;j++){ reserved[i][j]=1; reserved[j][i]=1; }
+    }
+
+    // 5) Place data bits in zigzag (right-to-left, skip col 6)
+    let i = 0;
+    for(let right = size-1; right >= 1; right -= 2){
+      if(right === 6) right = 5;
+      for(let vert = 0; vert < size; vert++){
+        for(let j=0;j<2;j++){
+          const x = right - j;
+          const upward = ((right+1) & 2) === 0;
+          const y = upward ? size-1-vert : vert;
+          if(!reserved[y][x] && i < finalBits.length){
+            modules[y][x] = finalBits[i];
+            i++;
+          }
+        }
+      }
+    }
+
+    // 6) Pick best mask
+    function applyMask(maskNum, mat){
+      for(let y=0;y<size;y++) for(let x=0;x<size;x++){
+        if(reserved[y][x]) continue;
+        let invert;
+        switch(maskNum){
+          case 0: invert = (x+y)%2===0; break;
+          case 1: invert = y%2===0; break;
+          case 2: invert = x%3===0; break;
+          case 3: invert = (x+y)%3===0; break;
+          case 4: invert = (Math.floor(x/3)+Math.floor(y/2))%2===0; break;
+          case 5: invert = (x*y)%2 + (x*y)%3 === 0; break;
+          case 6: invert = ((x*y)%2 + (x*y)%3)%2 === 0; break;
+          case 7: invert = ((x+y)%2 + (x*y)%3)%2 === 0; break;
+        }
+        if(invert) mat[y][x] ^= 1;
+      }
+    }
+    function placeFormat(mat, ecl, maskNum){
+      // ECL bits per spec: L=01, M=00, Q=11, H=10
+      const eclBits = [1,0,3,2][ecl];
+      let data = (eclBits<<3) | maskNum;
+      let rem = data;
+      for(let k=0;k<10;k++) rem = (rem<<1) ^ ((rem>>>9)*0x537);
+      const bits = ((data<<10) | rem) ^ 0x5412;
+      // Top-left
+      for(let i=0;i<6;i++) mat[8][i] = (bits>>>i)&1;
+      mat[8][7] = (bits>>>6)&1; mat[8][8] = (bits>>>7)&1; mat[7][8] = (bits>>>8)&1;
+      for(let i=9;i<15;i++) mat[14-i][8] = (bits>>>i)&1;
+      // Bottom-left + top-right
+      for(let i=0;i<8;i++) mat[size-1-i][8] = (bits>>>i)&1;
+      for(let i=8;i<15;i++) mat[8][size-15+i] = (bits>>>i)&1;
+      mat[size-8][8] = 1;
+    }
+    function placeVersion(mat){
+      if(version < 7) return;
+      let rem = version;
+      for(let k=0;k<12;k++) rem = (rem<<1) ^ ((rem>>>11)*0x1F25);
+      const bits = (version<<12) | rem;
+      for(let i=0;i<18;i++){
+        const a = Math.floor(i/3), b = (i%3) + size - 11;
+        const bit = (bits>>>i)&1;
+        mat[a][b] = bit; mat[b][a] = bit;
+      }
+    }
+    function penalty(mat){
+      let p = 0;
+      // Rule 1: ≥5 consecutive same-color in rows/cols
+      for(let y=0;y<size;y++){ let runColor=mat[y][0], runX=1; for(let x=1;x<size;x++){ if(mat[y][x]===runColor){ runX++; if(runX===5) p+=3; else if(runX>5) p++; } else { runColor=mat[y][x]; runX=1; } } }
+      for(let x=0;x<size;x++){ let runColor=mat[0][x], runY=1; for(let y=1;y<size;y++){ if(mat[y][x]===runColor){ runY++; if(runY===5) p+=3; else if(runY>5) p++; } else { runColor=mat[y][x]; runY=1; } } }
+      // Rule 2: 2x2 same color
+      for(let y=0;y<size-1;y++) for(let x=0;x<size-1;x++){
+        const c = mat[y][x];
+        if(c===mat[y][x+1]&&c===mat[y+1][x]&&c===mat[y+1][x+1]) p+=3;
+      }
+      // Rule 3: finder-like 1011101 with 0000 adjacent (rows + cols)
+      const pat=[1,0,1,1,1,0,1];
+      function check(arr){
+        let count=0;
+        for(let i=0;i<=arr.length-11;i++){
+          // pattern then 4 zeros
+          let m=true; for(let k=0;k<7;k++) if(arr[i+k]!==pat[k]){ m=false; break; }
+          if(m){ let z=true; for(let k=7;k<11;k++) if(arr[i+k]!==0){ z=false; break; } if(z) count++; }
+          // 4 zeros then pattern
+          m=true; for(let k=0;k<4;k++) if(arr[i+k]!==0){ m=false; break; }
+          if(m){ let z=true; for(let k=0;k<7;k++) if(arr[i+4+k]!==pat[k]){ z=false; break; } if(z) count++; }
+        }
+        return count;
+      }
+      for(let y=0;y<size;y++) p += check(Array.from(mat[y])) * 40;
+      for(let x=0;x<size;x++){ const col=[]; for(let y=0;y<size;y++) col.push(mat[y][x]); p += check(col)*40; }
+      // Rule 4: dark proportion
+      let dark=0; for(let y=0;y<size;y++) for(let x=0;x<size;x++) if(mat[y][x]) dark++;
+      const total=size*size;
+      const ratio = Math.floor(Math.abs(dark*20 - total*10) / total);
+      p += ratio*10;
+      return p;
+    }
+    let bestMat = null, bestMask = -1, bestPenalty = Infinity;
+    for(let mk=0; mk<8; mk++){
+      const mat = modules.map(r=>Uint8Array.from(r));
+      applyMask(mk, mat);
+      placeFormat(mat, ecl, mk);
+      const pen = penalty(mat);
+      if(pen < bestPenalty){ bestPenalty=pen; bestMask=mk; bestMat=mat; }
+    }
+    placeVersion(bestMat);
+    return { size, modules: bestMat, version, mask: bestMask };
+  }
+
+  global.qrEncode = function(text, eclName){
+    const ecl = QR_ECL[eclName||'M']; if(ecl==null) throw new Error('ecl?');
+    const bytes = _utf8Bytes(String(text||''));
+    return _encodeBytes(bytes, ecl);
+  };
+
+  global.qrRender = function(text, opts){
+    opts = opts || {};
+    const ecl = opts.ecLevel || 'M';
+    const moduleSize = Math.max(1, opts.moduleSize || 6);
+    const margin = Math.max(0, opts.margin == null ? 4 : opts.margin);
+    let qr;
+    try{ qr = global.qrEncode(text, ecl); }
+    catch(e){
+      // Fallback: text too long for any version → return error SVG
+      const w=220;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${w}" viewBox="0 0 ${w} ${w}"><rect width="100%" height="100%" fill="#222"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#fff" font-family="monospace" font-size="12">QR: zu lang (${(e&&e.message)||'fehler'})</text></svg>`;
+    }
+    const total = (qr.size + margin*2) * moduleSize;
+    // Build path d-attribute for dark modules (rect per module)
+    let d = '';
+    for(let y=0;y<qr.size;y++){
+      let runStart = -1;
+      for(let x=0;x<=qr.size;x++){
+        const on = x<qr.size && qr.modules[y][x];
+        if(on && runStart<0) runStart = x;
+        else if(!on && runStart>=0){
+          d += `M${(runStart+margin)*moduleSize},${(y+margin)*moduleSize}h${(x-runStart)*moduleSize}v${moduleSize}h-${(x-runStart)*moduleSize}z`;
+          runStart = -1;
+        }
+      }
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="${total}" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges" role="img" aria-label="QR-Code">`
+      + `<rect width="100%" height="100%" fill="#ffffff"/>`
+      + `<path d="${d}" fill="#000000"/>`
+      + `</svg>`;
+  };
+})(typeof window!=='undefined' ? window : globalThis);
+
 /* ═══════════════════════════════════════════════════════════════
-   v8.5.0 MODUL 6: OFFLINE-TEILEN (JSON + Share-Link)
-   QR-Code-Rendering vertagt auf v8.5.1 (Inline-Encoder zu groß für
-   diese Session — siehe README). Bestehender openQRShare bleibt
-   unverändert (externer CDN-Fetch, pre-v8.5.0 Code-Schuld).
+   v8.5.0 MODUL 6: OFFLINE-TEILEN (JSON + Share-Link + QR ab v8.6.0)
 
    Schema: { v:1, kind:'aroma'|'program'|'bundle', items:[...] }
 ═══════════════════════════════════════════════════════════════ */
@@ -15261,6 +15639,9 @@ function _openShareExportModal(payload, title){
   const link = shareToLink(payload);
   $('#shareExportSummary').textContent = `${payload.items.length} Item(s) · Typ: ${payload.kind} · ${title?'„'+title+'"':''}`;
   $('#shareLinkText').value = link;
+  // v8.6.0: QR-Box bei jedem Open zurücksetzen
+  const qb = $('#shareQrBox'); if(qb){ qb.style.display='none'; qb.innerHTML=''; }
+  const qh = $('#shareQrHint'); if(qh){ qh.style.display='none'; }
   m.classList.add('open');
   m.dataset.payload = JSON.stringify(payload);
   m.dataset.title = title || 'sessions-share';
@@ -15280,6 +15661,21 @@ function _shareWireUi(){
       const title = (m.dataset.title || 'share').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,40) || 'share';
       shareDownloadJson(payload, 'sessions-'+payload.kind+'-'+title+'.json');
     }catch(e){ toast('Download-Fehler'); }
+  });
+  // v8.6.0: QR-Code im Share-Modal rendern (inline, kein Netz)
+  $('#shareQrShow')?.addEventListener('click', ()=>{
+    const link = $('#shareLinkText') && $('#shareLinkText').value;
+    const box = $('#shareQrBox'); const hint = $('#shareQrHint');
+    if(!link || !box) return;
+    try{
+      const svg = qrRender(link, { ecLevel:'M', moduleSize:5, margin:3 });
+      box.innerHTML = svg;
+      box.style.display = 'block';
+      if(hint) hint.style.display = 'block';
+    }catch(e){
+      box.innerHTML = '<p style="color:#b00">QR-Fehler: '+(e.message||'?')+'</p>';
+      box.style.display = 'block';
+    }
   });
 }
 document.addEventListener('DOMContentLoaded', _shareWireUi);
