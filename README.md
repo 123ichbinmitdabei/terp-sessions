@@ -53,9 +53,11 @@ Hooks: `setConn()` triggert `connectChange`, der A11Y-Modal-Observer triggert `m
 - **„Rückgängig"-Toast** nach versehentlichem Löschen einer Session oder eines Programms — 6 Sekunden Zeit zum Klicken.
 - **Mikro-/Avatar-Buttons** sind während laufender Programme weiter bedienbar (v8.5.0-Fix, in v8.7.0 bestätigt).
 
-## v8.7.1-prep — CSC E2EE Krypto: Review-Iteration 1 (DORMANT)
+## v8.7.1-prep — CSC E2EE Krypto: Review-Iteration 1 + Patch 2 (DORMANT)
 
 **Sicherheitskritisch — Folgeauftrag nach externem Krypto-Review. App-Version bleibt v8.7.0 für Endnutzer.**
+
+**Patch 2 (2026-05-31, pgcrypto-Schema-Qualifikation):** Nach dem ersten Live-Selbst-Angriffs-Lauf gegen das Supabase-Backend zeigte sich, dass die `pgcrypto`-Extension in Supabase im `extensions`-Schema liegt — nicht in `public` — und die SECURITY-DEFINER-RPCs mit `search_path = public, pg_temp` die Funktionen `crypt`/`gen_salt` nicht fanden. Alle drei Aufrufstellen in `csc-backend.sql` sind jetzt voll-qualifiziert auf `extensions.crypt` und `extensions.gen_salt`. Begründung Option B vs A in `CSC-CRYPTO.md §10`. Keine Änderung am `cscCrypto`-Modul, keine App-Code-Änderung.
 
 Drei konkrete Code-Änderungen + zwei Walkthroughs aus dem ersten Review:
 

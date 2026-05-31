@@ -179,6 +179,33 @@ Vier Punkte aus dem ersten externen Krypto-Review:
 
 ² **#10 `csc_circle_aggregate`** validierte `p_circle_id`/`p_period`/`p_metric` nicht direkt. PIN + Member-Check schützten gegen Cross-Circle-Read; Postgres-bind-Vars schützten gegen SQL-Injection. Aber Konsistenz mit `csc_contribute` verlangt: Length/Regex-Checks vor dem Member-Check. **Eingebaut im v8.7.1-prep-Patch** (drei Validations analog zu `csc_contribute` Z. 326-328).
 
+## 10. Patch 2: pgcrypto-Schema-Qualifikation (2026-05-31)
+
+Nach dem ersten 5-Angriffs-Live-Test gegen das Supabase-Backend (lokaler Report `SUPABASE-SELFATTACK-REPORT.md`, gitignored) zeigte sich: 3 von 5 Angriffen schlugen fehl mit PostgreSQL-Code `42883` und Messages wie `function gen_salt(unknown, integer) does not exist` bzw. `function crypt(text, unknown) does not exist`.
+
+**Diagnose:** In Supabase liegt die `pgcrypto`-Extension standardmäßig im Schema **`extensions`**, nicht in `public`. Die SECURITY-DEFINER-RPCs setzen `set search_path = public, pg_temp` — **ohne `extensions`** — und Postgres fand `crypt`/`gen_salt` deshalb nicht.
+
+**Fix-Entscheidung — Option B gewählt:** alle drei pgcrypto-Aufrufe mit voll-qualifiziertem Schema-Prefix `extensions.…` versehen. Nicht Option A (`search_path` um `extensions` erweitern) — Option B ist:
+- **search_path-unabhängig:** funktioniert auch wenn Supabase künftig das `extensions`-Schema umzieht / der `search_path` durch Admin-Defaults überschrieben wird
+- **expliziter:** beim Lesen sofort sichtbar woher die Funktionen kommen
+- **Defense-in-Depth:** ein versehentliches `revoke usage on schema extensions from public` kann den Aufruf nicht ungewollt erlauben/blockieren
+
+**Betroffene Code-Stellen** in `csc-backend.sql`:
+1. `csc_internal_verify_pin` — `perform crypt(...)` (constant-time-Annäherung bei nicht-existentem User) → `perform extensions.crypt(...)`
+2. `csc_internal_verify_pin` — `ok := (u.pin_hash = crypt(p_pin, u.pin_hash))` → `extensions.crypt(...)`
+3. `csc_register` — `crypt(p_pin, gen_salt('bf', 8))` → `extensions.crypt(p_pin, extensions.gen_salt('bf', 8))`
+
+Keine weiteren pgcrypto-Funktionen im SQL (verifiziert per Grep nach `digest|hmac|pgp_|armor|dearmor` etc. — alle 0 Treffer).
+
+**Was unverändert bleibt:**
+- `cscCrypto`-Modul (in `index.html`) — komplett unangetastet, Reviewer-Iter-1 bleibt gültig
+- `cscClient` (dormant) — kommt in v8.7.2
+- App-Code (`index.html`, `sw.js`) — komplett unverändert
+- Tests `v87crypto.mjs` (37/37) — laufen weiter (mocken Web Crypto, hängen nicht an Supabase)
+- Externer Reviewer wurde NICHT für diese Doku-Datei konsultiert — Patch betrifft nur eine Supabase-Deployment-Anpassung, keine kryptographische Designänderung. Reviewer wird beim nächsten Anlass (v8.7.2 UI/cscClient-Umbau) regulär einbezogen.
+
+**Verifikation nach Patch:** Andre führt `csc-backend.sql` im Supabase SQL-Editor erneut aus (`create or replace function` updated in-place, idempotent). Danach werden die 5 Selbst-Angriffe wiederholt; Ergebnis in `SUPABASE-SELFATTACK-REPORT-v2.md` (lokal, gitignored). Erst bei 5/5 PASS ist das Backend für v8.7.2 freigegeben.
+
 ---
 
-**Stand:** v8.7.1-prep (inkl. Defense-in-Depth-Patch) · `cscCrypto` 37/37 Tests grün · 514/514 Gesamt-Regression · NICHT aktiv, NICHT bewerben, externes Review für Punkt b+c aus §7 weiterhin ausstehend (§9 jetzt komplett ✅).
+**Stand:** v8.7.1-prep + Patch 2 (Defense-in-Depth + pgcrypto-Schema-Qualifikation) · `cscCrypto` 37/37 Tests grün · 575/575 Gesamt-Regression · NICHT aktiv, NICHT bewerben, externes Review für Punkt b+c aus §7 weiterhin ausstehend (§9 + §10 jetzt komplett ✅ bzw. patch ausgeführt).

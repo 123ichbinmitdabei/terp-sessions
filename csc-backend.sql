@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Sessions PWA — CSC-Mode Backend (v8.7.1-prep, E2EE)
+-- Sessions PWA — CSC-Mode Backend (v8.7.1-prep + Patch 2, E2EE)
 -- Cannabis Social Club: end-to-end-encrypted Session-Sync mit anonymen Codes
 --
 -- ÄNDERUNGEN v8.7.1-prep gegenüber v8.7.0-prep (Review-Iteration 1):
@@ -8,8 +8,28 @@
 --   • csc_register nimmt zusätzlich p_hkdf_salt entgegen
 --   • csc_login liefert zusätzlich hkdf_salt zurück
 --   • Funktion-für-Funktion-Audit aller RPCs in CSC-CRYPTO.md §9 dokumentiert
---   • Kein Migrationspfad — Schema war dormant, niemand hat Produktivdaten.
---     Wer ein v8.7.0-prep-Test-Backend hat: DROP + diese Datei neu ausführen.
+--
+-- ÄNDERUNGEN v8.7.1-prep Patch 2 (2026-05-31, nach 5-Angriffs-Live-Test):
+--   • Alle pgcrypto-Aufrufe (crypt, gen_salt) sind jetzt voll-qualifiziert
+--     mit extensions.-Schema-Prefix.
+--   • Grund: in Supabase liegt pgcrypto im Schema „extensions", nicht in
+--     „public". Die SECURITY-DEFINER-Funktionen setzen
+--     `set search_path = public, pg_temp` (ohne extensions) — Postgres
+--     fand crypt/gen_salt deshalb nicht → HTTP 404 / 42883 für csc_register
+--     + csc_login mit nicht-existentem Code.
+--   • Option B gegenüber Option A (search_path erweitern) gewählt:
+--     search_path-unabhängig, robuster gegen Supabase-Änderungen, expliziter.
+--   • cscCrypto-Modul + alle anderen Funktionen unverändert.
+--   • Re-runnable: `create or replace function` updated die bestehenden RPCs
+--     in-place; kein DROP nötig.
+--
+--   AUSFÜHRUNG nach Patch 2:
+--     1. Im Supabase SQL-Editor: diese Datei komplett einfügen + Run.
+--     2. Danach sollten alle 5 Selbst-Angriffe PASS sein (siehe Repo-lokaler
+--        Report SUPABASE-SELFATTACK-REPORT-v2.md — gitignored).
+--
+--   Kein Migrationspfad — Schema war dormant, niemand hat Produktivdaten.
+--   Wer ein v8.7.0-prep-Test-Backend hat: DROP + diese Datei neu ausführen.
 -- ════════════════════════════════════════════════════════════════════════════
 --
 -- ⚠️  SICHERHEIT VOR FEATURE. KRYPTOGRAPHIE.
@@ -172,11 +192,11 @@ begin
   select code, pin_hash, failed_attempts, locked_until
     into u from csc_users where code = p_code;
   if not found then
-    perform crypt(p_pin, '$2a$08$abcdefghijklmnopqrstuv');   -- constant-time-Annäherung
+    perform extensions.crypt(p_pin, '$2a$08$abcdefghijklmnopqrstuv');   -- constant-time-Annäherung (Patch 2: voll-qualifiziert)
     return false;
   end if;
   if u.locked_until is not null and u.locked_until > now() then return false; end if;
-  ok := (u.pin_hash = crypt(p_pin, u.pin_hash));
+  ok := (u.pin_hash = extensions.crypt(p_pin, u.pin_hash));   -- Patch 2: voll-qualifiziert
   if ok then
     update csc_users set failed_attempts=0, locked_until=null, last_seen_at=now() where code=p_code;
     return true;
@@ -216,7 +236,7 @@ begin
   if p_encrypted_seed_iv is null or length(p_encrypted_seed_iv) < 12 or length(p_encrypted_seed_iv) > 32 then raise exception 'INVALID_IV' using errcode='P0001'; end if;
   new_code := csc_internal_generate_code();
   insert into csc_users (code, pin_hash, pin_salt, kdf_salt, hkdf_salt, encrypted_seed, encrypted_seed_iv)
-    values (new_code, crypt(p_pin, gen_salt('bf', 8)), '', p_kdf_salt, p_hkdf_salt, p_encrypted_seed, p_encrypted_seed_iv);
+    values (new_code, extensions.crypt(p_pin, extensions.gen_salt('bf', 8)), '', p_kdf_salt, p_hkdf_salt, p_encrypted_seed, p_encrypted_seed_iv);   -- Patch 2: voll-qualifiziert
   return jsonb_build_object('code', new_code);
 end
 $fn$;
