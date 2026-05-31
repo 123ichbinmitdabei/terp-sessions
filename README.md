@@ -2,6 +2,21 @@
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
+## v8.7.0-prep — CSC E2EE Krypto-Modul (DORMANT, nicht aktiv)
+
+**Sicherheitskritisch — Kryptographie. App-Version bleibt v8.6.0 für Endnutzer.**
+
+- **`cscCrypto`-Modul** als IIFE inline in `index.html`: PBKDF2-HMAC-SHA256 (600 000 Iter) für Passphrase→Key, HKDF-SHA256 für Seed→Daten-Keys, AES-256-GCM (12-Byte-IV pro Operation, niemals reuse) für alle Verschlüsselungen. Ausschließlich Web Crypto API, keine externen Libs.
+- **`csc-backend.sql` komplett überschrieben** (alte v8.5.0-prep-Version war Klartext und nie live): neues E2EE-Schema mit `csc_users.kdf_salt` + `encrypted_seed`, `csc_sessions.{iv, encrypted_blob}` (KEINE Klartext-Sortfelder mehr), `csc_circles` + `csc_circle_members` + `csc_circle_contributions` mit k-Anonymity-Schwelle.
+- **BIP39-Recovery vertagt auf v8.7.1.** Begründung: 2048-Wort-EN-Liste muss byte-genau übereinstimmen, eine Memory-Reproduktion ist zu fehleranfällig. v8.7.1 wird die offizielle Datei aus `bitcoin/bips` mit SHA-256-Test einbinden.
+- **`CSC-CRYPTO.md`** dokumentiert Threat-Model, Stack, Schlüssel-Hierarchie, Non-Goals, DSGVO-Restpflichten und die drei Stellen, an denen ich externe Krypto-Review für nötig halte.
+- **31 Tests** in `v87crypto.mjs` (Round-Trip, IV-Uniqueness über 100 Operationen, AES-GCM-Auth-Failures bei falschem Key/IV/manipuliertem CT, PBKDF2-Determinismus + Salt-Trennung, HKDF-Purpose-Trennung, Session-Wrapper-Versionierung).
+- **Volle Regression 480/480 grün** über 23 Suiten.
+
+**KEIN UI, KEIN Live-Feature, KEIN Tag.** Der bestehende dormant `cscClient` wurde NICHT umgebaut — das ist die v8.7.1-Aufgabe, nach externem Krypto-Review.
+
+**Was Andre tun muss vor jedem Live-Schritt:** externes Krypto-Review (siehe `CSC-CRYPTO.md` Abschnitt 6 + 7), Supabase-EU-Projekt mit neuem `csc-backend.sql` aufsetzen, BIP39-Recovery (v8.7.1) abwarten, dann erst v8.7.2 Aktivierung.
+
 ## v8.6.0 — Teilen vervollständigt (QR-Code inline, Buttons, CDN-Fix)
 
 Drei fokussierte Module, keine neuen Features sonst. Keine Änderung an Adaptern, CSC-Backend/-Client, Voice oder Tracking-Logik.

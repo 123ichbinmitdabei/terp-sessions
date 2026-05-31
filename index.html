@@ -15681,6 +15681,224 @@ function _shareWireUi(){
 document.addEventListener('DOMContentLoaded', _shareWireUi);
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.0-prep: CSC E2EE CRYPTO MODUL (cscCrypto)
+
+   SICHERHEITSKRITISCH. NUR Web Crypto API (window.crypto.subtle), keine
+   externen Libs, keine selbst-erfundene Krypto. Standard-Primitives:
+
+     • Schlüssel-Ableitung aus Passphrase: PBKDF2-HMAC-SHA256, 600 000 Iter,
+       16-Byte Salt (pro User, klartext in Supabase gespeichert)
+     • Schlüssel-Ableitung aus Seed: HKDF-SHA256 mit per-purpose info-Tag
+     • Verschlüsselung: AES-256-GCM, 12-Byte IV aus crypto.getRandomValues
+       (NIEMALS wiederverwendet → bei jedem encrypt() neu gezogen)
+     • Account-Seed: 16 zufällige Bytes (= 128 bit Entropie, BIP39-kompatibel)
+
+   STATUS v8.7.0-prep:
+     • Krypto-Modul ist VOLLSTÄNDIG implementiert und getestet.
+     • BIP39-Recovery-Wortliste ist NICHT enthalten — siehe seedToWords/
+       wordsToSeed-Stubs. Begründung: die offiziellen 2048 EN-Wörter müssen
+       byte-genau übereinstimmen, sonst inkompatibel mit anderen BIP39-Tools.
+       Eine fehleranfällige Memory-Reproduktion wird hier bewusst NICHT
+       gemacht. v8.7.1 wird die offizielle Liste aus dem bitcoin/bips-Repo
+       als verifizierte Datei einbinden (SHA-256 gegen kanonischen Hash).
+     • Modul ist nicht ans UI angebunden — KEIN Live-Feature. Anbindung
+       erfolgt in v8.7.1 nach externem Krypto-Review (siehe CSC-CRYPTO.md).
+
+   Threat-Model, Schlüssel-Hierarchie und Non-Goals: siehe CSC-CRYPTO.md. */
+(function(global){
+  'use strict';
+
+  const subtle = (typeof crypto !== 'undefined' && crypto.subtle) ? crypto.subtle : null;
+  const _rng   = (typeof crypto !== 'undefined' && crypto.getRandomValues) ? crypto.getRandomValues.bind(crypto) : null;
+
+  function _assertCrypto(){
+    if(!subtle || !_rng) throw new Error('WEB_CRYPTO_UNAVAILABLE');
+  }
+
+  // ── Base64 helpers (URL-safe NICHT verwenden hier; Standard-Base64 ─────────
+  //    damit die Blobs DB-kompatibel speicherbar sind) ──
+  function _b64encode(buf){
+    const u8 = (buf instanceof Uint8Array) ? buf : new Uint8Array(buf);
+    let s = '';
+    for(let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
+    return btoa(s);
+  }
+  function _b64decode(str){
+    const bin = atob(String(str||''));
+    const u8 = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+    return u8;
+  }
+
+  const _enc = new TextEncoder();
+  const _dec = new TextDecoder();
+
+  // ── PBKDF2 mit Spec-Iterations-Anzahl ────────────────────────────────────
+  // 600 000 entspricht OWASP-Empfehlung für PBKDF2-HMAC-SHA256 (Stand 2023+).
+  const PBKDF2_ITERATIONS = 600000;
+  const KEY_LENGTH_BITS   = 256;
+
+  async function _importPbkdf2Material(passphrase){
+    _assertCrypto();
+    return subtle.importKey(
+      'raw',
+      _enc.encode(String(passphrase||'')),
+      { name:'PBKDF2' },
+      /*extractable*/false,
+      ['deriveKey','deriveBits']
+    );
+  }
+
+  // ── HKDF-SHA256 Schlüssel-Ableitung aus Seed-Material ────────────────────
+  async function _importHkdfMaterial(seed){
+    _assertCrypto();
+    return subtle.importKey(
+      'raw',
+      seed instanceof Uint8Array ? seed : new Uint8Array(seed),
+      { name:'HKDF' },
+      /*extractable*/false,
+      ['deriveKey','deriveBits']
+    );
+  }
+
+  // ── Account-Seed: 16 Byte = 128 bit Entropie (BIP39-kompatibel) ──────────
+  function generateAccountSeed(){
+    _assertCrypto();
+    return _rng(new Uint8Array(16));
+  }
+  function generateKdfSalt(){
+    _assertCrypto();
+    return _rng(new Uint8Array(16));
+  }
+  function generateIv(){
+    _assertCrypto();
+    return _rng(new Uint8Array(12));
+  }
+
+  // ── PASSPHRASE → AES-256-GCM Key (für encrypted_seed) ────────────────────
+  // Mindest-Länge 12 Zeichen wird im UI durchgesetzt; hier nur Krypto-Schicht.
+  async function deriveKeyFromPassphrase(passphrase, saltB64){
+    _assertCrypto();
+    if(!passphrase || passphrase.length < 12){
+      throw new Error('PASSPHRASE_TOO_SHORT (min 12 chars)');
+    }
+    const salt = (typeof saltB64 === 'string') ? _b64decode(saltB64) : new Uint8Array(saltB64);
+    if(salt.length !== 16) throw new Error('KDF_SALT_LENGTH (need 16 bytes)');
+    const material = await _importPbkdf2Material(passphrase);
+    return subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash:'SHA-256' },
+      material,
+      { name:'AES-GCM', length: KEY_LENGTH_BITS },
+      /*extractable*/false,
+      ['encrypt','decrypt']
+    );
+  }
+
+  // ── SEED → AES-256-GCM Key per Purpose-Label (HKDF) ──────────────────────
+  // purpose ∈ {'master','data','agg'} – Trennung sichert dass Daten-Key und
+  // Aggregat-Key unterschiedlich bleiben, selbst bei gleichem Master-Seed.
+  async function deriveKeyFromSeed(seed16, purpose){
+    _assertCrypto();
+    if(!(seed16 instanceof Uint8Array) || seed16.length !== 16){
+      throw new Error('SEED_LENGTH (need 16 bytes Uint8Array)');
+    }
+    const p = String(purpose||'');
+    if(!/^(master|data|agg)$/.test(p)) throw new Error('PURPOSE_INVALID');
+    const material = await _importHkdfMaterial(seed16);
+    return subtle.deriveKey(
+      {
+        name:'HKDF',
+        hash:'SHA-256',
+        salt: new Uint8Array(0),               // BIP-konform: leeres Salt erlaubt
+        info: _enc.encode('sessions-csc/v1/' + p),
+      },
+      material,
+      { name:'AES-GCM', length: KEY_LENGTH_BITS },
+      /*extractable*/false,
+      ['encrypt','decrypt']
+    );
+  }
+
+  // ── Symmetrische Verschlüsselung ─────────────────────────────────────────
+  async function encrypt(key, plaintext){
+    _assertCrypto();
+    const iv = generateIv();                              // NIEMALS reuse — neu pro Aufruf
+    const pt = _enc.encode(typeof plaintext === 'string' ? plaintext : JSON.stringify(plaintext));
+    const ct = await subtle.encrypt({ name:'AES-GCM', iv }, key, pt);
+    return { iv: _b64encode(iv), ct: _b64encode(new Uint8Array(ct)) };
+  }
+  async function decrypt(key, ivB64, ctB64){
+    _assertCrypto();
+    const iv = _b64decode(ivB64);
+    if(iv.length !== 12) throw new Error('IV_LENGTH (need 12 bytes)');
+    const ct = _b64decode(ctB64);
+    let pt;
+    try{
+      pt = await subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
+    }catch(e){
+      // AES-GCM auth fail (falscher Key, manipuliertes ct, falsches iv)
+      throw new Error('DECRYPT_AUTH_FAILED');
+    }
+    return _dec.decode(pt);
+  }
+
+  // ── High-Level Session-Blob ──────────────────────────────────────────────
+  // Format ist versioniert (v:1), Encrypted-Payload enthält das JSON-Session-
+  // Objekt komplett. Server sieht NUR iv + ct (siehe csc-backend.sql).
+  const BLOB_VERSION = 1;
+  async function encryptSession(dataKey, sessionObj){
+    if(!sessionObj || typeof sessionObj !== 'object') throw new Error('SESSION_OBJ_INVALID');
+    const wrapped = { v: BLOB_VERSION, s: sessionObj };
+    return encrypt(dataKey, JSON.stringify(wrapped));
+  }
+  async function decryptSession(dataKey, ivB64, ctB64){
+    const json = await decrypt(dataKey, ivB64, ctB64);
+    let obj; try{ obj = JSON.parse(json); }catch{ throw new Error('SESSION_BLOB_MALFORMED'); }
+    if(!obj || obj.v !== BLOB_VERSION) throw new Error('SESSION_BLOB_VERSION ('+(obj&&obj.v)+')');
+    return obj.s;
+  }
+
+  // ── BIP39 Recovery: STUB für v8.7.1 ──────────────────────────────────────
+  // Die offizielle BIP39-EN-Wortliste (2048 Wörter) muss byte-genau aus dem
+  // bitcoin/bips-Repo eingebunden werden — eine Memory-Reproduktion in dieser
+  // Session ist zu fehleranfällig (ein vertauschtes Wort = inkompatibel mit
+  // jedem anderen BIP39-Wallet). Recovery-Flow ist deshalb in v8.7.0-prep
+  // bewusst NICHT ausgeliefert. v8.7.1 wird:
+  //   1. bip39-en.txt als Datei einchecken (mit Quelle-URL + erwartetem
+  //      SHA-256 als Test-Anker)
+  //   2. seedToWords/wordsToSeed implementieren (4-Bit-Checksumme aus
+  //      SHA-256 der 16 Seed-Bytes, 12 × 11-Bit-Wort-Indizes)
+  //   3. die offiziellen BIP39-Test-Vektoren gegen die Implementierung fahren
+  function seedToWords(){
+    throw new Error('NOT_IMPLEMENTED_v870prep — BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
+  }
+  function wordsToSeed(){
+    throw new Error('NOT_IMPLEMENTED_v870prep — BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
+  }
+
+  // ── Hilfs-Helper für UI / Speicher (Base64-Konvertierung exponiert) ─────
+  function bytesToB64(buf){ return _b64encode(buf); }
+  function b64ToBytes(str){ return _b64decode(str); }
+
+  global.cscCrypto = {
+    // KDF
+    deriveKeyFromPassphrase, deriveKeyFromSeed,
+    // Seed + Salt + IV (Generatoren)
+    generateAccountSeed, generateKdfSalt, generateIv,
+    // BIP39 (Stub bis v8.7.1)
+    seedToWords, wordsToSeed,
+    // Sym. Krypto
+    encrypt, decrypt,
+    // Session-High-Level
+    encryptSession, decryptSession,
+    // Helpers
+    bytesToB64, b64ToBytes,
+    // Konstanten (für Tests + Audit-Sichtbarkeit)
+    PBKDF2_ITERATIONS, KEY_LENGTH_BITS, BLOB_VERSION,
+  };
+})(typeof window!=='undefined' ? window : globalThis);
+
+/* ═══════════════════════════════════════════════════════════════════════════
    v8.5.0-prep: CSC-MODE CLIENT (dormant, hinter PREFS.cscEnabled)
 
    Sicherheitsmodell (siehe CSC-SECURITY.md + csc-backend.sql):
