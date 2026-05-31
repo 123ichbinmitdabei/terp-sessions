@@ -15814,8 +15814,11 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   const _dec = new TextDecoder();
 
   // ── PBKDF2 mit Spec-Iterations-Anzahl ────────────────────────────────────
-  // 600 000 entspricht OWASP-Empfehlung für PBKDF2-HMAC-SHA256 (Stand 2023+).
-  const PBKDF2_ITERATIONS = 600000;
+  // v8.7.1-prep (Review-Punkt 2): 600 000 → 1 000 000.
+  // OWASP-Untergrenze ist 600 000; Reviewer sagt „mehr darf gerne sein".
+  // 1 M dauert auf modernen Handys ~500-1000 ms — akzeptabel für Setup/Login
+  // (1× pro Session). Daten-Zugriffe nutzen NUR HKDF (instant), nicht PBKDF2.
+  const PBKDF2_ITERATIONS = 1000000;
   const KEY_LENGTH_BITS   = 256;
 
   async function _importPbkdf2Material(passphrase){
@@ -15850,6 +15853,13 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     _assertCrypto();
     return _rng(new Uint8Array(16));
   }
+  // v8.7.1-prep (Review-Punkt 1): Per-User-HKDF-Salt zusätzlich zum
+  // Per-Purpose-Info-Tag. Erzeugt 16 Bytes via CSPRNG; in csc_users.hkdf_salt
+  // klartext gespeichert (analog zu kdf_salt — Salt ist per Definition öffentlich).
+  function generateHkdfSalt(){
+    _assertCrypto();
+    return _rng(new Uint8Array(16));
+  }
   function generateIv(){
     _assertCrypto();
     return _rng(new Uint8Array(12));
@@ -15875,21 +15885,39 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   }
 
   // ── SEED → AES-256-GCM Key per Purpose-Label (HKDF) ──────────────────────
-  // purpose ∈ {'master','data','agg'} – Trennung sichert dass Daten-Key und
-  // Aggregat-Key unterschiedlich bleiben, selbst bei gleichem Master-Seed.
-  async function deriveKeyFromSeed(seed16, purpose){
+  // v8.7.1-prep (Review-Punkt 1): hkdfSalt ist jetzt Pflicht-Parameter.
+  // Per-User-Salt (16 Bytes random) + Per-Purpose-Info-Tag sichern, dass
+  //   (a) zwei User mit zufällig identischem Seed verschiedene Daten-Keys
+  //       bekommen,
+  //   (b) data-/agg-/master-Keys eines Users garantiert verschieden sind
+  //       (auch bei gleichem Salt).
+  // Backward-compat: WIRD NICHT bereitgestellt — Modul ist dormant, kein
+  // produktiver User existiert. Wer ein altes v8.7.0-prep-Backend ausgeführt
+  // hat: csc-backend.sql neu ausführen (drop + create).
+  async function deriveKeyFromSeed(seed16, hkdfSaltOrPurpose, maybePurpose){
     _assertCrypto();
     if(!(seed16 instanceof Uint8Array) || seed16.length !== 16){
       throw new Error('SEED_LENGTH (need 16 bytes Uint8Array)');
     }
-    const p = String(purpose||'');
+    // Signatur ist (seed, hkdfSalt, purpose). Alte 2-Arg-Aufrufe werden
+    // explizit abgelehnt — Review verlangt Pflicht-Salt.
+    if(maybePurpose === undefined){
+      throw new Error('HKDF_SALT_REQUIRED — deriveKeyFromSeed(seed16, hkdfSalt, purpose)');
+    }
+    const hkdfSalt = (hkdfSaltOrPurpose instanceof Uint8Array)
+      ? hkdfSaltOrPurpose
+      : (typeof hkdfSaltOrPurpose === 'string' ? _b64decode(hkdfSaltOrPurpose) : null);
+    if(!hkdfSalt || hkdfSalt.length !== 16){
+      throw new Error('HKDF_SALT_LENGTH (need 16 bytes — Uint8Array or base64)');
+    }
+    const p = String(maybePurpose||'');
     if(!/^(master|data|agg)$/.test(p)) throw new Error('PURPOSE_INVALID');
     const material = await _importHkdfMaterial(seed16);
     return subtle.deriveKey(
       {
         name:'HKDF',
         hash:'SHA-256',
-        salt: new Uint8Array(0),               // BIP-konform: leeres Salt erlaubt
+        salt: hkdfSalt,                        // v8.7.1-prep: Per-User-Salt statt leer
         info: _enc.encode('sessions-csc/v1/' + p),
       },
       material,
@@ -15963,9 +15991,9 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   global.cscCrypto = {
     // KDF
     deriveKeyFromPassphrase, deriveKeyFromSeed,
-    // Seed + Salt + IV (Generatoren)
-    generateAccountSeed, generateKdfSalt, generateIv,
-    // BIP39 (Stub bis v8.7.1)
+    // Seed + Salts + IV (Generatoren)
+    generateAccountSeed, generateKdfSalt, generateHkdfSalt, generateIv,
+    // BIP39 (Stub bis v8.7.2)
     seedToWords, wordsToSeed,
     // Sym. Krypto
     encrypt, decrypt,

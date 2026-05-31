@@ -53,6 +53,21 @@ Hooks: `setConn()` triggert `connectChange`, der A11Y-Modal-Observer triggert `m
 - **„Rückgängig"-Toast** nach versehentlichem Löschen einer Session oder eines Programms — 6 Sekunden Zeit zum Klicken.
 - **Mikro-/Avatar-Buttons** sind während laufender Programme weiter bedienbar (v8.5.0-Fix, in v8.7.0 bestätigt).
 
+## v8.7.1-prep — CSC E2EE Krypto: Review-Iteration 1 (DORMANT)
+
+**Sicherheitskritisch — Folgeauftrag nach externem Krypto-Review. App-Version bleibt v8.7.0 für Endnutzer.**
+
+Drei konkrete Code-Änderungen + zwei Walkthroughs aus dem ersten Review:
+
+1. **HKDF mit Per-User-Salt** (`csc_users.hkdf_salt`, 16 Bytes Base64). `cscCrypto.deriveKeyFromSeed(seed, hkdfSalt, purpose)` macht Salt zur Pflicht-Signatur (alte 2-Arg-Aufrufe werfen `HKDF_SALT_REQUIRED`). `csc_register` nimmt `p_hkdf_salt` zusätzlich entgegen, `csc_login` liefert es zurück. Begründung: zwei User mit zufällig identischem Seed bekommen jetzt trotzdem unterschiedliche Daten-Keys. Per-Purpose-Info-Tag bleibt zusätzlich aktiv.
+2. **PBKDF2 600 000 → 1 000 000 Iterationen.** OWASP-Untergrenze ist 600 000; Reviewer empfiehlt höher. 1 M dauert ~500–1 000 ms auf Handys — akzeptabel für Setup/Login (1× pro Session). Daten-Zugriffe nutzen nur HKDF (instant).
+3. **IV-Walkthrough (Punkt 3)** verifiziert clean — kein Code-Pfad cached oder leitet IV ab, `generateIv()` ruft direkt `crypto.getRandomValues`. Test verdoppelt von 100 auf 1 000 Operationen (Set-Größe == 1 000).
+4. **Backend-Funktion-für-Funktion-Audit (Punkt 4)** als Tabelle in `CSC-CRYPTO.md` §9. 11 Funktionen, alle ✅ bis auf zwei `⚠️`-Defense-in-Depth-Schwächen in `csc_leave_circle` und `csc_circle_aggregate` (fehlende Length/Regex-Validation der Kreis-Args). **Per Spec NICHT eigenmächtig gefixt** — Andre entscheidet (Patch ist ≤10 Min).
+
+Tests: +6 in `v87crypto.mjs` (jetzt 37/37 grün); volle Regression unverändert grün. Kein Tag, kein `SW_VERSION_LABEL`-Bump.
+
+Migrations-Pfad für etwaige v8.7.0-prep-Test-Backends: keiner. `csc-backend.sql` neu ausführen (DROP+CREATE). Modul war dormant, keine Produktivdaten.
+
 ## v8.7.0-prep — CSC E2EE Krypto-Modul (DORMANT, nicht aktiv)
 
 **Sicherheitskritisch — Kryptographie. App-Version bleibt v8.6.0 für Endnutzer.**

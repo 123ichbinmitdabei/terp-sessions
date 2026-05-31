@@ -1,6 +1,8 @@
-# CSC-Mode — Krypto-Doku (v8.7.0-prep)
+# CSC-Mode — Krypto-Doku (v8.7.1-prep, Review-Iteration 1 eingearbeitet)
 
-> **Status:** `cscCrypto`-Modul + neues E2EE-Backend-Schema sind committed, NICHT live. App-Version bleibt v8.6.0 für Endnutzer. Das Krypto-Modul ist nicht ans UI angebunden, der bestehende dormant `cscClient` wurde NICHT umgebaut (das ist die v8.7.1-Aufgabe). Vor jeder Live-Schaltung ist ein **externes Krypto-Review durch Fachpersonal** dringend empfohlen — siehe Abschnitt 6.
+> **Status:** `cscCrypto`-Modul + E2EE-Backend-Schema sind committed, NICHT live. App-Version bleibt **v8.7.0** für Endnutzer. Das Krypto-Modul ist nicht ans UI angebunden, der dormant `cscClient` wurde NICHT umgebaut (das ist die v8.7.2-Aufgabe). Vor jeder Live-Schaltung ist ein **externes Krypto-Review durch Fachpersonal** dringend empfohlen — siehe Abschnitt 6.
+>
+> **v8.7.1-prep:** drei Review-Punkte umgesetzt (HKDF mit Per-User-Salt, PBKDF2 auf 1 Mio. Iter, IV-Walkthrough verifiziert + Test-Umfang verdoppelt), Backend-Funktion-für-Funktion-Audit dokumentiert (§ 9). Siehe § 8 für die kompakte Änderungsliste.
 
 ## 1. Threat-Model
 
@@ -26,8 +28,8 @@
 
 | Zweck | Algorithmus | Parameter | Quelle |
 |---|---|---|---|
-| Passphrase → Schlüssel | PBKDF2-HMAC-SHA256 | 600 000 Iterationen, 16-Byte-Salt, 256-Bit-Key | OWASP Password Storage Cheat Sheet (Stand 2023+) |
-| Seed → Schlüssel | HKDF-SHA256 | leeres Salt, Info-Tag `"sessions-csc/v1/<purpose>"`, 256-Bit-Output | RFC 5869 |
+| Passphrase → Schlüssel | PBKDF2-HMAC-SHA256 | **1 000 000 Iterationen** (v8.7.1-prep), 16-Byte kdf_salt, 256-Bit-Key | OWASP-Untergrenze 600 000; Reviewer-Empfehlung „mehr darf gerne sein" |
+| Seed → Schlüssel | HKDF-SHA256 | **16-Byte hkdf_salt pro User** (v8.7.1-prep) + Info-Tag `"sessions-csc/v1/<purpose>"`, 256-Bit-Output | RFC 5869 |
 | Symmetrische Verschlüsselung | AES-256-GCM | 12-Byte-IV (zufällig pro Operation), 16-Byte-Auth-Tag | NIST SP 800-38D |
 | Zufalls-Quelle | `crypto.getRandomValues` | CSPRNG des Browsers | Web Crypto API |
 | PIN-Hash (Account-Existence) | bcrypt via `pgcrypto` | Cost-Factor 8 | Standard Postgres |
@@ -40,7 +42,7 @@
 ```
 USER-PASSPHRASE  (mind. 12 Zeichen)
        │
-       ▼  PBKDF2-HMAC-SHA256 (600 000 Iter, kdf_salt)
+       ▼  PBKDF2-HMAC-SHA256 (1 000 000 Iter, kdf_salt)        ← v8.7.1: 600k → 1M
 PASSPHRASE-KEY  (AES-256-GCM)
        │
        ▼  AES-GCM(account_seed)  →  encrypted_seed  ──► Supabase (csc_users.encrypted_seed)
@@ -49,13 +51,20 @@ PASSPHRASE-KEY  (AES-256-GCM)
                                                     │
 ACCOUNT-SEED  (16 Bytes, BIP39-kompatibel)          │
        │                                            │
-       ├──── HKDF(info="sessions-csc/v1/master") ─▶ MASTER-KEY
+       │  + hkdf_salt (16 Bytes Per-User)           │  ← v8.7.1: NEU als Pflicht-Salt für HKDF
        │
-       ├──── HKDF(info="sessions-csc/v1/data")   ─▶ DATA-KEY    ──► AES-GCM(JSON-Session)  ──► Supabase
+       ├──── HKDF(hkdf_salt, info="sessions-csc/v1/master") ─▶ MASTER-KEY
        │
-       └──── HKDF(info="sessions-csc/v1/agg")    ─▶ AGG-KEY     (für künftige Aggregat-Verschlüsselung;
-                                                                  in v8.7.0-prep noch ungenutzt)
+       ├──── HKDF(hkdf_salt, info="sessions-csc/v1/data")   ─▶ DATA-KEY    ──► AES-GCM(JSON-Session)  ──► Supabase
+       │
+       └──── HKDF(hkdf_salt, info="sessions-csc/v1/agg")    ─▶ AGG-KEY     (für künftige Aggregat-Verschlüsselung)
 ```
+
+**Begründung für Per-User-Salt (Option C aus Review-Punkt 1):**
+Per-User-Salt + Per-Purpose-Info-Tag kombiniert. Sichert zwei Eigenschaften:
+- **Salt:** zwei User mit zufällig identischem Seed (sehr unwahrscheinlich, aber theoretisch möglich) bekommen trotzdem unterschiedliche Daten-Keys.
+- **Info-Tag:** `data`-Key und `agg`-Key eines Users sind garantiert verschieden, auch bei gleichem Salt.
+Salt ist per Definition öffentlich → klartext in `csc_users.hkdf_salt`, analog zu `kdf_salt`.
 
 **Recovery-Pfade:**
 - **Passphrase + PIN (Standard-Login):** PIN entsperrt den Account auf dem Server (Brute-Force-geschützt), Passphrase entschlüsselt den lokal heruntergeladenen `encrypted_seed` → Daten-Keys werden abgeleitet.
@@ -120,14 +129,61 @@ ACCOUNT-SEED  (16 Bytes, BIP39-kompatibel)          │
 
 **3. „Hat das Krypto irgendeine Stelle wo ich unsicher bin ob es korrekt ist?"**
 
-**Ja, drei Stellen** — die müssen vor Live-Schaltung extern geprüft werden:
+In v8.7.0-prep waren drei Stellen markiert. Stand v8.7.1-prep nach Review-Iteration 1:
 
-- **(a) HKDF-Salt = leer:** RFC 5869 erlaubt explizit ein leeres Salt für HKDF, wenn das Input-Keying-Material (hier der `account_seed`) selbst hinreichend zufällig ist (was er ist: 128 Bit aus dem CSPRNG). Standard-Praxis, aber eine externe Review sollte bestätigen, dass kein per-purpose-Salt zusätzlich nötig ist.
-- **(b) PBKDF2 vs. Argon2id:** OWASP empfiehlt für neue Systeme bevorzugt Argon2id. Argon2id ist in der Web Crypto API NICHT verfügbar — daher PBKDF2-HMAC-SHA256 mit 600 000 Iter als nächstbeste Standard-Wahl. Eine externe Review sollte einschätzen, ob das für den Use-Case (Cannabis-Konsumdaten) als „angemessen" gemäß DSGVO Art. 32 durchgeht.
-- **(c) `CryptoKey`-Extractable:** Ich setze `extractable=false` für alle Daten-Keys (PBKDF2/HKDF-derived). Das bedeutet, sie können nicht per `exportKey` aus dem Browser raus. Eine Review sollte bestätigen, dass es keinen Code-Pfad gibt, der versehentlich `extractable=true` setzt — ich habe das gegrept, aber Code wächst.
+- ~~**(a) HKDF-Salt = leer:**~~ **RESOLVED in v8.7.1-prep** (Review-Punkt 1). Per-User-Salt + Per-Purpose-Info-Tag eingebaut, siehe Abschnitt 3 + Code-Kommentar `deriveKeyFromSeed`.
+- **(b) PBKDF2 vs. Argon2id:** weiterhin offen. Argon2id ist nach wie vor nicht in der Web Crypto API verfügbar; PBKDF2-HMAC-SHA256 mit jetzt **1 000 000 Iterationen** (vorher 600 000, Review-Punkt 2) ist die nächstbeste Standard-Wahl. Externe Review sollte erneut bewerten, ob das für Gesundheitsdaten + DSGVO Art. 32 angemessen ist.
+- **(c) `CryptoKey`-Extractable:** weiterhin überprüfungswert. Ich setze `extractable=false` für alle Daten-Keys. Grep über `deriveKey` und `importKey` in `index.html`: bestätigt 5 Stellen, alle mit `false`. Aber Code wächst — sollte mit jedem Crypto-Change neu gegrept werden.
 
 **Keine dieser Unsicherheiten ist ein Show-Stopper** — alle sind Standard-Praxis in WebApp-E2EE. Aber sie verdienen ausdrückliche externe Validierung, bevor Andre auf „Live" drückt.
 
+## 8. Review-Iteration 1 — Erledigt (v8.7.1-prep, 2026-05-31)
+
+Vier Punkte aus dem ersten externen Krypto-Review:
+
+| # | Review-Punkt | Status | Code-Belege |
+|---|---|---|---|
+| 1 | HKDF-Salt einbauen (Per-User + Per-Purpose) | ✅ implementiert | `generateHkdfSalt()`, `deriveKeyFromSeed(seed, hkdfSalt, purpose)` Pflicht-Signatur, `csc_users.hkdf_salt`-Feld + `csc_register`/`csc_login` RPC-Update; 6 neue Tests inkl. „zwei User mit gleichem Seed aber unterschiedlichen Salts" |
+| 2 | PBKDF2 auf 1 000 000 bumpen | ✅ implementiert | `PBKDF2_ITERATIONS = 1000000`, Konstante exposed für Audit, Test-Assert aktualisiert |
+| 3 | IV-Handling Doppel-Check | ✅ verifiziert clean | Walkthrough siehe unten; Test 100→1000 Operationen verdoppelt (Set-Größe 1000 = alle unique) |
+| 4 | Backend RLS/RPCs Doppel-Check | ✅ Tabelle siehe §9 | 2 Defense-in-Depth-Härtungen markiert, **NICHT eigenmächtig gefixt** — Andre entscheidet |
+
+**IV-Walkthrough-Ergebnis (Punkt 3):**
+- `generateIv()` (1 Zeile) ruft `crypto.getRandomValues(new Uint8Array(12))` direkt — Standard-CSPRNG, keine Caching.
+- `encrypt(key, plaintext)` ruft `generateIv()` synchron bei jedem Aufruf — keine Wiederverwendung, keine Ableitung aus einem Counter, kein Zwischenspeichern.
+- `encryptSession()` ruft `encrypt()` — IV-Generierung erbt korrekt.
+- Grep nach `iv` im cscCrypto-Block bestätigt: nur Generator-Aufruf + Return + Decrypt-Parameter-Lesen. Keine Variable hält einen IV über mehrere `encrypt()`-Aufrufe.
+- **Verdict:** CLEAN. Test bumped von 100 auf 1000 Operationen liefert 1000 unique IVs (Set-Check).
+
+**Migration für etwaige v8.7.0-prep-Test-Backends:** kein Migrationspfad implementiert. Wer ein altes Test-Backend angelegt hat (sehr unwahrscheinlich, das Modul war dormant): `DROP TABLE csc_users CASCADE;` + restliche Tabellen, dann `csc-backend.sql` neu ausführen. Es gibt keine Produktivdaten zu retten.
+
+## 9. Backend-Funktion-für-Funktion-Audit (Review-Punkt 4)
+
+| # | Funktion | search_path | revoke/grant | Validate | owner_code aus PIN |
+|---|---|:---:|:---:|:---:|:---:|
+| 1 | `csc_internal_generate_code` | ✅ | ✅ (intern, kein grant an anon) | n/a (keine Inputs) | n/a |
+| 2 | `csc_internal_verify_pin` | ✅ | ✅ (intern, kein grant an anon) | ✅ PIN-Regex + Code-Regex | n/a |
+| 3 | `csc_register` | ✅ | ✅ revoke from public/auth, grant to anon | ✅ alle 5 Inputs validated (PIN, kdf_salt, hkdf_salt, encrypted_seed, encrypted_seed_iv) | n/a (Code wird intern generiert) |
+| 4 | `csc_login` | ✅ | ✅ | ✅ via `csc_internal_verify_pin` | ✅ Response enthält nur den verifizierten Code |
+| 5 | `csc_push_session` | ✅ | ✅ | ✅ PIN+iv+blob alle validated | ✅ `owner_code = p_code` aus PIN-Verify, NICHT vom Client direkt |
+| 6 | `csc_pull_sessions` | ✅ | ✅ | ✅ PIN + limit-clamp (1..1000) | ✅ `where owner_code = p_code` |
+| 7 | `csc_join_circle` | ✅ | ✅ | ✅ PIN + circle_id-Regex + Length | ✅ `owner_code = p_code` |
+| 8 | `csc_leave_circle` | ✅ | ✅ | ⚠️ **Defense-in-Depth-Schwäche** | ✅ `delete where owner_code = p_code` |
+| 9 | `csc_contribute` | ✅ | ✅ | ✅ alle Inputs (PIN, period, metric, value) + member-check | ✅ `owner_code = p_code` |
+| 10 | `csc_circle_aggregate` | ✅ | ✅ | ⚠️ **Defense-in-Depth-Schwäche** + member-check | ✅ via member-check |
+| 11 | `csc_delete_account` | ✅ | ✅ | ✅ via verify_pin | ✅ `delete where code = p_code` |
+
+**Befund-Erklärung (⚠️-Spalten):**
+
+- **#8 `csc_leave_circle`:** validiert `p_circle_id` NICHT (kein Length/Regex-Check). Kein direkter Angriffsvektor — PIN-Auth + Member-Implicit-via-DELETE schützen die Funktion korrekt. Lange/unsinnige `p_circle_id`-Strings führen nur zu „nichts gelöscht". Aber Defense-in-Depth analog zu `csc_join_circle` ist sinnvoll: gleicher Regex-Check `^[a-z0-9_-]+$` + Length 3..64 hinzufügen.
+
+- **#10 `csc_circle_aggregate`:** validiert `p_circle_id`/`p_period`/`p_metric` nicht direkt (PIN + Member-Check schützen). Keine SQL-Injection (Postgres bind-vars). Aber Length-/Format-Check sollte aus Konsistenz mit `csc_contribute` ergänzt werden (Z. 326-328 zeigt das Pattern).
+
+**Per Spec NICHT eigenmächtig gefixt** — Andre entscheidet:
+1. Fix in dieser Iteration (ich kann den Patch in ≤10 Min nachschieben)
+2. Vertagen auf v8.7.2 / nächste Review-Iteration
+3. Argumentation dass Defense-in-Depth hier nicht nötig ist (siehe „kein direkter Angriffsvektor"-Klausel oben)
+
 ---
 
-**Stand:** v8.7.0-prep · `cscCrypto` 31/31 Tests grün · 480/480 Gesamt-Regression · NICHT aktiv, NICHT bewerben, externes Review ausstehend.
+**Stand:** v8.7.1-prep · `cscCrypto` 37/37 Tests grün · Gesamt-Regression läuft · NICHT aktiv, NICHT bewerben, externes Review für Punkt b+c aus §7 + Befund-Bewertung aus §9 ausstehend.

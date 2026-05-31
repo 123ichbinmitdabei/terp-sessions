@@ -1,6 +1,15 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Sessions PWA — CSC-Mode Backend (v8.7.0-prep, E2EE)
+-- Sessions PWA — CSC-Mode Backend (v8.7.1-prep, E2EE)
 -- Cannabis Social Club: end-to-end-encrypted Session-Sync mit anonymen Codes
+--
+-- ÄNDERUNGEN v8.7.1-prep gegenüber v8.7.0-prep (Review-Iteration 1):
+--   • csc_users.hkdf_salt NEU (Pflicht, 16 Bytes base64) — Per-User-Salt
+--     für HKDF-Schlüsselableitung (Review-Punkt 1)
+--   • csc_register nimmt zusätzlich p_hkdf_salt entgegen
+--   • csc_login liefert zusätzlich hkdf_salt zurück
+--   • Funktion-für-Funktion-Audit aller RPCs in CSC-CRYPTO.md §9 dokumentiert
+--   • Kein Migrationspfad — Schema war dormant, niemand hat Produktivdaten.
+--     Wer ein v8.7.0-prep-Test-Backend hat: DROP + diese Datei neu ausführen.
 -- ════════════════════════════════════════════════════════════════════════════
 --
 -- ⚠️  SICHERHEIT VOR FEATURE. KRYPTOGRAPHIE.
@@ -75,6 +84,7 @@ create table if not exists csc_users (
   pin_hash          text not null,                     -- bcrypt (existence-check, NICHT Datenschutz)
   pin_salt          text not null,                     -- bcrypt salt
   kdf_salt          text not null,                     -- 16 Bytes Base64, PBKDF2-Salt für Passphrase
+  hkdf_salt         text not null,                     -- v8.7.1-prep: 16 Bytes Base64, HKDF-Salt (Per-User)
   encrypted_seed    text not null,                     -- AES-GCM(account_seed, passphrase_key) als Base64
   encrypted_seed_iv text not null,                     -- 12 Bytes Base64
   failed_attempts   int  not null default 0,
@@ -186,11 +196,13 @@ revoke execute on function csc_internal_verify_pin(text, text) from anon, authen
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- REGISTER: Client erzeugt account_seed lokal, leitet passphrase_key ab,
--- verschlüsselt seed → schickt {pin, kdf_salt, encrypted_seed, iv}. Server
--- hashed PIN (bcrypt) und legt User-Zeile an.
+-- verschlüsselt seed → schickt {pin, kdf_salt, hkdf_salt, encrypted_seed, iv}.
+-- Server hashed PIN (bcrypt) und legt User-Zeile an.
+-- v8.7.1-prep (Review-Punkt 1): p_hkdf_salt zusätzlich (16 Bytes base64).
 create or replace function csc_register(
   p_pin               text,
   p_kdf_salt          text,
+  p_hkdf_salt         text,
   p_encrypted_seed    text,
   p_encrypted_seed_iv text
 ) returns jsonb language plpgsql security definer set search_path = public, pg_temp
@@ -198,20 +210,22 @@ as $fn$
 declare new_code text;
 begin
   if p_pin is null or p_pin !~ '^[0-9]{4,12}$' then raise exception 'INVALID_PIN' using errcode='P0001'; end if;
-  if p_kdf_salt is null or length(p_kdf_salt) < 16 or length(p_kdf_salt) > 64 then raise exception 'INVALID_KDF_SALT' using errcode='P0001'; end if;
+  if p_kdf_salt  is null or length(p_kdf_salt)  < 16 or length(p_kdf_salt)  > 64 then raise exception 'INVALID_KDF_SALT'  using errcode='P0001'; end if;
+  if p_hkdf_salt is null or length(p_hkdf_salt) < 16 or length(p_hkdf_salt) > 64 then raise exception 'INVALID_HKDF_SALT' using errcode='P0001'; end if;
   if p_encrypted_seed is null or length(p_encrypted_seed) < 24 or length(p_encrypted_seed) > 200 then raise exception 'INVALID_ENCRYPTED_SEED' using errcode='P0001'; end if;
   if p_encrypted_seed_iv is null or length(p_encrypted_seed_iv) < 12 or length(p_encrypted_seed_iv) > 32 then raise exception 'INVALID_IV' using errcode='P0001'; end if;
   new_code := csc_internal_generate_code();
-  insert into csc_users (code, pin_hash, pin_salt, kdf_salt, encrypted_seed, encrypted_seed_iv)
-    values (new_code, crypt(p_pin, gen_salt('bf', 8)), '', p_kdf_salt, p_encrypted_seed, p_encrypted_seed_iv);
+  insert into csc_users (code, pin_hash, pin_salt, kdf_salt, hkdf_salt, encrypted_seed, encrypted_seed_iv)
+    values (new_code, crypt(p_pin, gen_salt('bf', 8)), '', p_kdf_salt, p_hkdf_salt, p_encrypted_seed, p_encrypted_seed_iv);
   return jsonb_build_object('code', new_code);
 end
 $fn$;
-revoke execute on function csc_register(text,text,text,text) from public, authenticated;
-grant   execute on function csc_register(text,text,text,text) to   anon;
+revoke execute on function csc_register(text,text,text,text,text) from public, authenticated;
+grant   execute on function csc_register(text,text,text,text,text) to   anon;
 
--- LOGIN: prüft PIN → liefert kdf_salt + encrypted_seed + iv zurück.
--- Client leitet passphrase_key lokal ab und entschlüsselt seed selbst.
+-- LOGIN: prüft PIN → liefert kdf_salt + hkdf_salt + encrypted_seed + iv zurück.
+-- Client leitet passphrase_key + alle HKDF-Daten-Keys lokal ab.
+-- v8.7.1-prep (Review-Punkt 1): hkdf_salt im Response ergänzt.
 create or replace function csc_login(p_code text, p_pin text)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp
 as $fn$
@@ -219,8 +233,12 @@ declare ok boolean; u record;
 begin
   ok := csc_internal_verify_pin(p_code, p_pin);
   if not ok then raise exception 'AUTH_FAILED' using errcode='P0001'; end if;
-  select kdf_salt, encrypted_seed, encrypted_seed_iv into u from csc_users where code = p_code;
-  return jsonb_build_object('kdf_salt', u.kdf_salt, 'encrypted_seed', u.encrypted_seed, 'encrypted_seed_iv', u.encrypted_seed_iv);
+  select kdf_salt, hkdf_salt, encrypted_seed, encrypted_seed_iv into u from csc_users where code = p_code;
+  return jsonb_build_object(
+    'kdf_salt',          u.kdf_salt,
+    'hkdf_salt',         u.hkdf_salt,
+    'encrypted_seed',    u.encrypted_seed,
+    'encrypted_seed_iv', u.encrypted_seed_iv);
 end
 $fn$;
 revoke execute on function csc_login(text,text) from public, authenticated;
