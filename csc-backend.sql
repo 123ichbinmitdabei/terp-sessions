@@ -306,6 +306,11 @@ declare ok boolean;
 begin
   ok := csc_internal_verify_pin(p_code, p_pin);
   if not ok then raise exception 'AUTH_FAILED' using errcode='P0001'; end if;
+  -- v8.7.1-prep Patch: Defense-in-Depth-Validation (gleiches Pattern wie csc_join_circle)
+  if p_circle_id is null or length(p_circle_id) < 3 or length(p_circle_id) > 64
+     or p_circle_id !~ '^[a-z0-9_-]+$' then
+    raise exception 'INVALID_CIRCLE_ID' using errcode='P0001';
+  end if;
   delete from csc_circle_members where circle_id = p_circle_id and owner_code = p_code;
   -- Klartext-Aggregat-Beiträge dieses Users für diesen Kreis ebenfalls löschen
   delete from csc_circle_contributions where circle_id = p_circle_id and owner_code = p_code;
@@ -348,6 +353,17 @@ declare ok boolean; is_member boolean; min_k int; agg_sum numeric; agg_count int
 begin
   ok := csc_internal_verify_pin(p_code, p_pin);
   if not ok then raise exception 'AUTH_FAILED' using errcode='P0001'; end if;
+  -- v8.7.1-prep Patch: Defense-in-Depth-Validation (gleiches Pattern wie csc_contribute)
+  if p_circle_id is null or length(p_circle_id) < 3 or length(p_circle_id) > 64
+     or p_circle_id !~ '^[a-z0-9_-]+$' then
+    raise exception 'INVALID_CIRCLE_ID' using errcode='P0001';
+  end if;
+  if p_period is null or length(p_period) < 4 or length(p_period) > 32 then
+    raise exception 'INVALID_PERIOD' using errcode='P0001';
+  end if;
+  if p_metric is null or p_metric !~ '^[a-z_]{2,40}$' then
+    raise exception 'INVALID_METRIC' using errcode='P0001';
+  end if;
   select exists(select 1 from csc_circle_members where circle_id=p_circle_id and owner_code=p_code) into is_member;
   if not is_member then raise exception 'NOT_A_MEMBER' using errcode='P0001'; end if;
   select c.min_k into min_k from csc_circles c where c.circle_id = p_circle_id;

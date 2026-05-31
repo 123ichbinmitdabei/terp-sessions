@@ -146,7 +146,7 @@ Vier Punkte aus dem ersten externen Krypto-Review:
 | 1 | HKDF-Salt einbauen (Per-User + Per-Purpose) | ✅ implementiert | `generateHkdfSalt()`, `deriveKeyFromSeed(seed, hkdfSalt, purpose)` Pflicht-Signatur, `csc_users.hkdf_salt`-Feld + `csc_register`/`csc_login` RPC-Update; 6 neue Tests inkl. „zwei User mit gleichem Seed aber unterschiedlichen Salts" |
 | 2 | PBKDF2 auf 1 000 000 bumpen | ✅ implementiert | `PBKDF2_ITERATIONS = 1000000`, Konstante exposed für Audit, Test-Assert aktualisiert |
 | 3 | IV-Handling Doppel-Check | ✅ verifiziert clean | Walkthrough siehe unten; Test 100→1000 Operationen verdoppelt (Set-Größe 1000 = alle unique) |
-| 4 | Backend RLS/RPCs Doppel-Check | ✅ Tabelle siehe §9 | 2 Defense-in-Depth-Härtungen markiert, **NICHT eigenmächtig gefixt** — Andre entscheidet |
+| 4 | Backend RLS/RPCs Doppel-Check | ✅ Tabelle siehe §9 | 2 Defense-in-Depth-Härtungen markiert — **inzwischen via v8.7.1-prep-Patch geschlossen** (siehe §9-Fußnoten) |
 
 **IV-Walkthrough-Ergebnis (Punkt 3):**
 - `generateIv()` (1 Zeile) ruft `crypto.getRandomValues(new Uint8Array(12))` direkt — Standard-CSPRNG, keine Caching.
@@ -168,22 +168,17 @@ Vier Punkte aus dem ersten externen Krypto-Review:
 | 5 | `csc_push_session` | ✅ | ✅ | ✅ PIN+iv+blob alle validated | ✅ `owner_code = p_code` aus PIN-Verify, NICHT vom Client direkt |
 | 6 | `csc_pull_sessions` | ✅ | ✅ | ✅ PIN + limit-clamp (1..1000) | ✅ `where owner_code = p_code` |
 | 7 | `csc_join_circle` | ✅ | ✅ | ✅ PIN + circle_id-Regex + Length | ✅ `owner_code = p_code` |
-| 8 | `csc_leave_circle` | ✅ | ✅ | ⚠️ **Defense-in-Depth-Schwäche** | ✅ `delete where owner_code = p_code` |
+| 8 | `csc_leave_circle` | ✅ | ✅ | ✅ ¹ | ✅ `delete where owner_code = p_code` |
 | 9 | `csc_contribute` | ✅ | ✅ | ✅ alle Inputs (PIN, period, metric, value) + member-check | ✅ `owner_code = p_code` |
-| 10 | `csc_circle_aggregate` | ✅ | ✅ | ⚠️ **Defense-in-Depth-Schwäche** + member-check | ✅ via member-check |
+| 10 | `csc_circle_aggregate` | ✅ | ✅ | ✅ ² | ✅ via member-check |
 | 11 | `csc_delete_account` | ✅ | ✅ | ✅ via verify_pin | ✅ `delete where code = p_code` |
 
-**Befund-Erklärung (⚠️-Spalten):**
+**Fußnoten — Defense-in-Depth-Patch v8.7.1-prep:**
 
-- **#8 `csc_leave_circle`:** validiert `p_circle_id` NICHT (kein Length/Regex-Check). Kein direkter Angriffsvektor — PIN-Auth + Member-Implicit-via-DELETE schützen die Funktion korrekt. Lange/unsinnige `p_circle_id`-Strings führen nur zu „nichts gelöscht". Aber Defense-in-Depth analog zu `csc_join_circle` ist sinnvoll: gleicher Regex-Check `^[a-z0-9_-]+$` + Length 3..64 hinzufügen.
+¹ **#8 `csc_leave_circle`** hatte ursprünglich keine Length/Regex-Validation für `p_circle_id`. Kein direkter Angriffsvektor — PIN-Auth + DELETE-Idempotenz schützen die Funktion. Aber Konsistenz mit `csc_join_circle` verlangt: gleicher `^[a-z0-9_-]+$`-Regex + Length 3..64. **Eingebaut im v8.7.1-prep-Patch** (gleiches Pattern wie `csc_join_circle`, Beleg im SQL-Kommentar).
 
-- **#10 `csc_circle_aggregate`:** validiert `p_circle_id`/`p_period`/`p_metric` nicht direkt (PIN + Member-Check schützen). Keine SQL-Injection (Postgres bind-vars). Aber Length-/Format-Check sollte aus Konsistenz mit `csc_contribute` ergänzt werden (Z. 326-328 zeigt das Pattern).
-
-**Per Spec NICHT eigenmächtig gefixt** — Andre entscheidet:
-1. Fix in dieser Iteration (ich kann den Patch in ≤10 Min nachschieben)
-2. Vertagen auf v8.7.2 / nächste Review-Iteration
-3. Argumentation dass Defense-in-Depth hier nicht nötig ist (siehe „kein direkter Angriffsvektor"-Klausel oben)
+² **#10 `csc_circle_aggregate`** validierte `p_circle_id`/`p_period`/`p_metric` nicht direkt. PIN + Member-Check schützten gegen Cross-Circle-Read; Postgres-bind-Vars schützten gegen SQL-Injection. Aber Konsistenz mit `csc_contribute` verlangt: Length/Regex-Checks vor dem Member-Check. **Eingebaut im v8.7.1-prep-Patch** (drei Validations analog zu `csc_contribute` Z. 326-328).
 
 ---
 
-**Stand:** v8.7.1-prep · `cscCrypto` 37/37 Tests grün · Gesamt-Regression läuft · NICHT aktiv, NICHT bewerben, externes Review für Punkt b+c aus §7 + Befund-Bewertung aus §9 ausstehend.
+**Stand:** v8.7.1-prep (inkl. Defense-in-Depth-Patch) · `cscCrypto` 37/37 Tests grün · 514/514 Gesamt-Regression · NICHT aktiv, NICHT bewerben, externes Review für Punkt b+c aus §7 weiterhin ausstehend (§9 jetzt komplett ✅).
