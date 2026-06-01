@@ -2821,6 +2821,111 @@ button[data-sch-day].active{
   <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
 </div>
 
+<!-- v8.7.2-prep Phase 1b.1: Community-Register-Wizard (3 Schritte) -->
+<div class="modal" id="modalCommunityRegister" role="dialog" aria-modal="true" aria-labelledby="commRegTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commRegTitle">🌿 Community beitreten</h2>
+    <!-- Schritt 1 -->
+    <div data-comm-step="1">
+      <p class="wiz-text" style="white-space:pre-line">Mit Sorten und Programmen kannst du der Mariana-Community helfen. Bewertungen, Empfehlungen, eigene Beiträge — alles optional, alles unter Pseudonym.
+
+Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">Mehr in der Datenschutzerklärung.</p>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn sm ghost" data-comm-cancel style="flex:1">Abbrechen</button>
+        <button class="btn hot" data-comm-next="2" style="flex:2">Weiter →</button>
+      </div>
+    </div>
+    <!-- Schritt 2 -->
+    <div data-comm-step="2" hidden>
+      <div class="field">
+        <label>Pseudonym wählen</label>
+        <input class="input" id="commRegPseudonym" type="text" maxlength="24" placeholder="z.B. Alice_42" aria-describedby="commRegPseuHint" autocapitalize="none" autocomplete="off" spellcheck="false">
+        <small id="commRegPseuHint" style="display:block;margin-top:6px;color:var(--muted);font-size:11px">3–24 Zeichen, nur Buchstaben/Ziffern/`_`/`-`. Wird angezeigt wenn du Beiträge machst (du kannst pro Beitrag entscheiden, ob anonym oder mit Pseudonym).</small>
+        <div id="commRegPseuStatus" role="status" aria-live="polite" style="margin-top:6px;font-size:12px;min-height:18px"></div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn sm ghost" data-comm-prev="1" style="flex:1">← Zurück</button>
+        <button class="btn hot" data-comm-next="3" id="commRegNext2" style="flex:2" disabled>Weiter →</button>
+      </div>
+    </div>
+    <!-- Schritt 3 -->
+    <div data-comm-step="3" hidden>
+      <div class="field">
+        <label>PIN setzen</label>
+        <input class="input mono" id="commRegPin" type="password" inputmode="numeric" minlength="4" maxlength="12" placeholder="mind. 4 Ziffern" autocomplete="new-password">
+        <small style="display:block;margin-top:6px;color:var(--muted);font-size:11px">Mit dieser PIN entsperrst du später deinen Account.</small>
+      </div>
+      <div class="field">
+        <label>PIN bestätigen</label>
+        <input class="input mono" id="commRegPin2" type="password" inputmode="numeric" minlength="4" maxlength="12" placeholder="nochmal eingeben" autocomplete="new-password">
+        <div id="commRegPinStatus" role="status" aria-live="polite" style="margin-top:6px;font-size:12px;min-height:18px"></div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn sm ghost" data-comm-prev="2" style="flex:1">← Zurück</button>
+        <button class="btn hot" id="btnCommunityRegisterSubmit" style="flex:2" disabled>Registrieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.2-prep Phase 1b.1: Community-Login-Modal -->
+<div class="modal" id="modalCommunityLogin" role="dialog" aria-modal="true" aria-labelledby="commLoginTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commLoginTitle">🌿 Anmelden</h2>
+    <div class="field">
+      <label>Pseudonym</label>
+      <input class="input" id="commLoginPseudonym" type="text" maxlength="24" autocapitalize="none" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>PIN</label>
+      <input class="input mono" id="commLoginPin" type="password" inputmode="numeric" minlength="4" maxlength="12" autocomplete="current-password">
+    </div>
+    <div id="commLoginStatus" role="status" aria-live="polite" style="min-height:20px;font-size:12px;color:var(--err)"></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" data-comm-cancel-login style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnCommunityLoginSubmit" style="flex:2">Anmelden</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.2-prep Phase 1b.1: Bootstrap-Hinweis-Modal (nach Register, wenn noch kein Admin) -->
+<div class="modal" id="modalCommunityBootstrap" role="dialog" aria-modal="true" aria-labelledby="commBsTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commBsTitle">♿ Du bist der erste!</h2>
+    <p class="wiz-text" style="white-space:pre-line">Noch niemand ist Admin in dieser Community. Möchtest du die Rolle übernehmen? Admins können Edit-Vorschläge prüfen und unangemessene Beiträge flaggen oder löschen.</p>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="btnBootstrapLater" style="flex:1">Später, normales Mitglied</button>
+      <button class="btn hot" id="btnBootstrapAccept" style="flex:2">Ja, Admin werden</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.2-prep Phase 1b.1: Admin-Promote-Modal -->
+<div class="modal" id="modalAdminPromote" role="dialog" aria-modal="true" aria-labelledby="commPromoteTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commPromoteTitle">⚙ User zum Admin ernennen</h2>
+    <p class="wiz-text">Welcher User soll Admin werden? Pseudonym eingeben (case-sensitive).</p>
+    <div class="field">
+      <label>Pseudonym</label>
+      <input class="input" id="commPromotePseudonym" type="text" maxlength="24" autocapitalize="none" autocomplete="off" spellcheck="false">
+      <div id="commPromoteStatus" role="status" aria-live="polite" style="margin-top:6px;min-height:18px;font-size:12px"></div>
+    </div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="btnAdminPromoteCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnAdminPromoteSubmit" style="flex:2">Ernennen</button>
+    </div>
+  </div>
+</div>
+
 <!-- v8.7.1 Modul 2: iOS-Erst-Start-Hinweis Screen-Reader-Modus -->
 <div class="modal" id="modalSrHint" role="dialog" aria-modal="true" aria-labelledby="srHintTitle">
   <div class="back"></div>
@@ -3272,6 +3377,24 @@ button[data-sch-day].active{
 
     <!-- ERWEITERT: Voice, Engagement, Externe Integration -->
     <div class="settings-pane" data-set-pane="erweitert">
+      <!-- v8.7.2-prep Phase 1b.1: Community-DB-Setup -->
+      <h3 class="set-section-h">Community</h3>
+      <div class="toggle-row">
+        <div class="info">
+          <b>🌿 Community-DB aktivieren</b>
+          <small>Teile Sorten und Programme mit anderen Mariana-Mitgliedern. Optional — die App funktioniert auch ohne.</small>
+        </div>
+        <button class="toggle" id="togCommunity" role="switch" aria-checked="false" aria-label="Community-DB aktivieren"></button>
+      </div>
+      <div id="communitySetupBox" hidden style="margin:8px 0 14px;padding:12px;background:rgba(106,255,160,.05);border:1px solid rgba(106,255,160,.2);border-radius:var(--r)">
+        <div id="communityStatus" style="font-size:13px;line-height:1.5">Lädt …</div>
+        <div id="communityButtons" class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"></div>
+        <div id="communityAdminArea" hidden style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+          <h4 style="margin:0 0 6px;font-size:13px">⚙ Admin-Funktionen</h4>
+          <button class="btn sm ghost block" id="btnAdminPromoteOpen">User zum Admin ernennen</button>
+        </div>
+      </div>
+
       <h3 class="set-section-h">Sprachsteuerung</h3>
       <!-- v8.7.1: Screen-Reader-Master-Toggle (kommt VOR allen anderen TTS/Voice-Optionen, weil er sie überlagert) -->
       <div class="toggle-row" style="background:rgba(255,140,40,.06);padding:12px;border-radius:var(--r);margin:0 0 12px;border:1px solid rgba(255,140,40,.2)">
@@ -4815,6 +4938,8 @@ const PREFS_DEFAULTS = {
   trackingDefaults:{ strength:5, effect:'', purpose:'', moodBefore:3, moodAfter:3 },
   // v8.5.0-prep: CSC-Mode (Cloud-Sync). DORMANT default off. Backend muss separat eingerichtet werden.
   cscEnabled:false,       // Feature-Flag. UI/Funktionen bleiben aus, wenn false.
+  // v8.7.2-prep Phase 1b.1: Community-DB (Sorten/Programme teilen). Default off.
+  communityEnabled:false,
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
   pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
@@ -9670,7 +9795,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.1';
+const SW_VERSION_LABEL='v8.7.2';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15221,7 +15346,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.1 bereit.','ok');
+  log('Sessions v8.7.2 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -16344,6 +16469,23 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     return rpc('community_admin_delete', { p_code:_session.code, p_pin:_session.pin, p_target_type: targetType, p_target_id: targetId });
   }
 
+  // ── v8.7.2-prep Phase 1b.1: Bootstrap-Admin + Promotion ────────────────
+  async function bootstrapAvailable(){
+    // Public-RPC, kein PIN — returnt {available: bool, admin_count: int}
+    return rpc('community_bootstrap_available', {});
+  }
+  async function bootstrapFirstAdmin(){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    const r = await rpc('community_bootstrap_first_admin', { p_code:_session.code, p_pin:_session.pin });
+    if(r && r.ok){ _session.is_admin = true; }
+    return r;
+  }
+  async function adminPromote(targetPseudonym){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!validatePseudonym(targetPseudonym)) throw new Error('INVALID_PSEUDONYM');
+    return rpc('community_admin_promote', { p_code:_session.code, p_pin:_session.pin, p_target_pseudonym: targetPseudonym });
+  }
+
   global.communityClient = {
     // Auth
     register, login, logout, isLoggedIn, currentSession, pseudonymAvailable,
@@ -16354,6 +16496,8 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     programLinkStrains, programSetDevices,
     // Admin
     adminResolveProposal, adminFlag, adminDelete,
+    // v8.7.2-prep Phase 1b.1: Bootstrap + Promotion
+    bootstrapAvailable, bootstrapFirstAdmin, adminPromote,
     // Helpers (extern testbar)
     validatePseudonym, validateStrainData, validateProgramData, validateDevices,
     // Konstanten
@@ -16830,6 +16974,299 @@ function showShortcutHelp(){
 
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(initA11y, 800); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.2-prep Phase 1b.1: COMMUNITY SETUP UI
+   Toggle aktiviert die Community-Sektion im Settings-Modal.
+   Wizard registriert neue User; Login authentifiziert bestehende.
+   Bootstrap-Hinweis erscheint nur wenn noch kein Admin existiert.
+   Promotion-Modal erscheint nur für eingeloggte Admins.
+═══════════════════════════════════════════════════════════════════════════ */
+function _commSetupRefresh(){
+  try{
+    const box = document.getElementById('communitySetupBox');
+    const status = document.getElementById('communityStatus');
+    const buttons = document.getElementById('communityButtons');
+    const adminArea = document.getElementById('communityAdminArea');
+    if(!box || !status || !buttons) return;
+    const enabled = !!PREFS.communityEnabled;
+    box.hidden = !enabled;
+    if(!enabled) return;
+    if(typeof communityClient !== 'object' || !communityClient){
+      status.textContent = 'Community-Modul nicht geladen.'; buttons.innerHTML=''; return;
+    }
+    if(communityClient.isLoggedIn()){
+      const sess = communityClient.currentSession();
+      const adminBadge = sess && sess.is_admin ? ' <span style="color:var(--hot);font-weight:600">[Admin]</span>' : '';
+      status.innerHTML = 'Eingeloggt als <b>'+escapeHtml(sess && sess.pseudonym || '?')+'</b>'+adminBadge;
+      buttons.innerHTML = '<button class="btn sm ghost" id="btnCommLogoutNow">Abmelden</button>';
+      const logoutBtn = document.getElementById('btnCommLogoutNow');
+      if(logoutBtn){
+        logoutBtn.addEventListener('click', ()=>{
+          communityClient.logout();
+          toast('Abgemeldet');
+          _commSetupRefresh();
+        });
+      }
+      if(adminArea){ adminArea.hidden = !(sess && sess.is_admin); }
+    } else {
+      status.textContent = 'Du bist nicht eingeloggt. Registrieren oder anmelden:';
+      buttons.innerHTML = '<button class="btn sm hot" id="btnCommRegisterOpen" style="flex:1">Registrieren</button>'
+                       + '<button class="btn sm" id="btnCommLoginOpen" style="flex:1">Anmelden</button>';
+      document.getElementById('btnCommRegisterOpen')?.addEventListener('click', _commRegisterOpen);
+      document.getElementById('btnCommLoginOpen')?.addEventListener('click', _commLoginOpen);
+      if(adminArea){ adminArea.hidden = true; }
+    }
+  }catch(e){ /* defensive: UI darf nie crashen */ }
+}
+
+function _commWizardShow(step){
+  const m = document.getElementById('modalCommunityRegister'); if(!m) return;
+  m.querySelectorAll('[data-comm-step]').forEach(div=>{
+    div.hidden = String(div.dataset.commStep) !== String(step);
+  });
+}
+
+function _commRegisterOpen(){
+  // Reset
+  const m = document.getElementById('modalCommunityRegister'); if(!m) return;
+  ['commRegPseudonym','commRegPin','commRegPin2'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('commRegPseuStatus').textContent = '';
+  document.getElementById('commRegPinStatus').textContent = '';
+  document.getElementById('commRegNext2').disabled = true;
+  document.getElementById('btnCommunityRegisterSubmit').disabled = true;
+  _commWizardShow(1);
+  m.classList.add('open');
+}
+
+function _commLoginOpen(){
+  const m = document.getElementById('modalCommunityLogin'); if(!m) return;
+  document.getElementById('commLoginPseudonym').value = '';
+  document.getElementById('commLoginPin').value = '';
+  document.getElementById('commLoginStatus').textContent = '';
+  m.classList.add('open');
+}
+
+function _commWireSetup(){
+  // Toggle
+  const togSr = document.getElementById('togCommunity');
+  if(togSr && !togSr.__wired){
+    togSr.__wired = true;
+    togSr.addEventListener('click', ()=>{
+      PREFS.communityEnabled = !PREFS.communityEnabled;
+      savePrefs();
+      togSr.setAttribute('aria-checked', String(PREFS.communityEnabled));
+      _commSetupRefresh();
+    });
+    togSr.setAttribute('aria-checked', String(!!PREFS.communityEnabled));
+  }
+
+  // Wizard Navigation
+  document.querySelectorAll('#modalCommunityRegister [data-comm-next]').forEach(b=>{
+    if(b.__wired) return; b.__wired = true;
+    b.addEventListener('click', ()=>_commWizardShow(Number(b.dataset.commNext)));
+  });
+  document.querySelectorAll('#modalCommunityRegister [data-comm-prev]').forEach(b=>{
+    if(b.__wired) return; b.__wired = true;
+    b.addEventListener('click', ()=>_commWizardShow(Number(b.dataset.commPrev)));
+  });
+  document.querySelectorAll('#modalCommunityRegister [data-comm-cancel]').forEach(b=>{
+    if(b.__wired) return; b.__wired = true;
+    b.addEventListener('click', ()=>document.getElementById('modalCommunityRegister')?.classList.remove('open'));
+  });
+
+  // Pseudonym Live-Check (debounced)
+  const pseuInput = document.getElementById('commRegPseudonym');
+  const pseuStatus = document.getElementById('commRegPseuStatus');
+  const nextBtn2 = document.getElementById('commRegNext2');
+  if(pseuInput && !pseuInput.__wired){
+    pseuInput.__wired = true;
+    let timer = null;
+    pseuInput.addEventListener('input', ()=>{
+      const val = pseuInput.value;
+      nextBtn2.disabled = true;
+      pseuStatus.textContent = '';
+      pseuStatus.style.color = '';
+      if(!communityClient.validatePseudonym(val)){
+        if(val.length > 0){
+          pseuStatus.style.color = 'var(--err)';
+          pseuStatus.textContent = '✗ 3–24 Zeichen, nur Buchstaben/Ziffern/_/-';
+        }
+        return;
+      }
+      pseuStatus.style.color = 'var(--muted)';
+      pseuStatus.textContent = '⏳ prüfe …';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        try{
+          const r = await communityClient.pseudonymAvailable(val);
+          if(r && r.available === true){
+            pseuStatus.style.color = 'var(--ok)';
+            pseuStatus.textContent = '✓ verfügbar';
+            nextBtn2.disabled = false;
+          } else {
+            pseuStatus.style.color = 'var(--err)';
+            pseuStatus.textContent = '✗ schon vergeben — anderen wählen';
+          }
+        }catch(e){
+          pseuStatus.style.color = 'var(--err)';
+          pseuStatus.textContent = '✗ Server-Fehler: '+(e.message||'?');
+        }
+      }, 500);
+    });
+  }
+
+  // PIN-Validation
+  const pin1 = document.getElementById('commRegPin');
+  const pin2 = document.getElementById('commRegPin2');
+  const pinStatus = document.getElementById('commRegPinStatus');
+  const submitBtn = document.getElementById('btnCommunityRegisterSubmit');
+  function _commValidatePin(){
+    const a = pin1.value, b = pin2.value;
+    pinStatus.textContent = ''; pinStatus.style.color = '';
+    submitBtn.disabled = true;
+    if(!/^[0-9]{4,12}$/.test(a)){
+      if(a.length > 0){ pinStatus.style.color='var(--err)'; pinStatus.textContent='✗ 4–12 Ziffern'; }
+      return;
+    }
+    if(a !== b){
+      if(b.length > 0){ pinStatus.style.color='var(--err)'; pinStatus.textContent='✗ PINs stimmen nicht überein'; }
+      return;
+    }
+    pinStatus.style.color='var(--ok)'; pinStatus.textContent='✓ PIN OK';
+    submitBtn.disabled = false;
+  }
+  if(pin1 && !pin1.__wired){ pin1.__wired = true; pin1.addEventListener('input', _commValidatePin); }
+  if(pin2 && !pin2.__wired){ pin2.__wired = true; pin2.addEventListener('input', _commValidatePin); }
+
+  // Register-Submit
+  if(submitBtn && !submitBtn.__wired){
+    submitBtn.__wired = true;
+    submitBtn.addEventListener('click', async ()=>{
+      const pseudonym = pseuInput.value;
+      const pin = pin1.value;
+      submitBtn.disabled = true;
+      pinStatus.style.color = 'var(--muted)'; pinStatus.textContent = '⏳ registriere …';
+      try{
+        await communityClient.register(pseudonym, pin);
+        document.getElementById('modalCommunityRegister').classList.remove('open');
+        toast('✓ Willkommen, '+pseudonym);
+        _commSetupRefresh();
+        // Bootstrap-Check
+        try{
+          const av = await communityClient.bootstrapAvailable();
+          if(av && av.available === true){
+            document.getElementById('modalCommunityBootstrap')?.classList.add('open');
+          }
+        }catch{}
+      }catch(e){
+        pinStatus.style.color = 'var(--err)';
+        pinStatus.textContent = '✗ '+(e.message||'Fehler');
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  // Login-Modal
+  document.querySelectorAll('#modalCommunityLogin [data-comm-cancel-login]').forEach(b=>{
+    if(b.__wired) return; b.__wired = true;
+    b.addEventListener('click', ()=>document.getElementById('modalCommunityLogin')?.classList.remove('open'));
+  });
+  const loginSubmit = document.getElementById('btnCommunityLoginSubmit');
+  if(loginSubmit && !loginSubmit.__wired){
+    loginSubmit.__wired = true;
+    loginSubmit.addEventListener('click', async ()=>{
+      const pseudonym = document.getElementById('commLoginPseudonym').value.trim();
+      const pin = document.getElementById('commLoginPin').value;
+      const statusEl = document.getElementById('commLoginStatus');
+      statusEl.style.color = 'var(--muted)'; statusEl.textContent = '⏳ prüfe …';
+      loginSubmit.disabled = true;
+      try{
+        await communityClient.login(pseudonym, pin);
+        document.getElementById('modalCommunityLogin').classList.remove('open');
+        toast('✓ Eingeloggt als '+pseudonym);
+        _commSetupRefresh();
+      }catch(e){
+        statusEl.style.color = 'var(--err)';
+        if(/AUTH_FAILED/.test(e.message||'')) statusEl.textContent = '✗ Pseudonym oder PIN falsch';
+        else if(/INVALID_PSEUDONYM/.test(e.message||'')) statusEl.textContent = '✗ Pseudonym-Format ungültig';
+        else statusEl.textContent = '✗ '+(e.message||'Fehler');
+      }finally{
+        loginSubmit.disabled = false;
+      }
+    });
+  }
+
+  // Bootstrap-Modal-Buttons
+  const bsLater = document.getElementById('btnBootstrapLater');
+  const bsAccept = document.getElementById('btnBootstrapAccept');
+  if(bsLater && !bsLater.__wired){
+    bsLater.__wired = true;
+    bsLater.addEventListener('click', ()=>document.getElementById('modalCommunityBootstrap')?.classList.remove('open'));
+  }
+  if(bsAccept && !bsAccept.__wired){
+    bsAccept.__wired = true;
+    bsAccept.addEventListener('click', async ()=>{
+      bsAccept.disabled = true;
+      try{
+        await communityClient.bootstrapFirstAdmin();
+        document.getElementById('modalCommunityBootstrap')?.classList.remove('open');
+        toast('♿ Du bist jetzt Admin');
+        _commSetupRefresh();
+      }catch(e){
+        toast('Bootstrap-Fehler: '+(e.message||'?'));
+      }finally{
+        bsAccept.disabled = false;
+      }
+    });
+  }
+
+  // Admin-Promote-Modal
+  const promoteOpen = document.getElementById('btnAdminPromoteOpen');
+  if(promoteOpen && !promoteOpen.__wired){
+    promoteOpen.__wired = true;
+    promoteOpen.addEventListener('click', ()=>{
+      const m = document.getElementById('modalAdminPromote'); if(!m) return;
+      document.getElementById('commPromotePseudonym').value = '';
+      document.getElementById('commPromoteStatus').textContent = '';
+      m.classList.add('open');
+    });
+  }
+  const promoteCancel = document.getElementById('btnAdminPromoteCancel');
+  if(promoteCancel && !promoteCancel.__wired){
+    promoteCancel.__wired = true;
+    promoteCancel.addEventListener('click', ()=>document.getElementById('modalAdminPromote')?.classList.remove('open'));
+  }
+  const promoteSubmit = document.getElementById('btnAdminPromoteSubmit');
+  if(promoteSubmit && !promoteSubmit.__wired){
+    promoteSubmit.__wired = true;
+    promoteSubmit.addEventListener('click', async ()=>{
+      const target = document.getElementById('commPromotePseudonym').value.trim();
+      const statusEl = document.getElementById('commPromoteStatus');
+      statusEl.style.color = 'var(--muted)'; statusEl.textContent = '⏳ ernenne …';
+      promoteSubmit.disabled = true;
+      try{
+        await communityClient.adminPromote(target);
+        document.getElementById('modalAdminPromote').classList.remove('open');
+        toast('✓ '+target+' ist jetzt Admin');
+        _commSetupRefresh();
+      }catch(e){
+        statusEl.style.color = 'var(--err)';
+        if(/INVALID_PSEUDONYM/.test(e.message)) statusEl.textContent = '✗ Pseudonym-Format ungültig';
+        else if(/PSEUDONYM_NOT_FOUND/.test(e.message)) statusEl.textContent = '✗ Dieses Pseudonym existiert nicht';
+        else if(/NOT_ADMIN/.test(e.message)) statusEl.textContent = '✗ Du bist kein Admin (sollte nicht passieren)';
+        else if(/ALREADY_ADMIN_SELF/.test(e.message)) statusEl.textContent = '✗ Du kannst dich nicht selbst ernennen';
+        else statusEl.textContent = '✗ '+(e.message||'Fehler');
+      }finally{
+        promoteSubmit.disabled = false;
+      }
+    });
+  }
+
+  _commSetupRefresh();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_commWireSetup, 900); });
 </script>
 </body>
 </html>

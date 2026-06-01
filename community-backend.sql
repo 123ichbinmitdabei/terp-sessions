@@ -799,6 +799,98 @@ revoke execute on function community_admin_delete(text,text,text,uuid) from publ
 grant   execute on function community_admin_delete(text,text,text,uuid) to anon;
 
 -- ════════════════════════════════════════════════════════════════════════════
+-- TEIL E — v8.7.2-prep Phase 1b.1: Admin-Bootstrap + Promotion + Audit
+-- (idempotent additiv, ans Schema-Ende angehaengt)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Audit-Tabelle fuer Admin-Aktionen
+create table if not exists community_admin_audit (
+  id          uuid primary key default gen_random_uuid(),
+  admin_code  text not null references csc_users(code) on delete cascade,
+  action      text not null check (action in ('bootstrap_first_admin','promote_to_admin')),
+  target      text,                                   -- pseudonym oder NULL
+  ts          timestamptz not null default now()
+);
+create index if not exists community_admin_audit_admin_idx on community_admin_audit(admin_code);
+create index if not exists community_admin_audit_ts_idx    on community_admin_audit(ts desc);
+alter table community_admin_audit enable row level security;
+revoke all on community_admin_audit from anon, authenticated;
+
+-- RPC: bootstrap_available — oeffentlich, kein PIN, return ob noch kein Admin existiert.
+create or replace function community_bootstrap_available()
+returns jsonb language plpgsql security definer set search_path = public, pg_temp
+as $fn$
+declare cnt int;
+begin
+  select count(*) into cnt from csc_users where is_admin = true;
+  return jsonb_build_object('available', cnt = 0, 'admin_count', cnt);
+end
+$fn$;
+revoke execute on function community_bootstrap_available() from public, authenticated;
+grant   execute on function community_bootstrap_available() to   anon;
+
+-- RPC: bootstrap_first_admin — der eingeloggte User wird Admin, ABER nur wenn
+-- noch keiner existiert. Advisory-Lock + Re-Check verhindern Race-Conditions.
+create or replace function community_bootstrap_first_admin(p_code text, p_pin text)
+returns jsonb language plpgsql security definer set search_path = public, pg_temp
+as $fn$
+declare ok boolean; cnt int; lock_obtained boolean;
+begin
+  ok := csc_internal_verify_pin(p_code, p_pin);
+  if not ok then raise exception 'AUTH_FAILED' using errcode='P0001'; end if;
+  -- Globaler Advisory-Lock fuer Bootstrap-Race-Schutz (eindeutige int8 ID)
+  select pg_try_advisory_xact_lock(8472623001) into lock_obtained;
+  if not lock_obtained then
+    raise exception 'BOOTSTRAP_RACE' using errcode='P0001';
+  end if;
+  -- Re-Check unter Lock
+  select count(*) into cnt from csc_users where is_admin = true;
+  if cnt > 0 then
+    raise exception 'BOOTSTRAP_NOT_AVAILABLE' using errcode='P0001';
+  end if;
+  -- Promote
+  update csc_users set is_admin = true where code = p_code;
+  -- Audit
+  insert into community_admin_audit (admin_code, action, target) values (p_code, 'bootstrap_first_admin', null);
+  return jsonb_build_object('ok', true, 'code', p_code);
+end
+$fn$;
+revoke execute on function community_bootstrap_first_admin(text,text) from public, authenticated;
+grant   execute on function community_bootstrap_first_admin(text,text) to   anon;
+
+-- RPC: admin_promote — bestehender Admin ernennt einen anderen User per Pseudonym.
+create or replace function community_admin_promote(p_code text, p_pin text, p_target_pseudonym text)
+returns jsonb language plpgsql security definer set search_path = public, pg_temp
+as $fn$
+declare ok boolean; is_adm boolean; target_code text; was_admin boolean;
+begin
+  ok := csc_internal_verify_pin(p_code, p_pin);
+  if not ok then raise exception 'AUTH_FAILED' using errcode='P0001'; end if;
+  is_adm := community_internal_is_admin(p_code);
+  if not is_adm then raise exception 'NOT_ADMIN' using errcode='P0001'; end if;
+  if not community_internal_validate_pseudonym(p_target_pseudonym) then
+    raise exception 'INVALID_PSEUDONYM' using errcode='P0001';
+  end if;
+  select code, is_admin into target_code, was_admin from csc_users where pseudonym = p_target_pseudonym;
+  if target_code is null then
+    raise exception 'PSEUDONYM_NOT_FOUND' using errcode='P0001';
+  end if;
+  if target_code = p_code then
+    raise exception 'ALREADY_ADMIN_SELF' using errcode='P0001';
+  end if;
+  if was_admin then
+    -- idempotent: kein update noetig, aber Audit-Eintrag spart sich
+    return jsonb_build_object('ok', true, 'target', p_target_pseudonym, 'already_admin', true);
+  end if;
+  update csc_users set is_admin = true where code = target_code;
+  insert into community_admin_audit (admin_code, action, target) values (p_code, 'promote_to_admin', p_target_pseudonym);
+  return jsonb_build_object('ok', true, 'target', p_target_pseudonym);
+end
+$fn$;
+revoke execute on function community_admin_promote(text,text,text) from public, authenticated;
+grant   execute on function community_admin_promote(text,text,text) to   anon;
+
+-- ════════════════════════════════════════════════════════════════════════════
 -- SELBST-ANGRIFFS-NOTIZ (Andre macht das live mit curl, analog zu Patch 2)
 -- ════════════════════════════════════════════════════════════════════════════
 -- 1) Direkte SELECTs auf community_strains/community_programs/... mit Anon-Key
@@ -808,4 +900,8 @@ grant   execute on function community_admin_delete(text,text,text,uuid) to anon;
 -- 4) Admin-RPC als nicht-Admin → NOT_ADMIN
 -- 5) Pseudonym doppelt registrieren → PSEUDONYM_TAKEN
 -- 6) Programm mit ungueltigen Steps → INVALID_STEP_ACTION
+-- v8.7.2-prep Phase 1b.1:
+-- 7) bootstrap_first_admin zweimal → erstes ok, zweites BOOTSTRAP_NOT_AVAILABLE
+-- 8) admin_promote als Nicht-Admin → NOT_ADMIN
+-- 9) admin_promote auf nicht-existentes Pseudonym → PSEUDONYM_NOT_FOUND
 -- ════════════════════════════════════════════════════════════════════════════

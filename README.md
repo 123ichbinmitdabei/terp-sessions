@@ -1,6 +1,37 @@
-# Sessions — Vape Controller (v8.7.1)
+# Sessions — Vape Controller (v8.7.2)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.2 — Community-Setup (Phase 1b.1: Login + Bootstrap-Admin)
+
+Erstes user-sichtbares Stück des Community-Pivots. Sorten-/Programm-Liste + Anlage-Formulare folgen in v8.7.3. Hier nur: Toggle, Register-Wizard, Login, Erst-Admin-Bootstrap, Admin-Promotion.
+
+- **Toggle „🌿 Community-DB aktivieren"** in Settings → Erweitert → Community (vor allen anderen Settings-Sektionen). Default AUS — die App funktioniert auch ohne. Bei AN erscheint die Setup-Box.
+- **Register-Wizard (3 Schritte)** im `#modalCommunityRegister`: Welcome + DSGVO-Hinweis → Pseudonym (Live-Verfügbarkeits-Check, debounced 500 ms) → PIN + Bestätigung. Nach Register: bei leerem Backend (`bootstrapAvailable()` returnt `available:true`) erscheint ein Bootstrap-Modal „Du bist der erste — willst du Admin werden?".
+- **Login-Modal** mit Inline-Fehler bei `AUTH_FAILED` (Modal bleibt offen, User darf nochmal probieren). Brute-Force-Schutz läuft serverseitig via `csc_internal_verify_pin`-Lockout.
+- **Admin-Bereich** in der Setup-Box nur sichtbar wenn `currentSession().is_admin === true`. Enthält Button „User zum Admin ernennen" → `#modalAdminPromote` (Pseudonym-Input → `community_admin_promote`-RPC, idempotent bei schon-Admin).
+
+### Backend-Erweiterung (`community-backend.sql`)
+
+3 neue RPCs + 1 Audit-Tabelle, additiv und idempotent:
+- `community_bootstrap_available()` — public, `{available: bool, admin_count: int}`
+- `community_bootstrap_first_admin(p_code, p_pin)` — promotet den eingeloggten User zum ersten Admin; per `pg_try_advisory_xact_lock` race-safe + Re-Check unter Lock
+- `community_admin_promote(p_code, p_pin, p_target_pseudonym)` — bestehender Admin ernennt anderen via Pseudonym; idempotent bei schon-Admin; `NOT_ADMIN`/`PSEUDONYM_NOT_FOUND`/`ALREADY_ADMIN_SELF`-Errors
+- `community_admin_audit` — Tabelle für `bootstrap_first_admin`/`promote_to_admin`-Events; RLS-deny-all, CASCADE-clean bei User-Delete
+
+### Tests + Live-Verifikation
+
+- **+35 statische Tests** in `v872setup.mjs` (UI-Toggle, Wizard-Navigation, Pseudonym-Live-Check, PIN-Validation, Login-AUTH_FAILED-Verhalten, Admin-Bereich-Sichtbarkeit, mock-Roundtrips).
+- **Regression: 690 / 690 grün** über 31 Suiten.
+- **Live-Bootstrap-Test (9/9 PASS)** gegen das Live-Supabase nach Andre's SQL-Update: Bootstrap → Re-Bootstrap-Schutz → Promote → Idempotenz → 3 Invalid-Promote-Cases → Cleanup → Backend wieder leer. Report lokal (gitignored).
+
+### Was NICHT in v8.7.2 ist
+- Sorten-Liste + Sorten-Anlage-Formular (kommen in v8.7.3)
+- Programm-Liste + Programm-Anlage-Formular (v8.7.3)
+- Moderations-UI für Edit-Vorschläge (v8.7.3)
+- Werks-Sorten-Migration der 57+ bestehenden Sorten ins Community-Schema (v8.7.3)
+- Live-Sync-Features (Phase 1c)
+- E2EE-Tracking-Aktivierung (Phase 2)
 
 ## v8.7.2-prep Phase 1a — Community-DB Backend (DORMANT, aktiviert in v8.8.0)
 
