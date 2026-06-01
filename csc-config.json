@@ -1,0 +1,5 @@
+{
+  "_comment": "Dieser Anon-Key ist by-design public. Supabase RLS + RPC-Grants + PIN-Verify in den Funktionen sind der Sicherheits-Layer, NICHT die Geheimhaltung dieses Keys. Service-Role-Key gehoert NIEMALS hier rein, das ist ein anderes Geheimnis.",
+  "supabaseUrl": "https://dahpitcwphdghjgsmult.supabase.co",
+  "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhaHBpdGN3cGhkZ2hqZ3NtdWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDgwMDIsImV4cCI6MjA5NTgyNDAwMn0.lC2jBLkUvgsXrTVCIPXTVvmMDCr57Jt_TzZl6At5lJI"
+}

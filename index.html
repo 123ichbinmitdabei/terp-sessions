@@ -2829,7 +2829,7 @@ button[data-sch-day].active{
     <h2 id="commRegTitle">🌿 Community beitreten</h2>
     <!-- Schritt 1 -->
     <div data-comm-step="1">
-      <p class="wiz-text" style="white-space:pre-line">Mit Sorten und Programmen kannst du der Mariana-Community helfen. Bewertungen, Empfehlungen, eigene Beiträge — alles optional, alles unter Pseudonym.
+      <p class="wiz-text" style="white-space:pre-line">Mit Sorten und Programmen kannst du der Sessions-Community helfen. Bewertungen, Empfehlungen, eigene Beiträge — alles optional, alles unter Pseudonym.
 
 Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <p style="font-size:11px;color:var(--muted);margin-top:8px">Mehr in der Datenschutzerklärung.</p>
@@ -3382,7 +3382,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="toggle-row">
         <div class="info">
           <b>🌿 Community-DB aktivieren</b>
-          <small>Teile Sorten und Programme mit anderen Mariana-Mitgliedern. Optional — die App funktioniert auch ohne.</small>
+          <small>Teile Sorten und Programme mit anderen Nutzern. Optional — die App funktioniert auch ohne.</small>
         </div>
         <button class="toggle" id="togCommunity" role="switch" aria-checked="false" aria-label="Community-DB aktivieren"></button>
       </div>
@@ -9795,7 +9795,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.2';
+const SW_VERSION_LABEL='v8.7.3';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15346,7 +15346,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.2 bereit.','ok');
+  log('Sessions v8.7.3 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -17000,21 +17000,11 @@ function _commSetupRefresh(){
       const adminBadge = sess && sess.is_admin ? ' <span style="color:var(--hot);font-weight:600">[Admin]</span>' : '';
       status.innerHTML = 'Eingeloggt als <b>'+escapeHtml(sess && sess.pseudonym || '?')+'</b>'+adminBadge;
       buttons.innerHTML = '<button class="btn sm ghost" id="btnCommLogoutNow">Abmelden</button>';
-      const logoutBtn = document.getElementById('btnCommLogoutNow');
-      if(logoutBtn){
-        logoutBtn.addEventListener('click', ()=>{
-          communityClient.logout();
-          toast('Abgemeldet');
-          _commSetupRefresh();
-        });
-      }
       if(adminArea){ adminArea.hidden = !(sess && sess.is_admin); }
     } else {
       status.textContent = 'Du bist nicht eingeloggt. Registrieren oder anmelden:';
       buttons.innerHTML = '<button class="btn sm hot" id="btnCommRegisterOpen" style="flex:1">Registrieren</button>'
                        + '<button class="btn sm" id="btnCommLoginOpen" style="flex:1">Anmelden</button>';
-      document.getElementById('btnCommRegisterOpen')?.addEventListener('click', _commRegisterOpen);
-      document.getElementById('btnCommLoginOpen')?.addEventListener('click', _commLoginOpen);
       if(adminArea){ adminArea.hidden = true; }
     }
   }catch(e){ /* defensive: UI darf nie crashen */ }
@@ -17059,6 +17049,24 @@ function _commWireSetup(){
       _commSetupRefresh();
     });
     togSr.setAttribute('aria-checked', String(!!PREFS.communityEnabled));
+  }
+
+  // v8.7.3: Delegierter Click-Listener auf Container — robust gegen innerHTML-Rebuilds.
+  // Frueher: addEventListener direkt auf dynamische Buttons nach jedem innerHTML — fragil
+  // wenn _commSetupRefresh in Race-Bedingungen mehrfach laeuft oder Init-Kette wirft.
+  const commBtns = document.getElementById('communityButtons');
+  if(commBtns && !commBtns.__wired){
+    commBtns.__wired = true;
+    commBtns.addEventListener('click', (e)=>{
+      const t = e.target; if(!t || !t.id) return;
+      if(t.id === 'btnCommRegisterOpen'){ _commRegisterOpen(); }
+      else if(t.id === 'btnCommLoginOpen'){ _commLoginOpen(); }
+      else if(t.id === 'btnCommLogoutNow'){
+        try{ communityClient && communityClient.logout(); }catch(_){}
+        toast('Abgemeldet');
+        _commSetupRefresh();
+      }
+    });
   }
 
   // Wizard Navigation

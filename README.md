@@ -1,6 +1,16 @@
-# Sessions — Vape Controller (v8.7.2)
+# Sessions — Vape Controller (v8.7.3)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.3 — Hotfix Community-Setup
+
+Drei Findings aus Andre's v8.7.2-Setup-Test:
+
+1. **KRITISCH:** `csc-config.json` war `.gitignored` und damit auf GitHub Pages nicht ausgeliefert → `COMMUNITY_NOT_CONFIGURED` beim Toggle. Datei jetzt deploy-bar; Anon-Key ist by-design öffentlich (RLS + RPC-Grants + PIN-Verify sind der Sicherheits-Layer, nicht die Key-Geheimhaltung). Inline-`_comment` erklärt das.
+2. **Kosmetisch:** „Mariana-Community"/„Mariana-Mitgliedern" → „Sessions-Community"/„anderen Nutzern" in den zwei user-sichtbaren UI-Strings (Wizard-Welcome + Setup-Box-Beschreibung). Code-Kommentare/README unverändert.
+3. **UX-Bug:** Register/Anmelden/Abmelden in der Setup-Box reagierten unter bestimmten Init-Race-Bedingungen nicht — `addEventListener` lief direkt nach `innerHTML` auf den dynamischen Buttons, das ist fragil. Fix: ein delegierter Click-Listener auf dem Container `#communityButtons`, idempotent via `__wired`-Flag. Robust gegen beliebige innerHTML-Rebuilds.
+
+Tests: +5 in `v872setup.mjs` (jetzt 40/40); volle Regression 695/695 (+5 vs. 690). Live-Check: Pseudonym „Andre" ist frei (kein Halb-Account aus dem fehlgeschlagenen Setup).
 
 ## v8.7.2 — Community-Setup (Phase 1b.1: Login + Bootstrap-Admin)
 
