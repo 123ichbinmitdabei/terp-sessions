@@ -1,6 +1,42 @@
-# Sessions — Vape Controller (v8.7.0)
+# Sessions — Vape Controller (v8.7.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.1 — Screen-Reader-Modus (TTS-Konflikt-Fix nach Praxis-Test)
+
+Andre hat v8.7.0 mit iOS VoiceOver getestet — die Sessions-eigene Sprachausgabe (`speechSynthesis` für TTS-Events) überlagerte sich mit dem Screen-Reader. Für blinde Nutzer unbenutzbar. W3C/WCAG entmutigen automatische Screen-Reader-Detection — die Lösung ist User-Toggle-basiert.
+
+### Modul 1 — Screen-Reader-Master-Toggle
+- Neue `PREFS.screenReaderMode` (Default false).
+- Toggle im Setup → Sprachsteuerung als **erster** Toggle vor allen anderen TTS/Voice-Optionen, hervorgehobener Container mit `♿`-Symbol.
+- `ttsEvent()` checkt `PREFS.screenReaderMode === true` **ganz am Anfang** → ALLE app-eigenen TTS-Events werden unterdrückt.
+- `_wakeSay()` (Wake-Word-Dialog-TTS) wird ebenfalls geguarded.
+- `setupWakeWord()` stoppt aktives Wake-Word und blockiert Neustart, solange SR-Mode an ist.
+- Toggle-Click leert auch eine laufende `speechSynthesis`-Queue.
+- Visuell: alle `[data-sr-affected]`-Toggle-Rows bekommen `.sr-overridden`-Klasse + ihre Buttons werden `disabled=true`. Betrifft `togVoice`, `togVoiceTts`, `togWakeWord`.
+
+### Modul 2 — iOS-Erst-Start-Hinweis
+- `_isIOS()` prüft `iPad|iPhone|iPod`-UA und iPadOS-13+-Sonderfall (`MacIntel` + `maxTouchPoints > 1`).
+- Auf iOS + `PREFS.screenReaderHintShown !== true`: nach 2 s Modal `#modalSrHint` mit „Jetzt aktivieren" / „Später"-Buttons (Modal-Trigger wartet zusätzliche 5 s wenn ein anderes Modal offen ist).
+- Beide Pfade setzen `screenReaderHintShown=true` → Hinweis kommt nur einmal.
+- Buttons sind unabhängig vom UA-Check verdrahtet — Modal lässt sich auch programmatisch öffnen.
+
+### Modul 3 (Bonus, implementiert) — 30-Sekunden-Heuristik
+- Plattform-unabhängig: nach 30 s App-Nutzung wird gezählt: Tab-Keydowns, Pointer-Events, Touch-Events.
+- Wenn `tab > 0 && pointer == 0 && touch == 0`: Banner `#srHeuristicBanner` (kein Modal — nicht aufdrängend) mit „Ja, Screen-Reader-Modus an" / „Nein danke".
+- Trigger nur einmal (`PREFS.heuristicHintShown`); übersprungen wenn SR-Mode schon an.
+
+### Modul 4 — Cross-Platform-Doku in `?`-Shortcut-Hilfe
+- Bestehendes Modal `#modalKbdShortcuts` bekommt neue Sektion `♿ Screen-Reader` mit Plattform-Hinweisen (VoiceOver/TalkBack/NVDA/JAWS) plus Erklärung warum kein Auto-Detect.
+
+### Tests + Regression
+- +33 neue Tests in `v871screenreader.mjs` (PREFS-Defaults, UI-Position vor TTS-Toggles, ttsEvent-Guard, Toggle-Wirkung auf abhängige Toggles, `_isIOS()`-Detection, Modal-Buttons, Heuristik-Banner, ?-Hilfe-Erweiterung).
+- **608 / 608 grün** über 29 Suiten. Keine forward-compat-Patches nötig — `v85tts` läuft transparent über den neuen `ttsEvent`-Guard.
+
+### Was Andre seinen blinden Test-Nutzern sagen kann
+> „Wenn ihr VoiceOver/TalkBack nutzt, geht in Setup → Sprachsteuerung und aktiviert den Schalter ‚Ich nutze einen Screen-Reader'. Danach ist Sessions still und überlasst alles VoiceOver/TalkBack."
+
+iPhone/iPad-Nutzer sehen den Hinweis automatisch beim ersten Start. Tastatur-only-Nutzer (NVDA/JAWS) sehen nach 30 s einen freundlichen Banner.
 
 ## v8.7.0 — Accessibility-Update
 

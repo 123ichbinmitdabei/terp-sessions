@@ -1008,6 +1008,31 @@ html[data-theme="light"] .ios-banner .body a{ color:#8a5a05 }
 .sub-toggles .toggle-row{padding:8px 0;border-bottom:0}
 .sub-toggles .toggle-row .info b{font-size:13px}
 
+/* v8.7.1: durch Screen-Reader-Modus übersteuerte Toggles sichtbar markieren */
+.sr-overridden{ opacity:.55; pointer-events:none; position:relative }
+.sr-overridden::after{
+  content:'durch Screen-Reader-Modus deaktiviert';
+  display:block;width:100%;
+  font-size:10px;color:var(--hot);
+  margin-top:4px;font-style:italic;
+}
+
+/* v8.7.1: 30s-Heuristik-Banner (Modul 3) */
+.sr-hint-banner{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(130px + var(--safe-bot-padding));z-index:55;
+  background:rgba(30,22,18,.96);color:var(--text);
+  border:1px solid var(--hot);border-radius:var(--r);
+  padding:12px 14px;display:flex;flex-direction:column;gap:10px;
+  max-width:88%;font-size:13px;
+  box-shadow:0 10px 28px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s;
+}
+.sr-hint-banner.show{ opacity:1; pointer-events:auto }
+.sr-hint-banner .row{ display:flex; gap:8px }
+.sr-hint-banner button{ min-height:40px; flex:1 }
+
 /* ═══ Drag-reorder (v4.4) ══════════════════════════════════════ */
 .step{
   touch-action:pan-y;
@@ -2796,6 +2821,29 @@ button[data-sch-day].active{
   <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
 </div>
 
+<!-- v8.7.1 Modul 2: iOS-Erst-Start-Hinweis Screen-Reader-Modus -->
+<div class="modal" id="modalSrHint" role="dialog" aria-modal="true" aria-labelledby="srHintTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="srHintTitle">♿ VoiceOver erkannt?</h2>
+    <p class="wiz-text" style="white-space:pre-line">Falls du VoiceOver nutzt, aktiviere im Setup → Sprachsteuerung den Schalter „Ich nutze einen Screen-Reader" — sonst überlagern sich beide Stimmen.</p>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="srHintLater" style="flex:1">Später</button>
+      <button class="btn hot" id="srHintActivate" style="flex:2">Jetzt aktivieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.1 Modul 3: Heuristik-Banner (nicht aufdrängend) -->
+<div class="sr-hint-banner" id="srHeuristicBanner" role="status" aria-live="polite" hidden>
+  <span>Es sieht aus als nutzt du Tastatur/Screen-Reader. Soll Sessions sich entsprechend einstellen?</span>
+  <div class="row">
+    <button class="btn sm ghost" id="srHeurNo" type="button">Nein danke</button>
+    <button class="btn sm hot" id="srHeurYes" type="button">Ja, Screen-Reader-Modus an</button>
+  </div>
+</div>
+
 <!-- v8.5.0 Modul 6 / v8.6.0 erweitert: Share-Modal (JSON-Download + Link + QR-Code) -->
 <div class="modal" id="modalShareExport" role="dialog" aria-modal="true" aria-label="Teilen">
   <div class="back"></div>
@@ -3225,7 +3273,12 @@ button[data-sch-day].active{
     <!-- ERWEITERT: Voice, Engagement, Externe Integration -->
     <div class="settings-pane" data-set-pane="erweitert">
       <h3 class="set-section-h">Sprachsteuerung</h3>
-      <div class="toggle-row">
+      <!-- v8.7.1: Screen-Reader-Master-Toggle (kommt VOR allen anderen TTS/Voice-Optionen, weil er sie überlagert) -->
+      <div class="toggle-row" style="background:rgba(255,140,40,.06);padding:12px;border-radius:var(--r);margin:0 0 12px;border:1px solid rgba(255,140,40,.2)">
+        <div class="info"><b>♿ Ich nutze einen Screen-Reader</b><small>Sessions-Sprachausgabe wird automatisch deaktiviert, damit sie sich nicht mit VoiceOver/TalkBack/NVDA überlagert. Wake-Word wird ebenfalls gesperrt.</small></div>
+        <button class="toggle" id="togScreenReader" role="switch" aria-checked="false" aria-label="Screen-Reader-Modus"></button>
+      </div>
+      <div class="toggle-row" data-sr-affected="voice">
         <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw.</small></div>
         <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
       </div>
@@ -3242,7 +3295,7 @@ button[data-sch-day].active{
         <div class="toggle-row"><div class="info"><b>Ballon füllen</b></div><button class="toggle" data-vc="fillBag" role="switch"></button></div>
       </details>
 
-      <div class="toggle-row">
+      <div class="toggle-row" data-sr-affected="tts">
         <div class="info"><b>Sprachausgabe (TTS)</b><small>Bestätigt Status-Abfragen vorlesen + Event-Ansagen unten</small></div>
         <button class="toggle" id="togVoiceTts" role="switch" aria-checked="true" aria-label="Sprachausgabe"></button>
       </div>
@@ -3268,7 +3321,7 @@ button[data-sch-day].active{
         <div class="toggle-row"><div class="info"><b>Import abgeschlossen</b><small>Default an</small></div><button class="toggle" data-tts="importDone" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Generische Aktion (z.B. QR-Code generiert)</b></div><button class="toggle" data-tts="actionDone" role="switch"></button></div>
       </details>
-      <div class="toggle-row">
+      <div class="toggle-row" data-sr-affected="wake">
         <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
         <button class="toggle" id="togWakeWord" role="switch" aria-checked="false" aria-label="Wake-Word"></button>
       </div>
@@ -4735,6 +4788,13 @@ const PREFS_DEFAULTS = {
   // v8.4.0 Modul 2/3: Voice-Erweiterung
   voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
   wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
+  // v8.7.1: Screen-Reader-Modus (Master über allen TTS/Voice-Optionen).
+  // Wenn true: ttsEvent() macht nichts, Wake-Word ist gesperrt, Voice-Tts-Master
+  // wird visuell als „deaktiviert durch Screen-Reader" markiert. Begründung:
+  // VoiceOver/TalkBack/NVDA/JAWS und app-eigenes TTS überlagern sich sonst.
+  screenReaderMode:false,
+  screenReaderHintShown:false,    // iOS-Erst-Start-Modal nur einmal
+  heuristicHintShown:false,       // 30s-Heuristik-Banner nur einmal
   // v8.5.0 Modul 3 + v8.7.0 erweitert: TTS-Events pro Event konfigurierbar
   ttsEvents:{
     tempReached:false, programStepChange:true, programStart:false, programEnd:true,
@@ -7386,6 +7446,33 @@ function wire(){
     savePrefs();
     if(v) playTone(660, 100, .1);
   });
+  // v8.7.1: Screen-Reader-Master — übersteuert Voice-TTS + Wake-Word
+  wireToggle('#togScreenReader', ()=>!!PREFS.screenReaderMode, v=>{
+    PREFS.screenReaderMode = v; savePrefs();
+    if(v){
+      // Wake-Word sofort beenden falls aktiv
+      try{ stopWakeWord(); }catch{}
+      // Eventuell laufende speechSynthesis-Queue leeren
+      try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch{}
+      toast('♿ Screen-Reader-Modus aktiv — Sessions-Sprachausgabe pausiert');
+    } else {
+      // Wake-Word reaktivieren wenn der User es vorher an hatte
+      try{ setupWakeWord(); }catch{}
+      toast('Screen-Reader-Modus aus — Sessions-Sprachausgabe wieder aktiv');
+    }
+    _syncSrOverride();
+  });
+  // Visual: bei aktivem SR-Mode betroffene Toggles ausgrauen
+  function _syncSrOverride(){
+    const on = !!PREFS.screenReaderMode;
+    document.querySelectorAll('[data-sr-affected]').forEach(row=>{
+      row.classList.toggle('sr-overridden', on);
+      const btn = row.querySelector('button.toggle');
+      if(btn) btn.disabled = on;
+    });
+  }
+  window._syncSrOverride = _syncSrOverride;
+  _syncSrOverride();
   // v8.1.0 Modul 1: Theme automatisch dem System folgen
   wireToggle('#togThemeAuto', ()=>PREFS.themeAuto, v=>{ setThemeAuto(v); });
   wireToggle('#togHaptic', ()=>PREFS.haptic, v=>{
@@ -9583,7 +9670,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.0';
+const SW_VERSION_LABEL='v8.7.1';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12334,6 +12421,7 @@ function installKeyboardShortcuts(){
 function ttsEvent(eventName, text){
   try{
     if(!text) return;
+    if(PREFS.screenReaderMode === true) return;  // v8.7.1: Screen-Reader-Modus blockt ALLE app-eigenen TTS-Events (verhindert Konflikt mit VoiceOver/TalkBack/NVDA/JAWS)
     if(PREFS.voiceTts === false) return; // Master aus → keine TTS
     const ev = PREFS.ttsEvents || {};
     if(!(eventName in ev)) return;        // unbekannter Event-Name → ignorieren
@@ -12432,6 +12520,7 @@ function updateWakeIndicator(){
   if(txt) txt.textContent = _wakeDialogActive ? '🎤 Befehl bitte…' : '🎙 hört auf „Hey Sessions"';
 }
 function _wakeSay(msg){
+  if(PREFS.screenReaderMode === true) return;   // v8.7.1
   if(PREFS.voiceTts === false) return;
   try{
     if(!('speechSynthesis' in window)) return;
@@ -12523,6 +12612,9 @@ function stopWakeWord(){
   updateWakeIndicator();
 }
 function setupWakeWord(){
+  // v8.7.1: Screen-Reader-Modus sperrt Wake-Word — Mikrofon-Dauer-Listening
+  // + Screen-Reader-TTS überlagern sich sonst, zusätzlich Privacy-/Akku-Last.
+  if(PREFS.screenReaderMode === true){ stopWakeWord(); return; }
   if(PREFS.wakeWord && isWakeWordSupported()){
     startWakeWord();
   } else {
@@ -13952,6 +14044,8 @@ function toggleBlindMode(){
   syncToggle('togTooltipsVoice', PREFS.tooltipsVoice);
   syncToggle('togVoiceTts', PREFS.voiceTts !== false);
   syncToggle('togWakeWord', !!PREFS.wakeWord);
+  syncToggle('togScreenReader', !!PREFS.screenReaderMode);   // v8.7.1
+  if(typeof _syncSrOverride === 'function') _syncSrOverride();
   syncToggle('togHaptiCustom', PREFS.haptiCustom);
   syncToggle('togSound', PREFS.sound);
   syncToggle('togHaptic', PREFS.haptic);
@@ -15127,7 +15221,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.0 bereit.','ok');
+  log('Sessions v8.7.1 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -16293,6 +16387,104 @@ function initA11y(){
   _a11yConnectHooks();
   _a11yWireAriaCheckedSync();
   _a11yShortcutHelp();
+  // v8.7.1: Screen-Reader-Modus-Erkennungs-Helfer
+  _srHintInit();
+  _srHeuristicInit();
+}
+
+/* v8.7.1 Modul 2: iOS-UA-Check + Erst-Start-Modal für Screen-Reader-Mode. */
+function _isIOS(){
+  try{
+    const ua = navigator.userAgent || '';
+    if(/iPad|iPhone|iPod/i.test(ua)) return true;
+    // iPadOS ≥13 meldet sich als MacIntel — Touch-Indikator hinzunehmen
+    if(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+    return false;
+  }catch{ return false; }
+}
+function _srHintInit(){
+  try{
+    // Buttons IMMER wireup'en (unabhängig von Plattform — Modal kann auch
+    // manuell getriggert werden, z.B. künftig via Setup-Button).
+    $('#srHintLater')?.addEventListener('click', ()=>{
+      PREFS.screenReaderHintShown = true; savePrefs();
+      $('#modalSrHint')?.classList.remove('open');
+    });
+    $('#srHintActivate')?.addEventListener('click', ()=>{
+      PREFS.screenReaderMode = true;
+      PREFS.screenReaderHintShown = true;
+      savePrefs();
+      // syncToggle ist nur in init()-Closure → wir setzen aria-checked direkt
+      const t = $('#togScreenReader'); if(t) t.setAttribute('aria-checked','true');
+      if(typeof _syncSrOverride === 'function') _syncSrOverride();
+      try{ stopWakeWord(); }catch{}
+      try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch{}
+      $('#modalSrHint')?.classList.remove('open');
+      toast('♿ Aktiviert');
+    });
+    // Auto-Open nur unter iOS + noch nicht gezeigt + Mode nicht schon an
+    if(PREFS.screenReaderMode === true) return;
+    if(PREFS.screenReaderHintShown === true) return;
+    if(!_isIOS()) return;
+    // 2 s warten nach App-Start, damit Onboarding/Welcome zuerst fertig sein kann
+    setTimeout(()=>{
+      if(PREFS.screenReaderMode === true || PREFS.screenReaderHintShown === true) return;
+      const anyOpen = document.querySelector('.modal.open');
+      if(anyOpen){ setTimeout(()=>$('#modalSrHint')?.classList.add('open'), 5000); }
+      else { $('#modalSrHint')?.classList.add('open'); }
+    }, 2000);
+  }catch{}
+}
+
+/* v8.7.1 Modul 3: 30 s-Heuristik — wenn Tab-Fokus aber kein Pointer/Touch
+   → Banner (kein Modal, nicht aufdrängen). Plattform-unabhängig. */
+function _srHeuristicInit(){
+  try{
+    if(PREFS.screenReaderMode === true) return;
+    if(PREFS.heuristicHintShown === true) return;
+    let tabCount = 0, pointerCount = 0, touchCount = 0;
+    const onKey = (e)=>{ if(e.key === 'Tab') tabCount++; };
+    const onPointer = ()=>{ pointerCount++; };
+    const onTouch = ()=>{ touchCount++; };
+    document.addEventListener('keydown', onKey, true);
+    document.addEventListener('pointermove', onPointer, true);
+    document.addEventListener('pointerdown', onPointer, true);
+    document.addEventListener('touchstart', onTouch, true);
+    document.addEventListener('touchmove', onTouch, true);
+    setTimeout(()=>{
+      document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('pointermove', onPointer, true);
+      document.removeEventListener('pointerdown', onPointer, true);
+      document.removeEventListener('touchstart', onTouch, true);
+      document.removeEventListener('touchmove', onTouch, true);
+      if(PREFS.screenReaderMode === true || PREFS.heuristicHintShown === true) return;
+      if(tabCount > 0 && pointerCount === 0 && touchCount === 0){
+        _srShowHeuristicBanner();
+      }
+    }, 30000);
+  }catch{}
+}
+function _srShowHeuristicBanner(){
+  const b = $('#srHeuristicBanner'); if(!b) return;
+  b.hidden = false;
+  setTimeout(()=>b.classList.add('show'), 10);
+  $('#srHeurNo')?.addEventListener('click', ()=>{
+    PREFS.heuristicHintShown = true; savePrefs();
+    b.classList.remove('show');
+    setTimeout(()=>{ b.hidden = true; }, 250);
+  }, { once: true });
+  $('#srHeurYes')?.addEventListener('click', ()=>{
+    PREFS.heuristicHintShown = true;
+    PREFS.screenReaderMode = true;
+    savePrefs();
+    const t = $('#togScreenReader'); if(t) t.setAttribute('aria-checked','true');
+    if(typeof _syncSrOverride === 'function') _syncSrOverride();
+    try{ stopWakeWord(); }catch{}
+    try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch{}
+    b.classList.remove('show');
+    setTimeout(()=>{ b.hidden = true; }, 250);
+    toast('♿ Screen-Reader-Modus aktiv');
+  }, { once: true });
 }
 
 // v8.7.0 UX-Bonus: Undo-Toast für destruktive Aktionen.
@@ -16354,7 +16546,16 @@ function showShortcutHelp(){
     const rows = KEYBOARD_SHORTCUTS.map(([k,v]) =>
       '<tr><th scope="row" style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--line)"><kbd style="background:var(--bg-3);padding:2px 6px;border-radius:3px;font-family:var(--font-mono);font-size:12px">'+k+'</kbd></th><td style="padding:4px 8px;border-bottom:1px solid var(--line)">'+v+'</td></tr>'
     ).join('');
-    m.innerHTML = '<div class="back"></div><div class="sheet"><div class="grab"></div><h2>⌨ Tastatur-Shortcuts</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0"><tbody>'+rows+'</tbody></table><div class="row" style="margin-top:14px"><button class="btn primary block" id="btnShortcutsClose">Schließen</button></div></div>';
+    // v8.7.1: Screen-Reader-Plattform-Hinweise
+    const srSection = `<h3 style="margin:14px 0 6px;font-size:14px">♿ Screen-Reader</h3>
+      <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 8px">Da Web-Browser uns nicht verraten welche Hilfssoftware aktiv ist, musst du das einmal manuell sagen — danach merkt sich Sessions das.</p>
+      <ul style="margin:0 0 8px 16px;padding:0;font-size:12px;line-height:1.6">
+        <li><b>iPhone/iPad VoiceOver:</b> Setup → Sprachsteuerung → <kbd style="background:var(--bg-3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px">Ich nutze einen Screen-Reader</kbd></li>
+        <li><b>Android TalkBack:</b> gleicher Toggle</li>
+        <li><b>Desktop NVDA:</b> gleicher Toggle</li>
+        <li><b>Desktop JAWS:</b> gleicher Toggle</li>
+      </ul>`;
+    m.innerHTML = '<div class="back"></div><div class="sheet"><div class="grab"></div><h2>⌨ Tastatur-Shortcuts</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin:8px 0"><tbody>'+rows+'</tbody></table>'+srSection+'<div class="row" style="margin-top:14px"><button class="btn primary block" id="btnShortcutsClose">Schließen</button></div></div>';
     document.body.appendChild(m);
     m.querySelector('.back').addEventListener('click', ()=>m.classList.remove('open'));
     m.querySelector('#btnShortcutsClose').addEventListener('click', ()=>m.classList.remove('open'));
