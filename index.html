@@ -1990,6 +1990,46 @@ summary.tab-section-header:hover{color:var(--text)}
 .aroma-pill-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);min-width:42px}
 .aroma-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:12px;cursor:pointer}
 .aroma-pill.active{border-color:var(--accent,#5ab);background:rgba(90,170,187,.14);color:var(--accent,#5ab)}
+/* v8.7.4 Paket 12b.2: Tabs & Community-Sortenliste */
+.aroma-tabs{display:flex;gap:4px;margin:6px 0 10px;border-bottom:1px solid var(--line)}
+.aroma-tab{flex:1;min-height:36px;padding:8px 12px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;cursor:pointer;border-radius:6px 6px 0 0}
+.aroma-tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.aroma-tab.active{color:var(--hot);border-bottom-color:var(--hot);font-weight:600}
+.aroma-tab[hidden]{display:none}
+.comm-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:8px;cursor:pointer}
+.comm-card:hover{border-color:var(--accent,#5ab)}
+.comm-card-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.comm-card-name{font-size:15px;font-weight:600;flex:1;min-width:0}
+.comm-genbadge{font-size:10px;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em}
+.comm-genbadge.indica{background:rgba(140,90,200,.18);color:#b495e0;border:1px solid rgba(140,90,200,.35)}
+.comm-genbadge.sativa{background:rgba(220,150,60,.18);color:#e3b072;border:1px solid rgba(220,150,60,.35)}
+.comm-genbadge.hybrid{background:rgba(90,170,187,.18);color:#7fc2d3;border:1px solid rgba(90,170,187,.35)}
+.comm-card-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.comm-card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.comm-card-tag{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text)}
+.comm-card-author{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
+.comm-factory-badge{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,87,34,.15);color:var(--hot);border:1px solid rgba(255,87,34,.3);text-transform:uppercase;letter-spacing:.05em}
+.comm-stars{display:inline-flex;gap:2px;align-items:center;font-size:14px;line-height:1;user-select:none}
+.comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:18px;line-height:1}
+.comm-stars-btn.on{color:#ffb84d}
+.comm-stars-btn.mine{color:#ff7043}
+.comm-stars-btn:hover{transform:scale(1.15)}
+.comm-stars-readonly{color:#ffb84d}
+.comm-stars-empty{color:#555}
+.comm-stars-count{font-size:11px;color:var(--muted);margin-left:4px}
+.comm-empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:13px}
+.comm-empty button{margin-top:10px}
+.comm-error{padding:14px;text-align:center;color:var(--err);font-size:13px;border:1px solid rgba(255,87,87,.3);border-radius:var(--r);background:rgba(255,87,87,.05)}
+.comm-loading{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+.comm-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.comm-actions .btn{flex:0 0 auto}
+.comm-tag-input{display:flex;gap:6px;margin-bottom:6px}
+.comm-tag-input input{flex:1}
+.comm-tag-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;min-height:22px}
+.comm-tag-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(106,255,160,.1);border:1px solid rgba(106,255,160,.3);border-radius:999px;font-size:12px}
+.comm-tag-chip button{background:none;border:0;color:var(--err);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px}
+.comm-detail-section{margin:14px 0}
+.comm-detail-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
 .aroma-count{font-size:11px;color:var(--muted);margin:6px 0}
 .aroma-effs{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
 .aroma-eff{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
@@ -2926,6 +2966,76 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
+<!-- v8.7.4 Paket 12b.2: Community-Sorten-Detail -->
+<div class="modal" id="modalCommunityStrainDetail" role="dialog" aria-modal="true" aria-labelledby="commStrainDetailTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commStrainDetailTitle" style="display:none">Sorten-Detail</h2>
+    <div id="commStrainDetailBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnCommStrainDetailClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.4 Paket 12b.2: Community-Sorten Create/Edit/Propose-Modal (gemeinsames Formular) -->
+<div class="modal" id="modalCommunityStrainEdit" role="dialog" aria-modal="true" aria-labelledby="commStrainEditTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commStrainEditTitle">Neue Sorte</h2>
+    <p class="wiz-text" id="commStrainEditNote" style="display:none"></p>
+    <div class="field"><label>Name <span style="color:var(--err)">*</span></label><input class="input" id="csName" maxlength="100" autocapitalize="words"></div>
+    <div class="field"><label>Genetik</label>
+      <select class="select" id="csGenetics">
+        <option value="">—</option>
+        <option value="indica">Indica</option>
+        <option value="sativa">Sativa</option>
+        <option value="hybrid">Hybrid</option>
+      </select>
+    </div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>THC %</label><input class="input mono" id="csThc" type="number" min="0" max="100" step="0.1"></div>
+      <div class="field" style="flex:1"><label>CBD %</label><input class="input mono" id="csCbd" type="number" min="0" max="100" step="0.1"></div>
+    </div>
+    <div class="field">
+      <label>Terpene</label>
+      <div class="comm-tag-input"><input class="input" id="csTerpInput" placeholder="z.B. Myrcen"><button class="btn sm" id="csTerpAdd" type="button">+</button></div>
+      <div class="comm-tag-chips" id="csTerpChips"></div>
+    </div>
+    <div class="field">
+      <label>Effekte</label>
+      <div class="comm-tag-input"><input class="input" id="csEffInput" placeholder="z.B. relaxed"><button class="btn sm" id="csEffAdd" type="button">+</button></div>
+      <div class="comm-tag-chips" id="csEffChips"></div>
+    </div>
+    <div class="field">
+      <label>Aromen</label>
+      <div class="comm-tag-input"><input class="input" id="csAroInput" placeholder="z.B. citrus"><button class="btn sm" id="csAroAdd" type="button">+</button></div>
+      <div class="comm-tag-chips" id="csAroChips"></div>
+    </div>
+    <div class="row" style="gap:8px">
+      <div class="field" style="flex:1"><label>Temp min °C</label><input class="input mono" id="csTmin" type="number" min="40" max="230"></div>
+      <div class="field" style="flex:1"><label>Temp max °C</label><input class="input mono" id="csTmax" type="number" min="40" max="230"></div>
+      <div class="field" style="flex:1"><label>Empfohlen °C</label><input class="input mono" id="csTrec" type="number" min="40" max="230"></div>
+    </div>
+    <div class="field"><label>Beschreibung</label><textarea class="input" id="csDesc" maxlength="2000" rows="3"></textarea></div>
+    <div class="toggle-row" id="csShowPseuRow">
+      <div class="info"><b>Mit Pseudonym beitragen</b><small id="csShowPseuLabel">Anonym</small></div>
+      <button class="toggle" id="csShowPseu" role="switch" aria-checked="false" aria-label="Mit Pseudonym beitragen"></button>
+    </div>
+    <div class="field" id="csCommentRow" style="display:none">
+      <label>Kommentar an den Admin (optional)</label>
+      <textarea class="input" id="csComment" maxlength="1000" rows="2" placeholder="z.B. Quelle der Information"></textarea>
+    </div>
+    <div id="csStatus" role="status" aria-live="polite" style="min-height:18px;font-size:12px;color:var(--err);margin-top:4px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn sm ghost" id="csCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="csSubmit" style="flex:2">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <!-- v8.7.1 Modul 2: iOS-Erst-Start-Hinweis Screen-Reader-Modus -->
 <div class="modal" id="modalSrHint" role="dialog" aria-modal="true" aria-labelledby="srHintTitle">
   <div class="back"></div>
@@ -3555,6 +3665,12 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div class="grab"></div>
     <h2>Aroma & Sorten</h2>
     <p class="wiz-text"><small>Empfohlene Verdampfungstemperaturen für verschiedene Sorten und Terpen-Profile. Tipp eine Temperatur an um sie direkt zu setzen.</small></p>
+    <!-- v8.7.4 Paket 12b.2: Tab-Leiste Werk/Meine/Community -->
+    <div class="aroma-tabs" id="aromaTabs" role="tablist" aria-label="Sorten-Quellen">
+      <button class="aroma-tab active" data-aromatab="werk" role="tab" aria-selected="true">Werk</button>
+      <button class="aroma-tab" data-aromatab="meine" role="tab" aria-selected="false">Meine</button>
+      <button class="aroma-tab" data-aromatab="community" id="aromaTabCommunity" role="tab" aria-selected="false" hidden>Community</button>
+    </div>
     <input class="aroma-search" id="aromaSearch" placeholder="Sorte suchen (z.B. Sativa, OG Kush, Zitrus…)" aria-label="Aroma suchen">
     <div class="aroma-list" id="aromaList"></div>
     <div class="row" style="margin-top:14px">
@@ -4940,6 +5056,9 @@ const PREFS_DEFAULTS = {
   cscEnabled:false,       // Feature-Flag. UI/Funktionen bleiben aus, wenn false.
   // v8.7.2-prep Phase 1b.1: Community-DB (Sorten/Programme teilen). Default off.
   communityEnabled:false,
+  // v8.7.4 Paket 12b.2: Default-Memory fuer Pseudonym/Anonym-Toggle beim Create.
+  // true = naechster Beitrag default anonym; toggled bei jedem Erfolg auf das Gegenteil.
+  communityLastAnonymous:true,
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
   pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
@@ -7702,7 +7821,16 @@ function wire(){
   // Aroma (modal open from quick-action)
   $('#btnAromaClose').addEventListener('click', ()=>$('#modalAroma').classList.remove('open'));
   $('#btnAromaDetailClose')?.addEventListener('click', ()=>$('#modalAromaDetail').classList.remove('open'));   // v8.3.0 Modul 2
-  $('#aromaSearch').addEventListener('input', e=>renderAromaList(e.target.value));
+  // v8.7.4: tab-aware Suche — bei Community-Tab debounced reload, sonst direkt lokal filtern
+  let _aromaSearchDeb=null;
+  $('#aromaSearch').addEventListener('input', e=>{
+    if(_aromaActiveTab === 'community'){
+      clearTimeout(_aromaSearchDeb);
+      _aromaSearchDeb = setTimeout(()=>_commStrainListLoad(true), 350);
+    } else {
+      renderAromaList(e.target.value);
+    }
+  });
 
   // QR
   $('#btnQrClose').addEventListener('click', ()=>$('#modalQR').classList.remove('open'));
@@ -9795,7 +9923,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.3';
+const SW_VERSION_LABEL='v8.7.4';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -10133,8 +10261,60 @@ function aromaCardHtml(a){
     </div>
   </div>`;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.4 Paket 12b.2: Aroma-Tabs Werk / Meine / Community
+   Tab-State Memory-only. Community-Tab nur wenn Community aktiviert + login.
+═══════════════════════════════════════════════════════════════════════════ */
+let _aromaActiveTab = 'werk';  // 'werk' | 'meine' | 'community'
+let _commStrainCache = [];     // letzte geladene Community-Liste (fuer Detail-Ansicht)
+let _commStrainOffset = 0;     // Pagination-Cursor
+const _commStrainPageSize = 50;
+let _commStrainHasMore = false;
+let _commStrainLoading = false;
+
+function _aromaUpdateTabVisibility(){
+  const commTab = document.getElementById('aromaTabCommunity'); if(!commTab) return;
+  const show = !!(PREFS.communityEnabled && typeof communityClient === 'object' && communityClient && communityClient.isLoggedIn());
+  commTab.hidden = !show;
+  if(!show && _aromaActiveTab === 'community'){
+    _aromaActiveTab = 'werk';
+    _aromaApplyActiveTab();
+  }
+}
+function _aromaApplyActiveTab(){
+  document.querySelectorAll('#aromaTabs .aroma-tab').forEach(b => {
+    const on = b.dataset.aromatab === _aromaActiveTab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+}
+function _aromaTabSwitch(tab){
+  if(tab === _aromaActiveTab) return;
+  _aromaActiveTab = tab;
+  _aromaApplyActiveTab();
+  // Bei Wechsel auf Community: Liste laden (cached wenn vorhanden, sonst frisch)
+  if(tab === 'community' && _commStrainCache.length === 0 && !_commStrainLoading){
+    _commStrainListLoad(true);
+  } else {
+    renderAromaList(undefined);
+  }
+}
+function _aromaWireTabs(){
+  const tabs = document.getElementById('aromaTabs');
+  if(!tabs || tabs.__wired) return;
+  tabs.__wired = true;
+  tabs.addEventListener('click', e => {
+    const b = e.target.closest('[data-aromatab]'); if(!b) return;
+    _aromaTabSwitch(b.dataset.aromatab);
+  });
+}
 function renderAromaList(query){
+  _aromaWireTabs();
+  _aromaUpdateTabVisibility();
   const list = $('#aromaList'); if(!list) return;
+  if(_aromaActiveTab === 'community'){
+    return _renderCommunityStrainsView(query);
+  }
   const f=aromaFilterState();
   if(query!==undefined) f.q=query;
   const EFFS=['relaxed','energetic','creative','sleepy','focused','social'];
@@ -10153,9 +10333,18 @@ function renderAromaList(query){
     <div class="aroma-pill-row"><span class="aroma-pill-lbl">THC</span>${thcPills}<span style="margin-left:auto">${sortSel}</span></div>
   </div>`;
   const addHtml=`<div class="aroma-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><div class="name">+ Eigene Sorte hinzufügen</div><div class="desc" style="margin-bottom:0">Mit eigenen Temperaturen und Beschreibung</div></div><button class="btn sm primary" id="btnAddCustomAroma">Hinzufügen</button></div>`;
-  const results=aromaFiltered();
-  const cardsHtml = results.length ? results.map(aromaCardHtml).join('') : `<p class="wiz-text" style="text-align:center;color:var(--muted);margin-top:14px">Keine Treffer.</p>`;
-  list.innerHTML = recHtml + filterHtml + addHtml + `<div class="aroma-count">${results.length} Sorten</div>` + cardsHtml;
+  // v8.7.4: Tab-Filter Werk = nur Werks-Sorten, Meine = nur eigene
+  const allRes=aromaFiltered();
+  const results = _aromaActiveTab === 'meine' ? allRes.filter(a=>a.userAdded)
+                : _aromaActiveTab === 'werk'  ? allRes.filter(a=>!a.userAdded)
+                : allRes;
+  const showRecos = _aromaActiveTab === 'werk';
+  const showAdd   = _aromaActiveTab === 'meine';
+  const emptyMsg  = _aromaActiveTab === 'meine'
+    ? `<p class="wiz-text" style="text-align:center;color:var(--muted);margin-top:14px">Noch keine eigenen Sorten. Mit „+ Eigene Sorte hinzufügen" loslegen.</p>`
+    : `<p class="wiz-text" style="text-align:center;color:var(--muted);margin-top:14px">Keine Treffer.</p>`;
+  const cardsHtml = results.length ? results.map(aromaCardHtml).join('') : emptyMsg;
+  list.innerHTML = (showRecos?recHtml:'') + filterHtml + (showAdd?addHtml:'') + `<div class="aroma-count">${results.length} Sorten</div>` + cardsHtml;
   // Wiring
   $('#btnAddCustomAroma')?.addEventListener('click', addCustomAromaPrompt);
   $('#aromaSort')?.addEventListener('change',e=>{ f.sort=e.target.value; renderAromaList(); });
@@ -10176,6 +10365,399 @@ function renderAromaList(query){
     }));
   });
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.4 Paket 12b.2: Community-Sorten View, Sterne-Komponente, CRUD-Modale
+═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Sterne-Komponente (Modul 8) ─────────────────────────────────────────────
+function commStarsReadOnly(avg, count){
+  const a = Number(avg||0);
+  const full = Math.round(a);
+  let s = '<span class="comm-stars">';
+  for(let i=1;i<=5;i++){
+    s += `<span class="${i<=full?'comm-stars-readonly':'comm-stars-empty'}">★</span>`;
+  }
+  s += `<span class="comm-stars-count">(${Number(count||0)})</span></span>`;
+  return s;
+}
+function commStarsInteractive(avg, count, my){
+  const avgN = Number(avg||0);
+  const myN = my!=null ? Number(my) : null;
+  const avgRound = Math.round(avgN);
+  let s = '<div class="comm-stars-wrap"><div class="comm-stars" role="radiogroup" aria-label="Sterne-Bewertung">';
+  for(let i=1;i<=5;i++){
+    const isMine = myN && i<=myN;
+    const isAvg  = !myN && i<=avgRound;
+    const cls = isMine ? 'comm-stars-btn mine' : (isAvg ? 'comm-stars-btn on' : 'comm-stars-btn');
+    s += `<button type="button" class="${cls}" data-star="${i}" aria-label="${i} Sterne" role="radio" aria-checked="${isMine?'true':'false'}">★</button>`;
+  }
+  s += `<span class="comm-stars-count">${avgN.toFixed(1)} / 5 (${Number(count||0)})</span></div>`;
+  if(myN) s += `<div style="font-size:11px;color:var(--hot);margin-top:4px">Du hast ${myN} Sterne gegeben.</div>`;
+  s += '</div>';
+  return s;
+}
+
+// ── Community-Sorten-Liste rendern (Modul 2) ────────────────────────────────
+function _commStrainCardHtml(s){
+  const gen = String(s.genetics||'').toLowerCase();
+  const genBadge = ['indica','sativa','hybrid'].includes(gen) ? `<span class="comm-genbadge ${gen}">${gen}</span>` : '';
+  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">Werks-Vorschlag</span>' : '';
+  const tc = [];
+  if(s.thc_percent!=null) tc.push('THC '+s.thc_percent+'%');
+  if(s.cbd_percent!=null) tc.push('CBD '+s.cbd_percent+'%');
+  let temp = '';
+  if(s.temp_min && s.temp_max) temp = s.temp_min+'-'+s.temp_max+'°C';
+  else if(s.temp_recommended) temp = '~'+s.temp_recommended+'°C';
+  const tags = (Array.isArray(s.effects)?s.effects.slice(0,3):[]).concat(Array.isArray(s.aromas)?s.aromas.slice(0,2):[]);
+  const tagsHtml = tags.map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
+  let author;
+  if(s.is_factory_seed) author = 'Werks-Vorschlag';
+  else if(s.author_pseudonym) author = 'von '+escapeHtml(s.author_pseudonym);
+  else author = 'anonym beigetragen';
+  return `<div class="comm-card" data-strain-id="${escapeHtml(s.id)}">
+    <div class="comm-card-head"><div class="comm-card-name">${escapeHtml(s.name)}</div>${genBadge}${factory}</div>
+    <div class="comm-card-meta">
+      ${tc.length?'<span>'+tc.join(' · ')+'</span>':''}
+      ${temp?'<span>'+temp+'</span>':''}
+      ${commStarsReadOnly(s.avg_stars, s.review_count)}
+    </div>
+    ${tagsHtml?'<div class="comm-card-tags">'+tagsHtml+'</div>':''}
+    <div class="comm-card-author">${author}</div>
+  </div>`;
+}
+
+async function _commStrainListLoad(reset){
+  if(_commStrainLoading) return;
+  if(reset){ _commStrainCache=[]; _commStrainOffset=0; _commStrainHasMore=false; }
+  _commStrainLoading = true;
+  _renderCommunityStrainsView();
+  try{
+    const filter = ($('#aromaSearch')?.value || '').trim() || null;
+    const items = await communityClient.strainList(filter, _commStrainPageSize, _commStrainOffset);
+    const arr = Array.isArray(items) ? items : [];
+    _commStrainCache = reset ? arr : (_commStrainCache || []).concat(arr);
+    _commStrainHasMore = arr.length >= _commStrainPageSize;
+    _commStrainOffset = _commStrainCache.length;
+  } catch(e){
+    _commStrainCache = null;
+    window._commStrainError = e && e.message || 'Unbekannter Fehler';
+  } finally {
+    _commStrainLoading = false;
+    _renderCommunityStrainsView();
+  }
+}
+
+function _renderCommunityStrainsView(){
+  const list = $('#aromaList'); if(!list) return;
+  const actionsHtml = `<div class="comm-actions">
+    <button class="btn sm hot" id="btnCommStrainCreate">+ Neue Sorte</button>
+    <button class="btn sm ghost" id="btnCommStrainReload">↻ Neu laden</button>
+  </div>`;
+  if(_commStrainLoading && (!_commStrainCache || _commStrainCache.length === 0)){
+    list.innerHTML = actionsHtml + '<div class="comm-loading">Lade Sorten…</div>';
+  } else if(_commStrainCache === null){
+    list.innerHTML = actionsHtml + `<div class="comm-error">Konnte Sorten nicht laden.<br><small>${escapeHtml(window._commStrainError||'')}</small><br><button class="btn sm" id="btnCommStrainRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+    $('#btnCommStrainRetry')?.addEventListener('click', ()=>_commStrainListLoad(true));
+  } else if(_commStrainCache.length === 0){
+    list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Sorten — sei der erste!<br><button class="btn sm hot" id="btnCommStrainCreateEmpty">+ Neue Sorte</button></div>`;
+    $('#btnCommStrainCreateEmpty')?.addEventListener('click', _commStrainCreateOpen);
+  } else {
+    let html = actionsHtml + `<div class="aroma-count">${_commStrainCache.length} Sorten${_commStrainHasMore?'+':''}</div>`;
+    html += _commStrainCache.map(_commStrainCardHtml).join('');
+    if(_commStrainHasMore){
+      html += `<div style="text-align:center;margin:14px 0"><button class="btn sm ghost" id="btnCommStrainMore">Mehr laden</button></div>`;
+    }
+    list.innerHTML = html;
+    $('#btnCommStrainMore')?.addEventListener('click', ()=>_commStrainListLoad(false));
+    list.querySelectorAll('.comm-card[data-strain-id]').forEach(card => {
+      card.addEventListener('click', () => {
+        const s = _commStrainCache.find(x=>x.id===card.dataset.strainId);
+        if(s) _commStrainDetailOpen(s);
+      });
+    });
+  }
+  $('#btnCommStrainCreate')?.addEventListener('click', _commStrainCreateOpen);
+  $('#btnCommStrainReload')?.addEventListener('click', ()=>_commStrainListLoad(true));
+}
+
+// ── Strain-Detail-Modal (Modul 3) ────────────────────────────────────────────
+let _commCurrentStrain = null;
+function _commStrainDetailOpen(s){
+  _commCurrentStrain = s;
+  _commStrainDetailRender(s);
+  document.getElementById('modalCommunityStrainDetail')?.classList.add('open');
+}
+function _commStrainDetailRender(s){
+  const body = document.getElementById('commStrainDetailBody'); if(!body) return;
+  const isMy = !!s.is_my;
+  const gen = String(s.genetics||'').toLowerCase();
+  const genBadge = ['indica','sativa','hybrid'].includes(gen) ? `<span class="comm-genbadge ${gen}">${gen}</span>` : '';
+  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">Werks-Vorschlag</span>' : '';
+  const terps = (Array.isArray(s.terpenes)?s.terpenes:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
+  const effs  = (Array.isArray(s.effects)?s.effects:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
+  const aros  = (Array.isArray(s.aromas)?s.aromas:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
+  const tc = [];
+  if(s.thc_percent!=null) tc.push(`THC ${s.thc_percent}%`);
+  if(s.cbd_percent!=null) tc.push(`CBD ${s.cbd_percent}%`);
+  let temp = '—';
+  if(s.temp_min && s.temp_max){ temp = `${s.temp_min}–${s.temp_max}°C${s.temp_recommended?', empfohlen '+s.temp_recommended+'°C':''}`; }
+  else if(s.temp_recommended){ temp = `empfohlen ${s.temp_recommended}°C`; }
+  let author;
+  if(s.is_factory_seed) author='Werks-Vorschlag';
+  else if(s.author_pseudonym) author='von '+escapeHtml(s.author_pseudonym);
+  else if(isMy) author='dein anonymer Beitrag';
+  else author='anonym beigetragen';
+  body.innerHTML = `
+    <h2 style="margin:0 0 4px">${escapeHtml(s.name)}</h2>
+    <div class="comm-card-meta" style="margin-bottom:8px">${genBadge}${factory}</div>
+    <div class="comm-detail-section">${commStarsInteractive(s.avg_stars, s.review_count, s.my_stars)}</div>
+    ${tc.length ? `<div class="comm-detail-section"><div class="comm-detail-label">Cannabinoide</div>${tc.join(' · ')}</div>` : ''}
+    ${terps ? `<div class="comm-detail-section"><div class="comm-detail-label">Terpene</div><div class="comm-card-tags">${terps}</div></div>` : ''}
+    ${effs ? `<div class="comm-detail-section"><div class="comm-detail-label">Effekte</div><div class="comm-card-tags">${effs}</div></div>` : ''}
+    ${aros ? `<div class="comm-detail-section"><div class="comm-detail-label">Aromen</div><div class="comm-card-tags">${aros}</div></div>` : ''}
+    <div class="comm-detail-section"><div class="comm-detail-label">Temperatur</div>${temp}</div>
+    ${s.description ? `<div class="comm-detail-section"><div class="comm-detail-label">Beschreibung</div>${escapeHtml(s.description)}</div>` : ''}
+    <div class="comm-card-author" style="margin-top:14px">${author}</div>
+    <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+      ${isMy
+        ? `<button class="btn sm" id="btnCommStrainEditOwn" style="flex:1">✏️ Bearbeiten</button><button class="btn sm danger" id="btnCommStrainDeleteOwn" style="flex:1">🗑 Löschen</button>`
+        : `<button class="btn sm" id="btnCommStrainProposeEdit" style="flex:1">📝 Edit-Vorschlag</button>`
+      }
+    </div>
+  `;
+  body.querySelectorAll('.comm-stars [data-star]').forEach(btn => {
+    btn.addEventListener('click', () => _commStrainRateClick(s, parseInt(btn.dataset.star)));
+  });
+  document.getElementById('btnCommStrainEditOwn')?.addEventListener('click', ()=>_commStrainEditOpen('edit', s));
+  document.getElementById('btnCommStrainDeleteOwn')?.addEventListener('click', ()=>_commStrainDeleteConfirm(s));
+  document.getElementById('btnCommStrainProposeEdit')?.addEventListener('click', ()=>_commStrainEditOpen('propose', s));
+}
+
+// ── Sterne-Bewertung mit Optimistic Update ───────────────────────────────────
+async function _commStrainRateClick(s, stars){
+  if(!stars || stars<1 || stars>5) return;
+  const prev = s.my_stars;
+  s.my_stars = stars;
+  _commStrainDetailRender(s);
+  try{
+    await communityClient.strainRate(s.id, stars, null);
+    toast(`✓ Bewertung: ${stars} Sterne`);
+    // avg_stars + review_count im Hintergrund aktualisieren — neuen Stand holen
+    try{
+      const fresh = await communityClient.strainGet(s.id);
+      if(fresh){ Object.assign(s, fresh); _commStrainDetailRender(s); }
+    }catch(_){}
+  } catch(e){
+    s.my_stars = prev;
+    _commStrainDetailRender(s);
+    toast('Bewertung fehlgeschlagen: '+((e&&e.message)||'?'));
+  }
+}
+
+// ── Delete eigene (Modul 6) ──────────────────────────────────────────────────
+async function _commStrainDeleteConfirm(s){
+  if(!confirm(`Sorte „${s.name}" wirklich löschen? Auch alle Bewertungen werden gelöscht. Diese Aktion ist nicht rückgängig zu machen.`)) return;
+  try{
+    await communityClient.strainDeleteOwn(s.id);
+    document.getElementById('modalCommunityStrainDetail')?.classList.remove('open');
+    toast('Sorte gelöscht');
+    _commStrainListLoad(true);
+  } catch(e){
+    toast('Löschen fehlgeschlagen: '+((e&&e.message)||'?'));
+  }
+}
+
+// ── Edit/Create/Propose Modal (Module 4 / 5 / 7) ─────────────────────────────
+let _commEditMode = 'create';   // 'create' | 'edit' | 'propose'
+let _commEditOriginal = null;
+let _commEditTerpenes = [];
+let _commEditEffects = [];
+let _commEditAromas = [];
+
+function _commTagChipsRender(host, arr){
+  if(!host) return;
+  host.innerHTML = arr.map((t,i)=>`<span class="comm-tag-chip">${escapeHtml(t)}<button type="button" data-rm="${i}" aria-label="entfernen">✕</button></span>`).join('');
+  host.querySelectorAll('[data-rm]').forEach(b => {
+    b.addEventListener('click', () => {
+      arr.splice(parseInt(b.dataset.rm), 1);
+      _commTagChipsRender(host, arr);
+    });
+  });
+}
+function _commTagInputWire(inputId, addBtnId, chipsId, arr){
+  const inp = document.getElementById(inputId);
+  const add = document.getElementById(addBtnId);
+  const chips = document.getElementById(chipsId);
+  if(!inp || !add || !chips) return;
+  const doAdd = () => {
+    const v = (inp.value||'').trim();
+    if(!v) return;
+    if(arr.indexOf(v) === -1){ arr.push(v); _commTagChipsRender(chips, arr); }
+    inp.value = ''; inp.focus();
+  };
+  if(!add.__wired){ add.__wired = true; add.addEventListener('click', doAdd); }
+  if(!inp.__wired){
+    inp.__wired = true;
+    inp.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); doAdd(); } });
+  }
+}
+
+function _commStrainCreateOpen(){ _commStrainEditOpen('create'); }
+
+function _commStrainEditOpen(mode, source){
+  _commEditMode = mode;
+  _commEditOriginal = (source && mode !== 'create') ? Object.assign({}, source) : null;
+  const title = document.getElementById('commStrainEditTitle');
+  const note  = document.getElementById('commStrainEditNote');
+  if(mode === 'create'){
+    title.textContent = '🌿 Neue Sorte';
+    note.style.display = 'none';
+  } else if(mode === 'edit'){
+    title.textContent = '✏️ „'+((source&&source.name)||'?')+'" bearbeiten';
+    note.style.display = 'none';
+  } else {
+    title.textContent = '📝 Änderungsvorschlag';
+    note.style.display = '';
+    note.textContent = 'Deine Änderung wird einem Admin zur Prüfung vorgelegt. Du siehst sie erst nach Genehmigung.';
+  }
+  // Werte setzen
+  document.getElementById('csName').value = (source && source.name) || '';
+  document.getElementById('csGenetics').value = (source && source.genetics) || '';
+  document.getElementById('csThc').value = (source && source.thc_percent != null) ? source.thc_percent : '';
+  document.getElementById('csCbd').value = (source && source.cbd_percent != null) ? source.cbd_percent : '';
+  _commEditTerpenes = (source && Array.isArray(source.terpenes)) ? source.terpenes.slice() : [];
+  _commEditEffects  = (source && Array.isArray(source.effects))  ? source.effects.slice()  : [];
+  _commEditAromas   = (source && Array.isArray(source.aromas))   ? source.aromas.slice()   : [];
+  _commTagChipsRender(document.getElementById('csTerpChips'), _commEditTerpenes);
+  _commTagChipsRender(document.getElementById('csEffChips'),  _commEditEffects);
+  _commTagChipsRender(document.getElementById('csAroChips'),  _commEditAromas);
+  _commTagInputWire('csTerpInput','csTerpAdd','csTerpChips', _commEditTerpenes);
+  _commTagInputWire('csEffInput', 'csEffAdd', 'csEffChips',  _commEditEffects);
+  _commTagInputWire('csAroInput', 'csAroAdd', 'csAroChips',  _commEditAromas);
+  document.getElementById('csTmin').value = (source && source.temp_min != null) ? source.temp_min : '';
+  document.getElementById('csTmax').value = (source && source.temp_max != null) ? source.temp_max : '';
+  document.getElementById('csTrec').value = (source && source.temp_recommended != null) ? source.temp_recommended : '';
+  document.getElementById('csDesc').value = (source && source.description) || '';
+  // Pseudonym-Toggle: nur in create-Mode editierbar (Backend hat heute kein UPDATE auf show_pseudonym im update_own; bei edit blenden wir den Toggle daher aus)
+  const showPseuRow = document.getElementById('csShowPseuRow');
+  const csShowPseu  = document.getElementById('csShowPseu');
+  const lbl = document.getElementById('csShowPseuLabel');
+  if(mode === 'create'){
+    showPseuRow.style.display = '';
+    const withPseu = !PREFS.communityLastAnonymous;
+    csShowPseu.setAttribute('aria-checked', String(withPseu));
+    csShowPseu.classList.toggle('on', withPseu);
+    const sess = (communityClient.currentSession && communityClient.currentSession()) || null;
+    if(lbl) lbl.textContent = withPseu ? ('Mit Pseudonym '+(sess && sess.pseudonym || '')) : 'Anonym';
+  } else {
+    showPseuRow.style.display = 'none';
+  }
+  // Kommentar nur in propose-Mode
+  const cr = document.getElementById('csCommentRow');
+  if(cr) cr.style.display = (mode === 'propose') ? '' : 'none';
+  const csComment = document.getElementById('csComment'); if(csComment) csComment.value = '';
+  // Submit-Label
+  const sub = document.getElementById('csSubmit');
+  sub.textContent = mode === 'create' ? 'Sorte speichern' : mode === 'edit' ? 'Änderung speichern' : 'Vorschlag einreichen';
+  sub.disabled = false;
+  document.getElementById('csStatus').textContent = '';
+  document.getElementById('modalCommunityStrainEdit')?.classList.add('open');
+}
+
+function _commCollectStrainData(){
+  return {
+    name: (document.getElementById('csName').value||'').trim(),
+    genetics: document.getElementById('csGenetics').value || null,
+    thc_percent: document.getElementById('csThc').value || null,
+    cbd_percent: document.getElementById('csCbd').value || null,
+    terpenes: _commEditTerpenes,
+    effects:  _commEditEffects,
+    aromas:   _commEditAromas,
+    temp_min: document.getElementById('csTmin').value || null,
+    temp_max: document.getElementById('csTmax').value || null,
+    temp_recommended: document.getElementById('csTrec').value || null,
+    description: (document.getElementById('csDesc').value||'').trim() || null,
+  };
+}
+function _commDiffStrainData(orig, current){
+  const out = {};
+  ['name','genetics','thc_percent','cbd_percent','description','temp_min','temp_max','temp_recommended'].forEach(k=>{
+    const o = orig[k] == null ? '' : String(orig[k]);
+    const c = current[k] == null ? '' : String(current[k]);
+    if(o !== c) out[k] = current[k];
+  });
+  ['terpenes','effects','aromas'].forEach(k=>{
+    const o = ((orig[k]||[]).slice().sort()).join('|');
+    const c = ((current[k]||[]).slice().sort()).join('|');
+    if(o !== c) out[k] = current[k];
+  });
+  return out;
+}
+async function _commStrainEditSubmit(){
+  const status = document.getElementById('csStatus'); status.textContent = '';
+  const data = _commCollectStrainData();
+  if(!data.name){ status.textContent = 'Name ist Pflicht.'; return; }
+  if(data.name.length > 100){ status.textContent = 'Name max 100 Zeichen.'; return; }
+  if(data.thc_percent != null){
+    const v = parseFloat(data.thc_percent);
+    if(isNaN(v) || v < 0 || v > 100){ status.textContent = 'THC zwischen 0 und 100.'; return; }
+  }
+  if(data.cbd_percent != null){
+    const v = parseFloat(data.cbd_percent);
+    if(isNaN(v) || v < 0 || v > 100){ status.textContent = 'CBD zwischen 0 und 100.'; return; }
+  }
+  const showPseu = document.getElementById('csShowPseu').getAttribute('aria-checked') === 'true';
+  const sub = document.getElementById('csSubmit'); sub.disabled = true;
+  try{
+    if(_commEditMode === 'create'){
+      await communityClient.strainCreate(showPseu, data);
+      PREFS.communityLastAnonymous = !showPseu;
+      try{ savePrefs(); }catch(_){}
+      toast('✓ Sorte angelegt');
+    } else if(_commEditMode === 'edit'){
+      await communityClient.strainUpdateOwn(_commEditOriginal.id, data);
+      toast('✓ Änderung gespeichert');
+    } else {
+      const diff = _commDiffStrainData(_commEditOriginal, data);
+      if(Object.keys(diff).length === 0){ status.textContent = 'Keine Änderungen.'; sub.disabled = false; return; }
+      const comment = (document.getElementById('csComment').value||'').trim() || null;
+      await communityClient.strainProposeEdit(_commEditOriginal.id, diff, comment);
+      toast('✓ Vorschlag eingereicht');
+    }
+    document.getElementById('modalCommunityStrainEdit')?.classList.remove('open');
+    document.getElementById('modalCommunityStrainDetail')?.classList.remove('open');
+    _commStrainListLoad(true);
+  } catch(e){
+    status.textContent = 'Fehler: '+((e && e.message) || '?');
+  } finally {
+    sub.disabled = false;
+  }
+}
+
+// ── Wiring (einmalig idempotent) ─────────────────────────────────────────────
+function _commStrainModalsWire(){
+  const m = document.getElementById('modalCommunityStrainEdit');
+  if(m && !m.__wired){
+    m.__wired = true;
+    document.getElementById('csCancel')?.addEventListener('click', ()=>m.classList.remove('open'));
+    document.getElementById('csSubmit')?.addEventListener('click', _commStrainEditSubmit);
+    document.getElementById('csShowPseu')?.addEventListener('click', ()=>{
+      const t = document.getElementById('csShowPseu');
+      const on = t.getAttribute('aria-checked') !== 'true';
+      t.setAttribute('aria-checked', String(on));
+      t.classList.toggle('on', on);
+      const sess = (communityClient.currentSession && communityClient.currentSession()) || null;
+      const lbl = document.getElementById('csShowPseuLabel');
+      if(lbl) lbl.textContent = on ? ('Mit Pseudonym '+(sess && sess.pseudonym || '')) : 'Anonym';
+    });
+  }
+  const d = document.getElementById('modalCommunityStrainDetail');
+  if(d && !d.__wired){
+    d.__wired = true;
+    document.getElementById('btnCommStrainDetailClose')?.addEventListener('click', ()=>d.classList.remove('open'));
+  }
+}
+
 async function aromaSetTemp(a, t){
   if(!State.connected){ toast('Erst verbinden'); return; }
   try{
@@ -15346,7 +15928,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.3 bereit.','ok');
+  log('Sessions v8.7.4 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -16395,7 +16977,25 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     return rpc('community_strain_create', { p_code:_session.code, p_pin:_session.pin, p_show_pseudonym: !!showPseudonym, p_data: data });
   }
   async function strainList(filter, limit, offset){
-    return rpc('community_strain_list', { p_filter: filter || null, p_limit: limit || 50, p_offset: offset || 0 });
+    // v8.7.4: sendet zusaetzlich caller_code+caller_pin wenn eingeloggt
+    // → Backend liefert dann my_stars + is_my pro Item (Patch 12b.2)
+    const params = { p_filter: filter || null, p_limit: limit || 50, p_offset: offset || 0 };
+    if(_session && _session.code && _session.pin){
+      params.p_caller_code = _session.code;
+      params.p_caller_pin  = _session.pin;
+    }
+    return rpc('community_strain_list', params);
+  }
+  async function strainGet(strainId){
+    // v8.7.4: Convenience — fetch single by id via list-RPC (kein dedicated get-RPC)
+    if(!strainId) throw new Error('NO_ID');
+    const params = { p_filter: null, p_limit: 200, p_offset: 0 };
+    if(_session && _session.code && _session.pin){
+      params.p_caller_code = _session.code;
+      params.p_caller_pin  = _session.pin;
+    }
+    const arr = await rpc('community_strain_list', params);
+    return (Array.isArray(arr) ? arr : []).find(x=>x && x.id === strainId) || null;
   }
   async function strainUpdateOwn(strainId, data){
     if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
@@ -16423,7 +17023,13 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     return rpc('community_program_create', { p_code:_session.code, p_pin:_session.pin, p_show_pseudonym: !!showPseudonym, p_data: data });
   }
   async function programList(filter, device, limit, offset){
-    return rpc('community_program_list', { p_filter: filter || null, p_device: device || null, p_limit: limit || 50, p_offset: offset || 0 });
+    // v8.7.4: analog strainList — Caller wenn eingeloggt
+    const params = { p_filter: filter || null, p_device: device || null, p_limit: limit || 50, p_offset: offset || 0 };
+    if(_session && _session.code && _session.pin){
+      params.p_caller_code = _session.code;
+      params.p_caller_pin  = _session.pin;
+    }
+    return rpc('community_program_list', params);
   }
   async function programUpdateOwn(programId, data){
     if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
@@ -16490,7 +17096,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     // Auth
     register, login, logout, isLoggedIn, currentSession, pseudonymAvailable,
     // Strain
-    strainCreate, strainList, strainUpdateOwn, strainDeleteOwn, strainProposeEdit, strainRate,
+    strainCreate, strainList, strainGet, strainUpdateOwn, strainDeleteOwn, strainProposeEdit, strainRate,
     // Program
     programCreate, programList, programUpdateOwn, programDeleteOwn, programProposeEdit, programRate,
     programLinkStrains, programSetDevices,
@@ -17006,7 +17612,11 @@ function _commSetupRefresh(){
       buttons.innerHTML = '<button class="btn sm hot" id="btnCommRegisterOpen" style="flex:1">Registrieren</button>'
                        + '<button class="btn sm" id="btnCommLoginOpen" style="flex:1">Anmelden</button>';
       if(adminArea){ adminArea.hidden = true; }
+      // v8.7.4: bei Logout/Disabled — Cache reset damit keine alte Liste sichtbar bleibt
+      try{ _commStrainCache = []; _commStrainOffset = 0; _commStrainHasMore = false; }catch(_){}
     }
+    // v8.7.4: Tab-Sichtbarkeit aktualisieren (wenn modalAroma offen ist)
+    try{ if(typeof _aromaUpdateTabVisibility === 'function') _aromaUpdateTabVisibility(); }catch(_){}
   }catch(e){ /* defensive: UI darf nie crashen */ }
 }
 
@@ -17275,6 +17885,8 @@ function _commWireSetup(){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_commWireSetup, 900); });
+// v8.7.4 Paket 12b.2: Strain-Modals wiring (idempotent, einmalig nach DOMReady)
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commStrainModalsWire(); }catch(_){} }, 950); });
 </script>
 </body>
 </html>

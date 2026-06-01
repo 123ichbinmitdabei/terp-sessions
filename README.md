@@ -1,6 +1,28 @@
-# Sessions — Vape Controller (v8.7.3)
+# Sessions — Vape Controller (v8.7.4)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.4 — Community-Sorten-CRUD (Paket 12b.2, Phase 1b.2)
+
+Sorten-CRUD ist jetzt user-sichtbar. Wer Community aktiviert + eingeloggt ist, sieht in Aroma & Sorten einen dritten Tab **„Community"** — kann fremde Sorten lesen, bewerten, Änderungen vorschlagen; eigene anlegen, bearbeiten, löschen.
+
+- **Tab-Leiste in Aroma & Sorten**: Werk / Meine / Community. Community-Tab nur sichtbar wenn `PREFS.communityEnabled` UND `communityClient.isLoggedIn()`. Tab-State ist memory-only (jeder App-Start beginnt mit „Werk"). Werk-Tab und Meine-Tab sind unverändert (Werks-DB 57 Sorten, lokale Anlage); neu ist nur die Trennung in zwei separate Tabs.
+- **Sorten-Liste (Community)** zeigt Name, Genetik-Badge (indica/sativa/hybrid), THC/CBD, Sterne-Bewertung (`avg_stars` aus Aggregat, eigene Hervorhebung via `my_stars`), erste 3 Effekte + 2 Aromen, Temperatur-Bereich, „von Pseudonym" / „anonym beigetragen" / „Werks-Vorschlag"-Hinweis, „Mehr laden"-Pagination (50er-Seiten).
+- **Detail-Modal** mit interaktiven Sterne (Optimistic Update), Action-Buttons je nach `is_my`: eigene Sorten zeigen „Bearbeiten" + „Löschen", fremde zeigen „Edit-Vorschlag".
+- **Create-Modal** mit Tag-Inputs für Terpene/Effekte/Aromen, Temperatur min/max/empfohlen, Pseudonym-Toggle (Default-Memory via `PREFS.communityLastAnonymous` — letzter Beitrag merkt sich Gegenteil als Default).
+- **Edit eigene**: gleiches Formular vorbefüllt, `strainUpdateOwn` via Backend. Backend `community_strain_update_own` updated heute KEINE `show_pseudonym`-Spalte — Toggle ist deshalb im Edit-Mode ausgeblendet (nachzureichen in 12b.2.1 wenn nötig).
+- **Löschen eigene** mit Confirm-Dialog; Backend `ON DELETE CASCADE` löscht auch alle Bewertungen.
+- **Edit-Vorschlag** für fremde Sorten: gleiches Formular, sendet nur den Diff per `strainProposeEdit` zusammen mit optionalem Admin-Kommentar.
+- **Backend-Patch 12b.2** (`community-backend-patch-12b2.sql`): `community_strain_list` und `community_program_list` bekommen optionale `p_caller_code` + `p_caller_pin`-Parameter. Mit Auth liefert die Liste pro Item zusätzlich `my_stars` (eigene Bewertung) und `is_my` (eigener Beitrag — auch für anonyme erkennbar). Ohne Auth bleibt der alte Pfad (my_stars=null, is_my=false). Patch ist additiv-idempotent (DROP+CREATE der Signatur, `revoke ... from public, authenticated; grant ... to anon`). Live verifiziert: 9/9 Read-Only-Smoke-Tests grün.
+- **Aroma-Search ist tab-aware**: bei Community-Tab debounced (350ms) Reload via `strainList(filter)`, sonst lokale Filterung wie bisher.
+
+Tests: +53 in neuer Suite `v874strains.mjs` (Sterne-Komponente, Tab-Sichtbarkeit, Card-Render, List-View-States, Detail-Modal-Branching, Create-Validation, Pseudonym-Memory, Edit-Mode-Vorbefüllung, Propose-Diff-Logik, Werk/Meine-Tab-Filterung, Client-Caller-Code-Sending). Volle Regression: **748/748 PASS** über 33 Suiten.
+
+**Was NICHT in v8.7.4 ist** (kommt in 12b.3):
+- Programm-Tab + Programm-CRUD-UI (Backend ist da, UI fehlt)
+- Moderations-UI für Admin (Edit-Vorschläge prüfen, Flag/Delete)
+- Migration der 57 Werks-Aromas in `community_strains` als `is_factory_seed=true`
+- `show_pseudonym`-Editierbarkeit im Edit-Mode (benötigt Backend-Patch in `community_strain_update_own`)
 
 ## v8.7.3 — Hotfix Community-Setup
 
