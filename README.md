@@ -2,6 +2,22 @@
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
+## v8.7.2-prep Phase 1a — Community-DB Backend (DORMANT, aktiviert in v8.8.0)
+
+**Strategischer Pivot:** Sessions wird neben dem (dormant) E2EE-Tracking-Pfad eine geteilte Wissensbasis für Sorten + Programme bekommen — Pseudonym-Login, Bewertungen, Edit-Vorschläge, Moderation. Persönliches Tracking bleibt rein lokal.
+
+Phase 1a liefert nur Backend + dormant Client-Schicht — KEINE UI-Anbindung, kein Versions-Bump für Endnutzer.
+
+- **`community-backend.sql`** im Repo-Root: 7 neue Tabellen + 3 `ALTER TABLE`-Erweiterungen auf `csc_users` (`pseudonym`, `is_admin`, `last_anonymous_choice`) + 19 RPCs (Auth/Strain/Programm/Admin). Idempotent, additiv zu `csc-backend.sql`. Alle RPCs `security definer` mit voll-qualifiziertem `extensions.crypt`/`extensions.gen_salt` (Patch-2-Konvention).
+- **`window.communityClient`** in `index.html`: dormant Client-Schicht analog zu `cscClient`. Memory-only-Session (kein localStorage), tolerant gegenüber Naming-Variationen in `csc-config.json` (`supabaseUrl`|`url`). Krypto-Felder in Phase 1a mit zufälligen Dummies befüllt — Phase 2 überschreibt sie.
+- **`COMMUNITY-DB.md`** dokumentiert Pivot-Begründung, Schema, vollständige RPC-Referenz, Berechtigungs-Matrix, Phase-1a→2-Migrationspfad, offene Punkte für den Anwalt (Art. 4 vs Art. 9, Anti-Spam) und Andre's Live-Setup-Anleitung inkl. 6 curl-Selbst-Angriffe.
+- **+47 Tests** (`v872community.mjs`): API-Existenz aller 26 Methoden + Pseudonym-Regex + Strain-/Programm-/Device-Validierung + Not-logged-in-Guards für alle 15 Logged-In-Methoden + `show_pseudonym`-Durchreichung + Login-Mock-Roundtrip.
+- **Regression: 655 / 655 grün** über 30 Suiten.
+
+**Was NICHT in 12a ist:** UI-Anbindung (12b), Werks-Sorten-Migration der 57+ bestehenden Sorten (12c), Live-Sync-Features (Phase 1c), E2EE-Aktivierung (Phase 2).
+
+**Was Andre vor Paket 12b tun muss:** `community-backend.sql` in Supabase ausführen (additiv) + die 6 Live-Selbst-Angriffe per `curl` durchspielen (Anleitung in `COMMUNITY-DB.md §8.3`). Bei Findings: stoppen, melden — kein eigenmächtiger Fix.
+
 ## v8.7.1 — Screen-Reader-Modus (TTS-Konflikt-Fix nach Praxis-Test)
 
 Andre hat v8.7.0 mit iOS VoiceOver getestet — die Sessions-eigene Sprachausgabe (`speechSynthesis` für TTS-Events) überlagerte sich mit dem Screen-Reader. Für blinde Nutzer unbenutzbar. W3C/WCAG entmutigen automatische Screen-Reader-Detection — die Lösung ist User-Toggle-basiert.

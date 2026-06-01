@@ -16101,6 +16101,267 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
 })(typeof window!=='undefined' ? window : globalThis);
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.2-prep PHASE 1a: COMMUNITY-CLIENT (dormant, NICHT ans UI angebunden)
+
+   Geteilte Wissensbasis fuer Sorten + Programme mit Pseudonym-Login.
+   Phase 1a = Backend + Client-Schicht; Phase 1b = UI-Anbindung; Phase 2 =
+   E2EE-Sync-Features auf gleichem User-Account.
+
+   Konfiguration nutzt das gleiche csc-config.json (URL + Anon-Key) wie der
+   cscClient. Felder werden tolerant gelesen: supabaseUrl|url, supabaseAnonKey|
+   anonKey — damit beide Naming-Konventionen funktionieren.
+
+   Session-Token wird im MEMORY gehalten, NICHT in localStorage (Spec).
+   Beim Reload muss der User sich neu einloggen. */
+(function(global){
+  'use strict';
+
+  // ── Pseudonym-Regex (gleich wie in der DB) ───────────────────────────────
+  const PSEUDONYM_RE = /^[a-zA-Z0-9_-]{3,24}$/;
+
+  // ── Erlaubte Device-Identifier (gleich wie DB-Constraint) ────────────────
+  const VALID_DEVICES = ['volcano-classic','volcano-hybrid','crafty','crafty-plus','mighty','mighty-plus','venty','veazy','plenty','pax-3','puffco-peak-pro','firefly','other'];
+
+  // ── Erlaubte Step-Actions (gleich wie SQL-Validator) ─────────────────────
+  const VALID_STEP_ACTIONS = ['heat_on','heat_off','pump_on','pump_off','set_temperature','wait_until','wait','pump_for','loop_start','loop_end'];
+
+  // ── Pseudonym-/Daten-Validierung (Client-seitig vor RPC-Aufruf) ──────────
+  function validatePseudonym(p){ return typeof p === 'string' && PSEUDONYM_RE.test(p); }
+
+  function validateStrainData(d){
+    if(!d || typeof d !== 'object') return { ok:false, error:'STRAIN_DATA_NULL' };
+    if(typeof d.name !== 'string' || d.name.length < 1 || d.name.length > 100) return { ok:false, error:'INVALID_STRAIN_NAME' };
+    if(d.genetics != null && !['indica','sativa','hybrid'].includes(d.genetics)) return { ok:false, error:'INVALID_GENETICS' };
+    if(d.thc_percent != null && (d.thc_percent < 0 || d.thc_percent > 100)) return { ok:false, error:'INVALID_THC_PERCENT' };
+    if(d.cbd_percent != null && (d.cbd_percent < 0 || d.cbd_percent > 100)) return { ok:false, error:'INVALID_CBD_PERCENT' };
+    if(d.temp_min != null && (d.temp_min < 40 || d.temp_min > 240)) return { ok:false, error:'INVALID_TEMP_MIN' };
+    if(d.temp_max != null && (d.temp_max < 40 || d.temp_max > 240)) return { ok:false, error:'INVALID_TEMP_MAX' };
+    if(d.temp_recommended != null && (d.temp_recommended < 40 || d.temp_recommended > 240)) return { ok:false, error:'INVALID_TEMP_RECOMMENDED' };
+    if(d.description != null && d.description.length > 2000) return { ok:false, error:'DESCRIPTION_TOO_LONG' };
+    for(const k of ['terpenes','effects','aromas']){
+      if(d[k] != null){
+        if(!Array.isArray(d[k])) return { ok:false, error:'INVALID_ARRAY_'+k.toUpperCase() };
+        if(d[k].length > 20) return { ok:false, error:'ARRAY_TOO_LONG_'+k.toUpperCase() };
+      }
+    }
+    return { ok:true };
+  }
+
+  function validateProgramData(d){
+    if(!d || typeof d !== 'object') return { ok:false, error:'PROGRAM_DATA_NULL' };
+    if(typeof d.name !== 'string' || d.name.length < 1 || d.name.length > 100) return { ok:false, error:'INVALID_PROGRAM_NAME' };
+    if(!Array.isArray(d.steps) || d.steps.length < 1 || d.steps.length > 200) return { ok:false, error:'INVALID_STEPS_LENGTH' };
+    for(const s of d.steps){
+      if(!s || !VALID_STEP_ACTIONS.includes(s.action)) return { ok:false, error:'INVALID_STEP_ACTION' };
+    }
+    if(d.description != null && d.description.length > 2000) return { ok:false, error:'DESCRIPTION_TOO_LONG' };
+    if(d.total_duration_sec != null && (d.total_duration_sec < 0 || d.total_duration_sec > 14400)) return { ok:false, error:'INVALID_DURATION' };
+    return { ok:true };
+  }
+
+  function validateDevices(arr){
+    if(!Array.isArray(arr)) return false;
+    if(arr.length > VALID_DEVICES.length) return false;
+    return arr.every(d => VALID_DEVICES.includes(d));
+  }
+
+  // ── Config-Loader (tolerant gegenueber Naming) ───────────────────────────
+  let _commCfg = null, _commCfgLoaded = false;
+  async function loadConfig(){
+    if(_commCfgLoaded) return _commCfg;
+    _commCfgLoaded = true;
+    try{
+      const res = await fetch('csc-config.json', { cache:'no-store' });
+      if(!res.ok) return null;
+      const cfg = await res.json();
+      const url  = (cfg.supabaseUrl  || cfg.url  || '').replace(/\/$/,'');
+      const anon =  cfg.supabaseAnonKey || cfg.anonKey || '';
+      if(/^https:\/\//.test(url) && anon.length > 20){
+        _commCfg = { url, anonKey: anon };
+        return _commCfg;
+      }
+    }catch(_){}
+    return null;
+  }
+
+  // ── RPC-Helper ───────────────────────────────────────────────────────────
+  async function rpc(name, args){
+    const cfg = await loadConfig();
+    if(!cfg) throw new Error('COMMUNITY_NOT_CONFIGURED');
+    const res = await fetch(cfg.url + '/rest/v1/rpc/' + encodeURIComponent(name), {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey': cfg.anonKey,
+        'Authorization':'Bearer '+cfg.anonKey,
+        'Accept':'application/json',
+      },
+      body: JSON.stringify(args || {}),
+    });
+    let body=null; try{ body = await res.json(); }catch(_){}
+    if(!res.ok){
+      const msg = (body && (body.message || body.hint)) || res.statusText || 'RPC_ERROR';
+      const err = new Error(msg);
+      err.status = res.status; err.body = body;
+      throw err;
+    }
+    return body;
+  }
+
+  // ── Krypto-Dummies fuer Phase 1a ────────────────────────────────────────
+  // Phase 2 (E2EE-Tracking-Sync) wird diese spaeter ueberschreiben.
+  function b64rand(n){
+    const u8 = new Uint8Array(n);
+    crypto.getRandomValues(u8);
+    let s = '';
+    for(let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
+    return btoa(s);
+  }
+
+  // ── Session-State (Memory only, NICHT in localStorage) ───────────────────
+  let _session = null;   // { code, pin, pseudonym, is_admin }
+
+  function isLoggedIn(){ return !!(_session && _session.code && _session.pin); }
+  function currentSession(){ return _session ? { code:_session.code, pseudonym:_session.pseudonym, is_admin:_session.is_admin } : null; }
+  function logout(){ _session = null; }
+
+  // ── Register: csc_register Dummy + community_register_pseudonym ──────────
+  async function register(pseudonym, pin){
+    if(!validatePseudonym(pseudonym)) throw new Error('INVALID_PSEUDONYM');
+    if(typeof pin !== 'string' || !/^[0-9]{4,12}$/.test(pin)) throw new Error('INVALID_PIN');
+    // 1. Verfuegbarkeit pruefen (nicht-bindend, koennte race-conditionn — Server hat unique-Index)
+    const avail = await rpc('community_pseudonym_available', { p_pseudonym: pseudonym });
+    if(avail && avail.available === false) throw new Error('PSEUDONYM_TAKEN');
+    // 2. csc_register mit Krypto-Dummies (Phase 1a)
+    const reg = await rpc('csc_register', {
+      p_pin: pin,
+      p_kdf_salt: b64rand(16),
+      p_hkdf_salt: b64rand(16),
+      p_encrypted_seed: b64rand(32),
+      p_encrypted_seed_iv: b64rand(12),
+    });
+    const code = reg && reg.code;
+    if(typeof code !== 'string' || !/^CSC-\d{4}$/.test(code)) throw new Error('REGISTER_FAILED');
+    // 3. Pseudonym registrieren
+    const ps = await rpc('community_register_pseudonym', { p_code: code, p_pin: pin, p_pseudonym: pseudonym });
+    if(!ps || ps.ok !== true) throw new Error('PSEUDONYM_REGISTRATION_FAILED');
+    _session = { code, pin, pseudonym, is_admin: false };
+    return { code, pseudonym };
+  }
+
+  // ── Login per Pseudonym + PIN ────────────────────────────────────────────
+  async function login(pseudonym, pin){
+    if(!validatePseudonym(pseudonym)) throw new Error('INVALID_PSEUDONYM');
+    const r = await rpc('community_login_by_pseudonym', { p_pseudonym: pseudonym, p_pin: pin });
+    if(!r || !r.code) throw new Error('AUTH_FAILED');
+    _session = { code: r.code, pin, pseudonym: r.pseudonym, is_admin: !!r.is_admin };
+    return { code: r.code, pseudonym: r.pseudonym, is_admin: !!r.is_admin };
+  }
+
+  async function pseudonymAvailable(pseudonym){
+    if(!validatePseudonym(pseudonym)) return { available:false, error:'INVALID_PSEUDONYM' };
+    return rpc('community_pseudonym_available', { p_pseudonym: pseudonym });
+  }
+
+  // ── Strain-API ───────────────────────────────────────────────────────────
+  async function strainCreate(showPseudonym, data){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    const v = validateStrainData(data); if(!v.ok) throw new Error(v.error);
+    return rpc('community_strain_create', { p_code:_session.code, p_pin:_session.pin, p_show_pseudonym: !!showPseudonym, p_data: data });
+  }
+  async function strainList(filter, limit, offset){
+    return rpc('community_strain_list', { p_filter: filter || null, p_limit: limit || 50, p_offset: offset || 0 });
+  }
+  async function strainUpdateOwn(strainId, data){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    const v = validateStrainData(data); if(!v.ok) throw new Error(v.error);
+    return rpc('community_strain_update_own', { p_code:_session.code, p_pin:_session.pin, p_strain_id: strainId, p_data: data });
+  }
+  async function strainDeleteOwn(strainId){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_strain_delete_own', { p_code:_session.code, p_pin:_session.pin, p_strain_id: strainId });
+  }
+  async function strainProposeEdit(strainId, changes, comment){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_strain_propose_edit', { p_code:_session.code, p_pin:_session.pin, p_strain_id: strainId, p_changes: changes, p_comment: comment || null });
+  }
+  async function strainRate(strainId, stars, comment){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!(stars >= 1 && stars <= 5)) throw new Error('INVALID_STARS');
+    return rpc('community_strain_rate', { p_code:_session.code, p_pin:_session.pin, p_strain_id: strainId, p_stars: stars, p_comment: comment || null });
+  }
+
+  // ── Programm-API ─────────────────────────────────────────────────────────
+  async function programCreate(showPseudonym, data){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    const v = validateProgramData(data); if(!v.ok) throw new Error(v.error);
+    return rpc('community_program_create', { p_code:_session.code, p_pin:_session.pin, p_show_pseudonym: !!showPseudonym, p_data: data });
+  }
+  async function programList(filter, device, limit, offset){
+    return rpc('community_program_list', { p_filter: filter || null, p_device: device || null, p_limit: limit || 50, p_offset: offset || 0 });
+  }
+  async function programUpdateOwn(programId, data){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_program_update_own', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId, p_data: data });
+  }
+  async function programDeleteOwn(programId){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_program_delete_own', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId });
+  }
+  async function programProposeEdit(programId, changes, comment){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_program_propose_edit', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId, p_changes: changes, p_comment: comment || null });
+  }
+  async function programRate(programId, stars, comment){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!(stars >= 1 && stars <= 5)) throw new Error('INVALID_STARS');
+    return rpc('community_program_rate', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId, p_stars: stars, p_comment: comment || null });
+  }
+  async function programLinkStrains(programId, strainIds){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!Array.isArray(strainIds)) throw new Error('INVALID_STRAIN_IDS');
+    return rpc('community_program_link_strains', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId, p_strain_ids: strainIds });
+  }
+  async function programSetDevices(programId, devices){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!validateDevices(devices)) throw new Error('INVALID_DEVICES');
+    return rpc('community_program_set_devices', { p_code:_session.code, p_pin:_session.pin, p_program_id: programId, p_devices: devices });
+  }
+
+  // ── Admin-API ────────────────────────────────────────────────────────────
+  async function adminResolveProposal(proposalId, accept, note){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_admin_resolve_proposal', { p_code:_session.code, p_pin:_session.pin, p_proposal_id: proposalId, p_accept: !!accept, p_note: note || null });
+  }
+  async function adminFlag(targetType, targetId, reason){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!['strain','program'].includes(targetType)) throw new Error('INVALID_TARGET_TYPE');
+    return rpc('community_admin_flag', { p_code:_session.code, p_pin:_session.pin, p_target_type: targetType, p_target_id: targetId, p_reason: reason || null });
+  }
+  async function adminDelete(targetType, targetId){
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    if(!['strain','program'].includes(targetType)) throw new Error('INVALID_TARGET_TYPE');
+    return rpc('community_admin_delete', { p_code:_session.code, p_pin:_session.pin, p_target_type: targetType, p_target_id: targetId });
+  }
+
+  global.communityClient = {
+    // Auth
+    register, login, logout, isLoggedIn, currentSession, pseudonymAvailable,
+    // Strain
+    strainCreate, strainList, strainUpdateOwn, strainDeleteOwn, strainProposeEdit, strainRate,
+    // Program
+    programCreate, programList, programUpdateOwn, programDeleteOwn, programProposeEdit, programRate,
+    programLinkStrains, programSetDevices,
+    // Admin
+    adminResolveProposal, adminFlag, adminDelete,
+    // Helpers (extern testbar)
+    validatePseudonym, validateStrainData, validateProgramData, validateDevices,
+    // Konstanten
+    VALID_DEVICES, VALID_STEP_ACTIONS, PSEUDONYM_RE,
+  };
+})(typeof window!=='undefined' ? window : globalThis);
+
+/* ═══════════════════════════════════════════════════════════════════════════
    v8.5.0-prep: CSC-MODE CLIENT (dormant, hinter PREFS.cscEnabled)
 
    Sicherheitsmodell (siehe CSC-SECURITY.md + csc-backend.sql):
