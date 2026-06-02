@@ -4,136 +4,554 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c0a08">
-<title>Datenschutzerklärung — Sessions (Terp Sessions)</title>
+<meta name="robots" content="noindex">
+<title>Datenschutzerklärung — Terp Sessions</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:#0c0a08;color:#e8e3dc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;line-height:1.6}
-  body{padding:24px 16px}
-  .wrap{max-width:800px;margin:0 auto}
-  h1{font-size:26px;margin-bottom:6px;color:#ff5722}
-  h2{font-size:18px;margin-top:28px;margin-bottom:10px;color:#d8c8b8;border-bottom:1px solid #2d2722;padding-bottom:6px}
-  h3{font-size:15px;margin-top:18px;margin-bottom:6px;color:#cfc7bd}
-  p{margin-bottom:12px;color:#cfc7bd}
-  ul, ol{margin:8px 0 12px 22px;color:#cfc7bd}
-  li{margin-bottom:4px}
-  a{color:#ffb38a}
-  a:hover{color:#ff5722}
-  .meta{font-size:13px;color:#9a8f82;margin-bottom:14px}
-  .toc{background:rgba(255,255,255,.04);border:1px solid #2d2722;border-radius:8px;padding:14px 18px;margin:18px 0 28px}
-  .toc h3{margin-top:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#9a8f82}
-  .toc ol{margin:8px 0 0 22px;font-size:13px}
-  .toc a{text-decoration:none}
-  .preview-banner{background:rgba(255,87,34,.12);border:1px solid rgba(255,87,34,.4);border-radius:8px;padding:14px 16px;margin-bottom:20px;color:#ffb38a;font-size:13px}
-  .back-link{display:inline-block;margin-top:32px;padding:8px 16px;background:rgba(255,255,255,.06);border:1px solid #2d2722;border-radius:6px;color:#e8e3dc;text-decoration:none}
-  .back-link:hover{background:rgba(255,255,255,.1)}
-  code{font-family:Consolas,Menlo,monospace;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:3px;font-size:13px}
-  .footer{margin-top:40px;padding-top:18px;border-top:1px solid #2d2722;font-size:12px;color:#6e655c;text-align:center}
-  @media print { body { background:#fff;color:#000 } h1,h2{color:#000} a{color:#000;text-decoration:underline} .preview-banner,.back-link{display:none} }
+  html,body{
+    background:#0c0a08;color:#e8e3dc;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.6;
+    -webkit-text-size-adjust:100%;
+  }
+  body{padding:20px 16px 80px;max-width:800px;margin:0 auto}
+
+  /* Sprach-Umschalter */
+  .lang-switch{
+    position:sticky;top:0;background:#0c0a08;padding:12px 0;margin:-20px -16px 20px;
+    text-align:center;border-bottom:1px solid #2a2622;z-index:10;
+  }
+  .lang-btn{
+    background:none;border:1px solid #5fb84d;color:#5fb84d;
+    padding:6px 16px;margin:0 4px;border-radius:6px;cursor:pointer;
+    font-size:14px;font-family:inherit;
+  }
+  .lang-btn.active{background:#5fb84d;color:#0c0a08;font-weight:600}
+  .lang-btn:hover{opacity:.85}
+
+  /* Header */
+  header{text-align:center;margin-bottom:32px;padding:20px 0;border-bottom:1px solid #2a2622}
+  h1{font-size:28px;margin-bottom:6px;color:#fff}
+  header .subtitle{color:#888;font-size:15px;font-style:italic}
+  header .meta{color:#666;font-size:13px;margin-top:8px}
+
+  /* Inhaltsverzeichnis */
+  .toc{
+    background:#1a1612;border:1px solid #2a2622;border-radius:8px;
+    padding:16px 20px;margin-bottom:32px;
+  }
+  .toc h2{font-size:14px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+  .toc ul{list-style:none;padding-left:0}
+  .toc li{margin:4px 0}
+  .toc a{color:#5fb84d;text-decoration:none;font-size:14px}
+  .toc a:hover{text-decoration:underline}
+
+  /* Sektionen */
+  section{margin-bottom:36px;scroll-margin-top:80px}
+  h2{
+    font-size:22px;color:#fff;margin-bottom:14px;padding-bottom:6px;
+    border-bottom:1px solid #2a2622;
+  }
+  h3{font-size:16px;color:#5fb84d;margin:18px 0 8px;font-weight:600}
+  p{margin-bottom:10px;color:#cfc9c1}
+  ul{padding-left:22px;margin-bottom:10px}
+  ul li{margin-bottom:6px;color:#cfc9c1}
+  strong{color:#fff}
+  em{color:#a0a0a0;font-style:italic}
+
+  /* Kontakt-Box */
+  .contact-box{
+    background:rgba(95,184,77,.08);border:1px solid rgba(95,184,77,.3);
+    border-radius:8px;padding:14px 16px;margin:14px 0;
+  }
+  .contact-box p{margin-bottom:4px;color:#e8e3dc}
+  .contact-box a{color:#7fd968;text-decoration:none}
+  .contact-box a:hover{text-decoration:underline}
+
+  /* Back-Link */
+  .back-link{
+    text-align:center;margin-top:48px;padding:20px 0;
+    border-top:1px solid #2a2622;
+  }
+  .back-link a{
+    color:#5fb84d;text-decoration:none;font-size:14px;
+    padding:10px 20px;border:1px solid #5fb84d;border-radius:6px;
+    display:inline-block;
+  }
+  .back-link a:hover{background:#5fb84d;color:#0c0a08}
+
+  /* Lang-Toggle */
+  .lang-en{display:none}
+  html[lang="en"] .lang-de{display:none}
+  html[lang="en"] .lang-en{display:block}
+
+  /* Print */
+  @media print{
+    body{background:#fff;color:#000;max-width:none;padding:0}
+    h1,h2,h3{color:#000}
+    p,li,strong{color:#000}
+    .lang-switch,.back-link,.toc{display:none}
+    section{page-break-inside:avoid}
+    a{color:#000;text-decoration:underline}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<h1>Datenschutzerklärung — Sessions Community</h1>
-<p class="meta">Stand: 2. Juni 2026 · Version 2 (Entwurf)</p>
-
-<div class="preview-banner">
-  <b>⚠ Vorschau-Version.</b> Diese Datenschutzerklärung befindet sich in der anwaltlichen Endprüfung. Der vorliegende Text spiegelt den aktuellen Stand wider; Anpassungen können noch erfolgen. Bei Fragen oder Hinweisen: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a>.
+<div class="lang-switch">
+  <button class="lang-btn active" data-lang="de" type="button">Deutsch</button>
+  <button class="lang-btn" data-lang="en" type="button">English</button>
 </div>
 
-<div class="toc">
-  <h3>Inhalt</h3>
-  <ol>
-    <li><a href="#verantwortlicher">Verantwortlicher</a></li>
-    <li><a href="#daten">Welche Daten werden verarbeitet</a></li>
-    <li><a href="#rechtsgrundlage">Rechtsgrundlage</a></li>
-    <li><a href="#empfaenger">Empfänger / Auftragsverarbeiter</a></li>
-    <li><a href="#speicherdauer">Speicherdauer</a></li>
-    <li><a href="#rechte">Rechte der betroffenen Personen</a></li>
-    <li><a href="#cookies">Cookies / Local Storage</a></li>
-    <li><a href="#drittland">Drittland-Transfer</a></li>
-    <li><a href="#aenderungen">Änderungen dieser Erklärung</a></li>
-  </ol>
+<!-- ═══════════════════════════════════════════════ DEUTSCH ═══════════════════════════════════════════════ -->
+<div class="lang-de">
+
+<header>
+  <h1>Datenschutzerklärung</h1>
+  <p class="subtitle">Terp Sessions PWA — Phase 1a/b (Pioneer-Tester)</p>
+  <p class="meta">Stand: 2026-06-02</p>
+</header>
+
+<nav class="toc" aria-label="Inhaltsverzeichnis">
+  <h2>Inhalt</h2>
+  <ul>
+    <li><a href="#vorbemerkung">0. Vorbemerkung zum Projektcharakter</a></li>
+    <li><a href="#verantwortlicher">1. Verantwortlicher</a></li>
+    <li><a href="#dsb">2. Datenschutzbeauftragter</a></li>
+    <li><a href="#daten">3. Welche Daten werden verarbeitet</a></li>
+    <li><a href="#rechtsgrundlage">4. Rechtsgrundlage</a></li>
+    <li><a href="#zweck">5. Zweck der Verarbeitung</a></li>
+    <li><a href="#speicherdauer">6. Speicherdauer</a></li>
+    <li><a href="#empfaenger">7. Empfänger und Drittanbieter</a></li>
+    <li><a href="#rechte">8. Ihre Rechte</a></li>
+    <li><a href="#sicherheit">9. Datensicherheit</a></li>
+    <li><a href="#bluetooth">10. Bluetooth-Funktionalität</a></li>
+    <li><a href="#cookies">11. Cookies und Local Storage</a></li>
+    <li><a href="#automatisierung">12. Automatisierte Entscheidungsfindung</a></li>
+    <li><a href="#aenderungen">13. Änderungen dieser Erklärung</a></li>
+    <li><a href="#kontakt">14. Kontakt</a></li>
+  </ul>
+</nav>
+
+<section id="vorbemerkung">
+  <h2>0. Vorbemerkung zum Projektcharakter</h2>
+  <p>Terp Sessions ist ein privates Open-Source-Forschungsprojekt von Andre Reiche. Es handelt sich nicht um ein kommerzielles Produkt, sondern um eine progressive Web-App (PWA) zur Steuerung von Verdampfer-Geräten (Storz &amp; Bickel Volcano, Crafty, Mighty, Venty, Veazy, PAX, Puffco u.a.) sowie zum optionalen Wissens-Austausch über Cannabis-Sorten und Temperatur-Programme in einer geschlossenen Pioneer-Tester-Gruppe.</p>
+  <p>Die App wird nicht über App-Stores vertrieben, ist nicht öffentlich beworben und steht ausschließlich einer eingeladenen Tester-Gruppe von etwa 10 bis 30 Personen zur Verfügung. Die Nutzung erfolgt freiwillig und auf eigene Verantwortung.</p>
+  <p>Das Projekt verfolgt keine kommerziellen Zwecke und ist nicht mit einer juristischen Person verbunden. Verantwortlicher im Sinne der DSGVO ist eine natürliche Privatperson (siehe Abschnitt 1).</p>
+</section>
+
+<section id="verantwortlicher">
+  <h2>1. Verantwortlicher</h2>
+  <p>Verantwortlicher im Sinne der Datenschutz-Grundverordnung (DSGVO) und anderer datenschutzrechtlicher Bestimmungen ist:</p>
+  <div class="contact-box">
+    <p><strong>Andre Reiche</strong></p>
+    <p>Cappeler Str. 56</p>
+    <p>35039 Marburg</p>
+    <p>Deutschland</p>
+    <p>E-Mail: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
+  </div>
+  <p><em>Die Verarbeitung erfolgt ausschließlich privat. Es besteht keine Verbindung zu einem Verein, einer Firma oder einer sonstigen juristischen Person.</em></p>
+</section>
+
+<section id="dsb">
+  <h2>2. Datenschutzbeauftragter</h2>
+  <p>Da die Verarbeitung in privater Verantwortung einer einzelnen natürlichen Person erfolgt und weder eine regelmäßige systematische Überwachung im großen Umfang noch die Verarbeitung besonderer Kategorien personenbezogener Daten im Sinne von Art. 9 DSGVO im großen Umfang erfolgt, ist nach Auffassung des Verantwortlichen kein Datenschutzbeauftragter zu benennen (Art. 37 DSGVO, §38 BDSG).</p>
+  <p>Bei Fragen zum Datenschutz wenden Sie sich bitte direkt an den unter Abschnitt 1 genannten Verantwortlichen.</p>
+</section>
+
+<section id="daten">
+  <h2>3. Welche Daten werden verarbeitet</h2>
+  <p>Die App speichert standardmäßig den überwiegenden Teil der Daten ausschließlich lokal auf dem Endgerät des Nutzers (im Browser via localStorage). Eine Übertragung an Server erfolgt nur, wenn der Nutzer aktiv die optionale „Community-DB" in den Einstellungen aktiviert und sich mit einem selbstgewählten Pseudonym registriert.</p>
+
+  <h3>3.1 Daten ausschließlich lokal auf dem Endgerät</h3>
+  <p>Folgende Daten verlassen Ihr Endgerät NICHT, solange Sie die Community-DB nicht aktivieren:</p>
+  <ul>
+    <li>Verbindungs-Historie zu Verdampfer-Geräten via Bluetooth (Geräte-Namen, MAC-Adressen)</li>
+    <li>Persönliche Konsum-Sessions (Datum, Zeit, Sorte, Temperatur-Verlauf, Stimmungs-Bewertungen, Notizen)</li>
+    <li>Eigene angelegte Sorten und Temperatur-Programme</li>
+    <li>App-Einstellungen (Theme, Toggle-Zustände, Sprache, etc.)</li>
+    <li>Optionaler PIN-Code zum Sperren der App</li>
+  </ul>
+
+  <h3>3.2 Daten bei aktivierter Community-DB (optional)</h3>
+  <p>Wenn Sie die Community-DB in den Einstellungen aktivieren und sich registrieren, werden folgende Daten an den Cloud-Anbieter Supabase übertragen und dort gespeichert:</p>
+  <ul>
+    <li>Selbstgewähltes Pseudonym (3-24 Zeichen, frei wählbar)</li>
+    <li>Verschlüsselter PIN-Hash (bcrypt-ähnliches Hashverfahren, der Klartext-PIN wird nie übertragen)</li>
+    <li>Eindeutige interne Nutzer-Kennung (Format: CSC-XXXX, automatisch erzeugt)</li>
+    <li>Zufällig erzeugte kryptografische Werte (Salt, IV) — diese werden in Phase 1a/b nicht genutzt, sind aber technisch im Datensatz vorhanden für eine spätere optionale Erweiterung</li>
+    <li>Von Ihnen freiwillig beigetragene Sorten-Einträge (Name, Genetik, Cannabinoid-Werte, Terpene, Effekte, Aromen, Temperatur-Empfehlungen, Beschreibung)</li>
+    <li>Von Ihnen freiwillig beigetragene Temperatur-Programme (Schritte, Geräte-Zuordnung, Sorten-Verknüpfung)</li>
+    <li>Ihre Bewertungen zu Sorten und Programmen (1-5 Blätter, optional Text-Kommentar)</li>
+    <li>Edit-Vorschläge zu Beiträgen anderer Nutzer (Diff der vorgeschlagenen Änderung, optional Kommentar an Moderator)</li>
+    <li>Pro Beitrag eine Sichtbarkeits-Einstellung: „mit Pseudonym" oder „anonym" (anonym = Backend speichert dass es Ihr Beitrag ist, öffentlich sichtbar ist nur „anonym beigetragen")</li>
+  </ul>
+  <p><strong>Hinweis: Es werden KEINE persönlichen Konsumdaten (Wann haben Sie wieviel von welcher Sorte konsumiert?) an Supabase übertragen. Diese bleiben in Phase 1a/b ausschließlich lokal.</strong></p>
+
+  <h3>3.3 Technische Verbindungsdaten</h3>
+  <p>Beim Aufruf der Web-App und bei jeder Backend-Kommunikation fallen folgende technische Daten an, die vom Hosting-Anbieter (GitHub Pages) bzw. dem Datenbank-Anbieter (Supabase) verarbeitet werden:</p>
+  <ul>
+    <li>IP-Adresse</li>
+    <li>Datum und Uhrzeit des Zugriffs</li>
+    <li>Browser-Typ und -Version (User-Agent)</li>
+    <li>Referrer-URL (sofern verfügbar)</li>
+  </ul>
+  <p>Diese Daten werden von den genannten Anbietern unter deren eigener Datenschutz-Verantwortung verarbeitet (siehe Abschnitt 7).</p>
+
+  <h3>3.4 Admin- und Moderations-Logs</h3>
+  <p>Bei Aktionen der Administrator-Rolle (Annehmen/Ablehnen von Edit-Vorschlägen, Ernennung weiterer Admins) wird ein Audit-Log-Eintrag erstellt mit folgenden Daten: Admin-Kennung, Aktion, Ziel-Pseudonym (sofern relevant), Zeitstempel. Dieses Log dient ausschließlich der Nachvollziehbarkeit administrativer Entscheidungen.</p>
+</section>
+
+<section id="rechtsgrundlage">
+  <h2>4. Rechtsgrundlage</h2>
+  <p>Die Verarbeitung Ihrer personenbezogenen Daten erfolgt auf folgenden Rechtsgrundlagen:</p>
+  <ul>
+    <li><strong>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung):</strong> Die Aktivierung der Community-DB und die Registrierung mit einem Pseudonym sowie das Beitragen, Bewerten und Vorschlagen von Inhalten stellt eine ausdrückliche Einwilligung dar. Die Einwilligung wird bei der Registrierung explizit über das Datenschutz-Häkchen erteilt.</li>
+    <li><strong>Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung):</strong> Die Verarbeitung der Registrierungsdaten ist erforderlich, um Ihnen die Funktionen der Community-DB bereitzustellen.</li>
+    <li><strong>Art. 6 Abs. 1 lit. f DSGVO (Berechtigtes Interesse):</strong> Die Speicherung technischer Verbindungsdaten und Moderations-Audit-Logs erfolgt auf Basis des berechtigten Interesses des Verantwortlichen an der technischen Funktionsfähigkeit, Sicherheit und Nachvollziehbarkeit administrativer Entscheidungen.</li>
+  </ul>
+  <p>Eine erteilte Einwilligung können Sie jederzeit mit Wirkung für die Zukunft widerrufen, indem Sie Ihren Account löschen (siehe Abschnitt 8).</p>
+</section>
+
+<section id="zweck">
+  <h2>5. Zweck der Verarbeitung</h2>
+  <p>Die Verarbeitung personenbezogener Daten erfolgt zu folgenden Zwecken:</p>
+  <ul>
+    <li>Bereitstellung der Steuerungs-Funktionalität für Verdampfer-Geräte (lokal auf dem Endgerät)</li>
+    <li>Optionaler Wissens-Austausch innerhalb der geschlossenen Pioneer-Tester-Gruppe über Sorten und Temperatur-Programme (Community-DB)</li>
+    <li>Qualitätssicherung der Community-Beiträge durch Moderation (Edit-Vorschläge, Flagging)</li>
+    <li>Sicherstellung der technischen Funktionsfähigkeit und Abwehr von Missbrauch</li>
+    <li>Nachvollziehbarkeit administrativer Entscheidungen durch Audit-Logs</li>
+  </ul>
+</section>
+
+<section id="speicherdauer">
+  <h2>6. Speicherdauer</h2>
+  <ul>
+    <li><strong>Lokale Daten auf Ihrem Endgerät:</strong> Solange Sie die App installiert haben und den Browser-Speicher nicht löschen. Sie können diese Daten jederzeit über die Browser-Einstellungen oder die App-Funktion „Alle Daten zurücksetzen" entfernen.</li>
+    <li><strong>Community-DB-Konto und Beiträge:</strong> Bis zur aktiven Löschung des Accounts durch Sie selbst. Bei Löschung werden alle Ihre Beiträge, Bewertungen, Edit-Vorschläge sowie die Audit-Log-Einträge zu Ihrem Account per Cascade-Delete automatisch entfernt.</li>
+    <li><strong>Technische Verbindungsdaten (Server-Logs):</strong> Entsprechend der Standard-Aufbewahrungsfristen der jeweiligen Anbieter (GitHub Pages, Supabase). Der Verantwortliche hat hierauf keinen direkten Einfluss.</li>
+    <li><strong>Backup-Daten bei Supabase:</strong> Supabase erstellt automatische Backups. Eine vollständige Löschung von Daten aus Backups kann je nach Vertragsmodell mit Supabase einige Tage benötigen.</li>
+  </ul>
+</section>
+
+<section id="empfaenger">
+  <h2>7. Empfänger und Drittanbieter</h2>
+  <p>Die App nutzt folgende Drittanbieter:</p>
+
+  <h3>7.1 GitHub Pages (Microsoft Corporation)</h3>
+  <p>Hosting der statischen Web-App-Dateien. Anbieter: GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA — eine Tochtergesellschaft der Microsoft Corporation.</p>
+  <p>URL: <a href="https://123ichbinmitdabei.github.io/terp-sessions/">https://123ichbinmitdabei.github.io/terp-sessions/</a></p>
+  <p>Übertragung in die USA, gestützt auf den EU-US Data Privacy Framework Beschluss der Europäischen Kommission vom 10.07.2023.</p>
+  <p>Datenschutzerklärung GitHub: <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">docs.github.com/en/site-policy/privacy-policies/github-privacy-statement</a></p>
+
+  <h3>7.2 Supabase (Datenbank-Anbieter)</h3>
+  <p>Cloud-Datenbank für die Community-DB. Anbieter: Supabase Inc., 970 Toa Payoh North #07-04, Singapur 318992.</p>
+  <p>Server-Region: eu-west-1 (Dublin, Irland) — Daten werden ausschließlich innerhalb der Europäischen Union gespeichert und verarbeitet.</p>
+  <p>Datenschutzerklärung Supabase: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></p>
+</section>
+
+<section id="rechte">
+  <h2>8. Ihre Rechte</h2>
+  <p>Sie haben das Recht:</p>
+  <ul>
+    <li>Auskunft über die zu Ihrer Person gespeicherten Daten zu erhalten (Art. 15 DSGVO)</li>
+    <li>Berichtigung unrichtiger Daten zu verlangen (Art. 16 DSGVO)</li>
+    <li>Löschung Ihrer Daten zu verlangen (Art. 17 DSGVO) — direkt über die App-Funktion „Account löschen" oder durch Mitteilung an den Verantwortlichen</li>
+    <li>Einschränkung der Verarbeitung zu verlangen (Art. 18 DSGVO)</li>
+    <li>Ihre Daten in einem strukturierten, gängigen Format zu erhalten (Datenübertragbarkeit, Art. 20 DSGVO) — die App bietet hierfür eine CSV/JSON-Export-Funktion</li>
+    <li>Widerspruch gegen die Verarbeitung einzulegen (Art. 21 DSGVO)</li>
+    <li>Eingelegte Einwilligungen jederzeit zu widerrufen (Art. 7 Abs. 3 DSGVO)</li>
+    <li>Beschwerde bei einer Datenschutz-Aufsichtsbehörde einzulegen (Art. 77 DSGVO). Zuständig ist der <strong>Hessische Beauftragte für Datenschutz und Informationsfreiheit</strong>, Postfach 3163, 65021 Wiesbaden, E-Mail: <a href="mailto:poststelle@datenschutz.hessen.de">poststelle@datenschutz.hessen.de</a></li>
+  </ul>
+</section>
+
+<section id="sicherheit">
+  <h2>9. Datensicherheit</h2>
+  <p>Der Verantwortliche trifft folgende technische und organisatorische Maßnahmen (TOM) im Sinne von Art. 32 DSGVO:</p>
+  <ul>
+    <li>Verschlüsselte Übertragung sämtlicher Daten zwischen Endgerät und Servern via HTTPS/TLS</li>
+    <li>PIN-Codes werden ausschließlich als bcrypt-ähnlicher Hash gespeichert, niemals im Klartext</li>
+    <li>Datenbank-Zugriff über Row-Level-Security (RLS): direkter Lesezugriff auf Tabellen ist blockiert, nur über autorisierte Funktions-Aufrufe (RPCs) mit PIN-Verifikation möglich</li>
+    <li>Schutz gegen Brute-Force-Angriffe durch Failed-Attempts-Lockout im Backend</li>
+    <li>Cascade-Delete: Bei Account-Löschung werden alle abhängigen Daten automatisch entfernt</li>
+    <li>Live-Selbst-Angriffe vor Inbetriebnahme jeder neuen Backend-Version durchgeführt</li>
+    <li>Anonymisierungs-Option pro Beitrag (auch eingeloggte Nutzer können Beiträge ohne sichtbares Pseudonym leisten)</li>
+  </ul>
+</section>
+
+<section id="bluetooth">
+  <h2>10. Bluetooth-Funktionalität</h2>
+  <p>Die App verbindet sich via Web-Bluetooth-API direkt mit Verdampfer-Geräten. Diese Verbindung erfolgt ausschließlich zwischen Ihrem Endgerät und dem Verdampfer; es findet kein Datenaustausch mit Servern des Verantwortlichen oder Dritter statt.</p>
+  <p>Die Bluetooth-Berechtigung wird vom Browser bei der ersten Verbindung explizit abgefragt. Sie können diese Berechtigung jederzeit in den Browser-Einstellungen widerrufen.</p>
+</section>
+
+<section id="cookies">
+  <h2>11. Cookies und Local Storage</h2>
+  <p>Die App setzt <strong>KEINE Tracking-Cookies</strong> und nutzt <strong>KEINE Analyse-Dienste</strong> wie Google Analytics, Matomo oder ähnliches.</p>
+  <p>Die App nutzt ausschließlich Browser-Local-Storage und Service-Worker-Cache für folgende Zwecke:</p>
+  <ul>
+    <li>Speicherung Ihrer App-Einstellungen und persönlichen Konsum-Daten (siehe Abschnitt 3.1)</li>
+    <li>Offline-Verfügbarkeit der App (Progressive Web App)</li>
+  </ul>
+  <p>Diese Daten verlassen Ihr Endgerät nicht und werden nicht an Dritte übertragen.</p>
+</section>
+
+<section id="automatisierung">
+  <h2>12. Automatisierte Entscheidungsfindung</h2>
+  <p>Es findet <strong>keine automatisierte Entscheidungsfindung</strong> einschließlich Profiling im Sinne von Art. 22 DSGVO statt. Alle Moderations-Entscheidungen werden manuell durch menschliche Administratoren getroffen.</p>
+</section>
+
+<section id="aenderungen">
+  <h2>13. Änderungen dieser Erklärung</h2>
+  <p>Der Verantwortliche behält sich vor, diese Datenschutzerklärung anzupassen, sofern dies aufgrund von Änderungen der Funktionalität oder gesetzlichen Vorgaben notwendig wird. Die jeweils aktuelle Fassung wird in der App und im Code-Repository veröffentlicht.</p>
+  <p>Bei wesentlichen Änderungen werden registrierte Nutzer über einen In-App-Hinweis informiert (E-Mail-Adressen werden nicht gespeichert).</p>
+</section>
+
+<section id="kontakt">
+  <h2>14. Kontakt</h2>
+  <p>Bei Fragen zu dieser Datenschutzerklärung oder zur Ausübung Ihrer Rechte wenden Sie sich an:</p>
+  <div class="contact-box">
+    <p><strong>Andre Reiche</strong></p>
+    <p>Cappeler Str. 56</p>
+    <p>35039 Marburg</p>
+    <p>E-Mail: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
+  </div>
+</section>
+
 </div>
 
-<h2 id="verantwortlicher">1. Verantwortlicher</h2>
-<p>Verantwortlicher im Sinne der DSGVO ist:</p>
-<p><b>Andre Reiche</b>, privat, Sessions PWA / Community-Plattform (Terp Sessions).<br>
-Kontakt: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
-<p><i>Hinweis:</i> Sessions ist ein privates, nicht-kommerzielles Pioneer-Tester-Projekt. Sollte zukünftig eine juristische Trägerschaft (Verein) gegründet werden, wird die Verantwortlichkeit dorthin übertragen; Nutzerinnen und Nutzer werden über die App über einen solchen Wechsel informiert.</p>
+<!-- ═══════════════════════════════════════════════ ENGLISH ═══════════════════════════════════════════════ -->
+<div class="lang-en">
 
-<h2 id="daten">2. Welche Daten werden verarbeitet</h2>
-<p>Sessions Community ist eine Web-Anwendung (Progressive Web App, PWA), die das Teilen von Cannabis-Sorten-Informationen, Verdampfer-Programmen und Bewertungen unter pseudonymisierten Nutzerinnen und Nutzern ermöglicht.</p>
+<header>
+  <h1>Privacy Policy</h1>
+  <p class="subtitle">Terp Sessions PWA — Phase 1a/b (Pioneer Testers)</p>
+  <p class="meta">Last updated: 2026-06-02</p>
+</header>
 
-<h3>a) Pseudonym</h3>
-<p>Frei wählbare Bezeichnung (3–24 Zeichen, alphanumerisch). Eindeutig in der Community-Datenbank. Hinweis: bitte keine personenbezogenen Daten (Klarname, E-Mail-Bestandteile, Telefonnummer) als Pseudonym wählen.</p>
+<nav class="toc" aria-label="Table of Contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#vorbemerkung">0. Preamble on Project Character</a></li>
+    <li><a href="#verantwortlicher">1. Controller</a></li>
+    <li><a href="#dsb">2. Data Protection Officer</a></li>
+    <li><a href="#daten">3. Which Data is Processed</a></li>
+    <li><a href="#rechtsgrundlage">4. Legal Basis</a></li>
+    <li><a href="#zweck">5. Purpose of Processing</a></li>
+    <li><a href="#speicherdauer">6. Storage Duration</a></li>
+    <li><a href="#empfaenger">7. Recipients and Third Parties</a></li>
+    <li><a href="#rechte">8. Your Rights</a></li>
+    <li><a href="#sicherheit">9. Data Security</a></li>
+    <li><a href="#bluetooth">10. Bluetooth Functionality</a></li>
+    <li><a href="#cookies">11. Cookies and Local Storage</a></li>
+    <li><a href="#automatisierung">12. Automated Decision-Making</a></li>
+    <li><a href="#aenderungen">13. Changes to this Policy</a></li>
+    <li><a href="#kontakt">14. Contact</a></li>
+  </ul>
+</nav>
 
-<h3>b) PIN (verschlüsselt)</h3>
-<p>Vom Nutzer selbst gewählter numerischer Code (4–12 Ziffern). Wird vor Speicherung mit dem bcrypt-Algorithmus gehasht. Klartext-PIN wird niemals geloggt oder persistiert. Übertragung ausschließlich über HTTPS / TLS.</p>
+<section>
+  <h2>0. Preamble on Project Character</h2>
+  <p>Terp Sessions is a private open-source research project by Andre Reiche. It is not a commercial product but a progressive web application (PWA) for controlling vaporizer devices (Storz &amp; Bickel Volcano, Crafty, Mighty, Venty, Veazy, PAX, Puffco and others) and for the optional exchange of knowledge about cannabis strains and temperature programs within a closed pioneer-tester group.</p>
+  <p>The app is not distributed through app stores, is not publicly advertised, and is exclusively available to an invited tester group of approximately 10 to 30 people. Use is voluntary and at the user's own responsibility.</p>
+  <p>The project pursues no commercial purposes and is not associated with a legal entity. The controller within the meaning of the GDPR is a natural private individual (see Section 1).</p>
+</section>
 
-<h3>c) Eigene Beiträge</h3>
-<p>Frei eingegebene Sorten- und Programm-Daten (Name, Beschreibung, Genetik, THC/CBD-Anteile, Terpene, Effekte, Aromen, Temperaturbereiche, Verdampfer-Programm-Sequenzen). Beiträge werden mit dem Pseudonym verknüpft, sofern nicht „anonym beitragen" gewählt wird.</p>
+<section>
+  <h2>1. Controller</h2>
+  <p>The controller within the meaning of the General Data Protection Regulation (GDPR) and other data protection laws is:</p>
+  <div class="contact-box">
+    <p><strong>Andre Reiche</strong></p>
+    <p>Cappeler Str. 56</p>
+    <p>35039 Marburg, Germany</p>
+    <p>Email: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
+  </div>
+  <p><em>Processing occurs exclusively in a private capacity. There is no connection to any association, company, or other legal entity.</em></p>
+</section>
 
-<h3>d) Bewertungen</h3>
-<p>1- bis 5-Blätter-Bewertungen und optionale Kommentare zu Sorten und Programmen anderer. Aggregierter Mittelwert öffentlich; individuelle Bewerter-Liste nicht öffentlich.</p>
+<section>
+  <h2>2. Data Protection Officer</h2>
+  <p>Since processing is conducted under the private responsibility of a single natural person, and neither regular systematic monitoring on a large scale nor the processing of special categories of personal data within the meaning of Art. 9 GDPR on a large scale takes place, in the controller's opinion no Data Protection Officer needs to be appointed (Art. 37 GDPR, §38 BDSG).</p>
+  <p>For questions regarding data protection, please contact the controller listed in Section 1 directly.</p>
+</section>
 
-<h3>e) Vorschläge zur Bearbeitung fremder Beiträge</h3>
-<p>Vorschläge zur Korrektur/Ergänzung fremder Einträge mit Diff der vorgeschlagenen Änderungen und optionalem Admin-Kommentar.</p>
+<section>
+  <h2>3. Which Data is Processed</h2>
+  <p>By default, the app stores the majority of data exclusively locally on the user's device (in the browser via localStorage). Data is only transmitted to servers when the user actively enables the optional "Community DB" in settings and registers with a self-chosen pseudonym.</p>
 
-<h3>f) Admin-Audit-Logs</h3>
-<p>Moderations-Entscheidungen werden mit Zeitstempel und Aktor-Pseudonym im Audit-Log gespeichert. Nur für Admins sichtbar.</p>
+  <h3>3.1 Data exclusively local on the device</h3>
+  <p>The following data does NOT leave your device as long as you do not activate the Community DB:</p>
+  <ul>
+    <li>Connection history with vaporizer devices via Bluetooth (device names, MAC addresses)</li>
+    <li>Personal consumption sessions (date, time, strain, temperature progression, mood ratings, notes)</li>
+    <li>Self-created strains and temperature programs</li>
+    <li>App settings (theme, toggle states, language, etc.)</li>
+    <li>Optional PIN code for app lock</li>
+  </ul>
 
-<h3>g) Technische Metadaten beim Aufruf</h3>
-<p>IP-Adresse, Browser-User-Agent, Zeitstempel durch die jeweiligen Auftragsverarbeiter (Supabase, GitHub Pages) kurzfristig zur Missbrauchserkennung. Wird nicht in der Community-Datenbank gespeichert.</p>
+  <h3>3.2 Data when Community DB is activated (optional)</h3>
+  <p>If you activate the Community DB in settings and register, the following data is transmitted to the cloud provider Supabase and stored there:</p>
+  <ul>
+    <li>Self-chosen pseudonym (3-24 characters, freely selectable)</li>
+    <li>Encrypted PIN hash (bcrypt-like hashing, the plain PIN is never transmitted)</li>
+    <li>Unique internal user identifier (format: CSC-XXXX, automatically generated)</li>
+    <li>Randomly generated cryptographic values (salt, IV) — not used in Phase 1a/b but technically present in the record for later optional extension</li>
+    <li>Strain entries you voluntarily contribute (name, genetics, cannabinoid values, terpenes, effects, aromas, temperature recommendations, description)</li>
+    <li>Temperature programs you voluntarily contribute (steps, device assignment, strain linkage)</li>
+    <li>Your ratings of strains and programs (1-5 leaves, optional text comment)</li>
+    <li>Edit proposals for other users' contributions (diff of proposed change, optional comment to moderator)</li>
+    <li>Per contribution a visibility setting: with-pseudonym or anonymous (anonymous = backend stores that it is your contribution, but publicly visible is only "anonymously contributed")</li>
+  </ul>
+  <p><strong>Note: NO personal consumption data (when did you consume how much of which strain?) is transmitted to Supabase. This remains exclusively local in Phase 1a/b.</strong></p>
 
-<h3>h) Lokale Speicherung auf dem Endgerät</h3>
-<p>Einstellungen (Theme, Onboarding-Status, lokales Sessions-Tagebuch, eigene Sorten/Programme) ausschließlich im Local-Storage des Browsers. Verlassen das Endgerät nur bei aktiver Community-Funktion.</p>
+  <h3>3.3 Technical connection data</h3>
+  <p>When accessing the web app and during all backend communication, the following technical data is processed by the hosting provider (GitHub Pages) or the database provider (Supabase): IP address, date and time of access, browser type and version (user agent), referrer URL (if available). These data are processed by the named providers under their own data protection responsibility (see Section 7).</p>
 
-<h2 id="rechtsgrundlage">3. Rechtsgrundlage</h2>
-<p>Verarbeitung der unter Ziffer 2 lit. a–f genannten Daten: Art. 6 Abs. 1 lit. b DSGVO (Erfüllung des durch die Nutzungsbedingungen begründeten Vertrags).</p>
-<p>Technische Metadaten (Ziffer 2 lit. g): Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Missbrauchserkennung).</p>
-<p>Lokale Speicherung (Ziffer 2 lit. h): Teil der technischen Funktion, keine eigene Verarbeitungshandlung des Verantwortlichen.</p>
+  <h3>3.4 Admin and moderation logs</h3>
+  <p>Administrator-role actions (accepting/rejecting edit proposals, appointing further admins) create an audit log entry with: admin identifier, action, target pseudonym (if relevant), timestamp. This log serves exclusively for the traceability of administrative decisions.</p>
+</section>
 
-<h2 id="empfaenger">4. Empfänger / Auftragsverarbeiter</h2>
+<section>
+  <h2>4. Legal Basis</h2>
+  <p>Processing of your personal data is based on the following legal grounds:</p>
+  <ul>
+    <li><strong>Art. 6(1)(a) GDPR (consent):</strong> Activation of the Community DB and registration with a pseudonym, as well as contributing, rating and proposing content, constitutes explicit consent. Consent is explicitly given during registration via the data protection checkbox.</li>
+    <li><strong>Art. 6(1)(b) GDPR (contract performance):</strong> Processing of registration data is necessary to provide you the Community DB functionality.</li>
+    <li><strong>Art. 6(1)(f) GDPR (legitimate interest):</strong> Storage of technical connection data and moderation audit logs is based on the controller's legitimate interest in technical functionality, security, and traceability of administrative decisions.</li>
+  </ul>
+  <p>A consent given can be revoked at any time with effect for the future by deleting your account (see Section 8).</p>
+</section>
 
-<h3>Supabase Inc.</h3>
-<p>Bereitstellung von Datenbank, Authentifizierung und API. Hauptsitz Singapore, operative EU-Verarbeitung im Cluster eu-west-1 (Irland). Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.</p>
+<section>
+  <h2>5. Purpose of Processing</h2>
+  <p>Personal data processing serves the following purposes:</p>
+  <ul>
+    <li>Provision of vaporizer device control functionality (locally on the device)</li>
+    <li>Optional knowledge exchange within the closed pioneer-tester group about strains and temperature programs (Community DB)</li>
+    <li>Quality assurance of community contributions through moderation (edit proposals, flagging)</li>
+    <li>Ensuring technical functionality and prevention of misuse</li>
+    <li>Traceability of administrative decisions via audit logs</li>
+  </ul>
+</section>
 
-<h3>GitHub Inc. / GitHub Pages</h3>
-<p>Bereitstellung des statischen App-Codes über GitHub-Pages-CDN. Hauptsitz San Francisco, USA. EU-Standardvertragsklauseln Teil des GitHub Customer Agreement. GitHub erhält ausschließlich Requests für statische Asset-Dateien (kein Datenbank-Zugriff).</p>
+<section>
+  <h2>6. Storage Duration</h2>
+  <ul>
+    <li><strong>Local data on your device:</strong> as long as you have the app installed and do not clear browser storage. You can remove this data at any time via browser settings or the in-app "Reset all data" function.</li>
+    <li><strong>Community DB account and contributions:</strong> until you actively delete the account. Upon deletion, all your contributions, ratings, edit proposals, and audit log entries are automatically removed via cascade delete.</li>
+    <li><strong>Technical connection data (server logs):</strong> per the standard retention of the respective providers (GitHub Pages, Supabase).</li>
+    <li><strong>Backup data at Supabase:</strong> Supabase creates automatic backups. Complete data deletion from backups may take a few days depending on the contract model.</li>
+  </ul>
+</section>
 
-<p>Eine Weitergabe an Dritte zu Werbe- oder Tracking-Zwecken findet <b>nicht</b> statt.</p>
+<section>
+  <h2>7. Recipients and Third Parties</h2>
+  <p>The app uses the following third-party providers:</p>
 
-<h2 id="speicherdauer">5. Speicherdauer</h2>
-<p>Pseudonym, PIN-Hash und Beiträge: bis zur Account-Löschung. Bei Löschung werden alle eigenen Datensätze (eigene Beiträge, Bewertungen, Vorschläge, Audit-Einträge) per Foreign-Key-CASCADE mitgelöscht.</p>
-<p>Datenbank-Backups: 7 Tage Aufbewahrung beim Auftragsverarbeiter Supabase.</p>
+  <h3>7.1 GitHub Pages (Microsoft Corporation)</h3>
+  <p>Static web app hosting. Provider: GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA — a subsidiary of Microsoft Corporation.</p>
+  <p>URL: <a href="https://123ichbinmitdabei.github.io/terp-sessions/">https://123ichbinmitdabei.github.io/terp-sessions/</a></p>
+  <p>Transfer to the USA based on the EU-US Data Privacy Framework adequacy decision of the European Commission of 10.07.2023.</p>
+  <p>GitHub privacy policy: <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">docs.github.com/en/site-policy/privacy-policies/github-privacy-statement</a></p>
 
-<h2 id="rechte">6. Rechte der betroffenen Personen</h2>
-<ul>
-  <li><b>Auskunft</b> (Art. 15 DSGVO) — Anfrage per E-Mail</li>
-  <li><b>Berichtigung</b> (Art. 16) — über die App (Edit-Modus eigener Beiträge) oder per E-Mail</li>
-  <li><b>Löschung</b> (Art. 17) — über die App oder per E-Mail; Beantwortung innerhalb 30 Tage</li>
-  <li><b>Einschränkung</b> (Art. 18)</li>
-  <li><b>Datenübertragbarkeit</b> (Art. 20) — JSON-Export über die App-Einstellungen</li>
-  <li><b>Widerspruch</b> (Art. 21) — bezüglich Verarbeitung auf Basis Art. 6 Abs. 1 lit. f</li>
-  <li><b>Beschwerde bei Aufsichtsbehörde</b> (Art. 77)</li>
-</ul>
+  <h3>7.2 Supabase (Database Provider)</h3>
+  <p>Cloud database for the Community DB. Provider: Supabase Inc., 970 Toa Payoh North #07-04, Singapore 318992.</p>
+  <p>Server region: eu-west-1 (Dublin, Ireland) — data is stored and processed exclusively within the European Union.</p>
+  <p>Supabase privacy policy: <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></p>
+</section>
 
-<h2 id="cookies">7. Cookies / Local Storage</h2>
-<p>Die App setzt <b>keine Tracking-Cookies</b> und nutzt <b>keinen Werbe- oder Analytics-Dienstleister</b>. Im Local-Storage liegen ausschließlich App-Einstellungen, Onboarding-Status, lokales Sessions-Tagebuch, eigene Sorten/Programme, Cache-Daten. Löschen jederzeit über Browser-Einstellungen oder die App-eigene Funktion möglich.</p>
+<section>
+  <h2>8. Your Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li>Receive information about the data stored about you (Art. 15 GDPR)</li>
+    <li>Demand rectification of inaccurate data (Art. 16 GDPR)</li>
+    <li>Demand erasure of your data (Art. 17 GDPR) — directly via the in-app "Delete account" function or by contacting the controller</li>
+    <li>Demand restriction of processing (Art. 18 GDPR)</li>
+    <li>Receive your data in a structured, common format (data portability, Art. 20 GDPR) — CSV/JSON export available in the app</li>
+    <li>Object to processing (Art. 21 GDPR)</li>
+    <li>Revoke consents at any time (Art. 7(3) GDPR)</li>
+    <li>File a complaint with a data protection supervisory authority (Art. 77 GDPR). Competent: <strong>Hessischer Beauftragter für Datenschutz und Informationsfreiheit</strong>, Postfach 3163, 65021 Wiesbaden, Germany, email: <a href="mailto:poststelle@datenschutz.hessen.de">poststelle@datenschutz.hessen.de</a></li>
+  </ul>
+</section>
 
-<h2 id="drittland">8. Drittland-Transfer</h2>
-<p>Operative Datenverarbeitung im EU-Raum (Supabase-Region eu-west-1, Irland). Ein Drittland-Transfer i.S.v. Art. 44 ff. DSGVO findet durch die Verarbeitung selbst nicht statt. Die Muttergesellschaften der Auftragsverarbeiter (Supabase Inc., GitHub Inc.) haben Sitz außerhalb der EU; die Auftragsverarbeitungsverträge und Standardvertragsklauseln regeln die Zulässigkeit etwaiger Behördenzugriffe.</p>
+<section>
+  <h2>9. Data Security</h2>
+  <p>Technical and organizational measures (TOM) per Art. 32 GDPR:</p>
+  <ul>
+    <li>HTTPS/TLS encryption of all data in transit</li>
+    <li>PIN codes stored as bcrypt-like hash only, never plain text</li>
+    <li>Row-Level-Security on database; access only via authorized RPCs with PIN verification</li>
+    <li>Brute-force protection via failed-attempts lockout</li>
+    <li>Cascade-delete of all dependent data on account deletion</li>
+    <li>Live self-attack testing before each new backend version goes live</li>
+    <li>Per-contribution anonymity option</li>
+  </ul>
+</section>
 
-<h2 id="aenderungen">9. Änderungen dieser Datenschutzerklärung</h2>
-<p>Diese Datenschutzerklärung kann angepasst werden, wenn sich Funktionen der Anwendung oder Rechtsvorschriften ändern. Die jeweils aktuelle Fassung ist über die App erreichbar. Nutzerinnen und Nutzer werden über wesentliche Änderungen informiert.</p>
+<section>
+  <h2>10. Bluetooth Functionality</h2>
+  <p>The app connects via Web Bluetooth API directly to vaporizer devices. This connection occurs exclusively between your device and the vaporizer; no data exchange with servers of the controller or third parties takes place.</p>
+  <p>Bluetooth permission is explicitly requested by the browser on first connection. You can revoke this permission at any time in browser settings.</p>
+</section>
 
-<a class="back-link" href="./">← Zurück zur App</a>
+<section>
+  <h2>11. Cookies and Local Storage</h2>
+  <p>The app sets <strong>NO tracking cookies</strong> and uses <strong>NO analytics services</strong> such as Google Analytics, Matomo or similar. The app uses browser local storage and service worker cache only for: storing your app settings and personal consumption data, and offline availability (PWA). This data does not leave your device.</p>
+</section>
 
-<div class="footer">
-  Terp Sessions — Privates Pioneer-Projekt von Andre Reiche · Datenschutzerklärung v2 (Entwurf)
+<section>
+  <h2>12. Automated Decision-Making</h2>
+  <p>No automated decision-making including profiling within the meaning of Art. 22 GDPR takes place. All moderation decisions are made manually by human administrators.</p>
+</section>
+
+<section>
+  <h2>13. Changes to this Policy</h2>
+  <p>The controller reserves the right to adjust this privacy policy if necessary due to changes in functionality or legal requirements. The current version is published in the app and in the code repository. For material changes, registered users will be informed via an in-app notice (email addresses are not stored).</p>
+</section>
+
+<section>
+  <h2>14. Contact</h2>
+  <p>For questions about this privacy policy or to exercise your rights, please contact:</p>
+  <div class="contact-box">
+    <p><strong>Andre Reiche</strong></p>
+    <p>Cappeler Str. 56</p>
+    <p>35039 Marburg, Germany</p>
+    <p>Email: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
+  </div>
+</section>
+
 </div>
 
+<div class="back-link">
+  <a href="./">← <span class="lang-de">Zurück zur App</span><span class="lang-en">Back to App</span></a>
 </div>
+
+<script>
+  // Sprach-Umschalter
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+      // Titel anpassen
+      document.title = lang === 'en'
+        ? 'Privacy Policy — Terp Sessions'
+        : 'Datenschutzerklärung — Terp Sessions';
+      // Scroll zum Anfang
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+  // Initial-Lang aus URL-Hash (#en oder ?lang=en)
+  const urlLang = new URLSearchParams(location.search).get('lang') 
+                || (location.hash === '#en' ? 'en' : null);
+  if(urlLang === 'en'){
+    document.querySelector('.lang-btn[data-lang="en"]').click();
+  }
+</script>
+
 </body>
 </html>
