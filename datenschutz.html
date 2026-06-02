@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0a08">
+<title>Datenschutzerklärung — Sessions (Terp Sessions)</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#0c0a08;color:#e8e3dc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;line-height:1.6}
+  body{padding:24px 16px}
+  .wrap{max-width:800px;margin:0 auto}
+  h1{font-size:26px;margin-bottom:6px;color:#ff5722}
+  h2{font-size:18px;margin-top:28px;margin-bottom:10px;color:#d8c8b8;border-bottom:1px solid #2d2722;padding-bottom:6px}
+  h3{font-size:15px;margin-top:18px;margin-bottom:6px;color:#cfc7bd}
+  p{margin-bottom:12px;color:#cfc7bd}
+  ul, ol{margin:8px 0 12px 22px;color:#cfc7bd}
+  li{margin-bottom:4px}
+  a{color:#ffb38a}
+  a:hover{color:#ff5722}
+  .meta{font-size:13px;color:#9a8f82;margin-bottom:14px}
+  .toc{background:rgba(255,255,255,.04);border:1px solid #2d2722;border-radius:8px;padding:14px 18px;margin:18px 0 28px}
+  .toc h3{margin-top:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#9a8f82}
+  .toc ol{margin:8px 0 0 22px;font-size:13px}
+  .toc a{text-decoration:none}
+  .preview-banner{background:rgba(255,87,34,.12);border:1px solid rgba(255,87,34,.4);border-radius:8px;padding:14px 16px;margin-bottom:20px;color:#ffb38a;font-size:13px}
+  .back-link{display:inline-block;margin-top:32px;padding:8px 16px;background:rgba(255,255,255,.06);border:1px solid #2d2722;border-radius:6px;color:#e8e3dc;text-decoration:none}
+  .back-link:hover{background:rgba(255,255,255,.1)}
+  code{font-family:Consolas,Menlo,monospace;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:3px;font-size:13px}
+  .footer{margin-top:40px;padding-top:18px;border-top:1px solid #2d2722;font-size:12px;color:#6e655c;text-align:center}
+  @media print { body { background:#fff;color:#000 } h1,h2{color:#000} a{color:#000;text-decoration:underline} .preview-banner,.back-link{display:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Datenschutzerklärung — Sessions Community</h1>
+<p class="meta">Stand: 2. Juni 2026 · Version 2 (Entwurf)</p>
+
+<div class="preview-banner">
+  <b>⚠ Vorschau-Version.</b> Diese Datenschutzerklärung befindet sich in der anwaltlichen Endprüfung. Der vorliegende Text spiegelt den aktuellen Stand wider; Anpassungen können noch erfolgen. Bei Fragen oder Hinweisen: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a>.
+</div>
+
+<div class="toc">
+  <h3>Inhalt</h3>
+  <ol>
+    <li><a href="#verantwortlicher">Verantwortlicher</a></li>
+    <li><a href="#daten">Welche Daten werden verarbeitet</a></li>
+    <li><a href="#rechtsgrundlage">Rechtsgrundlage</a></li>
+    <li><a href="#empfaenger">Empfänger / Auftragsverarbeiter</a></li>
+    <li><a href="#speicherdauer">Speicherdauer</a></li>
+    <li><a href="#rechte">Rechte der betroffenen Personen</a></li>
+    <li><a href="#cookies">Cookies / Local Storage</a></li>
+    <li><a href="#drittland">Drittland-Transfer</a></li>
+    <li><a href="#aenderungen">Änderungen dieser Erklärung</a></li>
+  </ol>
+</div>
+
+<h2 id="verantwortlicher">1. Verantwortlicher</h2>
+<p>Verantwortlicher im Sinne der DSGVO ist:</p>
+<p><b>Andre Reiche</b>, privat, Sessions PWA / Community-Plattform (Terp Sessions).<br>
+Kontakt: <a href="mailto:123ichbinmitdabei@googlemail.com">123ichbinmitdabei@googlemail.com</a></p>
+<p><i>Hinweis:</i> Sessions ist ein privates, nicht-kommerzielles Pioneer-Tester-Projekt. Sollte zukünftig eine juristische Trägerschaft (Verein) gegründet werden, wird die Verantwortlichkeit dorthin übertragen; Nutzerinnen und Nutzer werden über die App über einen solchen Wechsel informiert.</p>
+
+<h2 id="daten">2. Welche Daten werden verarbeitet</h2>
+<p>Sessions Community ist eine Web-Anwendung (Progressive Web App, PWA), die das Teilen von Cannabis-Sorten-Informationen, Verdampfer-Programmen und Bewertungen unter pseudonymisierten Nutzerinnen und Nutzern ermöglicht.</p>
+
+<h3>a) Pseudonym</h3>
+<p>Frei wählbare Bezeichnung (3–24 Zeichen, alphanumerisch). Eindeutig in der Community-Datenbank. Hinweis: bitte keine personenbezogenen Daten (Klarname, E-Mail-Bestandteile, Telefonnummer) als Pseudonym wählen.</p>
+
+<h3>b) PIN (verschlüsselt)</h3>
+<p>Vom Nutzer selbst gewählter numerischer Code (4–12 Ziffern). Wird vor Speicherung mit dem bcrypt-Algorithmus gehasht. Klartext-PIN wird niemals geloggt oder persistiert. Übertragung ausschließlich über HTTPS / TLS.</p>
+
+<h3>c) Eigene Beiträge</h3>
+<p>Frei eingegebene Sorten- und Programm-Daten (Name, Beschreibung, Genetik, THC/CBD-Anteile, Terpene, Effekte, Aromen, Temperaturbereiche, Verdampfer-Programm-Sequenzen). Beiträge werden mit dem Pseudonym verknüpft, sofern nicht „anonym beitragen" gewählt wird.</p>
+
+<h3>d) Bewertungen</h3>
+<p>1- bis 5-Blätter-Bewertungen und optionale Kommentare zu Sorten und Programmen anderer. Aggregierter Mittelwert öffentlich; individuelle Bewerter-Liste nicht öffentlich.</p>
+
+<h3>e) Vorschläge zur Bearbeitung fremder Beiträge</h3>
+<p>Vorschläge zur Korrektur/Ergänzung fremder Einträge mit Diff der vorgeschlagenen Änderungen und optionalem Admin-Kommentar.</p>
+
+<h3>f) Admin-Audit-Logs</h3>
+<p>Moderations-Entscheidungen werden mit Zeitstempel und Aktor-Pseudonym im Audit-Log gespeichert. Nur für Admins sichtbar.</p>
+
+<h3>g) Technische Metadaten beim Aufruf</h3>
+<p>IP-Adresse, Browser-User-Agent, Zeitstempel durch die jeweiligen Auftragsverarbeiter (Supabase, GitHub Pages) kurzfristig zur Missbrauchserkennung. Wird nicht in der Community-Datenbank gespeichert.</p>
+
+<h3>h) Lokale Speicherung auf dem Endgerät</h3>
+<p>Einstellungen (Theme, Onboarding-Status, lokales Sessions-Tagebuch, eigene Sorten/Programme) ausschließlich im Local-Storage des Browsers. Verlassen das Endgerät nur bei aktiver Community-Funktion.</p>
+
+<h2 id="rechtsgrundlage">3. Rechtsgrundlage</h2>
+<p>Verarbeitung der unter Ziffer 2 lit. a–f genannten Daten: Art. 6 Abs. 1 lit. b DSGVO (Erfüllung des durch die Nutzungsbedingungen begründeten Vertrags).</p>
+<p>Technische Metadaten (Ziffer 2 lit. g): Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Missbrauchserkennung).</p>
+<p>Lokale Speicherung (Ziffer 2 lit. h): Teil der technischen Funktion, keine eigene Verarbeitungshandlung des Verantwortlichen.</p>
+
+<h2 id="empfaenger">4. Empfänger / Auftragsverarbeiter</h2>
+
+<h3>Supabase Inc.</h3>
+<p>Bereitstellung von Datenbank, Authentifizierung und API. Hauptsitz Singapore, operative EU-Verarbeitung im Cluster eu-west-1 (Irland). Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.</p>
+
+<h3>GitHub Inc. / GitHub Pages</h3>
+<p>Bereitstellung des statischen App-Codes über GitHub-Pages-CDN. Hauptsitz San Francisco, USA. EU-Standardvertragsklauseln Teil des GitHub Customer Agreement. GitHub erhält ausschließlich Requests für statische Asset-Dateien (kein Datenbank-Zugriff).</p>
+
+<p>Eine Weitergabe an Dritte zu Werbe- oder Tracking-Zwecken findet <b>nicht</b> statt.</p>
+
+<h2 id="speicherdauer">5. Speicherdauer</h2>
+<p>Pseudonym, PIN-Hash und Beiträge: bis zur Account-Löschung. Bei Löschung werden alle eigenen Datensätze (eigene Beiträge, Bewertungen, Vorschläge, Audit-Einträge) per Foreign-Key-CASCADE mitgelöscht.</p>
+<p>Datenbank-Backups: 7 Tage Aufbewahrung beim Auftragsverarbeiter Supabase.</p>
+
+<h2 id="rechte">6. Rechte der betroffenen Personen</h2>
+<ul>
+  <li><b>Auskunft</b> (Art. 15 DSGVO) — Anfrage per E-Mail</li>
+  <li><b>Berichtigung</b> (Art. 16) — über die App (Edit-Modus eigener Beiträge) oder per E-Mail</li>
+  <li><b>Löschung</b> (Art. 17) — über die App oder per E-Mail; Beantwortung innerhalb 30 Tage</li>
+  <li><b>Einschränkung</b> (Art. 18)</li>
+  <li><b>Datenübertragbarkeit</b> (Art. 20) — JSON-Export über die App-Einstellungen</li>
+  <li><b>Widerspruch</b> (Art. 21) — bezüglich Verarbeitung auf Basis Art. 6 Abs. 1 lit. f</li>
+  <li><b>Beschwerde bei Aufsichtsbehörde</b> (Art. 77)</li>
+</ul>
+
+<h2 id="cookies">7. Cookies / Local Storage</h2>
+<p>Die App setzt <b>keine Tracking-Cookies</b> und nutzt <b>keinen Werbe- oder Analytics-Dienstleister</b>. Im Local-Storage liegen ausschließlich App-Einstellungen, Onboarding-Status, lokales Sessions-Tagebuch, eigene Sorten/Programme, Cache-Daten. Löschen jederzeit über Browser-Einstellungen oder die App-eigene Funktion möglich.</p>
+
+<h2 id="drittland">8. Drittland-Transfer</h2>
+<p>Operative Datenverarbeitung im EU-Raum (Supabase-Region eu-west-1, Irland). Ein Drittland-Transfer i.S.v. Art. 44 ff. DSGVO findet durch die Verarbeitung selbst nicht statt. Die Muttergesellschaften der Auftragsverarbeiter (Supabase Inc., GitHub Inc.) haben Sitz außerhalb der EU; die Auftragsverarbeitungsverträge und Standardvertragsklauseln regeln die Zulässigkeit etwaiger Behördenzugriffe.</p>
+
+<h2 id="aenderungen">9. Änderungen dieser Datenschutzerklärung</h2>
+<p>Diese Datenschutzerklärung kann angepasst werden, wenn sich Funktionen der Anwendung oder Rechtsvorschriften ändern. Die jeweils aktuelle Fassung ist über die App erreichbar. Nutzerinnen und Nutzer werden über wesentliche Änderungen informiert.</p>
+
+<a class="back-link" href="./">← Zurück zur App</a>
+
+<div class="footer">
+  Terp Sessions — Privates Pioneer-Projekt von Andre Reiche · Datenschutzerklärung v2 (Entwurf)
+</div>
+
+</div>
+</body>
+</html>

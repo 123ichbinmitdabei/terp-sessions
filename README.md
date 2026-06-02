@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v8.8.0)
+# Terp Sessions — Vape Controller (v8.9.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,26 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v8.9.0 — Pre-Test-Polish (Paket S1)
+
+Fünf UX-Verbesserungen vor dem ersten Pioneer-Test:
+
+- **Cannabis-Blatt statt Sterne in Bewertungen** (Option B: stilisiert, 5-fingrig). Inline-SVG via `leafSvg()`, gleiche CSS-Klassen `.comm-stars-*` (backwards-kompatibel), Bewertungs-API (1–5 int) unverändert. Farbschema: Leaf-Green (`#5fb84d`) für allgemeine Bewertung, helleres Grün (`#7fd968`) für eigene Bewertung. Click-Animation via `:active` scale(.88). Aria-Labels: „X von 5 Blättern".
+
+- **Community-Profil auf Hauptseite (Option A: Header-Avatar erweitert)**. Das bestehende 👤-Symbol im Header öffnet jetzt ein erweitertes Profil-Modal mit zwei Sektionen: **🌿 Community** (Login/Register-Buttons bei logged-out, Pseudonym+Admin-Badge+Logout+Moderation-Quickaccess bei logged-in) und darunter die bestehende **👥 Lokale Profile auf diesem Gerät**-Sektion. Bei Klick auf Anmelden/Registrieren ohne aktivierte Community-DB: Confirm-Dialog aktiviert sie automatisch.
+
+- **Browser-Detection mit Just-in-Time-Hinweisen**. Neuer Helper `browserCapabilities()` (native checks, keine UA-Libs). Wenn User „Verbinden" antippt aber Web-Bluetooth fehlt: `#modalNoBluetooth` mit Bluefy-App-Store-Link + „Nicht wieder zeigen"-Checkbox (persistiert in `PREFS.browserHintsDismissed.noBluetooth`). Keine permanenten Banner, keine Modale beim App-Start.
+
+- **Mikrofon-FAB conditional + Text-Befehl-Alternative**. Bei `!voiceAvailable()` zeigt der Sprach-FAB ein Tastatur-Icon (⌨) statt Mikrofon (🎤); Klick öffnet `#modalTextCommand` mit Eingabefeld + 5 Tipp-Chips (z.B. „Heize auf 185 Grad"). Eingabe geht durch denselben `handleVoiceCommand`-Pfad. Settings-Toggle zeigt Hinweis-Text wenn Browser keine Spracherkennung unterstützt.
+
+- **Datenschutz-Häkchen bei Registrierung (anwaltliche Pflicht)**. Neuer Pflicht-Schritt im Register-Wizard: Checkbox „Ich habe die Datenschutzerklärung gelesen…" + Link zur neuen `datenschutz.html` (eigenständige statische Seite mit Inhaltsverzeichnis, Vorschau-Banner, 9 Sektionen). Submit-Button bleibt `disabled` + `aria-disabled=true` bis Checkbox gehakt. Einwilligung wird lokal in `PREFS.dataConsentAcceptedAt` (ISO-Datestring) protokolliert; Backend-Spalte folgt in v9.0. Checkbox wird bei jedem `_commRegisterOpen` wieder zurückgesetzt (Pflicht-Einwilligung muss explizit sein).
+
+**Neue PREFS-Felder:**
+- `PREFS.browserHintsDismissed` (Object mit `noBluetooth`/`noSpeech`/`pwaVoiceWarn`/`bluefyVoiceWarn`-Flags)
+- `PREFS.dataConsentAcceptedAt` (ISO-Datestring oder null)
+
+Tests: +41 in `v89polish.mjs` (Blatt-Icon, Profil-Sektion logged-out+admin, Browser-Capabilities, modalNoBluetooth-Dismiss, Text-Command-Modal, FAB-Conditional, Datenschutz-Workflow + Reset). Volle Regression bleibt grün.
 
 ## v8.8.0 — Hosting-Migration auf privaten Account (Paket 12d)
 

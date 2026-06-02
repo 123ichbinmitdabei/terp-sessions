@@ -2012,13 +2012,16 @@ summary.tab-section-header:hover{color:var(--text)}
 .comm-card-tag{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text)}
 .comm-card-author{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
 .comm-factory-badge{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,87,34,.15);color:var(--hot);border:1px solid rgba(255,87,34,.3);text-transform:uppercase;letter-spacing:.05em}
-.comm-stars{display:inline-flex;gap:2px;align-items:center;font-size:14px;line-height:1;user-select:none}
-.comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:18px;line-height:1}
-.comm-stars-btn.on{color:#ffb84d}
-.comm-stars-btn.mine{color:#ff7043}
-.comm-stars-btn:hover{transform:scale(1.15)}
-.comm-stars-readonly{color:#ffb84d}
-.comm-stars-empty{color:#555}
+/* v8.9.0 Modul 1: Blätter (zuvor Sterne) — gleiche Klassennamen für Backward-Compat */
+.comm-stars{display:inline-flex;gap:3px;align-items:center;font-size:14px;line-height:1;user-select:none}
+.comm-stars svg{display:inline-block}
+.comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:20px;line-height:1;transition:transform .15s ease, color .2s ease}
+.comm-stars-btn.on{color:#5fb84d}     /* leaf-green */
+.comm-stars-btn.mine{color:#7fd968}   /* hellerer leaf-green fuer eigene Bewertung */
+.comm-stars-btn:hover{transform:scale(1.18)}
+.comm-stars-btn:active{transform:scale(.88)}  /* "wackelt" beim Klick */
+.comm-stars-readonly{color:#5fb84d}
+.comm-stars-empty{color:#444}
 .comm-stars-count{font-size:11px;color:var(--muted);margin-left:4px}
 .comm-empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:13px}
 .comm-empty button{margin-top:10px}
@@ -2919,9 +2922,16 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <input class="input mono" id="commRegPin2" type="password" inputmode="numeric" minlength="4" maxlength="12" placeholder="nochmal eingeben" autocomplete="new-password">
         <div id="commRegPinStatus" role="status" aria-live="polite" style="margin-top:6px;font-size:12px;min-height:18px"></div>
       </div>
+      <!-- v8.9.0 Modul 5: Datenschutz-Einwilligung (anwaltliche Pflicht) -->
+      <div class="field" style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin-top:14px">
+        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px;line-height:1.4">
+          <input type="checkbox" id="commRegDataConsent" style="margin-top:3px;flex-shrink:0">
+          <span>Ich habe die <a href="./datenschutz.html" target="_blank" rel="noopener" style="color:var(--hot);text-decoration:underline">Datenschutzerklärung</a> gelesen und stimme der Verarbeitung meiner Daten gemäß der dort beschriebenen Zwecke zu.</span>
+        </label>
+      </div>
       <div class="row" style="gap:8px;margin-top:14px">
         <button class="btn sm ghost" data-comm-prev="2" style="flex:1">← Zurück</button>
-        <button class="btn hot" id="btnCommunityRegisterSubmit" style="flex:2" disabled>Registrieren</button>
+        <button class="btn hot" id="btnCommunityRegisterSubmit" style="flex:2" disabled aria-disabled="true">Registrieren</button>
       </div>
     </div>
   </div>
@@ -3118,6 +3128,55 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div id="commModList" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn ghost block" id="btnCommModClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.9.0 Modul 3: Just-in-Time-Hinweis bei fehlendem Web-Bluetooth -->
+<div class="modal" id="modalNoBluetooth" role="dialog" aria-modal="true" aria-labelledby="noBtTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="noBtTitle">📡 Bluetooth nicht verfügbar</h2>
+    <p class="wiz-text">Dein Browser kann kein Web-Bluetooth. Damit du Sessions mit deinem Verdampfer verbinden kannst, hast du diese Optionen:</p>
+    <ul class="wiz-text" style="margin:8px 0 14px 22px;line-height:1.6">
+      <li><b>iPhone / iPad:</b> Lade die kostenlose App „Bluefy — Web BLE Browser" aus dem App Store und öffne diese Seite dort.</li>
+      <li><b>Android:</b> Nutze Chrome (Web-Bluetooth ist standardmäßig dabei).</li>
+      <li><b>Desktop:</b> Chrome oder Edge.</li>
+      <li><b>Firefox / Safari Desktop:</b> Bluetooth wird nicht unterstützt (Browser-Hersteller-Entscheidung).</li>
+    </ul>
+    <a class="btn block" id="btnNoBtAppStore" href="https://apps.apple.com/de/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">App-Store: Bluefy laden</a>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:10px 0 0;cursor:pointer">
+      <input type="checkbox" id="noBtDismiss"> <span>Diesen Hinweis nicht wieder zeigen</span>
+    </label>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnNoBtClose">Verstanden</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.9.0 Modul 4: Text-Befehl-Modal als Voice-Alternative -->
+<div class="modal" id="modalTextCommand" role="dialog" aria-modal="true" aria-labelledby="txtCmdTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="txtCmdTitle">⌨️ Text-Befehl</h2>
+    <p class="wiz-text"><small>Tippe einen Befehl ein. Funktioniert wie Sprache, nur via Tastatur. Beispiele unten.</small></p>
+    <input class="input" id="txtCmdInput" type="text" placeholder="z.B. Heize auf 185 Grad" autocomplete="off" autocapitalize="sentences">
+    <div id="txtCmdStatus" role="status" aria-live="polite" style="min-height:18px;font-size:12px;color:var(--muted);margin-top:6px"></div>
+    <div style="margin-top:10px">
+      <small style="color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Tipps</small>
+      <div class="comm-card-tags" style="margin-top:6px">
+        <span class="comm-card-tag" data-txtcmd-tip>Heize auf 185 Grad</span>
+        <span class="comm-card-tag" data-txtcmd-tip>Pumpe an</span>
+        <span class="comm-card-tag" data-txtcmd-tip>Pumpe aus</span>
+        <span class="comm-card-tag" data-txtcmd-tip>Alles stoppen</span>
+        <span class="comm-card-tag" data-txtcmd-tip>Status</span>
+      </div>
+    </div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn sm ghost" id="btnTxtCmdCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnTxtCmdRun" style="flex:2">Ausführen</button>
     </div>
   </div>
 </div>
@@ -3599,7 +3658,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <button class="toggle" id="togScreenReader" role="switch" aria-checked="false" aria-label="Screen-Reader-Modus"></button>
       </div>
       <div class="toggle-row" data-sr-affected="voice">
-        <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw.</small></div>
+        <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw. <span id="voiceUnavailableHint" hidden style="color:var(--hot)">Dein Browser unterstützt keine Spracherkennung — du bekommst stattdessen Text-Eingabe.</span></small></div>
         <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
       </div>
       <details id="voiceCmdSub" class="sub-toggles-details">
@@ -3947,8 +4006,15 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <div class="back"></div>
   <div class="sheet">
     <div class="grab"></div>
-    <h2>👥 Benutzer-Profile</h2>
-    <p class="wiz-text"><small>Mehrere Profile nutzen dieselbe App. Statistik, Notizen und Favoriten bleiben pro Profil getrennt.</small></p>
+    <h2>👤 Profil</h2>
+
+    <!-- v8.9.0 Modul 2: Community-Profil-Sektion oben (primaerer Entry-Point) -->
+    <h3 style="margin:6px 0 8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">🌿 Community</h3>
+    <div id="userPanelCommunity" style="background:rgba(106,255,160,.05);border:1px solid rgba(106,255,160,.2);border-radius:var(--r);padding:12px;margin-bottom:14px"></div>
+
+    <!-- Lokale Profile (bestehend) -->
+    <h3 style="margin:6px 0 8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">👥 Lokale Profile auf diesem Geraet</h3>
+    <p class="wiz-text"><small>Mehrere Profile nutzen dieselbe App. Statistik, Notizen und Favoriten bleiben pro Profil getrennt. (Unterschiedlich von der Community-Anmeldung oben.)</small></p>
     <div class="dev-list" id="userList"></div>
     <button class="btn block primary" id="btnAddUser" style="margin-top:10px">+ Neues Profil</button>
     <div class="row" style="margin-top:14px">
@@ -5146,6 +5212,10 @@ const PREFS_DEFAULTS = {
   // v8.7.4 Paket 12b.2: Default-Memory fuer Pseudonym/Anonym-Toggle beim Create.
   // true = naechster Beitrag default anonym; toggled bei jedem Erfolg auf das Gegenteil.
   communityLastAnonymous:true,
+  // v8.9.0 Modul 3: Just-in-Time-Browser-Hinweise — "Nicht wieder zeigen" pro Hinweis-Typ
+  browserHintsDismissed:{ noBluetooth:false, noSpeech:false, pwaVoiceWarn:false, bluefyVoiceWarn:false },
+  // v8.9.0 Modul 5: Datenschutz-Einwilligung (lokal als Beleg; Backend folgt in v9.0)
+  dataConsentAcceptedAt:null,
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
   pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
@@ -6108,10 +6178,35 @@ async function dumpDiagnostics(){
   log('═══ ENDE DIAGNOSE ═══','warn');
 }
 
+/* v8.9.0 Modul 3: Browser-Capability-Detection (KEINE externen UA-Parser-Libs, nur native). */
+function browserCapabilities(){
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isBluefy = ua.indexOf('Bluefy') !== -1;
+  const isSafariMobile = /Safari/.test(ua) && /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|Bluefy|EdgiOS/.test(ua);
+  const isStandalonePWA = (window.navigator && window.navigator.standalone === true) ||
+                         (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+  return {
+    isIOS, isBluefy, isSafariMobile, isStandalonePWA,
+    hasBluetooth: typeof navigator !== 'undefined' && 'bluetooth' in navigator,
+    hasSpeechRec: !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+    hasTTS: 'speechSynthesis' in window,
+  };
+}
+function _showNoBluetoothHint(){
+  if(PREFS.browserHintsDismissed && PREFS.browserHintsDismissed.noBluetooth){
+    toast('Bluetooth nicht verfügbar');
+    return;
+  }
+  const m = document.getElementById('modalNoBluetooth');
+  if(m){ m.classList.add('open'); return; }
+  // Fallback wenn Modal nicht im DOM
+  toast('Web Bluetooth nicht verfügbar in diesem Browser. Auf iPhone: Bluefy Browser nutzen.');
+}
 async function connectBLE(){
   if(!('bluetooth' in navigator)){
-    toast('Web Bluetooth nicht verfügbar');
-    log('Web Bluetooth fehlt. Nutze Chrome auf Android oder Desktop.','err');
+    _showNoBluetoothHint();
+    log('Web Bluetooth fehlt. Nutze Chrome auf Android oder Desktop. Auf iPhone: Bluefy Browser.','err');
     return;
   }
   try{
@@ -8527,8 +8622,15 @@ function wire(){
   $('#btnQrCopy').addEventListener('click', copyQRUrl);
   $('#btnQrShare').addEventListener('click', shareQRUrl);
 
-  // Voice FAB
-  $('#voiceFab').addEventListener('click', toggleVoiceListening);
+  // Voice FAB — v8.9.0: tab-aware (Voice ODER Text-Command-Fallback)
+  $('#voiceFab').addEventListener('click', ()=>{
+    const fab = $('#voiceFab');
+    if(fab && fab.dataset.mode === 'text'){
+      _openTextCommandModal();
+    } else {
+      toggleVoiceListening();
+    }
+  });
 
   // Notes
   const notesEl = $('#sessionNotes');
@@ -10617,7 +10719,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.8.0';
+const SW_VERSION_LABEL='v8.9.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -11066,12 +11168,20 @@ function renderAromaList(query){
 ═══════════════════════════════════════════════════════════════════════════ */
 
 // ── Sterne-Komponente (Modul 8) ─────────────────────────────────────────────
+/* v8.9.0 Modul 1: Cannabis-Blatt-Icon (Option B: stilisiert, 5-fingrig) ersetzt
+   Unicode-Sterne in Bewertungen. CSS-Klassen .comm-stars-* bleiben identisch,
+   damit bestehende Tests + Styling weiter funktionieren. API der Bewertung
+   (1-5 int) unveraendert; Backend weiss nichts vom Icon. */
+const LEAF_SVG_PATH = 'M12 2 C10 4 8 5 6 6 C5 9 6 11 8 12 C5 13 4 15 4 17 C7 17 9 16 11 14 L11 20 Q11.5 22 12 22 Q12.5 22 13 20 L13 14 C15 16 17 17 20 17 C20 15 19 13 16 12 C18 11 19 9 18 6 C16 5 14 4 12 2 Z';
+function leafSvg(){
+  return `<svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor" style="vertical-align:middle;display:inline-block"><path d="${LEAF_SVG_PATH}"/></svg>`;
+}
 function commStarsReadOnly(avg, count){
   const a = Number(avg||0);
   const full = Math.round(a);
-  let s = '<span class="comm-stars">';
+  let s = '<span class="comm-stars" aria-label="Bewertung '+full+' von 5 Blättern">';
   for(let i=1;i<=5;i++){
-    s += `<span class="${i<=full?'comm-stars-readonly':'comm-stars-empty'}">★</span>`;
+    s += `<span class="${i<=full?'comm-stars-readonly':'comm-stars-empty'}">${leafSvg()}</span>`;
   }
   s += `<span class="comm-stars-count">(${Number(count||0)})</span></span>`;
   return s;
@@ -11080,15 +11190,15 @@ function commStarsInteractive(avg, count, my){
   const avgN = Number(avg||0);
   const myN = my!=null ? Number(my) : null;
   const avgRound = Math.round(avgN);
-  let s = '<div class="comm-stars-wrap"><div class="comm-stars" role="radiogroup" aria-label="Sterne-Bewertung">';
+  let s = '<div class="comm-stars-wrap"><div class="comm-stars" role="radiogroup" aria-label="Blätter-Bewertung 1 bis 5">';
   for(let i=1;i<=5;i++){
     const isMine = myN && i<=myN;
     const isAvg  = !myN && i<=avgRound;
     const cls = isMine ? 'comm-stars-btn mine' : (isAvg ? 'comm-stars-btn on' : 'comm-stars-btn');
-    s += `<button type="button" class="${cls}" data-star="${i}" aria-label="${i} Sterne" role="radio" aria-checked="${isMine?'true':'false'}">★</button>`;
+    s += `<button type="button" class="${cls}" data-star="${i}" aria-label="${i} von 5 Blättern" role="radio" aria-checked="${isMine?'true':'false'}">${leafSvg()}</button>`;
   }
   s += `<span class="comm-stars-count">${avgN.toFixed(1)} / 5 (${Number(count||0)})</span></div>`;
-  if(myN) s += `<div style="font-size:11px;color:var(--hot);margin-top:4px">Du hast ${myN} Sterne gegeben.</div>`;
+  if(myN) s += `<div style="font-size:11px;color:var(--hot);margin-top:4px">Du hast ${myN} Blätter gegeben.</div>`;
   s += '</div>';
   return s;
 }
@@ -11517,8 +11627,17 @@ function voiceAvailable(){
 function initVoice(){
   const fab = $('#voiceFab');
   if(!fab) return;
+  // v8.9.0 Modul 4: bei !voiceAvailable → FAB als Text-Befehl-Alternative
   if(!voiceAvailable()){
-    fab.style.display='none';
+    if(PREFS.voice){
+      // FAB als Text-Befehl-Button (Tastatur-Icon)
+      fab.style.display = 'flex';
+      fab.innerHTML = '⌨';
+      fab.setAttribute('aria-label', 'Text-Befehl eingeben (Sprache in diesem Browser nicht verfügbar)');
+      fab.dataset.mode = 'text';
+    } else {
+      fab.style.display = 'none';
+    }
     return;
   }
   if(!PREFS.voice){
@@ -11526,6 +11645,9 @@ function initVoice(){
     return;
   }
   fab.style.display='flex';
+  fab.innerHTML = '🎤';
+  fab.setAttribute('aria-label', 'Sprachsteuerung aktivieren');
+  fab.dataset.mode = 'voice';
 }
 function voiceFeedback(text, timeout=2500){
   const el = $('#voiceFeedback'); if(!el) return;
@@ -15202,7 +15324,62 @@ function renderUserAvatar(){
   el.textContent = u.icon;
   el.setAttribute('aria-label', 'Profil: '+u.name);
 }
+/* v8.9.0 Modul 2: Community-Profil-Sektion im Profil-Modal (primaerer Entry-Point).
+   Liegt OBERHALB der lokalen User-Liste. Bei Klick auf Anmelden/Registrieren ohne
+   aktivierte Community-DB wird der User gefragt ob er die Sync-Funktion aktivieren
+   moechte. Settings-Sektion bleibt parallel als Power-User-Detail. */
+function renderUserPanelCommunity(){
+  const root = document.getElementById('userPanelCommunity'); if(!root) return;
+  const enabled = !!PREFS.communityEnabled;
+  const cc = (typeof communityClient === 'object' && communityClient) ? communityClient : null;
+  const logged = !!(cc && cc.isLoggedIn && cc.isLoggedIn());
+  const sess = logged ? cc.currentSession() : null;
+  if(!enabled || !logged){
+    root.innerHTML = `<div style="margin-bottom:8px">Community-DB ${enabled ? 'aktiv, aber nicht angemeldet' : 'noch nicht aktiviert'}.</div>
+      <div class="row" style="gap:8px">
+        <button class="btn sm" id="btnUserPanelLogin" style="flex:1">Anmelden</button>
+        <button class="btn sm hot" id="btnUserPanelRegister" style="flex:1">Registrieren</button>
+      </div>
+      <small style="display:block;margin-top:6px;color:var(--muted)">Pseudonym + PIN. Keine Email noetig. Lokal-only? Einfach Community-DB aus lassen.</small>`;
+    document.getElementById('btnUserPanelLogin')?.addEventListener('click', ()=>_userPanelCommAction('login'));
+    document.getElementById('btnUserPanelRegister')?.addEventListener('click', ()=>_userPanelCommAction('register'));
+  } else {
+    const adminBadge = sess && sess.is_admin ? '<span style="color:var(--hot);font-weight:600;font-size:11px;padding:2px 6px;border:1px solid var(--hot);border-radius:4px;margin-left:6px">Admin</span>' : '';
+    const modBtn = sess && sess.is_admin ? '<button class="btn sm" id="btnUserPanelModeration" style="flex:1">📝 Moderation</button>' : '';
+    root.innerHTML = `<div style="margin-bottom:8px">Eingeloggt als <b>${escapeHtml(sess.pseudonym || '?')}</b>${adminBadge}</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        ${modBtn}
+        <button class="btn sm ghost" id="btnUserPanelLogout" style="flex:1">Abmelden</button>
+      </div>`;
+    document.getElementById('btnUserPanelLogout')?.addEventListener('click', ()=>{
+      try{ cc.logout(); }catch(_){}
+      toast('Abgemeldet');
+      renderUserPanelCommunity();
+      try{ if(typeof _commSetupRefresh === 'function') _commSetupRefresh(); }catch(_){}
+    });
+    document.getElementById('btnUserPanelModeration')?.addEventListener('click', ()=>{
+      document.getElementById('modalUsers')?.classList.remove('open');
+      try{ _commModWire(); _commModOpen(); }catch(_){}
+    });
+  }
+}
+
+function _userPanelCommAction(action){
+  // Wenn Community-DB noch nicht aktiv: erst Confirm, dann aktivieren
+  if(!PREFS.communityEnabled){
+    if(!confirm('Community-DB einschalten? Sorten und Programme werden dann mit der Sessions-Community ausgetauscht. Du kannst das jederzeit wieder in den Einstellungen deaktivieren.')) return;
+    PREFS.communityEnabled = true;
+    try{ savePrefs(); }catch(_){}
+    try{ if(typeof _commSetupRefresh === 'function') _commSetupRefresh(); }catch(_){}
+  }
+  document.getElementById('modalUsers')?.classList.remove('open');
+  if(action === 'register'){ try{ _commRegisterOpen(); }catch(_){} }
+  else { try{ _commLoginOpen(); }catch(_){} }
+}
+
 function renderUserList(){
+  // v8.9.0: parallel Community-Panel rendern wenn Modal offen
+  try{ renderUserPanelCommunity(); }catch(_){}
   const root = $('#userList');
   if(!root) return;
   const profiles = getUserProfiles();
@@ -16632,7 +16809,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.8.0 bereit.','ok');
+  log('Sessions v8.9.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18348,6 +18525,9 @@ function _commRegisterOpen(){
   document.getElementById('commRegPinStatus').textContent = '';
   document.getElementById('commRegNext2').disabled = true;
   document.getElementById('btnCommunityRegisterSubmit').disabled = true;
+  // v8.9.0: Datenschutz-Checkbox bei jedem Open zuruecksetzen (Pflicht-Einwilligung muss explizit sein)
+  const consent = document.getElementById('commRegDataConsent');
+  if(consent) consent.checked = false;
   _commWizardShow(1);
   m.classList.add('open');
 }
@@ -18452,10 +18632,13 @@ function _commWireSetup(){
   const pin2 = document.getElementById('commRegPin2');
   const pinStatus = document.getElementById('commRegPinStatus');
   const submitBtn = document.getElementById('btnCommunityRegisterSubmit');
+  // v8.9.0 Modul 5: Submit disabled bis PIN OK + Datenschutz-Checkbox gehakt
+  const consentBox = document.getElementById('commRegDataConsent');
   function _commValidatePin(){
     const a = pin1.value, b = pin2.value;
     pinStatus.textContent = ''; pinStatus.style.color = '';
-    submitBtn.disabled = true;
+    const consentOk = !!(consentBox && consentBox.checked);
+    submitBtn.disabled = true; submitBtn.setAttribute('aria-disabled','true');
     if(!/^[0-9]{4,12}$/.test(a)){
       if(a.length > 0){ pinStatus.style.color='var(--err)'; pinStatus.textContent='✗ 4–12 Ziffern'; }
       return;
@@ -18464,11 +18647,16 @@ function _commWireSetup(){
       if(b.length > 0){ pinStatus.style.color='var(--err)'; pinStatus.textContent='✗ PINs stimmen nicht überein'; }
       return;
     }
-    pinStatus.style.color='var(--ok)'; pinStatus.textContent='✓ PIN OK';
-    submitBtn.disabled = false;
+    if(!consentOk){
+      pinStatus.style.color='var(--muted)'; pinStatus.textContent='✓ PIN OK · Bitte Datenschutz-Häkchen setzen';
+      return;
+    }
+    pinStatus.style.color='var(--ok)'; pinStatus.textContent='✓ Alles bereit';
+    submitBtn.disabled = false; submitBtn.setAttribute('aria-disabled','false');
   }
   if(pin1 && !pin1.__wired){ pin1.__wired = true; pin1.addEventListener('input', _commValidatePin); }
   if(pin2 && !pin2.__wired){ pin2.__wired = true; pin2.addEventListener('input', _commValidatePin); }
+  if(consentBox && !consentBox.__wired){ consentBox.__wired = true; consentBox.addEventListener('change', _commValidatePin); }
 
   // Register-Submit
   if(submitBtn && !submitBtn.__wired){
@@ -18480,6 +18668,9 @@ function _commWireSetup(){
       pinStatus.style.color = 'var(--muted)'; pinStatus.textContent = '⏳ registriere …';
       try{
         await communityClient.register(pseudonym, pin);
+        // v8.9.0 Modul 5: Datenschutz-Einwilligung lokal protokollieren (Backend-Spalte folgt in v9.0)
+        PREFS.dataConsentAcceptedAt = new Date().toISOString();
+        try{ savePrefs(); }catch(_){}
         document.getElementById('modalCommunityRegister').classList.remove('open');
         toast('✓ Willkommen, '+pseudonym);
         _commSetupRefresh();
@@ -18608,6 +18799,78 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_commWireSetup, 9
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commStrainModalsWire(); }catch(_){} }, 950); });
 // v8.7.5 Paket 12b.3: Programm-Modals + Moderations-Modal wiring
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commProgramModalsWire(); _commModWire(); }catch(_){} }, 960); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.9.0 Modul 3 + 4: noBluetooth-Modal + Text-Command-Modal Wiring
+═══════════════════════════════════════════════════════════════════════════ */
+function _openTextCommandModal(){
+  const m = document.getElementById('modalTextCommand'); if(!m) return;
+  const inp = document.getElementById('txtCmdInput'); if(inp){ inp.value=''; }
+  const st = document.getElementById('txtCmdStatus'); if(st){ st.textContent=''; }
+  m.classList.add('open');
+  setTimeout(()=>{ try{ inp && inp.focus(); }catch(_){} }, 100);
+}
+async function _runTextCommand(){
+  const inp = document.getElementById('txtCmdInput');
+  const st  = document.getElementById('txtCmdStatus');
+  const txt = (inp && inp.value || '').trim();
+  if(!txt){ if(st) st.textContent = 'Bitte einen Befehl eingeben.'; return; }
+  if(st){ st.textContent = 'Wird ausgeführt…'; st.style.color = 'var(--muted)'; }
+  try{
+    if(typeof handleVoiceCommand === 'function'){
+      await handleVoiceCommand(txt);
+      if(st){ st.textContent = '✓ Befehl ausgeführt.'; st.style.color = 'var(--ok, #6affa0)'; }
+      setTimeout(()=>{ document.getElementById('modalTextCommand')?.classList.remove('open'); }, 600);
+    } else {
+      if(st){ st.textContent = 'Befehls-Logik nicht geladen.'; st.style.color = 'var(--err)'; }
+    }
+  } catch(e){
+    if(st){ st.textContent = 'Fehler: '+(e && e.message || '?'); st.style.color = 'var(--err)'; }
+  }
+}
+function _v89modalsWire(){
+  // No-Bluetooth-Modal
+  const nbt = document.getElementById('modalNoBluetooth');
+  if(nbt && !nbt.__wired){
+    nbt.__wired = true;
+    document.getElementById('btnNoBtClose')?.addEventListener('click', ()=>{
+      const cb = document.getElementById('noBtDismiss');
+      if(cb && cb.checked){
+        if(!PREFS.browserHintsDismissed) PREFS.browserHintsDismissed = {};
+        PREFS.browserHintsDismissed.noBluetooth = true;
+        try{ savePrefs(); }catch(_){}
+      }
+      nbt.classList.remove('open');
+    });
+  }
+  // Text-Command-Modal
+  const tc = document.getElementById('modalTextCommand');
+  if(tc && !tc.__wired){
+    tc.__wired = true;
+    document.getElementById('btnTxtCmdCancel')?.addEventListener('click', ()=>tc.classList.remove('open'));
+    document.getElementById('btnTxtCmdRun')?.addEventListener('click', _runTextCommand);
+    document.getElementById('txtCmdInput')?.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){ e.preventDefault(); _runTextCommand(); }
+    });
+    tc.querySelectorAll('[data-txtcmd-tip]').forEach(chip => {
+      chip.style.cursor = 'pointer';
+      chip.addEventListener('click', ()=>{
+        const inp = document.getElementById('txtCmdInput');
+        if(inp){ inp.value = chip.textContent || ''; inp.focus(); }
+      });
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _v89modalsWire(); }catch(_){} }, 970); });
+// v8.9.0: Voice-Unavailable-Hint im Settings einblenden wenn Browser keine Spracherkennung kann
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{
+  try{
+    const hint = document.getElementById('voiceUnavailableHint');
+    if(hint && typeof voiceAvailable === 'function' && !voiceAvailable()){
+      hint.hidden = false;
+    }
+  }catch(_){}
+}, 980); });
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8.7.6 Paket 12e: Modal-Stack-Manager
