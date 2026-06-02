@@ -9962,6 +9962,8 @@ class FireflyAdapter extends DeviceAdapter {
 function fireflyHelpMailto(){
   const subj=encodeURIComponent('[Pioneers RE-Hilfe] Firefly BLE-Protokoll');
   const body=encodeURIComponent('Ich moechte beim Reverse-Engineering des Firefly helfen.\n\nWas hilft uns:\n- BLE-Sniffer-Logs aus der offiziellen Firefly-App (Android HCI-Snoop oder Wireshark)\n- Service-/Characteristic-UUIDs (z.B. via nRF Connect / Web Bluetooth Inspector)\n- Beobachtete Befehle (Temperatur setzen, Heizen, Akku lesen)\n\nGeraet (Firefly 2 / 2+): \nBrowser: '+navigator.userAgent+'\n');
+  // v8.8.0: Fallback auf GitHub-Issue wenn keine PIONEERS_EMAIL gesetzt
+  if(!PIONEERS_EMAIL) return 'https://github.com/'+PIONEERS_REPO+'/issues/new?title='+subj+'&body='+body+'&labels=pioneers,firefly-re';
   return 'mailto:'+PIONEERS_EMAIL+'?subject='+subj+'&body='+body;
 }
 
@@ -10447,7 +10449,7 @@ function wireSlides(){
    alte-User-Migration (vol_tour_completed → maybeMigrationWizard)
    bleibt unverändert. */
 const WELCOME_SLIDES = [
-  {h:'Willkommen bei Sessions', t:'Sessions ist dein Multi-Gerät-Vape-Controller von Mariana Cannabis — heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud.'},
+  {h:'Willkommen bei Sessions', t:'Sessions ist dein Multi-Gerät-Vape-Controller — heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud (außer du aktivierst die optionale Community-DB).'},
   {h:'Welche Geräte?', t:'• Storz & Bickel: Volcano, Crafty, Mighty, Venty, Veazy — voll unterstützt\n• PAX 3, Puffco Peak Pro — Beta (Tester gesucht)\n• Firefly — Probe-Only (Reverse-Engineering-Hilfe willkommen)'},
   {h:'So verbindest du', t:'1. Bluetooth einschalten\n2. Oben rechts auf „Verbinden" tippen\n3. Dein Gerät aus der Liste wählen\n\nHinweis: Es geht nur in Chrome oder Edge (Android/Desktop). iOS Safari unterstützt Web-Bluetooth leider nicht.'},
   {h:'Was Sessions kann', t:'• Temperatur + Heizer steuern\n• Programme und visueller Heizkurven-Editor\n• Aroma-Bibliothek mit Filter und Empfehlungen\n• Session-Tracking (optional, lokal)\n• Sprachsteuerung und Wake-Word (experimentell)'},
@@ -10556,8 +10558,10 @@ function maybeMigrationWizard(){
 /* ═══ v5.2.0 PHASE 6a: SESSIONS PIONEERS (Beta-Tester-Framework) ═══
    Reines UI/Status-Framework, KEIN Geraete-Protokoll (nichts geraten).
    Greift automatisch fuer kuenftige unverified-Adapter (PAX/Puffco/Firefly). */
-const PIONEERS_EMAIL='andre@marianacannabis.de';
-const PIONEERS_REPO='MarianaCannabis/volcano';
+// v8.8.0: Keine Email mehr im Code — Andre's Kontakt steht ausschliesslich in der README.
+// mailto-Funktionen fallen automatisch auf GitHub-Issues zurueck wenn EMAIL leer ist.
+const PIONEERS_EMAIL='';
+const PIONEERS_REPO='123ichbinmitdabei/terp-sessions';
 const BETA_STATUS = { volcano:'stable', crafty_mighty:'mock_only', venty_veazy:'stable', pax:'unverified', puffco:'unverified', firefly:'probe_only' };
 const BETA_LABELS = { stable:{pill:'✓ Stable',color:'var(--ok)'}, mock_only:{pill:'🔬 Mock-validiert',color:'var(--accent,#5ab)'}, unverified:{pill:'🟡 Tester gesucht',color:'var(--hot)'}, probe_only:{pill:'🔬 RE-Hilfe gesucht',color:'var(--accent,#5ab)'} };
 const BETA_DEVNAMES = { volcano:'Volcano Hybrid', crafty_mighty:'Crafty / Mighty', venty_veazy:'Venty / Veazy', pax:'PAX', puffco:'Puffco', firefly:'Firefly' };
@@ -10613,7 +10617,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.6';
+const SW_VERSION_LABEL='v8.8.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -10634,6 +10638,8 @@ function pioneerMailto(){
   const dev=(State.adapter&&State.adapter.constructor.displayName)||(t&&BETA_DEVNAMES[t])||'Gerät';
   const subj=encodeURIComponent('[Sessions Pioneers] Beta-Test '+dev);
   const body=encodeURIComponent('Gerät: '+dev+'\nModell/Subtype: '+((State.device&&State.device.subtype)||'')+'\nBrowser: '+navigator.userAgent+'\n\nMein Feedback:\n');
+  // v8.8.0: Fallback auf GitHub-Issue wenn keine PIONEERS_EMAIL gesetzt
+  if(!PIONEERS_EMAIL) return pioneerIssueUrl();
   return 'mailto:'+PIONEERS_EMAIL+'?subject='+subj+'&body='+body;
 }
 function pioneerIssueUrl(){
@@ -14506,7 +14512,7 @@ function printAsciiVolcano(){
      /     N O       \\
     /__________________\\
 
-      [ Built for Mariana Cannabis ]
+      [ Sessions Pioneer Build ]
       [ Web Bluetooth · PWA ]
       [ Type sessions.about() for credits ]
   `;
@@ -14536,7 +14542,7 @@ function setupEasterEggs(){
   // sessions.about() console command
   window.sessions = {
     about: ()=>{
-      console.log('%cSessions — by Mariana Cannabis', 'font-size:18px;color:#ff5722;font-weight:bold');
+      console.log('%cSessions — Privates Pioneer-Projekt', 'font-size:18px;color:#ff5722;font-weight:bold');
       console.log('Single-file PWA · Web Bluetooth · CC BY-NC 4.0');
       console.log('UUIDs verified against firsttris/reactive-volcano-app');
       console.log('Try the Konami code: ↑↑↓↓←→←→ba');
@@ -15138,7 +15144,7 @@ th{background:#f0f0f0;font-weight:600}
 </div>
 ${rows ? `<h2>Sessions (letzte 90)</h2><table><thead><tr><th>Datum/Zeit</th><th>Ballons</th><th>Heizdauer</th><th>Notizen</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
 ${symRows ? `<h2>Symptom-Tracker (letzte 40)</h2><table><thead><tr><th>Datum/Zeit</th><th>Phase</th><th>Schmerz</th><th>Schlaf</th><th>Appetit</th><th>Stimmung</th><th>Angst</th></tr></thead><tbody>${symRows}</tbody></table><div style="font-size:11px;color:#666;margin-top:4px">Skala: 1 (sehr gering) bis 10 (sehr hoch)</div>` : ''}
-<div class="foot">Selbst-Dokumentation · keine ärztliche Diagnose · keine Beratung<br>Generiert mit Sessions PWA — by Mariana Cannabis</div>
+<div class="foot">Selbst-Dokumentation · keine ärztliche Diagnose · keine Beratung<br>Generiert mit Sessions PWA · Privates Pioneer-Projekt</div>
 <div style="margin-top:20px;text-align:center"><button onclick="window.print()" style="padding:10px 22px;font-size:14px;cursor:pointer;background:#c83a0e;color:#fff;border:none;border-radius:6px">🖨 Drucken / als PDF speichern</button></div>
 </body></html>`;
 }
@@ -15247,7 +15253,7 @@ function broadcastShared(action){
    v4.7: PROGRAMM-BIBLIOTHEK (JSON-URL-Import)
 ═══════════════════════════════════════════════════════════════ */
 async function importLibraryFromUrl(){
-  const url = prompt('URL einer Programm-Sammlung (JSON):', 'https://marianacannabis.github.io/sessions-library/programs.json');
+  const url = prompt('URL einer Programm-Sammlung (JSON):', 'https://123ichbinmitdabei.github.io/terp-sessions/programs.json');
   if(!url) return;
   try{
     const res = await fetch(url);
@@ -16626,7 +16632,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.6 bereit.','ok');
+  log('Sessions v8.8.0 bereit.','ok');
 
   setupPwaUpdate();
 

@@ -40,7 +40,7 @@
 
 **Pre-Regression-Helpers / nicht in `run-all.mjs`:**
 - `checksyntax.mjs` — JS-Syntax-Check der gesamten `index.html` (extrahiert alle `<script>`-Blöcke, parsed via `new Function()`)
-- `livecheck.mjs` — fetcht `marianacannabis.github.io/volcano/sw.js` und prüft die Live-Version
+- `livecheck.mjs` — fetcht `123ichbinmitdabei.github.io/terp-sessions/sw.js` und prüft die Live-Version
 - `aesbrowser.mjs` / `validate-aes.mjs` — Krypto-Sanity-Checks aus früheren Iterationen
 - `phase1.mjs` — alte v4.9.8-Scheduler-Tests (durch v5.x ersetzt)
 - `v501mock.mjs` / `v502mock.mjs` / `v60paxmock.mjs` / `v70puffcomock.mjs` — Geräte-Protokoll-Mocks ohne Connect

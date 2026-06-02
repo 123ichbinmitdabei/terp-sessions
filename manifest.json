@@ -1,7 +1,7 @@
 {
-  "name": "Sessions — S&B Vape Controller",
+  "name": "Sessions — Vape Controller (Terp Sessions)",
   "short_name": "Sessions",
-  "description": "Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty und Venty",
+  "description": "Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty, Venty, PAX 3, Puffco Peak Pro und Firefly. Privates Pioneer-Projekt.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

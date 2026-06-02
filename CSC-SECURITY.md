@@ -72,7 +72,7 @@ Angreifer:
 | Löschungsrecht | ✅ `csc_delete_account` cascade-löscht alle Sessions; `cscClient.deleteAccount()` löscht zusätzlich lokale Credentials |
 | Speicherort | ⏳ Andre wählt: Supabase EU-Region (Frankfurt) → kein Drittlandtransfer; **nicht** Supabase US |
 | Auftragsverarbeitungsvertrag | ⏳ Supabase Inc. ist DPA-Partner; Andre muss DPA unterschreiben |
-| Privacy-Policy-Eintrag | ⏳ Andre muss die Privacy Policy von Mariana ergänzen (Welche Daten, Wo, Wie lange, Rechte) |
+| Privacy-Policy-Eintrag | ⏳ Andre privat: Datenschutzerklärung-ENTWURF-v2.docx liegt vor (Paket 12c Teil B), wartet auf Anwalts-Freigabe |
 | Logs / Audit-Trail | ⚠️ Aktuell nur `last_seen_at`; Empfehlung: keine zusätzlichen Logs anlegen, um keine Profile zu schaffen |
 
 ## Was Andre konkret tun muss

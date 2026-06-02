@@ -1,6 +1,35 @@
-# Sessions — Vape Controller (v8.7.6)
+# Terp Sessions — Vape Controller (v8.8.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## Über dieses Projekt
+
+**Terp Sessions** ist ein **privates Open-Source-Forschungsprojekt von Andre Reiche** für eine geschlossene Pioneer-Tester-Gruppe.
+
+Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentrechte. Verwendung auf eigene Verantwortung. Storz & Bickel, PAX, Puffco, Firefly sind eingetragene Marken der jeweiligen Hersteller und stehen in keinerlei Verbindung zu diesem Projekt.
+
+**Verantwortlicher i.S.d. DSGVO:** Andre Reiche, privat (Kontakt: `123ichbinmitdabei@googlemail.com`).
+**Datenschutzerklärung:** in Vorbereitung — wird nach Anwalts-Freigabe veröffentlicht.
+
+**Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
+**Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v8.8.0 — Hosting-Migration auf privaten Account (Paket 12d)
+
+Strategischer Pivot: dieses private Projekt zieht von der bisherigen Hosting-URL (`marianacannabis.github.io/volcano`) auf den eigenen Account (`123ichbinmitdabei.github.io/terp-sessions`) um. Saubere Trennung zwischen Mariana-Verein und Andre privat — DSGVO-Verantwortlicher ist Andre privat.
+
+- **Neue Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
+- **Alte URL** (`marianacannabis.github.io/volcano`) zeigt nach Migration eine Notice-Seite mit Verweis auf den neuen Standort. Bleibt mindestens 30 Tage online.
+- **Backend bleibt 1:1 dasselbe Supabase-Projekt** — `csc-config.json` mit identischer URL und Anon-Key. Pseudonym/PIN-Logins funktionieren unverändert weiter, keine Re-Registrierung nötig.
+- **App-Anzeigename in der UI bleibt „Sessions"** — nur der Repo/URL ändert sich. Manifest-`name` wird zu „Sessions — Vape Controller (Terp Sessions)" für die PWA-Installation, `short_name` bleibt „Sessions".
+- **Branding-Säuberung:** alle User-sichtbaren „Mariana"-Strings in Onboarding-Tour, Footer, Console-Branding, ASCII-Logo wurden generisch gemacht. Code-Kommentare unverändert (historisch).
+- **`PIONEERS_EMAIL` ist jetzt leer im Code** — Kontakt-Adresse steht ausschließlich in dieser README. Pioneers-Feedback-Buttons fallen automatisch auf GitHub-Issues zurück (`pioneerMailto()` und `fireflyHelpMailto()` returnen die Issue-URL wenn keine Email gesetzt).
+- **`PIONEERS_REPO` aktualisiert** auf `123ichbinmitdabei/terp-sessions` — Bug-Reports und RE-Hilfe-Anfragen landen jetzt im neuen Repo.
+- **Service-Worker-Cache invalidiert** durch Version-Bump v8.7.6 → v8.8.0. Bestehende User holen das neue Bundle automatisch beim nächsten Aufruf der neuen URL.
+
+Tests: +x in neuer Suite `v88migration.mjs`. Volle Regression auf bestehenden 852 Tests bleibt grün.
+
+**Was Pioneer-Tester tun müssen:** siehe `Pioneer-Migration-Notice.md` (mitgeliefert für Andre's Verteilung). TL;DR: einmal auf die neue URL gehen, App installieren, mit altem Pseudonym+PIN einloggen — fertig.
 
 ## v8.7.6 — Hotfix Modal-Scrolling + Modal-Stacking (Paket 12e)
 
@@ -251,7 +280,7 @@ Drei fokussierte Module, keine neuen Features sonst. Keine Änderung an Adaptern
 
 ### Modul 3 — Externe CDN-Schuld abgeräumt
 - **`openQRShare` (pre-v8.5.0)** nutzte `api.qrserver.com` als `<img src>`-Fetch. Jetzt: `qrRender()` inline, gleiches `#qrBox` zeigt das SVG.
-- **Grep-Audit** aller HTTPS-URLs in index.html: keine unbekannten externen Hosts mehr. Whitelist (dokumentierte intentional-Externe): `fonts.googleapis.com` + `fonts.gstatic.com` (Google Fonts, sw.js skipt bewusst), `api.open-meteo.com` + `geocoding-api.open-meteo.com` (Wetter-Feature, vom User opt-in), `github.com` + `apps.apple.com` + `marianacannabis.github.io` (alle nur `<a href>`-Links, kein Fetch), `nayuki.io` (Lizenz-Header-URL im Kommentar), `www.w3.org` (SVG-xmlns, kein Fetch). Webhook/MQTT-Felder bleiben User-konfigurierbar (`webhook.example.com`, `your-webhook-url` sind Placeholder).
+- **Grep-Audit** aller HTTPS-URLs in index.html: keine unbekannten externen Hosts mehr. Whitelist (dokumentierte intentional-Externe): `fonts.googleapis.com` + `fonts.gstatic.com` (Google Fonts, sw.js skipt bewusst), `api.open-meteo.com` + `geocoding-api.open-meteo.com` (Wetter-Feature, vom User opt-in), `github.com` + `apps.apple.com` + `123ichbinmitdabei.github.io` (alle nur `<a href>`-Links, kein Fetch), `nayuki.io` (Lizenz-Header-URL im Kommentar), `www.w3.org` (SVG-xmlns, kein Fetch). Webhook/MQTT-Felder bleiben User-konfigurierbar (`webhook.example.com`, `your-webhook-url` sind Placeholder).
 - **Service Worker** `sw.js` SHELL-Array enthält ausschließlich relative Pfade (`./`, `./index.html`, …). Google-Fonts-Domains werden im Fetch-Handler explizit übersprungen (kein Cache, kein Intercept).
 
 ### Tests + Regression
