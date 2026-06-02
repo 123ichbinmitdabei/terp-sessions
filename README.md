@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.0-alpha)
+# Terp Sessions — Vape Controller (v9.0.0-beta)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,32 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.0-beta — Pioneer-Gamification + Bug-Reports (Paket S2.2)
+
+Phase 2 baut auf der alpha-Basis auf. Phase 3 (S3-Features: URL-Scheme, Touch-Macros, TTS-Profile) folgt nach Andre-Status-Sync.
+
+- **Punkte-System** — pass +10 Punkte, fail+Bug-Report +25 Punkte (Bug-Hunter-Bonus), skip 0; Combo-Bonus +5 alle 3 hintereinander erfolgreiche Tests. Aktuelle Punkte + Combo werden im Wizard-Header sichtbar (z.B. „120 Pkt · 🔥 4 Combo · 33%"). Re-Bewertung gibt keine Punkte (anti-Gaming).
+- **10 Cannabis-Themed Achievements** — 🌱 Erste Sprossen, 🌿 Bowl Master, 🧙 Strain Sage, 🔬 Terp Hunter, 🎤 Voice Warrior, 🐛 Bug Hunter, ♿ Accessibility Champion (alle 12 Pfad-B-Tests), 💯 Completionist (24/24), 🥇 Patient Zero (in Juni/Juli 2026 abgeschlossen), ⚡ Speed Run (alle Tests <30 Min). Trigger werden in `_pioneerCheckAchievements()` zentralisiert ausgewertet nach jedem `_pioneerSetResult`. Bei Freischaltung: Toast + Sound + 200ms Vibration + Aria-Live-Announcement.
+- **Sound-Library** via Web Audio API (KEIN externes Asset, KEIN data-URI Bloat): `_pioneerPlaySound(type)` mit 4 Tönen (pass=880Hz sine, fail=180Hz sawtooth, achievement=523/659/784Hz Sequenz, combo=200→800Hz Sweep). Toggle „🔊 Test-Sounds" im Settings (default ON, für Screen-Reader-User mute-bar via `PREFS.pioneerTestSounds`).
+- **Bug-Report-Modal** `#modalPioneerBugReport` — bei „✗ Funktioniert nicht" öffnet sich Formular mit „Was sollte passieren? / Was ist passiert? / Wie hast du es gemacht?". Auto-Info (Test-ID, App-Version, Browser-UA, Geräte-Name, Pseudonym, Timestamp) wird sichtbar angezeigt. Submit-Button generiert eine vorausgefüllte **GitHub-Issue-URL** für `123ichbinmitdabei/terp-sessions` mit Labels `pioneers,bug` und öffnet sie in neuem Tab. Bei Submit: Test als `fail` mit `bugReported=true` markiert → +25 Punkte → bug_hunter-Achievement triggert.
+- **End-Screen erweitert** — neben den bisherigen Stats (X bestanden / Y Bugs / Z übersprungen) jetzt: Total-Punkte, Liste freigeschalteter Achievements mit Titel+Desc, **„📋 Komplett-Report als Issue"**-Button generiert ein Übersichts-Issue mit pro-Test-Status (✓/✗/⏭ pro ID), Notizen, Auto-Info — Labels `pioneers,test-complete`.
+
+**Achievement-Trigger im Detail:**
+| ID | Bedingung |
+|---|---|
+| first_steps | ≥1 pass total |
+| bowl_master | A3 oder B3 pass (Bluetooth-Verbinden) |
+| strain_sage | A8 oder B8 pass (Sorte anlegen) |
+| terp_hunter | A5 oder B5 pass (Aroma-Liste navigiert) |
+| voice_warrior | A10 oder B10 pass (Sprachsteuerung) |
+| bug_hunter | ≥1 fail mit bugReported=true |
+| accessibility_champ | alle 12 Pfad-B-Tests pass |
+| completionist | alle 24 Tests pass (beide Pfade) |
+| patient_zero | completedAt vor 2026-07-31 |
+| speed_run | (completedAt − startedAt) < 30 Min |
+
+Tests: +39 in `v90pioneer-game.mjs` (Punkte-Vergabe in allen Modi, Combo-Logik, alle 10 Achievement-Trigger einzeln, Sound-Mute-Toggle, Bug-URL-Format + Escape, Bug-Modal-Workflow, Komplett-Report-URL-Generator). Volle Regression bleibt grün.
 
 ## v9.0.0-alpha — Pioneer-Test-Modus Phase 1 (Paket S2.1)
 

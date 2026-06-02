@@ -3141,6 +3141,50 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
+<!-- v9.0.0-beta Paket S2 Phase 2: Pioneer-Bug-Report-Formular -->
+<div class="modal" id="modalPioneerBugReport" role="dialog" aria-modal="true" aria-labelledby="pbrTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="pbrTitle">🐛 Bug melden</h2>
+    <p class="wiz-text" id="pbrIntro" style="font-size:13px;color:var(--muted)">Beschreib was nicht funktioniert hat. Wir erstellen daraus ein GitHub-Issue mit allen Infos vorausgefuellt — du musst nur noch „Submit" klicken.</p>
+    <div class="field">
+      <label>Was sollte passieren?</label>
+      <textarea class="input" id="pbrExpected" rows="2" maxlength="600"></textarea>
+    </div>
+    <div class="field">
+      <label>Was ist stattdessen passiert?</label>
+      <textarea class="input" id="pbrActual" rows="3" maxlength="800" placeholder="z.B. Modal geht nicht auf, App haengt, Heizer reagiert nicht"></textarea>
+    </div>
+    <div class="field">
+      <label>Wie hast du es gemacht? <small style="color:var(--muted)">(optional)</small></label>
+      <textarea class="input" id="pbrSteps" rows="2" maxlength="600" placeholder="z.B. 'auf Verbinden geklickt, dann Bluefy gewaehlt, dann Crash'"></textarea>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;margin:8px 0;font-size:11px;color:var(--muted);font-family:monospace">
+      <div id="pbrAutoInfo">Browser/Geraet-Info wird automatisch ergaenzt</div>
+    </div>
+    <div id="pbrStatus" role="status" aria-live="polite" style="min-height:18px;font-size:12px;color:var(--muted);margin-top:6px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn sm ghost" id="btnPbrCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="btnPbrSubmit" style="flex:2">🐛 Bug auf GitHub melden (+25 Punkte)</button>
+    </div>
+  </div>
+</div>
+
+<!-- v9.0.0-beta Paket S2 Phase 2: End-Screen-Modal (Komplett-Report) -->
+<div class="modal" id="modalPioneerComplete" role="dialog" aria-modal="true" aria-labelledby="pcTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="pcTitle">🎉 Pioneer-Test abgeschlossen!</h2>
+    <div id="pcBody"></div>
+    <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn ghost" id="btnPcClose" style="flex:1">Schliessen</button>
+      <button class="btn hot" id="btnPcReport" style="flex:2">📋 Komplett-Report als GitHub-Issue</button>
+    </div>
+  </div>
+</div>
+
 <!-- v8.9.0 Modul 3: Just-in-Time-Hinweis bei fehlendem Web-Bluetooth -->
 <div class="modal" id="modalNoBluetooth" role="dialog" aria-modal="true" aria-labelledby="noBtTitle">
   <div class="back"></div>
@@ -3651,6 +3695,14 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
           <small>Fuegt einen zusaetzlichen Tab mit 24 gefuehrten Test-Aufgaben hinzu. Nur fuer Pioneer-Tester sinnvoll — Normal-User koennen das ignorieren.</small>
         </div>
         <button class="toggle" id="togPioneerTest" role="switch" aria-checked="false" aria-label="Pioneer-Test-Modus"></button>
+      </div>
+      <!-- v9.0.0-beta Phase 2: Sound-Toggle fuer Achievements/Pass/Fail -->
+      <div class="toggle-row">
+        <div class="info">
+          <b>🔊 Test-Sounds</b>
+          <small>Kurze Toene bei Pass/Fail/Achievement/Combo. Bei Screen-Reader-Nutzung evtl. stoerend — hier mute-bar.</small>
+        </div>
+        <button class="toggle" id="togPioneerSounds" role="switch" aria-checked="true" aria-label="Pioneer-Test-Sounds"></button>
       </div>
 
       <!-- v8.7.2-prep Phase 1b.1: Community-DB-Setup -->
@@ -10746,7 +10798,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.0-alpha';
+const SW_VERSION_LABEL='v9.0.0-beta';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -16836,7 +16888,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v9.0.0-alpha bereit.','ok');
+  log('Sessions v9.0.0-beta bereit.','ok');
 
   setupPwaUpdate();
 
@@ -19103,15 +19155,23 @@ function _pioneerRenderWizard(){
   // End-Screen wenn alle bearbeitet
   if(done >= tests.length){
     if(!st.completedAt){ st.completedAt = new Date().toISOString(); try{ savePrefs(); }catch(_){} }
+    // v9.0.0-beta: Achievements-Liste + Komplett-Report
+    const ach = Array.isArray(st.achievements) ? st.achievements : [];
+    const achHtml = ach.length
+      ? '<div style="margin-top:10px;padding:10px;background:rgba(95,184,77,.08);border:1px solid rgba(95,184,77,.3);border-radius:var(--r)"><b style="font-size:12px;color:#7fd968">🏆 ' + ach.length + ' Achievement' + (ach.length===1?'':'s') + ' freigeschaltet</b><div style="font-size:12px;margin-top:6px">' + ach.map(id => { const a = PIONEER_ACHIEVEMENTS.find(x => x.id === id); return a ? '<div>' + escapeHtml(a.title) + ' — <small style="color:var(--muted)">' + escapeHtml(a.desc) + '</small></div>' : ''; }).join('') + '</div></div>'
+      : '';
     w.innerHTML = `<div style="text-align:center">
       <h3 style="margin:0 0 10px">🎉 Test-Pfad abgeschlossen!</h3>
       <p>${pathLabel} · ${passed} bestanden · ${failed} Bugs · ${skipped} uebersprungen</p>
+      <div style="margin:10px 0;font-size:14px"><b>${st.points || 0}</b> Punkte gesammelt</div>
+      ${achHtml}
       <div class="row" style="gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap">
-        <button class="btn sm ghost" id="btnPioneerResetPath" style="flex:1">Test zuruecksetzen</button>
-        <button class="btn sm" id="btnPioneerSwitchPath" style="flex:1">Anderen Pfad starten</button>
+        <button class="btn sm hot" id="btnPioneerCompleteReport" style="flex:1.5">📋 Komplett-Report als Issue</button>
+        <button class="btn sm" id="btnPioneerSwitchPath" style="flex:1">Anderer Pfad</button>
+        <button class="btn sm ghost" id="btnPioneerResetPath" style="flex:1">Reset</button>
       </div>
-      <small style="display:block;margin-top:10px;color:var(--muted)">Komplett-Report als GitHub-Issue: kommt in v9.0.0-beta.</small>
     </div>`;
+    document.getElementById('btnPioneerCompleteReport')?.addEventListener('click', _pioneerCompleteReportOpen);
     document.getElementById('btnPioneerResetPath')?.addEventListener('click', _pioneerResetState);
     document.getElementById('btnPioneerSwitchPath')?.addEventListener('click', _pioneerSwitchPath);
     return;
@@ -19120,9 +19180,9 @@ function _pioneerRenderWizard(){
   const statusBadge = result.status ? `<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:${result.status==='pass'?'rgba(95,184,77,.2)':result.status==='fail'?'rgba(255,87,87,.2)':'rgba(255,184,77,.2)'};color:${result.status==='pass'?'#5fb84d':result.status==='fail'?'#ff5757':'#ffb84d'};margin-left:8px">${result.status==='pass'?'✓ bestanden':result.status==='fail'?'✗ Bug':'⏭ uebersprungen'}</span>` : '';
 
   w.innerHTML = `<div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap;gap:6px">
         <span>${pathLabel} · Test ${idx+1} von ${tests.length}</span>
-        <span>${pct}%</span>
+        <span><b style="color:#7fd968">${st.points || 0}</b> Pkt${st.combo >= 2 ? ' · 🔥 ' + st.combo + ' Combo' : ''} · ${pct}%</span>
       </div>
       <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#5fb84d,#7fd968);transition:width .3s ease"></div>
@@ -19175,19 +19235,55 @@ function _pioneerSetPath(path){
   _pioneerAnnounce('Pfad ' + (path === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. 12 Aufgaben.');
 }
 
-function _pioneerSetResult(testId, status){
+function _pioneerSetResult(testId, status, opts){
   const st = PREFS.pioneerTestState;
   if(!st) return;
   if(!st.results) st.results = {};
-  st.results[testId] = { status, note:'', timestamp: new Date().toISOString() };
+  const prev = st.results[testId] || {};
+  const wasReported = !!prev.bugReported;
+  st.results[testId] = {
+    status,
+    note: (opts && opts.note) || '',
+    bugReported: status === 'fail' ? !!(opts && opts.bugReported) : false,
+    timestamp: new Date().toISOString(),
+  };
+  // v9.0.0-beta: Punkte + Combo
+  if(typeof st.points !== 'number') st.points = 0;
+  if(typeof st.combo !== 'number') st.combo = 0;
+  if(!prev.status){
+    // Neu bewertet — Punkte vergeben (Re-Bewertung gibt nichts)
+    if(status === 'pass'){
+      st.points += 10;
+      st.combo += 1;
+      if(st.combo > 0 && st.combo % 3 === 0){
+        st.points += 5;
+        _pioneerPlaySound('combo');
+        _pioneerAnnounce('Combo! 3 Tests hintereinander geschafft, +5 Bonus.');
+      } else {
+        _pioneerPlaySound('pass');
+      }
+    } else if(status === 'fail'){
+      st.combo = 0;
+      if(opts && opts.bugReported){
+        st.points += 25;
+      }
+      _pioneerPlaySound('fail');
+    } else {
+      st.combo = 0;
+    }
+  }
   try{ savePrefs(); }catch(_){}
+  // v9.0.0-beta: Achievement-Check
+  try{ _pioneerCheckAchievements(); }catch(_){}
   const tests = _pioneerTestsForCurrentPath();
   const t = tests.find(x => x.id === testId);
-  if(status === 'fail'){
-    // Phase 2 wird hier Bug-Report-Modal oeffnen; Phase 1 zeigt nur Hinweis
-    toast('Bug-Report-Formular kommt in v9.0.0-beta');
+  if(status === 'fail' && !(opts && opts._skipBugModal) && !wasReported){
+    // v9.0.0-beta: Bug-Report-Modal oeffnen
+    _pioneerBugReportOpen(testId);
+    _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': Bug-Report-Formular geoeffnet.');
+    return;
   }
-  _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': ' + (status==='pass'?'geschafft':status==='fail'?'Bug gemeldet':'uebersprungen') + '.');
+  _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': ' + (status==='pass'?'geschafft, +10 Punkte':status==='fail'?'Bug gemeldet':'uebersprungen') + '.');
   _pioneerNav(+1);
 }
 
@@ -19226,6 +19322,259 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   }, 1100);
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v9.0.0-beta Paket S2 Phase 2: Gamification + Bug-Reports
+   - 10 Cannabis-Themed Achievements mit Trigger-Bedingungen
+   - Web-Audio-Sounds (kein externer Asset noetig, kein CDN, ~0 KB Bandwidth)
+   - Bug-Report-Modal → GitHub-Issue-Pre-fill via window.open
+   - Komplett-Report-Generator am End-Screen
+═══════════════════════════════════════════════════════════════════════════ */
+const PIONEER_GITHUB_REPO = '123ichbinmitdabei/terp-sessions';
+const PIONEER_ACHIEVEMENTS = [
+  { id:'first_steps',         title:'🌱 Erste Sprossen',      desc:'Ersten Test geschafft' },
+  { id:'bowl_master',          title:'🌿 Bowl Master',         desc:'Bluetooth-Verbindung erfolgreich (A3 oder B3)' },
+  { id:'strain_sage',          title:'🧙 Strain Sage',         desc:'Eigene Sorte angelegt (A8 oder B8)' },
+  { id:'terp_hunter',          title:'🔬 Terp Hunter',         desc:'Aroma-Liste navigiert (A5 oder B5)' },
+  { id:'voice_warrior',        title:'🎤 Voice Warrior',       desc:'Sprachsteuerung getestet (A10 oder B10)' },
+  { id:'bug_hunter',           title:'🐛 Bug Hunter',          desc:'Ersten Bug mit Report gemeldet' },
+  { id:'accessibility_champ',  title:'♿ Accessibility Champion', desc:'Alle 12 Tests von Pfad B bestanden' },
+  { id:'speed_run',            title:'⚡ Speed Run',           desc:'Alle Tests in unter 30 Min absolviert' },
+  { id:'completionist',        title:'💯 Completionist',       desc:'24 von 24 Tests bestanden (beide Pfade)' },
+  { id:'patient_zero',         title:'🥇 Patient Zero',        desc:'Pioneer-Tester der ersten Stunde' },
+];
+
+// ── Web Audio Sounds (4 Toene, keine externe Files) ────────────────────────
+let _pioneerAudioCtx = null;
+function _pioneerPlaySound(type){
+  if(PREFS.pioneerTestSounds === false) return;
+  try{
+    if(!_pioneerAudioCtx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      _pioneerAudioCtx = new Ctx();
+    }
+    const ctx = _pioneerAudioCtx;
+    const now = ctx.currentTime;
+    function beep(freq, dur, when, type2){
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type2 || 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, when);
+      gain.gain.linearRampToValueAtTime(0.15, when + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, when + dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(when); osc.stop(when + dur + 0.02);
+    }
+    if(type === 'pass'){ beep(880, 0.12, now, 'sine'); }
+    else if(type === 'fail'){ beep(180, 0.20, now, 'sawtooth'); }
+    else if(type === 'achievement'){ beep(523, 0.10, now); beep(659, 0.10, now+0.12); beep(784, 0.18, now+0.24); }
+    else if(type === 'combo'){
+      // Sweep 200→800Hz
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.12);
+    }
+  } catch(_){}
+}
+
+function _pioneerVibrate(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(_){}
+}
+
+// ── Achievement-Detection ──────────────────────────────────────────────────
+function _pioneerCheckAchievements(){
+  const st = PREFS.pioneerTestState;
+  if(!st || !st.results) return;
+  if(!Array.isArray(st.achievements)) st.achievements = [];
+  const r = st.results;
+  const passedIds = Object.keys(r).filter(k => r[k] && r[k].status === 'pass');
+  const passedCount = passedIds.length;
+  const bugReports = Object.values(r).filter(x => x && x.status === 'fail' && x.bugReported).length;
+  const pathB = PIONEER_TESTS.filter(t => t.path === 'screenreader').map(t => t.id);
+  const pathBPassed = pathB.every(id => r[id] && r[id].status === 'pass');
+  const allPassed = PIONEER_TESTS.every(t => r[t.id] && r[t.id].status === 'pass');
+
+  const triggers = [
+    { id:'first_steps',         when: passedCount >= 1 },
+    { id:'bowl_master',         when: (r.A3 && r.A3.status === 'pass') || (r.B3 && r.B3.status === 'pass') },
+    { id:'strain_sage',         when: (r.A8 && r.A8.status === 'pass') || (r.B8 && r.B8.status === 'pass') },
+    { id:'terp_hunter',         when: (r.A5 && r.A5.status === 'pass') || (r.B5 && r.B5.status === 'pass') },
+    { id:'voice_warrior',       when: (r.A10 && r.A10.status === 'pass') || (r.B10 && r.B10.status === 'pass') },
+    { id:'bug_hunter',          when: bugReports >= 1 },
+    { id:'accessibility_champ', when: pathBPassed },
+    { id:'completionist',       when: allPassed },
+    { id:'patient_zero',        when: !!st.completedAt && new Date(st.completedAt) < new Date('2026-07-31T23:59:59Z') },
+    { id:'speed_run',           when: (() => {
+        if(!st.startedAt || !st.completedAt) return false;
+        const ms = new Date(st.completedAt) - new Date(st.startedAt);
+        return ms > 0 && ms < 30 * 60 * 1000;
+      })() },
+  ];
+  let unlocked = 0;
+  triggers.forEach(t => {
+    if(t.when && st.achievements.indexOf(t.id) === -1){
+      st.achievements.push(t.id);
+      unlocked++;
+      const a = PIONEER_ACHIEVEMENTS.find(x => x.id === t.id);
+      if(a){
+        try{ toast('🏆 Achievement: ' + a.title); }catch(_){}
+        _pioneerPlaySound('achievement');
+        _pioneerVibrate(200);
+        _pioneerAnnounce('Achievement freigeschaltet: ' + a.title);
+      }
+    }
+  });
+  if(unlocked > 0){ try{ savePrefs(); }catch(_){} }
+  return unlocked;
+}
+
+// ── Bug-Report Modal ────────────────────────────────────────────────────────
+let _pioneerBugReportFor = null;
+function _pioneerBugReportOpen(testId){
+  _pioneerBugReportFor = testId;
+  const tests = _pioneerTestsForCurrentPath();
+  const t = tests.find(x => x.id === testId) || PIONEER_TESTS.find(x => x.id === testId);
+  const m = document.getElementById('modalPioneerBugReport'); if(!m || !t) return;
+  document.getElementById('pbrExpected').value = t.desc || '';
+  document.getElementById('pbrActual').value = '';
+  document.getElementById('pbrSteps').value = '';
+  document.getElementById('pbrStatus').textContent = '';
+  const info = document.getElementById('pbrAutoInfo');
+  if(info){
+    const ua = navigator.userAgent || 'unknown';
+    const sess = (typeof communityClient === 'object' && communityClient && communityClient.currentSession && communityClient.currentSession()) || null;
+    const dev = (typeof State !== 'undefined' && State.adapter && State.adapter.constructor && (State.adapter.constructor.displayName || State.adapter.constructor.deviceType)) || 'kein Geraet verbunden';
+    info.innerHTML = '<b>Auto-Ergaenzt im Issue:</b><br>'
+      + 'Test-ID: ' + escapeHtml(testId) + ' (' + escapeHtml(t.title || '') + ')<br>'
+      + 'App-Version: ' + escapeHtml(typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?') + '<br>'
+      + 'Browser: ' + escapeHtml(ua.length > 100 ? ua.slice(0,100) + '…' : ua) + '<br>'
+      + 'Geraet: ' + escapeHtml(dev) + '<br>'
+      + 'Pseudonym: ' + escapeHtml(sess && sess.pseudonym || '(nicht eingeloggt)');
+  }
+  m.classList.add('open');
+}
+
+function _pioneerBugReportBuildUrl(testId, expected, actual, steps){
+  const t = PIONEER_TESTS.find(x => x.id === testId) || { id: testId, title:'(unbekannt)' };
+  const ua = navigator.userAgent || 'unknown';
+  const ver = typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?';
+  const dev = (typeof State !== 'undefined' && State.adapter && State.adapter.constructor && (State.adapter.constructor.displayName || State.adapter.constructor.deviceType)) || 'kein Geraet verbunden';
+  const sess = (typeof communityClient === 'object' && communityClient && communityClient.currentSession && communityClient.currentSession()) || null;
+  const title = '[Pioneer-Test ' + t.id + '] ' + (t.title || 'Bug');
+  const body = '## Was sollte passieren?\n' + (expected || '(keine Angabe)') + '\n\n'
+    + '## Was ist stattdessen passiert?\n' + (actual || '(keine Angabe)') + '\n\n'
+    + (steps ? '## Wie hast du es gemacht?\n' + steps + '\n\n' : '')
+    + '## Auto-Info\n'
+    + '- Test-ID: `' + t.id + '`\n'
+    + '- App-Version: `' + ver + '`\n'
+    + '- Browser-UA: `' + ua + '`\n'
+    + '- Geraet: `' + dev + '`\n'
+    + '- Pseudonym: ' + (sess && sess.pseudonym ? '`' + sess.pseudonym + '`' : '(nicht eingeloggt)') + '\n'
+    + '- Timestamp: `' + new Date().toISOString() + '`\n';
+  return 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new'
+    + '?title=' + encodeURIComponent(title)
+    + '&body=' + encodeURIComponent(body)
+    + '&labels=' + encodeURIComponent('pioneers,bug');
+}
+
+function _pioneerBugReportSubmit(){
+  if(!_pioneerBugReportFor) return;
+  const testId = _pioneerBugReportFor;
+  const expected = document.getElementById('pbrExpected').value.trim();
+  const actual = document.getElementById('pbrActual').value.trim();
+  const steps = document.getElementById('pbrSteps').value.trim();
+  if(!actual){
+    document.getElementById('pbrStatus').textContent = 'Bitte beschreibe was passiert ist.';
+    document.getElementById('pbrStatus').style.color = 'var(--err)';
+    return;
+  }
+  const url = _pioneerBugReportBuildUrl(testId, expected, actual, steps);
+  // GitHub-Issue in neuem Tab oeffnen
+  try{ window.open(url, '_blank', 'noopener'); }catch(_){}
+  // Result mit bugReported=true setzen (geht durch Punkte-Logik mit +25)
+  _pioneerSetResult(testId, 'fail', { bugReported:true, note: actual, _skipBugModal:true });
+  document.getElementById('modalPioneerBugReport')?.classList.remove('open');
+  toast('🐛 Bug-Issue geoeffnet · +25 Punkte');
+  _pioneerBugReportFor = null;
+}
+
+// ── Komplett-Report (Issue mit Zusammenfassung aller Tests) ─────────────────
+function _pioneerCompleteReportOpen(){
+  const st = PREFS.pioneerTestState;
+  if(!st) return;
+  const tests = _pioneerTestsForCurrentPath();
+  const passed = tests.filter(t => st.results[t.id] && st.results[t.id].status === 'pass').length;
+  const failed = tests.filter(t => st.results[t.id] && st.results[t.id].status === 'fail').length;
+  const skipped = tests.filter(t => st.results[t.id] && st.results[t.id].status === 'skip').length;
+  const pathLabel = st.path === 'visual' ? 'Pfad A (sehend)' : 'Pfad B (Screen-Reader)';
+  const ver = typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?';
+  const ua = navigator.userAgent || 'unknown';
+  const ach = (st.achievements || []).map(id => {
+    const a = PIONEER_ACHIEVEMENTS.find(x => x.id === id);
+    return a ? '- ' + a.title + ' — ' + a.desc : '- ' + id;
+  }).join('\n') || '(keine)';
+  const lines = tests.map(t => {
+    const r = st.results[t.id];
+    const icon = r ? (r.status === 'pass' ? '✓' : r.status === 'fail' ? '✗' : '⏭') : '⏸';
+    const note = r && r.note ? ' — `' + r.note.replace(/`/g,"'").slice(0,80) + '`' : '';
+    return '- ' + icon + ' **' + t.id + '** ' + t.title + note;
+  }).join('\n');
+  const title = '[Pioneer-Test Komplett] ' + pathLabel + ' · ' + passed + '/' + tests.length + ' bestanden';
+  const body = '## Zusammenfassung\n'
+    + pathLabel + ' · ' + passed + ' bestanden · ' + failed + ' Bugs · ' + skipped + ' uebersprungen\n'
+    + 'Punkte: **' + (st.points || 0) + '**\n'
+    + 'Achievements: ' + (st.achievements || []).length + '\n\n'
+    + '## Achievements\n' + ach + '\n\n'
+    + '## Test-Ergebnisse im Detail\n' + lines + '\n\n'
+    + '## Auto-Info\n'
+    + '- App-Version: `' + ver + '`\n'
+    + '- Browser-UA: `' + ua + '`\n'
+    + '- Gestartet: `' + (st.startedAt || '?') + '`\n'
+    + '- Abgeschlossen: `' + (st.completedAt || '?') + '`\n';
+  const url = 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new'
+    + '?title=' + encodeURIComponent(title)
+    + '&body=' + encodeURIComponent(body)
+    + '&labels=' + encodeURIComponent('pioneers,test-complete');
+  try{ window.open(url, '_blank', 'noopener'); }catch(_){}
+  toast('📋 Komplett-Report-Issue geoeffnet');
+}
+
+// ── Modal-Wiring (idempotent) + Sound-Toggle ────────────────────────────────
+function _pioneerPhase2Wire(){
+  const m = document.getElementById('modalPioneerBugReport');
+  if(m && !m.__wired){
+    m.__wired = true;
+    document.getElementById('btnPbrCancel')?.addEventListener('click', ()=>{
+      m.classList.remove('open');
+      // Bei Abbruch: result trotzdem als 'fail' speichern, aber ohne Punkte fuer Bug-Hunter
+      if(_pioneerBugReportFor){
+        _pioneerSetResult(_pioneerBugReportFor, 'fail', { bugReported:false, _skipBugModal:true });
+      }
+      _pioneerBugReportFor = null;
+    });
+    document.getElementById('btnPbrSubmit')?.addEventListener('click', _pioneerBugReportSubmit);
+  }
+  const tog = document.getElementById('togPioneerSounds');
+  if(tog && !tog.__wired){
+    tog.__wired = true;
+    tog.setAttribute('aria-checked', String(PREFS.pioneerTestSounds !== false));
+    tog.addEventListener('click', ()=>{
+      PREFS.pioneerTestSounds = !(PREFS.pioneerTestSounds !== false ? true : false);
+      tog.setAttribute('aria-checked', String(PREFS.pioneerTestSounds !== false));
+      try{ savePrefs(); }catch(_){}
+      if(PREFS.pioneerTestSounds) _pioneerPlaySound('pass');
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_pioneerPhase2Wire, 1200); });
 </script>
 </body>
 </html>
