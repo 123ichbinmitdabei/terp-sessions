@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.0-beta)
+# Terp Sessions — Vape Controller (v9.0.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,45 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.0 — S3-Features echt + Pioneer-Tests 25-30 (Paket S2.3)
+
+Phase 3 finalisiert v9.0.0: drei echte App-Features die NORMAL nutzbar sind UND im Pioneer-Test-Pfad als Aufgaben A13-A15 + B13-B15 mitgetestet werden. Bereit für Pioneer-Onboarding.
+
+### URL-Scheme-Befehle (Siri-Shortcuts / Android-Tasker)
+Die bestehende `handleUrlCommand()` (seit v4.9.4 mit `?cmd=…`) bekommt Spec-konforme Alias-Form:
+- `?command=set_temp&value=185` → mapped auf `?cmd=set&temp=185`
+- `?command=heat_on` / `heat_off` / `pump_on` / `pump_off` / `stop_all` / `status`
+- Beide Formate funktionieren parallel; ältere Shortcuts bleiben gültig.
+- Nach Ausführung: `history.replaceState` Cleanup; Toast „URL-Befehl: …"; bei BLE-Befehlen ohne Verbindung 2s Auto-Reconnect-Versuch oder Hinweis.
+
+### Touch-Befehl-Macros (1-Tap Custom Quick-Actions)
+- Settings → Erweitert → „Touch-Befehl-Macros" → „+ Neuer Macro": Name, Emoji-Icon, Aktion-Dropdown (7 Optionen), bei `set_temp` zusätzlich Temperatur-Eingabe.
+- Macros werden im Steuerung-Tab unter den Standard-Quick-Actions als kompakte Chips (grünlich) gerendert, mit Aria-Label „Macro X ausführen (Aktion)".
+- Klick auf Chip führt sofort aus (mit Toast-Bestätigung + TTS-Ansage); bei BLE-Befehlen ohne Verbindung Hinweis.
+- Edit/Delete via Edit-Icon in Settings-Liste.
+- Lokal in `PREFS.touchMacros = [{id, name, icon, action, params}]`.
+
+### TTS-Voice-Profile + Bluefy-Heuristik
+- Settings → Sprachsteuerung → „TTS-Stimme": Dropdown mit allen verfügbaren Browser-Stimmen (sortiert nach Sprache+Name) + „▶ Test"-Button.
+- `PREFS.ttsVoiceURI` speichert Auswahl; `ttsSay()` nutzt sie via `SpeechSynthesisUtterance.voice`.
+- **Bluefy-Heuristik:** `ttsSay()` returnt early bei `navigator.userAgent.indexOf('Bluefy') !== -1` (Apple-WebKit-Limitation für injizierten Browser).
+- `speechSynthesis.onvoiceschanged` lädt asynchron geladene Stimmen nach.
+
+### Pioneer-Test-Pfad erweitert auf 30 Tests
+6 neue Tests (15 sehend + 15 Screen-Reader gesamt):
+- **A13 / B13:** URL-Scheme via Siri Shortcut / Adressleiste / Voice-Feedback
+- **A14 / B14:** Touch-Macro anlegen + nutzen (sehend / mit Screen-Reader)
+- **A15 / B15:** TTS-Stimme wechseln + testen / SR-Modus-Heuristik
+
+`completionist`-Achievement-Bedingung „alle 24 pass" gilt jetzt für alle 30 (via `PIONEER_TESTS.every(...)`). `accessibility_champ` (alle B-Tests) erfordert jetzt 15 statt 12 Pfad-B-Pässe.
+
+Tests: +38 in `v90pioneer-s3.mjs` (30-Test-Definition-Konsistenz, URL-Scheme-Aliases + Live-Parse mit Mock, Touch-Macros CRUD + Render + Validation + Fire, TTS-Voice-Dropdown + Bluefy-UA-Block + Voice-Selection-Persist, Pioneer-Tests-Inhalte). Volle Regression bleibt grün.
+
+### Was Pioneer-Tester bekommen
+1. **Komplette App** (Verbinden, Steuern, Programme, Aroma, Community)
+2. **Test-Pfad-Modus** (30 gefuehrte Aufgaben, Punkte, 10 Achievements, Bug-Reports per GitHub-Issue)
+3. **3 neue Power-User-Features** (URL-Scheme für Voice-Assistants, Touch-Macros, TTS-Stimmen-Auswahl)
 
 ## v9.0.0-beta — Pioneer-Gamification + Bug-Reports (Paket S2.2)
 
