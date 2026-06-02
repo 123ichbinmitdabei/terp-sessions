@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v8.9.0)
+# Terp Sessions — Vape Controller (v9.0.0-alpha)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,21 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.0-alpha — Pioneer-Test-Modus Phase 1 (Paket S2.1)
+
+Erster deploybarer Stand des Pioneer-Test-Wizards. Phase 2 (Gamification + Bug-Reports) und Phase 3 (S3-Features: URL-Scheme, Touch-Macros, TTS-Profile) folgen nach Andre-Status-Sync.
+
+- **Feature-Flag `PREFS.pioneerTestMode`** (default OFF) — Toggle in Settings → Erweitert → „Pioneer-Test-Modus". Confirm-Dialog beim Aktivieren. Normal-User sehen den Test-Pfad-Tab GAR NICHT.
+- **Neuer Tab „🌿 Test-Pfad"** in der Bottom-Navigation, nur sichtbar wenn Flag an. Bei Deaktivierung des Mode während Tab aktiv → automatischer Fallback auf Steuerung-Tab.
+- **24 Test-Definitionen** als `PIONEER_TESTS`-Konstante: 12 Tests für Pfad A (sehende Tester, IDs A1–A12) + 12 Tests für Pfad B (Screen-Reader-Tester, IDs B0–B11). Inhalt: App-Install, Onboarding, Bluetooth, Temperatur, Aroma-Liste, Programm-Start, Community-Register, Sorte anlegen, Sterne-Bewertung, Sprachsteuerung, Session-Tracking, Datenschutz lesen. *Andre sollte später aus `Pioneer-Test-Szenarien-v1.docx` abgleichen — Plausible-Defaults sind derzeit drin.*
+- **Wizard-UI** mit Pfad-Auswahl (initial + jederzeit wechselbar), Fortschrittsbalken („Test X von 12 — XX%"), Aufgaben-Card mit ID + Titel + Beschreibung + Hint, drei Action-Buttons (✓ Geschafft / ✗ Funktioniert nicht / ⏭ Überspringen) sowie Navigation (‹ Zurück / Weiter ›).
+- **Lokale State-Speicherung** in `PREFS.pioneerTestState`: `{path, currentIndex, results, startedAt, completedAt, points, combo, achievements}`. Auto-Save nach jedem Klick. Resume nach Re-Open am letzten Index.
+- **Accessibility-Basis**: Aria-Live-Region (`#pioneerLive`, off-screen) für Test-Wechsel-Announcements. Fokus springt nach jedem Klick auf den primären Action-Button (Pass) für Keyboard-Nutzer. Buttons mit klaren `aria-label`s.
+- **End-Screen** bei alle 24 (bzw. 12 pro Pfad) Tests bearbeitet: Stats („X bestanden, Y Bugs, Z übersprungen") + Reset + Pfad-Wechsel. Komplett-Report-Generierung kommt in v9.0.0-beta.
+- **Bug-Report-Formular** ist in Phase 1 noch nicht voll implementiert — bei „✗ Funktioniert nicht" wird derzeit nur eine Toast-Nachricht „Bug-Report-Formular kommt in v9.0.0-beta" gezeigt, der Test selbst aber bereits als `fail` markiert.
+
+Tests: +39 in `v90pioneer-basis.mjs` (Feature-Flag-Default, Tab-Visibility, 24-Definitionen-Konsistenz, Pfad-Wahl, Wizard-Render, Result-Speicherung, Back/Next-Navigation, Aria-Live, Persist+Reload, Reset, End-Screen). Volle Regression: bleibt grün.
 
 ## v8.9.0 — Pre-Test-Polish (Paket S1)
 
