@@ -573,6 +573,9 @@ body:has(.run-card.show) .wake-indicator{ bottom:calc(220px + var(--safe-bot-pad
 
 .modal{position:fixed;inset:0;z-index:50;display:none}
 .modal.open{display:block}
+/* v8.7.6 Paket 12e: Body-Scroll-Lock waehrend Modal offen — verhindert Background-Scroll
+   am Desktop wenn Scroll-Event im .sheet nicht abgefangen wird. */
+body.modal-open{overflow:hidden}
 .modal .back{
   position:absolute;inset:0;
   background:rgba(0,0,0,.72);
@@ -10610,7 +10613,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.5';
+const SW_VERSION_LABEL='v8.7.6';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -16623,7 +16626,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.5 bereit.','ok');
+  log('Sessions v8.7.6 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18599,6 +18602,54 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_commWireSetup, 9
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commStrainModalsWire(); }catch(_){} }, 950); });
 // v8.7.5 Paket 12b.3: Programm-Modals + Moderations-Modal wiring
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commProgramModalsWire(); _commModWire(); }catch(_){} }, 960); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.6 Paket 12e: Modal-Stack-Manager
+   Loest Bug 2 (Modal hinter anderem Modal) ohne Aenderung an bestehenden
+   .classList.add('open')-Aufrufen. MutationObserver schaut auf 'class'-
+   Aenderungen aller .modal-Elemente und vergibt dynamische z-index +
+   togglet body.modal-open (Bug 1 Background-Scroll-Lock).
+
+   Eigenschaften:
+   * Stack-Counter wird inkrementiert pro Open, dekrementiert pro Close
+   * dataset.modalStack speichert pro Modal den eigenen Stack-Wert
+     (idempotent: zweimal open() bei schon offenem Modal aendert nichts)
+   * z-index = 1000 + stackPos*10
+   * body.modal-open bleibt solange MINDESTENS ein Modal offen ist
+═══════════════════════════════════════════════════════════════════════════ */
+window._modalStack = 0;
+function _modalStackManageEl(el){
+  const isOpen = el.classList.contains('modal') && el.classList.contains('open');
+  const wasManaged = !!el.dataset.modalStack;
+  if(isOpen && !wasManaged){
+    window._modalStack += 1;
+    el.dataset.modalStack = String(window._modalStack);
+    el.style.zIndex = String(1000 + window._modalStack * 10);
+    document.body.classList.add('modal-open');
+  } else if(!isOpen && wasManaged){
+    delete el.dataset.modalStack;
+    el.style.zIndex = '';
+    window._modalStack = Math.max(0, window._modalStack - 1);
+    if(document.querySelectorAll('.modal.open').length === 0){
+      document.body.classList.remove('modal-open');
+    }
+  }
+}
+function _modalStackInit(){
+  const obs = new MutationObserver(muts => {
+    muts.forEach(m => {
+      if(m.attributeName !== 'class') return;
+      _modalStackManageEl(m.target);
+    });
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    obs.observe(m, { attributes:true, attributeFilter:['class'] });
+    // Initial-Sync fuer Modale die schon mit .open im DOM sind (unwahrscheinlich, aber defensiv)
+    if(m.classList.contains('open')) _modalStackManageEl(m);
+  });
+  window._modalStackObserver = obs;
+}
+document.addEventListener('DOMContentLoaded', _modalStackInit);
 </script>
 </body>
 </html>

@@ -1,6 +1,20 @@
-# Sessions — Vape Controller (v8.7.5)
+# Sessions — Vape Controller (v8.7.6)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.6 — Hotfix Modal-Scrolling + Modal-Stacking (Paket 12e)
+
+Zwei Bugs aus Andre's v8.7.5-Manuell-Test:
+
+1. **Modal-Scrolling am Desktop kaputt:** Lange Modale (z.B. Strain-Create mit allen Feldern) konnten am PC nicht gescrollt werden — Scroll-Event leakte ans Dokument, die Hauptseite scrollte statt das Modal. Root-Cause: `body` hatte kein `overflow:hidden` während Modal offen. **Fix:** neue CSS-Klasse `body.modal-open { overflow:hidden }` + JS-Hook der bei Modal-Open/Close diese Klasse togglet.
+
+2. **Modale öffnen hinter anderen:** Aus einem offenen Modal heraus getriggerte zweite Modale (z.B. Settings → Login) öffneten sich HINTER dem ersten — beide hatten denselben `z-index:50`, DOM-Order entschied. **Fix:** Modal-Stack-Manager via MutationObserver auf alle `.modal`-Elemente. Pro Open inkrementiert Stack-Counter + dynamischer `z-index = 1000 + stackPos*10`. Beim Close: z-index zurückgesetzt + Counter dekrementiert.
+
+**Implementation-Pragmatik:** der MutationObserver beobachtet Class-Changes aller bestehenden `.modal`-Elemente und vergibt den z-index dynamisch — **keine Änderung an bestehenden `.classList.add('open')`-Aufrufen nötig**. Idempotent via `dataset.modalStack`-Check. Funktioniert für alle 39 Modale im DOM ohne Touch.
+
+Tests: +24 in neuer Suite `v876modals.mjs`. Modal-Inventar-Skript prüft alle 39 Modale (Open/Close + Stack-Verhalten) — 39/39 OK. Visual-Check mit Puppeteer-Screenshots zeigt korrektes Stacking (z=1020 vorne, z=1010 hinten) und vollständige Scroll-Range im Strain-Create-Modal. Volle Regression: **852/852 PASS** über 37 Suiten (+24 vs. 828).
+
+**Patch 2 (Werks-Sorten-Migration) Status:** ✓ live verifiziert — 127/127 Werks-Sorten als `is_factory_seed=true` in der Community-DB.
 
 ## v8.7.5 — Community-Programme + Moderation + Werks-Migration (Paket 12b.3)
 
