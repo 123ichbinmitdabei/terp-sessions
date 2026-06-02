@@ -1,6 +1,25 @@
-# Sessions — Vape Controller (v8.7.4)
+# Sessions — Vape Controller (v8.7.5)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
+
+## v8.7.5 — Community-Programme + Moderation + Werks-Migration (Paket 12b.3)
+
+Sorten-CRUD von v8.7.4 + Programme-CRUD + Admin-Moderation. Zwei optionale Backend-Patches im Repo, die App degradiert sauber wenn sie noch nicht eingespielt sind.
+
+- **Programm-Tab-Leiste** in *Programme*: Meine / Vorlagen / Community. Community-Tab nur sichtbar wenn `PREFS.communityEnabled` UND `communityClient.isLoggedIn()`. Memory-only Tab-State. Trennung der bisherigen „Eigene" + „Vorlagen"-Cards in zwei separate Tabs; Community-Tab zeigt eigenen Container.
+- **Community-Programme-Liste** mit Name, Beschreibung, Step-Count, Gesamtdauer, Geräte-Badges, Sterne-Anzeige, Verknüpfungs-Count. 50er-Pagination, Loading/Empty/Error-States.
+- **Programm-Detail-Modal** mit interaktiven Sternen (Optimistic Update), verknüpften Sorten (klickbar → Strain-Detail), Steps-Liste (action · °C · sec). Action-Buttons je nach `is_my`. Extra: **„In meine Programme laden"** importiert das Community-Programm als lokales Programm.
+- **Programm-Create/Edit/Propose-Formular** mit Steps-Editor (Add/Remove + Action-Dropdown + Temp + Sekunden pro Schritt), Device-Toggle-Chips (13 unterstützte Geräte), Sorten-Multi-Select (aus Community-Cache), Pseudonym-Toggle mit Default-Memory. Submit ruft `programCreate` + `programSetDevices` + `programLinkStrains` nacheinander auf.
+- **Moderations-UI für Admins** im *Settings → Community*-Bereich: Button „📝 Offene Edit-Vorschläge" öffnet Modal mit Filter (Alle / Sorten / Programme). Pro Vorschlag: Target-Name, Vorschlagender (oder anonym), Kommentar, Diff der vorgeschlagenen Änderungen, [Annehmen] / [Ablehnen]-Buttons. Bei Ablehnen optional Begründung. **Bei fehlendem Backend-Patch zeigt die UI einen klaren Hinweis-Banner** mit Patch-Datei-Name (kein Crash, kein generic Error).
+- **Backend-Patch 12b.3-proposals** (`community-backend-patch-12b3-proposals.sql`, KRITISCH für A6): Neue RPC `community_list_open_proposals(p_code, p_pin)` mit Admin-Check, returnt offene Vorschläge mit denormalisiertem `target_name` und `proposer_pseudonym`. Additiv-idempotent. Andre spielt im Supabase SQL-Editor ein.
+- **Backend-Patch Werks-Migration** (`community-backend-patch-factory-seed.sql`, optional): Importiert die 127 in der App eingebetteten Werks-Aroma-Sorten in `community_strains` mit `is_factory_seed=true`. Owner ist spezieller `FACTORY`-User mit nicht-login-barem pin_hash. Re-runnable (Existenz-Check via `author_code='FACTORY' AND name`).
+
+Tests: +61 in zwei neuen Suiten (`v875programs.mjs` 41/41, `v875moderation.mjs` 20/20). Volle Regression: **809/809 PASS** über 35 Suiten (+61 vs. 748).
+
+**Was NICHT in v8.7.5 ist:**
+- Live-Migration der Werks-Sorten (Patch-Vorschlag liegt, Einspielen bei Andre)
+- DSGVO-Datenschutzerklärung v2 (separater Paket-Teil B, kein Code-Asset)
+- Edge-Case-Bug-Hunt (Paket-Teil C, falls Zeit)
 
 ## v8.7.4 — Community-Sorten-CRUD (Paket 12b.2, Phase 1b.2)
 

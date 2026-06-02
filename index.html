@@ -2470,20 +2470,33 @@ button[data-sch-day].active{
 <section class="tab" id="tab-prog" aria-labelledby="tab-prog-label">
   <h2 id="tab-prog-label" class="sr-only">Programme</h2>
 
-  <div class="card">
+  <!-- v8.7.5 Paket 12b.3: Tab-Leiste Werk/Meine/Community fuer Programme -->
+  <div class="aroma-tabs" id="progTabs" role="tablist" aria-label="Programm-Quellen" style="margin-bottom:8px">
+    <button class="aroma-tab active" data-progtab="meine" role="tab" aria-selected="true">Meine</button>
+    <button class="aroma-tab" data-progtab="werk" role="tab" aria-selected="false">Vorlagen</button>
+    <button class="aroma-tab" data-progtab="community" id="progTabCommunity" role="tab" aria-selected="false" hidden>Community</button>
+  </div>
+
+  <div class="card" id="cardQuickReplay">
     <h3>Schnell</h3>
     <button class="btn block hot" id="btnReplayLast" data-tip="Wiederholt das zuletzt komplett gelaufene Programm — schneller Re-Start ohne erneut auswählen" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardProgSaved">
     <h3>Eigene Programme <button class="help-ico" data-help="workflow">?</button></h3>
     <div class="prog-list" id="progSaved"></div>
     <button class="btn block primary" id="btnNewProg" data-tip="Erstellt ein neues eigenes Programm mit eigenen Schritten — Temperatur-Rampen, Pumpen, Pausen" style="margin-top:10px">+ Neues Programm</button>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardProgPresets">
     <h3>Vorlagen</h3>
     <div class="prog-list" id="progPresets"></div>
+  </div>
+
+  <!-- v8.7.5 Community-Programme Container (nur in Community-Tab sichtbar) -->
+  <div class="card" id="cardCommPrograms" hidden>
+    <h3>Community-Programme</h3>
+    <div class="prog-list" id="commProgList"></div>
   </div>
 
   <div class="card">
@@ -3036,6 +3049,76 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
+<!-- v8.7.5 Paket 12b.3: Community-Programm-Detail -->
+<div class="modal" id="modalCommunityProgramDetail" role="dialog" aria-modal="true" aria-labelledby="commProgDetailTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commProgDetailTitle" style="display:none">Programm-Detail</h2>
+    <div id="commProgDetailBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnCommProgDetailClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.5 Paket 12b.3: Community-Programm Create/Edit/Propose-Formular -->
+<div class="modal" id="modalCommunityProgramEdit" role="dialog" aria-modal="true" aria-labelledby="commProgEditTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commProgEditTitle">Neues Programm</h2>
+    <p class="wiz-text" id="commProgEditNote" style="display:none"></p>
+    <div class="field"><label>Name <span style="color:var(--err)">*</span></label><input class="input" id="cpName" maxlength="100" autocapitalize="words"></div>
+    <div class="field"><label>Beschreibung</label><textarea class="input" id="cpDesc" maxlength="2000" rows="2"></textarea></div>
+    <div class="field">
+      <label>Geräte</label>
+      <div id="cpDevices" class="comm-tag-chips"></div>
+    </div>
+    <div class="field">
+      <label>Schritte <span style="color:var(--err)">*</span></label>
+      <div id="cpSteps" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+      <button class="btn sm ghost" id="cpStepAdd" type="button">+ Schritt</button>
+    </div>
+    <div class="field">
+      <label>Verknüpfte Sorten <small style="color:var(--muted)">(optional)</small></label>
+      <select class="select" id="cpStrainSelect"><option value="">— Sorte aus Community —</option></select>
+      <div class="comm-tag-chips" id="cpStrainChips" style="margin-top:6px"></div>
+    </div>
+    <div class="toggle-row" id="cpShowPseuRow">
+      <div class="info"><b>Mit Pseudonym beitragen</b><small id="cpShowPseuLabel">Anonym</small></div>
+      <button class="toggle" id="cpShowPseu" role="switch" aria-checked="false" aria-label="Mit Pseudonym beitragen"></button>
+    </div>
+    <div class="field" id="cpCommentRow" style="display:none">
+      <label>Kommentar an den Admin (optional)</label>
+      <textarea class="input" id="cpComment" maxlength="1000" rows="2"></textarea>
+    </div>
+    <div id="cpStatus" role="status" aria-live="polite" style="min-height:18px;font-size:12px;color:var(--err);margin-top:4px"></div>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <button class="btn sm ghost" id="cpCancel" style="flex:1">Abbrechen</button>
+      <button class="btn hot" id="cpSubmit" style="flex:2">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- v8.7.5 Paket 12b.3: Moderations-UI fuer Admins -->
+<div class="modal" id="modalCommunityModeration" role="dialog" aria-modal="true" aria-labelledby="commModTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="commModTitle">⚙ Offene Edit-Vorschläge</h2>
+    <div class="aroma-tabs" id="modTabs" role="tablist" aria-label="Vorschlags-Typ" style="margin-bottom:8px">
+      <button class="aroma-tab active" data-modtab="all" role="tab" aria-selected="true">Alle</button>
+      <button class="aroma-tab" data-modtab="strain" role="tab" aria-selected="false">Sorten</button>
+      <button class="aroma-tab" data-modtab="program" role="tab" aria-selected="false">Programme</button>
+    </div>
+    <div id="commModList" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost block" id="btnCommModClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <!-- v8.7.1 Modul 2: iOS-Erst-Start-Hinweis Screen-Reader-Modus -->
 <div class="modal" id="modalSrHint" role="dialog" aria-modal="true" aria-labelledby="srHintTitle">
   <div class="back"></div>
@@ -3502,6 +3585,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <div id="communityAdminArea" hidden style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
           <h4 style="margin:0 0 6px;font-size:13px">⚙ Admin-Funktionen</h4>
           <button class="btn sm ghost block" id="btnAdminPromoteOpen">User zum Admin ernennen</button>
+          <button class="btn sm ghost block" id="btnAdminModerationOpen" style="margin-top:6px">📝 Offene Edit-Vorschläge</button>
         </div>
       </div>
 
@@ -6761,7 +6845,595 @@ function stepSummary(steps){
   }).join(' · ') + (steps.length>4?' · …':'');
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.5 Paket 12b.3: Programme-Tabs + Community-Programme-CRUD
+═══════════════════════════════════════════════════════════════════════════ */
+let _progActiveTab = 'meine';   // 'meine' | 'werk' | 'community'
+let _commProgCache = [];
+let _commProgOffset = 0;
+const _commProgPageSize = 50;
+let _commProgHasMore = false;
+let _commProgLoading = false;
+window._commProgError = null;
+
+function _progUpdateTabVisibility(){
+  const t = document.getElementById('progTabCommunity'); if(!t) return;
+  const show = !!(PREFS.communityEnabled && typeof communityClient === 'object' && communityClient && communityClient.isLoggedIn());
+  t.hidden = !show;
+  if(!show && _progActiveTab === 'community'){
+    _progActiveTab = 'meine';
+    _progApplyActiveTab();
+    _progApplyVisibility();
+  }
+}
+function _progApplyActiveTab(){
+  document.querySelectorAll('#progTabs .aroma-tab').forEach(b => {
+    const on = b.dataset.progtab === _progActiveTab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+}
+function _progApplyVisibility(){
+  // Sichtbare Cards je Tab
+  const q = id => document.getElementById(id);
+  const cardSaved = q('cardProgSaved');
+  const cardPre   = q('cardProgPresets');
+  const cardQuick = q('cardQuickReplay');
+  const cardComm  = q('cardCommPrograms');
+  if(_progActiveTab === 'meine'){
+    if(cardSaved) cardSaved.hidden = false;
+    if(cardPre)   cardPre.hidden   = true;
+    if(cardQuick) cardQuick.hidden = false;
+    if(cardComm)  cardComm.hidden  = true;
+  } else if(_progActiveTab === 'werk'){
+    if(cardSaved) cardSaved.hidden = true;
+    if(cardPre)   cardPre.hidden   = false;
+    if(cardQuick) cardQuick.hidden = false;
+    if(cardComm)  cardComm.hidden  = true;
+  } else {
+    if(cardSaved) cardSaved.hidden = true;
+    if(cardPre)   cardPre.hidden   = true;
+    if(cardQuick) cardQuick.hidden = true;
+    if(cardComm)  cardComm.hidden  = false;
+  }
+}
+function _progTabSwitch(tab){
+  if(tab === _progActiveTab) return;
+  _progActiveTab = tab;
+  _progApplyActiveTab();
+  _progApplyVisibility();
+  if(tab === 'community' && _commProgCache.length === 0 && !_commProgLoading){
+    _commProgramListLoad(true);
+  } else if(tab === 'community'){
+    _renderCommunityProgramsView();
+  }
+}
+function _progWireTabs(){
+  const tabs = document.getElementById('progTabs');
+  if(!tabs || tabs.__wired) return;
+  tabs.__wired = true;
+  tabs.addEventListener('click', e => {
+    const b = e.target.closest('[data-progtab]'); if(!b) return;
+    _progTabSwitch(b.dataset.progtab);
+  });
+}
+
+// ── Community-Programm-Card-Render ───────────────────────────────────────────
+function _commProgramCardHtml(p){
+  const stepN = Array.isArray(p.steps) ? p.steps.length : 0;
+  const dur = p.total_duration_sec || 0;
+  const durStr = dur > 0 ? (dur >= 60 ? Math.round(dur/60)+'min' : dur+'s') : '?';
+  const devs = (Array.isArray(p.devices) ? p.devices : []).slice(0,3).map(d=>`<span class="comm-card-tag">${escapeHtml(d)}</span>`).join('');
+  const strainCnt = (Array.isArray(p.strains) ? p.strains.length : 0);
+  const factory = p.is_factory_seed ? '<span class="comm-factory-badge">Werks-Vorlage</span>' : '';
+  let author;
+  if(p.is_factory_seed) author = 'Werks-Vorlage';
+  else if(p.author_pseudonym) author = 'von '+escapeHtml(p.author_pseudonym);
+  else author = 'anonym beigetragen';
+  return `<div class="comm-card" data-program-id="${escapeHtml(p.id)}">
+    <div class="comm-card-head"><div class="comm-card-name">${escapeHtml(p.name)}</div>${factory}</div>
+    ${p.description ? `<div class="comm-card-meta"><span>${escapeHtml(p.description)}</span></div>` : ''}
+    <div class="comm-card-meta">
+      <span>${stepN} Schritte</span><span>~${durStr}</span>${strainCnt?`<span>${strainCnt} Sorten</span>`:''}
+      ${commStarsReadOnly(p.avg_stars, p.review_count)}
+    </div>
+    ${devs ? '<div class="comm-card-tags">'+devs+'</div>' : ''}
+    <div class="comm-card-author">${author}</div>
+  </div>`;
+}
+
+async function _commProgramListLoad(reset){
+  if(_commProgLoading) return;
+  if(reset){ _commProgCache = []; _commProgOffset = 0; _commProgHasMore = false; window._commProgError = null; }
+  _commProgLoading = true;
+  _renderCommunityProgramsView();
+  try{
+    const items = await communityClient.programList(null, null, _commProgPageSize, _commProgOffset);
+    const arr = Array.isArray(items) ? items : [];
+    _commProgCache = reset ? arr : _commProgCache.concat(arr);
+    _commProgHasMore = arr.length >= _commProgPageSize;
+    _commProgOffset = _commProgCache.length;
+  } catch(e){
+    _commProgCache = null;
+    window._commProgError = (e && e.message) || 'Unbekannter Fehler';
+  } finally {
+    _commProgLoading = false;
+    _renderCommunityProgramsView();
+  }
+}
+
+function _renderCommunityProgramsView(){
+  const list = document.getElementById('commProgList'); if(!list) return;
+  const actionsHtml = `<div class="comm-actions" style="margin-top:6px">
+    <button class="btn sm hot" id="btnCommProgCreate">+ Neues Programm</button>
+    <button class="btn sm ghost" id="btnCommProgReload">↻ Neu laden</button>
+  </div>`;
+  if(_commProgLoading && (!_commProgCache || _commProgCache.length === 0)){
+    list.innerHTML = actionsHtml + '<div class="comm-loading">Lade Programme…</div>';
+  } else if(_commProgCache === null){
+    list.innerHTML = actionsHtml + `<div class="comm-error">Konnte Programme nicht laden.<br><small>${escapeHtml(window._commProgError||'')}</small><br><button class="btn sm" id="btnCommProgRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+    document.getElementById('btnCommProgRetry')?.addEventListener('click', ()=>_commProgramListLoad(true));
+  } else if(_commProgCache.length === 0){
+    list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Programme.<br><button class="btn sm hot" id="btnCommProgCreateEmpty">+ Neues Programm</button></div>`;
+    document.getElementById('btnCommProgCreateEmpty')?.addEventListener('click', _commProgramCreateOpen);
+  } else {
+    let html = actionsHtml + `<div class="aroma-count">${_commProgCache.length} Programme${_commProgHasMore?'+':''}</div>`;
+    html += _commProgCache.map(_commProgramCardHtml).join('');
+    if(_commProgHasMore){
+      html += `<div style="text-align:center;margin:14px 0"><button class="btn sm ghost" id="btnCommProgMore">Mehr laden</button></div>`;
+    }
+    list.innerHTML = html;
+    document.getElementById('btnCommProgMore')?.addEventListener('click', ()=>_commProgramListLoad(false));
+    list.querySelectorAll('.comm-card[data-program-id]').forEach(card => {
+      card.addEventListener('click', () => {
+        const p = _commProgCache.find(x=>x.id === card.dataset.programId);
+        if(p) _commProgramDetailOpen(p);
+      });
+    });
+  }
+  document.getElementById('btnCommProgCreate')?.addEventListener('click', _commProgramCreateOpen);
+  document.getElementById('btnCommProgReload')?.addEventListener('click', ()=>_commProgramListLoad(true));
+}
+
+// ── Detail-Modal ─────────────────────────────────────────────────────────────
+let _commCurrentProgram = null;
+function _commProgramDetailOpen(p){
+  _commCurrentProgram = p;
+  _commProgramDetailRender(p);
+  document.getElementById('modalCommunityProgramDetail')?.classList.add('open');
+}
+function _commProgramDetailRender(p){
+  const body = document.getElementById('commProgDetailBody'); if(!body) return;
+  const isMy = !!p.is_my;
+  const stepN = Array.isArray(p.steps) ? p.steps.length : 0;
+  const dur = p.total_duration_sec || 0;
+  const durStr = dur > 0 ? (dur >= 60 ? Math.round(dur/60)+'min' : dur+'s') : '?';
+  const devsHtml = (Array.isArray(p.devices) ? p.devices : []).map(d=>`<span class="comm-card-tag">${escapeHtml(d)}</span>`).join('');
+  const strainsHtml = (Array.isArray(p.strains) ? p.strains : []).map(sid=>{
+    const s = _commStrainCache.find(x=>x.id === sid);
+    return s ? `<span class="comm-card-tag" data-comm-strain="${escapeHtml(sid)}" style="cursor:pointer">${escapeHtml(s.name)}</span>` : `<span class="comm-card-tag" title="Sorte nicht im Cache">${escapeHtml(sid).slice(0,8)}…</span>`;
+  }).join('');
+  const stepsHtml = (Array.isArray(p.steps) ? p.steps : []).map((s, i) => {
+    const parts = [];
+    if(s.value != null) parts.push(s.value+'°');
+    if(s.seconds != null) parts.push(s.seconds+'s');
+    return `<div style="font-size:12px;padding:4px 8px;background:rgba(255,255,255,.04);border-radius:4px;margin-bottom:3px"><b>${i+1}.</b> ${escapeHtml(s.action||'?')}${parts.length?' · '+parts.join(' · '):''}</div>`;
+  }).join('');
+  let author;
+  if(p.is_factory_seed) author='Werks-Vorlage';
+  else if(p.author_pseudonym) author='von '+escapeHtml(p.author_pseudonym);
+  else if(isMy) author='dein anonymer Beitrag';
+  else author='anonym beigetragen';
+  body.innerHTML = `
+    <h2 style="margin:0 0 4px">${escapeHtml(p.name)}</h2>
+    ${p.is_factory_seed ? '<div style="margin-bottom:6px"><span class="comm-factory-badge">Werks-Vorlage</span></div>' : ''}
+    <div class="comm-detail-section">${commStarsInteractive(p.avg_stars, p.review_count, p.my_stars)}</div>
+    ${p.description ? `<div class="comm-detail-section"><div class="comm-detail-label">Beschreibung</div>${escapeHtml(p.description)}</div>` : ''}
+    <div class="comm-detail-section"><div class="comm-detail-label">Übersicht</div>${stepN} Schritte · ~${durStr}</div>
+    ${devsHtml ? `<div class="comm-detail-section"><div class="comm-detail-label">Geräte</div><div class="comm-card-tags">${devsHtml}</div></div>` : ''}
+    ${strainsHtml ? `<div class="comm-detail-section"><div class="comm-detail-label">Verknüpfte Sorten</div><div class="comm-card-tags">${strainsHtml}</div></div>` : ''}
+    <div class="comm-detail-section"><div class="comm-detail-label">Schritte</div>${stepsHtml || '<small style="color:var(--muted)">keine Schritte</small>'}</div>
+    <div class="comm-card-author" style="margin-top:14px">${author}</div>
+    <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+      ${isMy
+        ? `<button class="btn sm" id="btnCommProgEditOwn" style="flex:1">✏️ Bearbeiten</button><button class="btn sm danger" id="btnCommProgDeleteOwn" style="flex:1">🗑 Löschen</button>`
+        : `<button class="btn sm" id="btnCommProgProposeEdit" style="flex:1">📝 Edit-Vorschlag</button>`
+      }
+    </div>
+    <div style="margin-top:8px"><button class="btn sm ghost block" id="btnCommProgLoadLocal">⤓ In meine Programme laden</button></div>
+  `;
+  body.querySelectorAll('.comm-stars [data-star]').forEach(btn => {
+    btn.addEventListener('click', () => _commProgramRateClick(p, parseInt(btn.dataset.star)));
+  });
+  body.querySelectorAll('[data-comm-strain]').forEach(span=>{
+    span.addEventListener('click', () => {
+      const s = _commStrainCache.find(x=>x.id === span.dataset.commStrain);
+      if(s){ document.getElementById('modalCommunityProgramDetail')?.classList.remove('open'); _commStrainDetailOpen(s); }
+    });
+  });
+  document.getElementById('btnCommProgEditOwn')?.addEventListener('click', ()=>_commProgramEditOpen('edit', p));
+  document.getElementById('btnCommProgDeleteOwn')?.addEventListener('click', ()=>_commProgramDeleteConfirm(p));
+  document.getElementById('btnCommProgProposeEdit')?.addEventListener('click', ()=>_commProgramEditOpen('propose', p));
+  document.getElementById('btnCommProgLoadLocal')?.addEventListener('click', ()=>_commProgramLoadIntoLocal(p));
+}
+
+async function _commProgramRateClick(p, stars){
+  if(!stars || stars < 1 || stars > 5) return;
+  const prev = p.my_stars; p.my_stars = stars;
+  _commProgramDetailRender(p);
+  try{
+    await communityClient.programRate(p.id, stars, null);
+    toast(`✓ Bewertung: ${stars} Sterne`);
+    try{
+      // Refresh aus Liste — kein dedicated programGet
+      const fresh = await communityClient.programList(null, null, 200, 0);
+      const f = Array.isArray(fresh) ? fresh.find(x=>x && x.id === p.id) : null;
+      if(f){ Object.assign(p, f); _commProgramDetailRender(p); }
+    }catch(_){}
+  } catch(e){
+    p.my_stars = prev;
+    _commProgramDetailRender(p);
+    toast('Bewertung fehlgeschlagen: '+((e&&e.message)||'?'));
+  }
+}
+
+async function _commProgramDeleteConfirm(p){
+  if(!confirm(`Programm „${p.name}" wirklich löschen? Auch Bewertungen + Sorten-Verknüpfungen werden gelöscht. Nicht rückgängig.`)) return;
+  try{
+    await communityClient.programDeleteOwn(p.id);
+    document.getElementById('modalCommunityProgramDetail')?.classList.remove('open');
+    toast('Programm gelöscht');
+    _commProgramListLoad(true);
+  } catch(e){
+    toast('Löschen fehlgeschlagen: '+((e&&e.message)||'?'));
+  }
+}
+
+function _commProgramLoadIntoLocal(p){
+  // Convenience: importiert das Community-Programm als lokales Programm
+  const local = {
+    id: 'prog-'+Date.now(),
+    name: p.name + ' (Community)',
+    desc: p.description || '',
+    steps: Array.isArray(p.steps) ? JSON.parse(JSON.stringify(p.steps)) : [],
+    isPreset: false,
+  };
+  State.programs.unshift(local);
+  LS.set('vol_programs', State.programs);
+  if(typeof renderPrograms === 'function') renderPrograms();
+  toast('Programm „'+p.name+'" in deine Programme geladen');
+  document.getElementById('modalCommunityProgramDetail')?.classList.remove('open');
+  _progTabSwitch('meine');
+}
+
+// ── Create/Edit/Propose Modal ────────────────────────────────────────────────
+let _commProgEditMode = 'create';
+let _commProgEditOriginal = null;
+let _commProgEditSteps = [];
+let _commProgEditDevices = [];
+let _commProgEditStrainIds = [];
+
+function _commProgramCreateOpen(){ _commProgramEditOpen('create'); }
+
+function _commProgramEditOpen(mode, source){
+  _commProgEditMode = mode;
+  _commProgEditOriginal = (source && mode !== 'create') ? Object.assign({}, source) : null;
+  const title = document.getElementById('commProgEditTitle');
+  const note  = document.getElementById('commProgEditNote');
+  if(mode === 'create'){ title.textContent = '🌿 Neues Programm'; note.style.display='none'; }
+  else if(mode === 'edit'){ title.textContent = '✏️ „'+((source&&source.name)||'?')+'" bearbeiten'; note.style.display='none'; }
+  else { title.textContent = '📝 Änderungsvorschlag'; note.style.display=''; note.textContent = 'Deine Änderung wird einem Admin zur Prüfung vorgelegt.'; }
+  document.getElementById('cpName').value = (source && source.name) || '';
+  document.getElementById('cpDesc').value = (source && source.description) || '';
+  _commProgEditSteps   = (source && Array.isArray(source.steps)) ? JSON.parse(JSON.stringify(source.steps)) : [];
+  _commProgEditDevices = (source && Array.isArray(source.devices)) ? source.devices.slice() : [];
+  _commProgEditStrainIds = (source && Array.isArray(source.strains)) ? source.strains.slice() : [];
+  _commProgStepsRender();
+  _commProgDevicesRender();
+  _commProgStrainsRender();
+  // Pseudonym-Toggle (nur create-mode)
+  const row = document.getElementById('cpShowPseuRow');
+  const csp = document.getElementById('cpShowPseu');
+  const lbl = document.getElementById('cpShowPseuLabel');
+  if(mode === 'create'){
+    row.style.display = '';
+    const withPseu = !PREFS.communityLastAnonymous;
+    csp.setAttribute('aria-checked', String(withPseu));
+    csp.classList.toggle('on', withPseu);
+    const sess = (communityClient.currentSession && communityClient.currentSession()) || null;
+    if(lbl) lbl.textContent = withPseu ? ('Mit Pseudonym '+(sess && sess.pseudonym || '')) : 'Anonym';
+  } else { row.style.display = 'none'; }
+  // Kommentar nur in propose
+  document.getElementById('cpCommentRow').style.display = (mode === 'propose') ? '' : 'none';
+  document.getElementById('cpComment').value = '';
+  const sub = document.getElementById('cpSubmit');
+  sub.textContent = mode === 'create' ? 'Programm speichern' : mode === 'edit' ? 'Änderung speichern' : 'Vorschlag einreichen';
+  sub.disabled = false;
+  document.getElementById('cpStatus').textContent = '';
+  document.getElementById('modalCommunityProgramEdit')?.classList.add('open');
+}
+
+const _commProgValidActions = ['heat_on','heat_off','pump_on','pump_off','set_temperature','wait_until','wait','pump_for','loop_start','loop_end'];
+
+function _commProgStepsRender(){
+  const host = document.getElementById('cpSteps'); if(!host) return;
+  host.innerHTML = _commProgEditSteps.map((s, i) => {
+    const optsHtml = _commProgValidActions.map(a => `<option value="${a}"${a===s.action?' selected':''}>${a}</option>`).join('');
+    return `<div class="row" style="gap:4px;align-items:center" data-step-row="${i}">
+      <span style="font-size:11px;color:var(--muted);width:18px">${i+1}.</span>
+      <select class="select" data-step-action style="flex:2;font-size:12px;padding:4px 6px">${optsHtml}</select>
+      <input class="input mono" data-step-value type="number" placeholder="°C" value="${s.value!=null?s.value:''}" style="flex:1;font-size:12px;padding:4px 6px">
+      <input class="input mono" data-step-sec type="number" placeholder="sec" value="${s.seconds!=null?s.seconds:''}" style="flex:1;font-size:12px;padding:4px 6px">
+      <button type="button" class="btn sm ghost" data-step-remove aria-label="entfernen" style="padding:4px 8px;color:var(--err)">✕</button>
+    </div>`;
+  }).join('');
+  host.querySelectorAll('[data-step-row]').forEach(row => {
+    const i = parseInt(row.dataset.stepRow);
+    row.querySelector('[data-step-action]').addEventListener('change', e => { _commProgEditSteps[i].action = e.target.value; });
+    row.querySelector('[data-step-value]').addEventListener('input', e => { _commProgEditSteps[i].value = e.target.value === '' ? null : parseInt(e.target.value); });
+    row.querySelector('[data-step-sec]').addEventListener('input', e => { _commProgEditSteps[i].seconds = e.target.value === '' ? null : parseInt(e.target.value); });
+    row.querySelector('[data-step-remove]').addEventListener('click', () => { _commProgEditSteps.splice(i, 1); _commProgStepsRender(); });
+  });
+}
+
+function _commProgDevicesRender(){
+  const host = document.getElementById('cpDevices'); if(!host) return;
+  const VD = (typeof communityClient === 'object' && communityClient && communityClient.VALID_DEVICES) || ['volcano-classic','volcano-hybrid','crafty','crafty-plus','mighty','mighty-plus','venty','veazy','plenty','pax-3','puffco-peak-pro','firefly','other'];
+  host.innerHTML = VD.map(d => {
+    const on = _commProgEditDevices.includes(d);
+    return `<button type="button" class="comm-tag-chip" data-dev="${escapeHtml(d)}" style="cursor:pointer;${on?'background:rgba(255,87,34,.18);border-color:rgba(255,87,34,.4)':'opacity:.5'}">${escapeHtml(d)}</button>`;
+  }).join('');
+  host.querySelectorAll('[data-dev]').forEach(b => {
+    b.addEventListener('click', () => {
+      const d = b.dataset.dev;
+      const i = _commProgEditDevices.indexOf(d);
+      if(i >= 0) _commProgEditDevices.splice(i, 1); else _commProgEditDevices.push(d);
+      _commProgDevicesRender();
+    });
+  });
+}
+
+function _commProgStrainsRender(){
+  const chips = document.getElementById('cpStrainChips');
+  const sel = document.getElementById('cpStrainSelect');
+  if(!chips || !sel) return;
+  // Dropdown mit verfügbaren Sorten
+  const known = (Array.isArray(_commStrainCache) ? _commStrainCache : []).filter(s => s && s.id);
+  sel.innerHTML = '<option value="">— Sorte aus Community —</option>' + known.filter(s => !_commProgEditStrainIds.includes(s.id)).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
+  if(!sel.__wired){
+    sel.__wired = true;
+    sel.addEventListener('change', () => {
+      const v = sel.value; if(!v) return;
+      if(!_commProgEditStrainIds.includes(v)) _commProgEditStrainIds.push(v);
+      _commProgStrainsRender();
+    });
+  }
+  chips.innerHTML = _commProgEditStrainIds.map((sid, i) => {
+    const s = known.find(x => x.id === sid);
+    const label = s ? s.name : sid.slice(0,8)+'…';
+    return `<span class="comm-tag-chip">${escapeHtml(label)}<button type="button" data-rm-strain="${i}" aria-label="entfernen">✕</button></span>`;
+  }).join('');
+  chips.querySelectorAll('[data-rm-strain]').forEach(b => {
+    b.addEventListener('click', () => { _commProgEditStrainIds.splice(parseInt(b.dataset.rmStrain), 1); _commProgStrainsRender(); });
+  });
+}
+
+function _commProgCollectData(){
+  return {
+    name: (document.getElementById('cpName').value||'').trim(),
+    description: (document.getElementById('cpDesc').value||'').trim() || null,
+    steps: _commProgEditSteps.filter(s => s && s.action),
+    total_duration_sec: _commProgEditSteps.reduce((s, st) => s + (parseInt(st.seconds)||0), 0) || null,
+  };
+}
+
+function _commProgDiffData(orig, current){
+  const out = {};
+  ['name','description','total_duration_sec'].forEach(k => {
+    const o = orig[k] == null ? '' : String(orig[k]);
+    const c = current[k] == null ? '' : String(current[k]);
+    if(o !== c) out[k] = current[k];
+  });
+  const oSteps = JSON.stringify(orig.steps || []);
+  const cSteps = JSON.stringify(current.steps);
+  if(oSteps !== cSteps) out.steps = current.steps;
+  return out;
+}
+
+async function _commProgramEditSubmit(){
+  const status = document.getElementById('cpStatus'); status.textContent = '';
+  const data = _commProgCollectData();
+  if(!data.name){ status.textContent = 'Name ist Pflicht.'; return; }
+  if(data.name.length > 100){ status.textContent = 'Name max 100 Zeichen.'; return; }
+  if(!Array.isArray(data.steps) || data.steps.length < 1 || data.steps.length > 200){ status.textContent = 'Schritte: 1 bis 200.'; return; }
+  const showPseu = document.getElementById('cpShowPseu').getAttribute('aria-checked') === 'true';
+  const sub = document.getElementById('cpSubmit'); sub.disabled = true;
+  try{
+    let programId;
+    if(_commProgEditMode === 'create'){
+      const r = await communityClient.programCreate(showPseu, data);
+      programId = r && r.id;
+      PREFS.communityLastAnonymous = !showPseu; try{ savePrefs(); }catch(_){}
+      toast('✓ Programm angelegt');
+    } else if(_commProgEditMode === 'edit'){
+      await communityClient.programUpdateOwn(_commProgEditOriginal.id, data);
+      programId = _commProgEditOriginal.id;
+      toast('✓ Änderung gespeichert');
+    } else {
+      const diff = _commProgDiffData(_commProgEditOriginal, data);
+      if(Object.keys(diff).length === 0){ status.textContent = 'Keine Änderungen.'; sub.disabled = false; return; }
+      const comment = (document.getElementById('cpComment').value||'').trim() || null;
+      await communityClient.programProposeEdit(_commProgEditOriginal.id, diff, comment);
+      toast('✓ Vorschlag eingereicht');
+    }
+    // Devices + Strains nur in create/edit (nicht propose — separater RPC waere zu komplex hier)
+    if(programId && _commProgEditMode !== 'propose'){
+      try{ await communityClient.programSetDevices(programId, _commProgEditDevices); }catch(_){}
+      try{ await communityClient.programLinkStrains(programId, _commProgEditStrainIds); }catch(_){}
+    }
+    document.getElementById('modalCommunityProgramEdit')?.classList.remove('open');
+    document.getElementById('modalCommunityProgramDetail')?.classList.remove('open');
+    _commProgramListLoad(true);
+  } catch(e){
+    status.textContent = 'Fehler: '+((e&&e.message) || '?');
+  } finally {
+    sub.disabled = false;
+  }
+}
+
+function _commProgramModalsWire(){
+  const m = document.getElementById('modalCommunityProgramEdit');
+  if(m && !m.__wired){
+    m.__wired = true;
+    document.getElementById('cpCancel')?.addEventListener('click', ()=>m.classList.remove('open'));
+    document.getElementById('cpSubmit')?.addEventListener('click', _commProgramEditSubmit);
+    document.getElementById('cpStepAdd')?.addEventListener('click', () => {
+      _commProgEditSteps.push({ action:'wait', value:null, seconds:10 });
+      _commProgStepsRender();
+    });
+    document.getElementById('cpShowPseu')?.addEventListener('click', () => {
+      const t = document.getElementById('cpShowPseu');
+      const on = t.getAttribute('aria-checked') !== 'true';
+      t.setAttribute('aria-checked', String(on));
+      t.classList.toggle('on', on);
+      const sess = (communityClient.currentSession && communityClient.currentSession()) || null;
+      const lbl = document.getElementById('cpShowPseuLabel');
+      if(lbl) lbl.textContent = on ? ('Mit Pseudonym '+(sess && sess.pseudonym || '')) : 'Anonym';
+    });
+  }
+  const d = document.getElementById('modalCommunityProgramDetail');
+  if(d && !d.__wired){
+    d.__wired = true;
+    document.getElementById('btnCommProgDetailClose')?.addEventListener('click', ()=>d.classList.remove('open'));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v8.7.5 Paket 12b.3 A6: Moderations-UI fuer Admins
+   Backend-RPC community_list_open_proposals fehlt heute — wird via Patch
+   12b.3-proposals nachgereicht. Bis dahin zeigt die UI einen sauberen Hinweis.
+═══════════════════════════════════════════════════════════════════════════ */
+let _commModFilter = 'all';
+let _commModCache = [];
+let _commModLoading = false;
+window._commModError = null;
+
+async function _commModOpen(){
+  const m = document.getElementById('modalCommunityModeration'); if(!m) return;
+  m.classList.add('open');
+  _commModListLoad();
+}
+
+async function _commModListLoad(){
+  _commModLoading = true;
+  _commModRender();
+  try{
+    if(typeof communityClient.adminListOpenProposals !== 'function'){
+      throw new Error('PATCH_NOT_DEPLOYED');
+    }
+    const items = await communityClient.adminListOpenProposals();
+    _commModCache = Array.isArray(items) ? items : [];
+  } catch(e){
+    _commModCache = null;
+    window._commModError = (e && e.message) || 'unbekannt';
+  } finally {
+    _commModLoading = false;
+    _commModRender();
+  }
+}
+
+function _commModRender(){
+  const list = document.getElementById('commModList'); if(!list) return;
+  if(_commModLoading){
+    list.innerHTML = '<div class="comm-loading">Lade Vorschläge…</div>';
+    return;
+  }
+  if(_commModCache === null){
+    const err = String(window._commModError||'');
+    const isPatchMissing = err === 'PATCH_NOT_DEPLOYED' || err.indexOf('community_list_open_proposals') !== -1 || err.indexOf('does not exist') !== -1 || err.indexOf('PGRST202') !== -1;
+    if(isPatchMissing){
+      list.innerHTML = `<div class="comm-error"><b>Backend-Patch noch nicht eingespielt.</b><br><small>Die Moderations-Liste benötigt die RPC <code>community_list_open_proposals</code>. Patch-Datei: <code>community-backend-patch-12b3-proposals.sql</code> im Repo-Root.</small></div>`;
+    } else {
+      list.innerHTML = `<div class="comm-error">Konnte Vorschläge nicht laden.<br><small>${escapeHtml(err)}</small><br><button class="btn sm" id="btnCommModRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+      document.getElementById('btnCommModRetry')?.addEventListener('click', _commModListLoad);
+    }
+    return;
+  }
+  const filtered = _commModCache.filter(p => _commModFilter === 'all' || p.target_type === _commModFilter);
+  if(filtered.length === 0){
+    list.innerHTML = '<div class="comm-empty">Keine offenen Vorschläge.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(_commModItemHtml).join('');
+  list.querySelectorAll('[data-mod-resolve]').forEach(b => {
+    b.addEventListener('click', () => _commModResolve(b.dataset.modResolve, b.dataset.modAccept === 'true'));
+  });
+}
+
+function _commModItemHtml(p){
+  const typ = p.target_type === 'strain' ? 'Sorte' : 'Programm';
+  const targetName = p.target_name || p.target_id?.slice(0,8) || '?';
+  const author = p.proposer_pseudonym ? 'von '+escapeHtml(p.proposer_pseudonym) : 'anonym';
+  const changes = p.proposed_changes || {};
+  const diffHtml = Object.keys(changes).map(k => {
+    const v = changes[k];
+    return `<div style="font-size:11px;margin-bottom:2px"><b>${escapeHtml(k)}:</b> ${escapeHtml(typeof v === 'string' ? v : JSON.stringify(v))}</div>`;
+  }).join('');
+  return `<div class="comm-card" style="cursor:default" data-prop-id="${escapeHtml(p.id)}">
+    <div class="comm-card-head"><div class="comm-card-name">${escapeHtml(targetName)}</div><span class="comm-card-tag">${typ}</span></div>
+    <div class="comm-card-author">${author}</div>
+    ${p.proposer_comment ? `<div class="comm-card-meta"><span style="font-style:italic">„${escapeHtml(p.proposer_comment)}"</span></div>` : ''}
+    <div style="margin-top:6px;padding:6px 8px;background:rgba(255,255,255,.04);border-radius:4px">${diffHtml || '<small>(keine Änderungen)</small>'}</div>
+    <div class="row" style="gap:8px;margin-top:8px">
+      <button class="btn sm danger" data-mod-resolve="${escapeHtml(p.id)}" data-mod-accept="false" style="flex:1">Ablehnen</button>
+      <button class="btn sm hot" data-mod-resolve="${escapeHtml(p.id)}" data-mod-accept="true" style="flex:1">Annehmen</button>
+    </div>
+  </div>`;
+}
+
+async function _commModResolve(propId, accept){
+  let note = null;
+  if(!accept){
+    note = prompt('Optional: Begründung (max 500 Zeichen)') || null;
+  }
+  try{
+    await communityClient.adminResolveProposal(propId, accept, note);
+    toast(accept ? '✓ Vorschlag angenommen' : 'Vorschlag abgelehnt');
+    _commModListLoad();
+    _commStrainListLoad(true);
+    _commProgramListLoad(true);
+  } catch(e){
+    toast('Fehler: '+((e&&e.message)||'?'));
+  }
+}
+
+function _commModWire(){
+  const tabs = document.getElementById('modTabs');
+  if(tabs && !tabs.__wired){
+    tabs.__wired = true;
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('[data-modtab]'); if(!b) return;
+      _commModFilter = b.dataset.modtab;
+      tabs.querySelectorAll('[data-modtab]').forEach(x => {
+        const on = x.dataset.modtab === _commModFilter;
+        x.classList.toggle('active', on);
+        x.setAttribute('aria-selected', String(on));
+      });
+      _commModRender();
+    });
+  }
+  const m = document.getElementById('modalCommunityModeration');
+  if(m && !m.__wired){
+    m.__wired = true;
+    document.getElementById('btnCommModClose')?.addEventListener('click', () => m.classList.remove('open'));
+  }
+}
+
 function renderPrograms(){
+  // v8.7.5: Tab-aware
+  _progWireTabs();
+  _progUpdateTabVisibility();
+  _progApplyVisibility();
   // Saved (user-created, isPreset=false)
   const saved=$('#progSaved');
   saved.innerHTML='';
@@ -9923,7 +10595,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v8.7.4';
+const SW_VERSION_LABEL='v8.7.5';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15928,7 +16600,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v8.7.4 bereit.','ok');
+  log('Sessions v8.7.5 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -17060,6 +17732,11 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   }
 
   // ── Admin-API ────────────────────────────────────────────────────────────
+  async function adminListOpenProposals(){
+    // v8.7.5: braucht Backend-Patch 12b.3-proposals (community_list_open_proposals)
+    if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
+    return rpc('community_list_open_proposals', { p_code:_session.code, p_pin:_session.pin });
+  }
   async function adminResolveProposal(proposalId, accept, note){
     if(!isLoggedIn()) throw new Error('NOT_LOGGED_IN');
     return rpc('community_admin_resolve_proposal', { p_code:_session.code, p_pin:_session.pin, p_proposal_id: proposalId, p_accept: !!accept, p_note: note || null });
@@ -17101,7 +17778,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     programCreate, programList, programUpdateOwn, programDeleteOwn, programProposeEdit, programRate,
     programLinkStrains, programSetDevices,
     // Admin
-    adminResolveProposal, adminFlag, adminDelete,
+    adminListOpenProposals, adminResolveProposal, adminFlag, adminDelete,
     // v8.7.2-prep Phase 1b.1: Bootstrap + Promotion
     bootstrapAvailable, bootstrapFirstAdmin, adminPromote,
     // Helpers (extern testbar)
@@ -17614,9 +18291,13 @@ function _commSetupRefresh(){
       if(adminArea){ adminArea.hidden = true; }
       // v8.7.4: bei Logout/Disabled — Cache reset damit keine alte Liste sichtbar bleibt
       try{ _commStrainCache = []; _commStrainOffset = 0; _commStrainHasMore = false; }catch(_){}
+      // v8.7.5: Programm-Cache analog
+      try{ _commProgCache = []; _commProgOffset = 0; _commProgHasMore = false; }catch(_){}
     }
     // v8.7.4: Tab-Sichtbarkeit aktualisieren (wenn modalAroma offen ist)
     try{ if(typeof _aromaUpdateTabVisibility === 'function') _aromaUpdateTabVisibility(); }catch(_){}
+    // v8.7.5: Programm-Tab-Sichtbarkeit
+    try{ if(typeof _progUpdateTabVisibility === 'function'){ _progUpdateTabVisibility(); _progApplyVisibility(); } }catch(_){}
   }catch(e){ /* defensive: UI darf nie crashen */ }
 }
 
@@ -17850,6 +18531,12 @@ function _commWireSetup(){
       m.classList.add('open');
     });
   }
+  // v8.7.5: Moderations-Modal-Trigger
+  const modOpen = document.getElementById('btnAdminModerationOpen');
+  if(modOpen && !modOpen.__wired){
+    modOpen.__wired = true;
+    modOpen.addEventListener('click', ()=>{ try{ _commModWire(); _commModOpen(); }catch(_){} });
+  }
   const promoteCancel = document.getElementById('btnAdminPromoteCancel');
   if(promoteCancel && !promoteCancel.__wired){
     promoteCancel.__wired = true;
@@ -17887,6 +18574,8 @@ function _commWireSetup(){
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_commWireSetup, 900); });
 // v8.7.4 Paket 12b.2: Strain-Modals wiring (idempotent, einmalig nach DOMReady)
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commStrainModalsWire(); }catch(_){} }, 950); });
+// v8.7.5 Paket 12b.3: Programm-Modals + Moderations-Modal wiring
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _commProgramModalsWire(); _commModWire(); }catch(_){} }, 960); });
 </script>
 </body>
 </html>
