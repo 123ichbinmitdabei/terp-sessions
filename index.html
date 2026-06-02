@@ -7170,8 +7170,15 @@ function _commProgStepsRender(){
   host.querySelectorAll('[data-step-row]').forEach(row => {
     const i = parseInt(row.dataset.stepRow);
     row.querySelector('[data-step-action]').addEventListener('change', e => { _commProgEditSteps[i].action = e.target.value; });
-    row.querySelector('[data-step-value]').addEventListener('input', e => { _commProgEditSteps[i].value = e.target.value === '' ? null : parseInt(e.target.value); });
-    row.querySelector('[data-step-sec]').addEventListener('input', e => { _commProgEditSteps[i].seconds = e.target.value === '' ? null : parseInt(e.target.value); });
+    // v8.7.5 (Paket 12c C): NaN-Safe — leere/nicht-numerische Eingaben → null statt NaN
+    row.querySelector('[data-step-value]').addEventListener('input', e => {
+      const raw = e.target.value; const n = parseInt(raw);
+      _commProgEditSteps[i].value = (raw === '' || isNaN(n)) ? null : n;
+    });
+    row.querySelector('[data-step-sec]').addEventListener('input', e => {
+      const raw = e.target.value; const n = parseInt(raw);
+      _commProgEditSteps[i].seconds = (raw === '' || isNaN(n)) ? null : n;
+    });
     row.querySelector('[data-step-remove]').addEventListener('click', () => { _commProgEditSteps.splice(i, 1); _commProgStepsRender(); });
   });
 }
@@ -7240,7 +7247,15 @@ function _commProgDiffData(orig, current){
   return out;
 }
 
+let _commProgramSubmitting = false;
 async function _commProgramEditSubmit(){
+  // v8.7.5 (Paket 12c C): Mutex gegen Doppel-Submit-Race
+  if(_commProgramSubmitting) return;
+  _commProgramSubmitting = true;
+  try{ return await _commProgramEditSubmitImpl(); }
+  finally{ _commProgramSubmitting = false; }
+}
+async function _commProgramEditSubmitImpl(){
   const status = document.getElementById('cpStatus'); status.textContent = '';
   const data = _commProgCollectData();
   if(!data.name){ status.textContent = 'Name ist Pflicht.'; return; }
@@ -11365,7 +11380,15 @@ function _commDiffStrainData(orig, current){
   });
   return out;
 }
+let _commStrainSubmitting = false;
 async function _commStrainEditSubmit(){
+  // v8.7.5 (Paket 12c C): Mutex gegen Doppel-Submit-Race
+  if(_commStrainSubmitting) return;
+  _commStrainSubmitting = true;
+  try{ return await _commStrainEditSubmitImpl(); }
+  finally{ _commStrainSubmitting = false; }
+}
+async function _commStrainEditSubmitImpl(){
   const status = document.getElementById('csStatus'); status.textContent = '';
   const data = _commCollectStrainData();
   if(!data.name){ status.textContent = 'Name ist Pflicht.'; return; }
