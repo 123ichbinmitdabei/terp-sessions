@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.0)
+# Terp Sessions — Vape Controller (v9.0.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.1 — Hotfix: Self-Test-Findings (B4, B5, B1/B2, B6, B7)
+
+Hotfix nach Andres Live-Self-Test von v9.0.0. Sechs gemeldete Bugs in einem Rutsch, **keine** Änderung an cscCrypto oder Backend, **keine** neuen Features.
+
+- **B4 (hoch) — Pfad-Wahl ohne `prompt()`:** Beim Aktivieren des Pioneer-Test-Modus öffnete sich ein nativer Browser-`prompt()` zur Pfad-Eingabe — für blinde Tester (Pfad B!) absurd. Jetzt springt die Aktivierung direkt in den Test-Pfad-Tab, wo die bereits vorhandenen, barrierefreien Pfad-Wahl-Buttons stehen. Buttons aufgewertet: größere Touch-Targets, Icons, klare `aria-label`s, Beschreibung mit echten Test-Zahlen (15 pro Pfad), `aria-live`-Ansage beim Öffnen. `_pioneerShowPathChoice` bleibt als toter Backup-Code erhalten, wird aber nicht mehr aufgerufen.
+- **B5 (mittel) — Combo-Sound nicht hörbar:** Die Combo-Logik (`st.combo % 3 === 0`) war korrekt — Ursache war der `AudioContext`, der je nach Browser im `suspended`-Zustand startet. Fix: `_pioneerAudioCtx.resume()` bei `state === 'suspended'` in `_pioneerPlaySound`.
+- **B1/B2 (mittel) — Google-Fonts-CORS-Error:** `crossorigin="anonymous"` stand fälschlich am **Stylesheet**-`<link>` (Abweichung vom kanonischen Google-Fonts-Snippet). Das erzwingt CORS-Modus für die CSS-Datei; ein Cache-Layer ohne ACAO-Header (alter SW / Disk-Cache) löst dann „CSS stylesheet blocked by CORS" aus. Fix: `crossorigin` vom Stylesheet entfernt, `preconnect` zu gstatic behält `crossorigin` (Font-Binärdateien laden ohnehin im CORS-Modus). Kein externes Font-CDN hinzugefügt; Fraunces/Inter-Tight/IBM-Plex-Mono bleiben.
+- **B6 (niedrig, UX) — Sticky-Schließen in langen Modalen:** Lange Modale (Strain-/Programm-Edit, Bug-Report, Aroma) hatten Cancel/Save nur im Footer. Neu: ein „✕"-Schließen-X wird oben (sticky) injiziert — automatisch und **nur** in Sheets, die höher als ~85 % des Viewports sind (Höhenmessung in `_modalInjectCloseX`, eingehängt in den bestehenden `_modalStackManageEl`-MutationObserver). Footer-Buttons bleiben unberührt; kurze Modale bekommen kein X.
+- **B7 (niedrig) — `favicon.ico` 404:** `datenschutz.html` hatte keinen Icon-Link, der Browser fragte `/favicon.ico` im Root an → 404. Fix: `<link rel="icon" href="./icon-192.png">` ergänzt.
+
+**Tests:** neue Suite `v901hotfix.mjs` mit 31 Tests (alle fünf Bugs + Version-Bump), volle Regression grün.
 
 ## v9.0.0 — S3-Features echt + Pioneer-Tests 25-30 (Paket S2.3)
 

@@ -17,7 +17,11 @@
 <title>Sessions — S&B Vape Controller</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous">
+<!-- v9.0.1 (B1/B2): KEIN crossorigin am Stylesheet-Link (kanonisches Google-Fonts-Snippet).
+     crossorigin am css2-Stylesheet erzwingt CORS-Modus; ein Cache-Layer ohne ACAO-Header
+     (alter SW / Disk-Cache) loest dann "CSS stylesheet blocked by CORS" aus. gstatic-preconnect
+     behaelt crossorigin (Font-Binaerdateien werden ohnehin im CORS-/anonymous-Modus geladen). -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Mineralische Erd-Tones */
@@ -597,6 +601,23 @@ body.modal-open{overflow:hidden}
   width:42px;height:4px;background:var(--line);border-radius:2px;
   margin:-10px auto 16px;
 }
+/* v9.0.1 (B6): Sticky-Schliessen-X oben in langen Modalen. Wird nur in Sheets injiziert,
+   die hoeher als ~85% des Viewports sind (siehe _modalInjectCloseX). Footer-Buttons bleiben. */
+.modal .sheet .modal-close-x{
+  position:sticky;top:0;z-index:5;
+  margin:-22px -20px 12px;            /* an die Sheet-Raender druecken (padding 22px 20px) */
+  padding:8px 12px;
+  text-align:right;
+  background:var(--bg-2);
+  border-bottom:1px solid var(--line);
+  border-top-left-radius:26px;border-top-right-radius:26px;
+}
+.modal .sheet .modal-close-x button{
+  background:none;border:0;color:var(--text);
+  font-size:20px;line-height:1;cursor:pointer;padding:6px 10px;border-radius:8px;
+  min-width:44px;min-height:44px;       /* A11Y Touch-Target */
+}
+.modal .sheet .modal-close-x button:hover{background:rgba(255,255,255,.08)}
 .modal h2{
   margin:0 0 16px;
   font-family:var(--font-display);
@@ -10850,7 +10871,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.0';
+const SW_VERSION_LABEL='v9.0.1';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -16982,7 +17003,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v9.0.0 bereit.','ok');
+  log('Sessions v9.0.1 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -19060,6 +19081,30 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{
    * body.modal-open bleibt solange MINDESTENS ein Modal offen ist
 ═══════════════════════════════════════════════════════════════════════════ */
 window._modalStack = 0;
+// v9.0.1 (B6): Sticky-Schliessen-X nur in langen Modalen injizieren (>85% Viewport-Hoehe).
+// Footer-Buttons der Modale bleiben unangetastet; kurze Modale bekommen KEIN X.
+function _modalInjectCloseX(modalEl){
+  try{
+    const sheet = modalEl.querySelector('.sheet');
+    if(!sheet) return;
+    if(sheet.querySelector(':scope > .modal-close-x')) return; // schon vorhanden
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if(!vh || !(sheet.scrollHeight > 0.85 * vh)) return;        // selektiv: nur lange Modale
+    const bar = document.createElement('div');
+    bar.className = 'modal-close-x';
+    bar.dataset.injected = '1';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Dialog schliessen');
+    btn.textContent = '✕';
+    btn.addEventListener('click', ()=>{ try{ modalEl.classList.remove('open'); }catch(_){} });
+    bar.appendChild(btn);
+    sheet.insertBefore(bar, sheet.firstChild);
+  }catch(_){}
+}
+function _modalRemoveCloseX(modalEl){
+  try{ modalEl.querySelectorAll('.modal-close-x[data-injected="1"]').forEach(n=>n.remove()); }catch(_){}
+}
 function _modalStackManageEl(el){
   const isOpen = el.classList.contains('modal') && el.classList.contains('open');
   const wasManaged = !!el.dataset.modalStack;
@@ -19068,10 +19113,12 @@ function _modalStackManageEl(el){
     el.dataset.modalStack = String(window._modalStack);
     el.style.zIndex = String(1000 + window._modalStack * 10);
     document.body.classList.add('modal-open');
+    _modalInjectCloseX(el);
   } else if(!isOpen && wasManaged){
     delete el.dataset.modalStack;
     el.style.zIndex = '';
     window._modalStack = Math.max(0, window._modalStack - 1);
+    _modalRemoveCloseX(el);
     if(document.querySelectorAll('.modal.open').length === 0){
       document.body.classList.remove('modal-open');
     }
@@ -19168,14 +19215,21 @@ function _pioneerToggleClicked(){
   const tog = document.getElementById('togPioneerTest');
   const newState = !PREFS.pioneerTestMode;
   if(newState){
-    if(!confirm('Pioneer-Test-Modus aktivieren?\n\nDu bekommst einen zusaetzlichen Tab mit 24 Test-Aufgaben und kannst Bugs direkt melden. Kann jederzeit deaktiviert werden.')) return;
+    if(!confirm('Pioneer-Test-Modus aktivieren?\n\nDu bekommst einen zusaetzlichen Tab mit Test-Aufgaben (15 pro Pfad) und kannst Bugs direkt melden. Kann jederzeit deaktiviert werden.')) return;
   }
   PREFS.pioneerTestMode = newState;
   if(tog) tog.setAttribute('aria-checked', String(newState));
   try{ savePrefs(); }catch(_){}
   _pioneerApplyTabVisibility();
+  // v9.0.1 (B4): KEIN browser-prompt() mehr fuer die Pfad-Wahl (unbenutzbar fuer blinde Tester).
+  // Stattdessen direkt in den Test-Pfad-Tab springen — dort stehen die barrierefreien
+  // Pfad-Wahl-Buttons (_pioneerRenderWizard, !st.path-Zweig). _pioneerShowPathChoice bleibt
+  // als Backup definiert, wird aber nicht mehr aufgerufen.
   if(newState && !PREFS.pioneerTestState.path){
-    setTimeout(_pioneerShowPathChoice, 200);
+    setTimeout(()=>{
+      if(typeof switchTab === 'function') switchTab('pioneer');
+      _pioneerRenderWizard();
+    }, 200);
   }
 }
 
@@ -19190,6 +19244,8 @@ function _pioneerApplyTabVisibility(){
   }
 }
 
+// v9.0.1 (B4): DEPRECATED Backup — nicht mehr aufgerufen. Pfad-Wahl laeuft jetzt ueber die
+// barrierefreien Buttons in _pioneerRenderWizard (!st.path). Funktion bleibt nur als Fallback drin.
 function _pioneerShowPathChoice(){
   const path = prompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A (12 Tests, normale Sicht)\n  "screenreader" — fuer Pfad B (12 Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
   if(!path) return;
@@ -19232,13 +19288,23 @@ function _pioneerRenderWizard(){
   const w = document.getElementById('pioneerWizard'); if(!w) return;
   const st = PREFS.pioneerTestState;
   if(!st || !st.path){
-    w.innerHTML = `<p>Bitte zuerst einen Test-Pfad waehlen.</p>
-      <div class="row" style="gap:8px;margin-top:14px">
-        <button class="btn primary" id="btnPioneerPathVisual" style="flex:1">Pfad A — Sehend</button>
-        <button class="btn primary" id="btnPioneerPathSr" style="flex:1">Pfad B — Screen-Reader</button>
+    // v9.0.1 (B4): barrierefreie, grosse Pfad-Wahl-Buttons mit Icons + echten Test-Zahlen.
+    const nVisual = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='visual').length : 0;
+    const nSr = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='screenreader').length : 0;
+    w.innerHTML = `<p style="margin:0 0 4px">Bitte zuerst einen Test-Pfad waehlen:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+        <button class="btn primary" id="btnPioneerPathVisual" style="display:block;width:100%;padding:16px;text-align:left;height:auto" aria-label="Pfad A starten: sehende Tester, ${nVisual} Aufgaben mit normaler Sicht">
+          <span style="font-size:22px;margin-right:10px" aria-hidden="true">👁️</span><b style="font-size:16px">Pfad A — Sehend</b>
+          <span style="display:block;font-size:12px;color:rgba(255,255,255,.75);margin:4px 0 0 34px">${nVisual} Tests mit normaler Sicht</span>
+        </button>
+        <button class="btn primary" id="btnPioneerPathSr" style="display:block;width:100%;padding:16px;text-align:left;height:auto" aria-label="Pfad B starten: Screen-Reader-Tester, ${nSr} Aufgaben mit VoiceOver, TalkBack oder NVDA">
+          <span style="font-size:22px;margin-right:10px" aria-hidden="true">🔊</span><b style="font-size:16px">Pfad B — Screen-Reader</b>
+          <span style="display:block;font-size:12px;color:rgba(255,255,255,.75);margin:4px 0 0 34px">${nSr} Tests mit VoiceOver / TalkBack / NVDA</span>
+        </button>
       </div>`;
     document.getElementById('btnPioneerPathVisual')?.addEventListener('click', ()=>_pioneerSetPath('visual'));
     document.getElementById('btnPioneerPathSr')?.addEventListener('click', ()=>_pioneerSetPath('screenreader'));
+    _pioneerAnnounce('Test-Pfad-Auswahl. Zwei Knoepfe: Pfad A fuer sehende Tester mit ' + nVisual + ' Aufgaben, Pfad B fuer Screen-Reader mit ' + nSr + ' Aufgaben.');
     return;
   }
   const tests = _pioneerTestsForCurrentPath();
@@ -19333,7 +19399,8 @@ function _pioneerSetPath(path){
   PREFS.pioneerTestState.startedAt = PREFS.pioneerTestState.startedAt || new Date().toISOString();
   try{ savePrefs(); }catch(_){}
   _pioneerRenderWizard();
-  _pioneerAnnounce('Pfad ' + (path === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. 12 Aufgaben.');
+  const _nTasks = _pioneerTestsForCurrentPath().length;
+  _pioneerAnnounce('Pfad ' + (path === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. ' + _nTasks + ' Aufgaben.');
 }
 
 function _pioneerSetResult(testId, status, opts){
@@ -19455,6 +19522,9 @@ function _pioneerPlaySound(type){
       if(!Ctx) return;
       _pioneerAudioCtx = new Ctx();
     }
+    // v9.0.1 (B5): AudioContext startet je nach Browser im 'suspended'-Zustand und muss
+    // nach User-Geste reaktiviert werden — sonst bleiben Toene (u.a. Combo) stumm.
+    if(_pioneerAudioCtx.state === 'suspended'){ _pioneerAudioCtx.resume().catch(()=>{}); }
     const ctx = _pioneerAudioCtx;
     const now = ctx.currentTime;
     function beep(freq, dur, when, type2){
