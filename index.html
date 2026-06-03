@@ -10992,7 +10992,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.1.0';
+const SW_VERSION_LABEL='v9.2.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -11480,7 +11480,7 @@ function commStarsInteractive(avg, count, my){
 function _commStrainCardHtml(s){
   const gen = String(s.genetics||'').toLowerCase();
   const genBadge = ['indica','sativa','hybrid'].includes(gen) ? `<span class="comm-genbadge ${gen}">${gen}</span>` : '';
-  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">Werks-Vorschlag</span>' : '';
+  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">🔒 Werks-Vorschlag</span>' : '';
   const tc = [];
   if(s.thc_percent!=null) tc.push('THC '+s.thc_percent+'%');
   if(s.cbd_percent!=null) tc.push('CBD '+s.cbd_percent+'%');
@@ -11571,7 +11571,7 @@ function _commStrainDetailRender(s){
   const isMy = !!s.is_my;
   const gen = String(s.genetics||'').toLowerCase();
   const genBadge = ['indica','sativa','hybrid'].includes(gen) ? `<span class="comm-genbadge ${gen}">${gen}</span>` : '';
-  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">Werks-Vorschlag</span>' : '';
+  const factory = s.is_factory_seed ? '<span class="comm-factory-badge">🔒 Werks-Vorschlag</span>' : '';
   const terps = (Array.isArray(s.terpenes)?s.terpenes:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
   const effs  = (Array.isArray(s.effects)?s.effects:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
   const aros  = (Array.isArray(s.aromas)?s.aromas:[]).map(t=>`<span class="comm-card-tag">${escapeHtml(t)}</span>`).join('');
@@ -11598,9 +11598,12 @@ function _commStrainDetailRender(s){
     ${s.description ? `<div class="comm-detail-section"><div class="comm-detail-label">Beschreibung</div>${escapeHtml(s.description)}</div>` : ''}
     <div class="comm-card-author" style="margin-top:14px">${author}</div>
     <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
-      ${isMy
-        ? `<button class="btn sm" id="btnCommStrainEditOwn" style="flex:1">✏️ Bearbeiten</button><button class="btn sm danger" id="btnCommStrainDeleteOwn" style="flex:1">🗑 Löschen</button>`
-        : `<button class="btn sm" id="btnCommStrainProposeEdit" style="flex:1">📝 Edit-Vorschlag</button>`
+      ${s.is_factory_seed
+        ? `<div id="commStrainFactoryLock" class="comm-factory-lock" role="note" style="flex-basis:100%;font-size:12px;color:var(--muted);margin-bottom:2px">🔒 Werks-Sorte, direkte Bearbeitung gesperrt. Bewerten und Änderungen vorschlagen ist möglich.</div>
+           <button class="btn sm" id="btnCommStrainProposeEdit" style="flex:1" title="Werks-Sorte, du kannst eine Änderung vorschlagen">📝 Edit-Vorschlag</button>`
+        : (isMy
+          ? `<button class="btn sm" id="btnCommStrainEditOwn" style="flex:1">✏️ Bearbeiten</button><button class="btn sm danger" id="btnCommStrainDeleteOwn" style="flex:1">🗑 Löschen</button>`
+          : `<button class="btn sm" id="btnCommStrainProposeEdit" style="flex:1">📝 Edit-Vorschlag</button>`)
       }
     </div>
   `;
@@ -17126,7 +17129,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.1.0 bereit.','ok');
+  log('Terp Sessions v9.2.0 bereit.','ok');
 
   setupPwaUpdate();
 

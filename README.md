@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.1.0)
+# Terp Sessions — Vape Controller (v9.2.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,21 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.2.0 — Werks-Sorten Polish (Paket N4, final)
+
+Letztes Paket der N-Serie. Wichtig: das eigentliche Feature („Werks-Sorten als Community-Mirror") war **bereits seit v8.7.5 vorhanden** und der Seed-Patch ist in der Live-DB eingespielt. v9.2.0 zieht nur den fehlenden UX-Polish nach, **keine** Schema-Änderung, **kein** SQL-Patch.
+
+**Bereits vorhanden (kein Neubau in N4):**
+- Tabelle `community_strains` mit `is_factory_seed`; 127 Werks-Sorten als Mirror (Owner `FACTORY`, nicht einloggbar) via `community-backend-patch-factory-seed.sql`. Sanity-Check: die 127 Seed-Sorten decken sich namensgenau mit der eingebetteten `AROMA_DB` (kein Drift).
+- Bewertungen über `community_strain_rate`; `community_strain_list` liefert bereits `avg_stars`, `review_count`, `my_stars`. Ein separates `get_strain_ratings_summary` war daher nicht nötig.
+- Edit-Schutz über das bestehende Ownership-Modell (RLS deny-all plus RPC-gated; FACTORY kann sich nicht einloggen, daher kein „Edit own" auf Werks-Sorten).
+
+**Neu in v9.2.0 (UX-Polish):**
+- 🔒-Schloss-Icon am „Werks-Vorschlag"-Badge der Sorten (Karte und Detail).
+- Im Detail einer Werks-Sorte ein klarer Hinweis „🔒 Werks-Sorte, direkte Bearbeitung gesperrt. Bewerten und Änderungen vorschlagen ist möglich." plus `title`-Tooltip am Edit-Vorschlag-Button. Direktes Bearbeiten/Löschen bleibt gesperrt, Bewerten und Edit-Vorschläge bleiben möglich.
+
+**Unberührt:** cscCrypto, alle Backend-RPCs, Schema. **Tests:** `v920factory.mjs`, volle Regression grün.
 
 ## v9.1.0 — DSGVO data_consent_at (Paket N3)
 
