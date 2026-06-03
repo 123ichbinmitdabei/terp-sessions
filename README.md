@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.4)
+# Terp Sessions — Vape Controller (v9.1.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,23 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.1.0 — DSGVO data_consent_at (Paket N3)
+
+Rechtssicherer Nachweis, wann ein Community-Nutzer der Datenschutzerklärung zugestimmt hat. MINOR-Bump, weil es eine Backend-Schema-Änderung ist.
+
+**Backend (SQL-Patch 13, von Andre in Supabase eingespielt):**
+- Neue Spalte `data_consent_at` in `csc_users`. Echte Nutzer per Backfill auf das Release-Datum 2026-06-03, danach NOT NULL + DEFAULT now() (neue Registrierungen bekommen den Zeitpunkt automatisch).
+- Minimal-invasiv: `csc_register` wurde nicht angefasst (DEFAULT now() genügt), kein Audit-INSERT (es gibt keine generische Audit-Tabelle).
+- Der FACTORY-System-Dummy (`code='FACTORY'`, kann sich nicht einloggen) bekommt 1970-01-01 als n/a-Marker, weil er nie zugestimmt hat.
+- Patch 13b (optional, noch nicht eingespielt) würde die Login-RPC erweitern, damit das Profil das echte Datum statt „noch nicht erfasst" zeigt.
+
+**Frontend:**
+- `communityClient` reicht `data_consent_at` aus der Login-Session durch (`currentSession`, `login`, `register`).
+- Community-Profil zeigt „Datenschutz-Zustimmung seit: <Datum>" (deutsches Format) oder „noch nicht erfasst" (graceful, solange Patch 13b fehlt; 1970-Marker wird ebenfalls als „nicht erfasst" behandelt).
+- Neuer Button „📄 Meine Daten": lädt eine DSGVO-Auskunft als JSON (Pseudonym, Code, Admin-Status, `data_consent_at`). Persönliche Tracking-Daten bleiben lokal und sind nicht enthalten.
+
+**Unberührt:** cscCrypto-Modul, alle anderen Backend-RPCs. **Tests:** `v910consent.mjs` (27), volle Regression grün über 48 Suiten.
 
 ## v9.0.4 — Browser-Kompatibilitäts-Welcome (Paket N2)
 

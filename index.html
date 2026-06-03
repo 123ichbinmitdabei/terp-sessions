@@ -10992,7 +10992,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.4';
+const SW_VERSION_LABEL='v9.1.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17126,7 +17126,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.0.4 bereit.','ok');
+  log('Terp Sessions v9.1.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18130,10 +18130,12 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   }
 
   // ── Session-State (Memory only, NICHT in localStorage) ───────────────────
-  let _session = null;   // { code, pin, pseudonym, is_admin }
+  let _session = null;   // { code, pin, pseudonym, is_admin, data_consent_at }
 
   function isLoggedIn(){ return !!(_session && _session.code && _session.pin); }
-  function currentSession(){ return _session ? { code:_session.code, pseudonym:_session.pseudonym, is_admin:_session.is_admin } : null; }
+  // v9.1.0 N3: data_consent_at wird durchgereicht falls die Login-RPC sie liefert (Patch 13b);
+  // sonst null (Anzeige zeigt dann "noch nicht erfasst").
+  function currentSession(){ return _session ? { code:_session.code, pseudonym:_session.pseudonym, is_admin:_session.is_admin, data_consent_at:_session.data_consent_at||null } : null; }
   function logout(){ _session = null; }
 
   // ── Register: csc_register Dummy + community_register_pseudonym ──────────
@@ -18156,7 +18158,9 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     // 3. Pseudonym registrieren
     const ps = await rpc('community_register_pseudonym', { p_code: code, p_pin: pin, p_pseudonym: pseudonym });
     if(!ps || ps.ok !== true) throw new Error('PSEUDONYM_REGISTRATION_FAILED');
-    _session = { code, pin, pseudonym, is_admin: false };
+    // v9.1.0 N3: data_consent_at setzt das Backend per DEFAULT NOW() (Patch 13); der genaue
+    // Wert wird erst beim naechsten Login mitgeliefert (Patch 13b), daher hier null.
+    _session = { code, pin, pseudonym, is_admin: false, data_consent_at: (ps && ps.data_consent_at) || null };
     return { code, pseudonym };
   }
 
@@ -18165,7 +18169,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     if(!validatePseudonym(pseudonym)) throw new Error('INVALID_PSEUDONYM');
     const r = await rpc('community_login_by_pseudonym', { p_pseudonym: pseudonym, p_pin: pin });
     if(!r || !r.code) throw new Error('AUTH_FAILED');
-    _session = { code: r.code, pin, pseudonym: r.pseudonym, is_admin: !!r.is_admin };
+    _session = { code: r.code, pin, pseudonym: r.pseudonym, is_admin: !!r.is_admin, data_consent_at: r.data_consent_at || null };
     return { code: r.code, pseudonym: r.pseudonym, is_admin: !!r.is_admin };
   }
 
@@ -18797,6 +18801,52 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(initA11y, 800); }
    Bootstrap-Hinweis erscheint nur wenn noch kein Admin existiert.
    Promotion-Modal erscheint nur für eingeloggte Admins.
 ═══════════════════════════════════════════════════════════════════════════ */
+/* v9.1.0 Paket N3: DSGVO data_consent_at — Anzeige + Auskunfts-Export.
+   Reine, backend-unabhaengige Helfer (testbar mit Mock-Session). Der eigentliche
+   Wert kommt aus der Community-Session (Login-RPC, Patch 13b); fehlt er, wird
+   "noch nicht erfasst" angezeigt. */
+function _communityFormatConsent(iso){
+  if(!iso) return null;
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return null;
+  try{ return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+  catch(_){ return null; }
+}
+function _communityConsentText(session){
+  const iso = session && session.data_consent_at;
+  if(iso){
+    const d = new Date(iso);
+    // FACTORY-System-Dummy nutzt 1970-01-01 als n/a-Marker -> wie "nicht erfasst" behandeln
+    if(!isNaN(d.getTime()) && d.getFullYear() > 1970){
+      const f = _communityFormatConsent(iso);
+      if(f) return 'Datenschutz-Zustimmung seit: ' + f;
+    }
+  }
+  return 'Datenschutz-Zustimmung: noch nicht erfasst';
+}
+function communityDataExport(session){
+  const s = session || ((typeof communityClient === 'object' && communityClient && communityClient.currentSession && communityClient.currentSession()) || {});
+  return {
+    typ: 'DSGVO-Auskunft Terp Sessions Community',
+    pseudonym: s.pseudonym || null,
+    code: s.code || null,
+    is_admin: !!s.is_admin,
+    data_consent_at: s.data_consent_at || null,
+    hinweis: 'Persoenliche Tracking-Daten bleiben lokal auf dem Geraet und sind hier nicht enthalten.',
+  };
+}
+function _communityDataExportDownload(){
+  try{
+    const data = communityDataExport(null);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'terp-sessions-community-auskunft.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); a.remove(); }catch(_){} }, 0);
+    try{ toast('DSGVO-Auskunft als JSON exportiert'); }catch(_){}
+  }catch(_){ try{ toast('Export fehlgeschlagen'); }catch(__){} }
+}
 function _commSetupRefresh(){
   try{
     const box = document.getElementById('communitySetupBox');
@@ -18813,8 +18863,11 @@ function _commSetupRefresh(){
     if(communityClient.isLoggedIn()){
       const sess = communityClient.currentSession();
       const adminBadge = sess && sess.is_admin ? ' <span style="color:var(--hot);font-weight:600">[Admin]</span>' : '';
-      status.innerHTML = 'Eingeloggt als <b>'+escapeHtml(sess && sess.pseudonym || '?')+'</b>'+adminBadge;
-      buttons.innerHTML = '<button class="btn sm ghost" id="btnCommLogoutNow">Abmelden</button>';
+      // v9.1.0 N3: Datenschutz-Zustimmungs-Datum anzeigen (graceful, "noch nicht erfasst" wenn unbekannt)
+      const consentLine = '<div style="color:var(--muted);font-size:12px;margin-top:4px">'+escapeHtml(_communityConsentText(sess))+'</div>';
+      status.innerHTML = 'Eingeloggt als <b>'+escapeHtml(sess && sess.pseudonym || '?')+'</b>'+adminBadge+consentLine;
+      buttons.innerHTML = '<button class="btn sm ghost" id="btnCommLogoutNow">Abmelden</button>'
+                       + '<button class="btn sm ghost" id="btnCommDataExport" aria-label="Meine Community-Daten als DSGVO-Auskunft exportieren">📄 Meine Daten</button>';
       if(adminArea){ adminArea.hidden = !(sess && sess.is_admin); }
     } else {
       status.textContent = 'Du bist nicht eingeloggt. Registrieren oder anmelden:';
@@ -18892,6 +18945,7 @@ function _commWireSetup(){
         toast('Abgemeldet');
         _commSetupRefresh();
       }
+      else if(t.id === 'btnCommDataExport'){ _communityDataExportDownload(); } // v9.1.0 N3 DSGVO-Auskunft
     });
   }
 
