@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0a08">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<title>Über Terp Sessions — Pioneer-Info</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    background:#0c0a08;color:#e8e3dc;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.65;
+    -webkit-text-size-adjust:100%;
+  }
+  body{padding:20px 16px 80px;max-width:760px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:32px;padding:24px 0 20px;border-bottom:1px solid #2a2622}
+  header .logo{font-size:48px;margin-bottom:8px}
+  h1{font-size:30px;margin-bottom:8px;color:#fff;font-weight:700}
+  header .subtitle{color:#7fd968;font-size:15px;font-weight:500}
+  header .meta{color:#666;font-size:13px;margin-top:10px;font-style:italic}
+
+  section{margin-bottom:32px}
+  h2{
+    font-size:20px;color:#fff;margin-bottom:14px;padding-bottom:6px;
+    border-bottom:1px solid #2a2622;display:flex;align-items:center;gap:10px;
+  }
+  h2 .ico{font-size:24px}
+  h3{font-size:15px;color:#7fd968;margin:14px 0 6px;font-weight:600}
+  p{margin-bottom:10px;color:#cfc9c1}
+  ul{padding-left:0;list-style:none;margin-bottom:10px}
+  ul li{
+    margin-bottom:8px;color:#cfc9c1;padding-left:24px;position:relative;
+  }
+  ul li::before{
+    content:"🌿";position:absolute;left:0;top:0;font-size:13px;
+  }
+  strong{color:#fff;font-weight:600}
+  em{color:#a0a0a0;font-style:italic}
+  code{
+    background:rgba(95,184,77,.1);padding:2px 6px;border-radius:4px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px;color:#7fd968;
+  }
+
+  .feature-card{
+    background:rgba(255,255,255,.03);border:1px solid #2a2622;border-radius:10px;
+    padding:14px 18px;margin-bottom:12px;
+  }
+  .feature-card h3{margin-top:0}
+  .feature-card p:last-child{margin-bottom:0}
+
+  .device-grid{
+    display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0;
+  }
+  .device-row{
+    background:rgba(255,255,255,.03);border:1px solid #2a2622;border-radius:8px;
+    padding:10px 14px;display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:8px;
+  }
+  .device-row .name{color:#fff;font-weight:500}
+  .device-row .status{font-size:12px;padding:3px 10px;border-radius:999px}
+  .status-full{background:rgba(95,184,77,.15);color:#7fd968}
+  .status-beta{background:rgba(255,184,77,.15);color:#ffb84d}
+  .status-probe{background:rgba(255,87,87,.15);color:#ff5757}
+
+  .browser-table{
+    background:rgba(255,255,255,.03);border:1px solid #2a2622;border-radius:10px;
+    padding:14px 18px;margin:12px 0;overflow-x:auto;
+  }
+  .browser-table table{width:100%;border-collapse:collapse;font-size:14px;min-width:480px}
+  .browser-table th,.browser-table td{padding:8px 10px;text-align:left;border-bottom:1px solid #2a2622}
+  .browser-table th{color:#7fd968;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .browser-table td{color:#cfc9c1}
+  .browser-table tr:last-child td{border-bottom:0}
+  .check{color:#7fd968;font-weight:600}
+  .cross{color:#ff5757;font-weight:600}
+
+  .info-box{
+    background:rgba(95,184,77,.06);border:1px solid rgba(95,184,77,.3);
+    border-radius:10px;padding:14px 18px;margin:14px 0;
+  }
+  .info-box p:last-child{margin-bottom:0}
+  .warn-box{
+    background:rgba(255,184,77,.06);border:1px solid rgba(255,184,77,.3);
+    border-radius:10px;padding:14px 18px;margin:14px 0;
+  }
+  .warn-box p:last-child{margin-bottom:0}
+
+  .back-link{
+    text-align:center;margin-top:40px;padding:20px 0;border-top:1px solid #2a2622;
+  }
+  .back-link a{
+    color:#5fb84d;text-decoration:none;font-size:14px;
+    padding:10px 22px;border:1px solid #5fb84d;border-radius:6px;
+    display:inline-block;transition:all .2s;
+  }
+  .back-link a:hover{background:#5fb84d;color:#0c0a08}
+
+  a{color:#7fd968}
+
+  @media print{
+    body{background:#fff;color:#000;max-width:none;padding:0}
+    h1,h2,h3,p,li,strong{color:#000}
+    .feature-card,.device-row,.browser-table,.info-box,.warn-box{
+      background:#fff;border:1px solid #ccc;
+    }
+    .check{color:#0a0}
+    .cross{color:#a00}
+    .back-link{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" aria-hidden="true">🌿</div>
+  <h1>Terp Sessions</h1>
+  <p class="subtitle">Pioneer-Tester-Info</p>
+  <p class="meta">Privates Forschungsprojekt · Stand: 2026-06-03</p>
+</header>
+
+<section>
+  <p>Hi! Schön dass du dabei bist. Hier alles Wichtige zur App in einem Aufwasch. Falls du was nicht findest, schreib mir einfach.</p>
+</section>
+
+<section>
+  <h2><span class="ico">🎯</span>Worum geht's?</h2>
+  <p><strong>Terp Sessions</strong> ist eine Web-App die deinen Vaporizer per Bluetooth steuert, Sorten und Programme verwaltet und dir hilft den Überblick zu behalten was wirklich für dich funktioniert.</p>
+  <p>Das Ganze läuft direkt im Browser, ohne Installation aus einem App-Store, ohne Account-Zwang, ohne Werbung. Du kannst die App als PWA installieren wenn du magst, dann hast du sie wie eine normale App auf dem Home-Screen.</p>
+  <p>Wichtig vorab: das hier ist <strong>mein privates Forschungsprojekt</strong>, nicht offiziell Mariana. Wer rechtlich verantwortlich ist findest du in der Datenschutzerklärung in der App.</p>
+</section>
+
+<section>
+  <h2><span class="ico">⚡</span>Was die App kann</h2>
+
+  <div class="feature-card">
+    <h3>🎛️ Geräte-Steuerung per Bluetooth</h3>
+    <p>Heizen, Pumpe an, Temperatur setzen, Status abfragen, alles direkt aus dem Browser. Funktioniert ohne Setup, du musst nichts pairen außer einmal die App mit dem Gerät verbinden.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>⚙️ Programme und Heizkurven</h3>
+    <p>Baue dir eigene Step-by-Step-Abläufe: erst 180° für 2 Minuten, dann 195° für 3 Minuten, am Ende Pumpe für 30 Sekunden. Die App führt das automatisch aus, du musst nur zugucken.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🌿 Sorten-Datenbank</h3>
+    <p>Über 130 Sorten mit Aromen, Effekten, Temperatur-Empfehlungen. Du kannst eigene anlegen, bewerten, mit anderen Pioneers teilen (optional). Suche nach Effekt, nach Terpenen, nach Tageszeit.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>📊 Session-Tagebuch</h3>
+    <p>Was hast du wann konsumiert, wie warm, wie war's? Bleibt komplett lokal auf deinem Gerät, geht nicht in die Cloud. Hilft beim Tracken was wirklich wirkt.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🎤 Sprachsteuerung</h3>
+    <p>Sag <code>"Hey Terp Sessions, heize auf 185 Grad"</code> oder <code>"starte Northern Lights"</code>. Funktioniert hands-free, gut wenn du gerade keine Hand frei hast.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>♿ Barrierefreiheit</h3>
+    <p>Funktioniert mit VoiceOver auf iOS, TalkBack auf Android, NVDA und JAWS auf Desktop. Wenn du blind bist oder einen Screen-Reader nutzt, gibt's einen eigenen Modus in den Einstellungen der TTS-Konflikte vermeidet.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🌐 Community-Funktionen (optional)</h3>
+    <p>Wenn du willst, kannst du dich mit Pseudonym + PIN anmelden und in der Community-DB Sorten + Programme teilen, bewerten, kommentieren. Komplett optional, ohne Anmeldung läuft alles trotzdem.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3>🔗 Power-User: URL-Befehle und Macros</h3>
+    <p>Du kannst Siri-Shortcuts oder Tasker-Actions anlegen die direkt einen Befehl ausführen, z.B. <code>?command=set_temp&value=185</code>. Oder dir eigene 1-Tap-Buttons (Touch-Macros) für häufige Befehle anlegen.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="ico">📱</span>Welche Geräte werden unterstützt?</h2>
+
+  <h3 style="color:#fff;margin-top:14px">Storz &amp; Bickel (voll unterstützt)</h3>
+  <div class="device-grid">
+    <div class="device-row"><span class="name">Volcano Hybrid</span><span class="status status-full">✓ Voll</span></div>
+    <div class="device-row"><span class="name">Crafty</span><span class="status status-full">✓ Voll</span></div>
+    <div class="device-row"><span class="name">Crafty+</span><span class="status status-full">✓ Voll</span></div>
+    <div class="device-row"><span class="name">Mighty</span><span class="status status-full">✓ Voll</span></div>
+    <div class="device-row"><span class="name">Venty</span><span class="status status-full">✓ Voll</span></div>
+    <div class="device-row"><span class="name">Veazy</span><span class="status status-full">✓ Voll</span></div>
+  </div>
+
+  <h3 style="color:#fff;margin-top:14px">Andere Hersteller</h3>
+  <div class="device-grid">
+    <div class="device-row"><span class="name">PAX 3</span><span class="status status-beta">⚠ Beta</span></div>
+    <div class="device-row"><span class="name">Puffco Peak Pro</span><span class="status status-beta">⚠ Beta</span></div>
+    <div class="device-row"><span class="name">Firefly</span><span class="status status-probe">○ Erkennung only</span></div>
+  </div>
+
+  <p style="font-size:13px;color:#a0a0a0;margin-top:14px"><em>Beta-Geräte: Erkennung + Grundfunktionen gehen, aber noch nicht alle Details. Wenn du eines hast, sei vorsichtig und gib mir Bescheid wenn was hakt.<br>Firefly: Reverse-Engineering läuft, aktuell wird das Gerät nur erkannt aber nicht gesteuert.</em></p>
+</section>
+
+<section>
+  <h2><span class="ico">🌐</span>Welcher Browser?</h2>
+
+  <div class="browser-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Plattform / Browser</th>
+          <th>Bluetooth</th>
+          <th>Voice</th>
+          <th>Screen-Reader</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Android Chrome</strong></td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓ TalkBack</td>
+        </tr>
+        <tr>
+          <td><strong>Desktop Chrome/Edge</strong></td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓ NVDA/JAWS</td>
+        </tr>
+        <tr>
+          <td><strong>iPhone Safari</strong></td>
+          <td class="cross">✗</td>
+          <td class="check">✓</td>
+          <td class="check">✓ VoiceOver</td>
+        </tr>
+        <tr>
+          <td><strong>iPhone Bluefy</strong></td>
+          <td class="check">✓</td>
+          <td class="cross">✗</td>
+          <td class="check">✓ VoiceOver</td>
+        </tr>
+        <tr>
+          <td><strong>Desktop Safari/Firefox</strong></td>
+          <td class="cross">✗</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warn-box">
+    <p><strong>Tipp für iPhone-User:</strong> Auf iPhone gibt's leider keinen Browser der gleichzeitig Bluetooth und Voice kann. Apple blockt Bluetooth in Safari plattformweit. Workaround: für Sorten-Recherche und Voice nutzt du Safari, für Geräte-Steuerung wechselst du zu Bluefy (kostenlos im App Store). Beide Apps haben dieselben App-Daten lokal.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="ico">🔒</span>Datenschutz und Rahmen</h2>
+  <ul>
+    <li><strong>Privates Forschungsprojekt</strong>, nicht Mariana e.V. Verantwortlicher: Andre Reiche persönlich, Adresse in der Datenschutzerklärung.</li>
+    <li><strong>Daten überwiegend lokal</strong> auf deinem Gerät. Was wirklich in die Cloud geht: nur was du aktiv in der Community-DB beiträgst (Sorten, Programme, Bewertungen).</li>
+    <li><strong>Kein Tracking, keine Analytics, keine Werbung.</strong> Keine Cookies außer dem Browser-Storage für deine eigenen Daten.</li>
+    <li><strong>Community-Server in der EU</strong> (Supabase, Frankfurt). DSGVO-konform, Backup-Strategie dokumentiert.</li>
+    <li><strong>Datenschutzerklärung anwaltlich geprüft</strong>, in der App unter <a href="datenschutz.html">datenschutz.html</a> verlinkt.</li>
+    <li><strong>Account-Löschung sofort möglich</strong>, ohne Nachfragen, alle deine Beiträge gehen automatisch mit weg (Cascade-Delete).</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="ico">🐛</span>Bugs melden</h2>
+  <p>Wenn was nicht funktioniert: in der App gibt es einen <strong>Pioneer-Test-Modus</strong> mit gefuehrten Aufgaben. Bei jedem Schritt kannst du "✗ funktioniert nicht" klicken, ein Formular geht auf, du beschreibst kurz was passiert ist, drückst Submit, und es entsteht automatisch ein GitHub-Issue mit allen Infos.</p>
+  <p>Falls du kein GitHub-Konto hast: schick mir die Beschreibung einfach per Discord-DM, ich kümmere mich.</p>
+</section>
+
+<section>
+  <h2><span class="ico">🤝</span>Was ich von dir brauche</h2>
+  <ul>
+    <li>30 bis 60 Minuten Zeit, gerne über mehrere Tage verteilt</li>
+    <li>Ehrliches Feedback: was nervt, was fehlt, was funktioniert nicht</li>
+    <li>Bei Geräte-Tests: vorsichtig sein, das Gerät nicht unbeaufsichtigt lassen</li>
+    <li>Bei der Sorten-DB: gerne mitmachen, eigene Sorten anlegen wenn du magst</li>
+    <li>Geduld: das ist ein Pioneer-Build, nicht alles ist schon perfekt</li>
+  </ul>
+</section>
+
+<div class="back-link">
+  <a href="./">← Zurück zur App</a>
+</div>
+
+</body>
+</html>
