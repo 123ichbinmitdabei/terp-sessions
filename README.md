@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.3)
+# Terp Sessions — Vape Controller (v9.0.4)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,26 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.4 — Browser-Kompatibilitäts-Welcome (Paket N2)
+
+Neuer „First-Visit-Compatibility-Check": Beim ersten Besuch eines neuen Browsers oder Geräts sieht der User klar, welche Funktionen verfügbar sind, statt versteckter Hinweise. Besonders wichtig für iPhone-Safari-User, die kein Web-Bluetooth haben.
+
+**Zentrale Capability-Matrix `detectBrowserCapabilities()`** (baut auf der bestehenden `browserCapabilities()` auf, keine externen UA-Libs):
+- Erkennt einen lesbaren Browser-Namen (iPhone Safari, iPhone Chrome, iPhone Bluefy, Android Chrome, Desktop Edge, usw.). iOS-Browser außer Bluefy (CriOS/FxiOS/EdgiOS) sind alle WebKit, werden also wie Safari behandelt.
+- Liefert ehrliche Feature-Flags: `bluetooth` (iOS-WebKit und Firefox haben kein Web-Bluetooth), `tts` (bei Bluefy systembedingt aus), `voice` (Mikrofon-Spracherkennung, bei Bluefy aus).
+- `hash` über Browser plus Feature-Flags, damit ein Browser-Wechsel erkannt wird.
+
+**Welcome-Modal `modalCompatibilityWelcome`:**
+- Zeigt „Du nutzt: …" plus Tabelle Feature für Feature (verfügbar / nicht verfügbar mit kurzer Erklärung).
+- Kontextabhängige Empfehlung (iPhone ohne BT zu Bluefy, sonst Chrome/Edge) plus passende Buttons: „Bluefy im App Store öffnen" (nur wenn sinnvoll), „Trotzdem weitermachen", „Später erinnern".
+- „Trotzdem weitermachen" merkt sich den Browser-Hash (`PREFS.compatibilityHintSeen`), „Später erinnern" nicht, der Hinweis kommt dann erneut.
+
+**Trigger + Recall:** Beim Erst-Besuch automatisch (selbst-guarded, legt sich nie über Welcome-Flow, Onboarding-Tour oder ein anderes Modal, retryt sonst). Manuell jederzeit über Einstellungen, Sprachsteuerung, „🔎 Browser-Kompatibilität prüfen".
+
+**Konsolidierung:** Die bestehenden Hints (`modalNoBluetooth`, Voice-FAB-Conditional, TTS-Bluefy-Heuristik) bleiben als Fallback unverändert.
+
+**Tests:** neue Suite `v904hints.mjs`, volle Regression grün.
 
 ## v9.0.3 — Wake-Word „Hey Terp Sessions" + Pioneers-Naming (Paket N1.5)
 

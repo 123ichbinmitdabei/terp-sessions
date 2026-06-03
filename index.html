@@ -3261,6 +3261,18 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
+<!-- v9.0.4 Paket N2: First-Visit-Compatibility-Check-Welcome -->
+<div class="modal" id="modalCompatibilityWelcome" role="dialog" aria-modal="true" aria-labelledby="compatTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="compatTitle">👋 Kurzer Geräte-Check</h2>
+    <p class="wiz-text">Damit du weißt, was auf deinem Browser funktioniert, hier eine kurze Übersicht.</p>
+    <div id="compatBody"></div>
+    <div class="row" id="compatActions" style="margin-top:14px;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
 <!-- v8.9.0 Modul 4: Text-Befehl-Modal als Voice-Alternative -->
 <div class="modal" id="modalTextCommand" role="dialog" aria-modal="true" aria-labelledby="txtCmdTitle">
   <div class="back"></div>
@@ -3789,6 +3801,8 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <div class="info"><b>♿ Ich nutze einen Screen-Reader</b><small>Sessions-Sprachausgabe wird automatisch deaktiviert, damit sie sich nicht mit VoiceOver/TalkBack/NVDA überlagert. Wake-Word wird ebenfalls gesperrt.</small></div>
         <button class="toggle" id="togScreenReader" role="switch" aria-checked="false" aria-label="Screen-Reader-Modus"></button>
       </div>
+      <!-- v9.0.4 Paket N2: Recall des Kompatibilitäts-Checks -->
+      <button class="btn ghost block" id="btnCompatCheck" type="button" style="margin:0 0 12px" aria-label="Browser-Kompatibilität prüfen">🔎 Browser-Kompatibilität prüfen</button>
       <div class="toggle-row" data-sr-affected="voice">
         <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw. <span id="voiceUnavailableHint" hidden style="color:var(--hot)">Dein Browser unterstützt keine Spracherkennung — du bekommst stattdessen Text-Eingabe.</span></small></div>
         <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
@@ -5356,6 +5370,8 @@ const PREFS_DEFAULTS = {
   communityLastAnonymous:true,
   // v8.9.0 Modul 3: Just-in-Time-Browser-Hinweise — "Nicht wieder zeigen" pro Hinweis-Typ
   browserHintsDismissed:{ noBluetooth:false, noSpeech:false, pwaVoiceWarn:false, bluefyVoiceWarn:false },
+  // v9.0.4 Paket N2: First-Visit-Compatibility-Check — speichert den Capability-Hash des zuletzt gezeigten Browsers
+  compatibilityHintSeen:null,
   // v8.9.0 Modul 5: Datenschutz-Einwilligung (lokal als Beleg; Backend folgt in v9.0)
   dataConsentAcceptedAt:null,
   // v9.0.0-alpha Paket S2 Phase 1: Pioneer-Test-Modus (Feature-Flag, default OFF).
@@ -6354,6 +6370,110 @@ function _showNoBluetoothHint(){
   if(m){ m.classList.add('open'); return; }
   // Fallback wenn Modal nicht im DOM
   toast('Web Bluetooth nicht verfügbar in diesem Browser. Auf iPhone: Bluefy Browser nutzen.');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v9.0.4 Paket N2: First-Visit-Compatibility-Check
+   Zentrale Capability-Matrix (BT / TTS / Voice) je Browser + freundliches
+   Welcome-Modal. Baut auf browserCapabilities() auf (keine externen UA-Libs).
+   Bestehende Hints (modalNoBluetooth, Voice-FAB, TTS-Bluefy-Heuristik) bleiben
+   als Fallback unangetastet.
+═══════════════════════════════════════════════════════════════════════════ */
+function detectBrowserCapabilities(){
+  const caps = browserCapabilities();
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/.test(ua);
+  const isCriOS = /CriOS/.test(ua), isFxiOS = /FxiOS/.test(ua), isEdgiOS = /EdgiOS/.test(ua);
+  const isFirefox = /Firefox|FxiOS/.test(ua);
+  const isEdge = /Edg\//.test(ua) || isEdgiOS;
+  const isChrome = (/Chrome|CriOS/.test(ua)) && !isEdge;
+  let label;
+  if(caps.isIOS){
+    if(caps.isBluefy) label = 'iPhone/iPad Bluefy';
+    else if(isCriOS)  label = 'iPhone/iPad Chrome';
+    else if(isFxiOS)  label = 'iPhone/iPad Firefox';
+    else if(isEdgiOS) label = 'iPhone/iPad Edge';
+    else              label = 'iPhone/iPad Safari';
+  } else if(isAndroid){
+    if(caps.isBluefy) label = 'Android Bluefy';
+    else if(isFirefox)label = 'Android Firefox';
+    else if(isEdge)   label = 'Android Edge';
+    else if(isChrome) label = 'Android Chrome';
+    else              label = 'Android Browser';
+  } else {
+    if(isEdge)            label = 'Desktop Edge';
+    else if(isChrome)     label = 'Desktop Chrome';
+    else if(isFirefox)    label = 'Desktop Firefox';
+    else if(/Safari/.test(ua)) label = 'Desktop Safari';
+    else                 label = 'Desktop Browser';
+  }
+  // iOS-WebKit-Browser (alles außer Bluefy) haben KEIN Web-Bluetooth, egal was navigator sagt.
+  // Firefox hat plattformübergreifend kein Web-Bluetooth.
+  const webkitNoBT = caps.isIOS && !caps.isBluefy;
+  const bluetooth  = caps.hasBluetooth && !webkitNoBT && !isFirefox;
+  const tts        = caps.hasTTS && !caps.isBluefy;          // Bluefy: SpeechSynthesis systembedingt unzuverlässig
+  const voice      = caps.hasSpeechRec && !caps.isBluefy;    // Bluefy: keine SpeechRecognition
+  const hash = label + '|bt' + (bluetooth?1:0) + '|tts' + (tts?1:0) + '|v' + (voice?1:0);
+  return { ...caps, isAndroid, isFirefox, label, bluetooth, tts, voice, hash };
+}
+function _compatFeatureRow(label, ok, note){
+  return `<div role="row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <span role="cell">${escapeHtml(label)}</span>
+      <span role="cell" style="white-space:nowrap;font-weight:600;color:${ok?'#5fb84d':'var(--hot,#ff5757)'}">${ok?'✓ verfügbar':'✗ nicht verfügbar'}</span>
+    </div>${note?`<div style="font-size:12px;color:var(--muted);margin:2px 0 0">${escapeHtml(note)}</div>`:''}`;
+}
+function _compatRenderAndOpen(force){
+  const c = detectBrowserCapabilities();
+  const body = document.getElementById('compatBody');
+  const actions = document.getElementById('compatActions');
+  const modal = document.getElementById('modalCompatibilityWelcome');
+  if(!body || !actions || !modal) return false;
+  let html = `<div style="margin:6px 0 10px;font-size:14px"><b>Du nutzt:</b> ${escapeHtml(c.label)}</div>
+    <div role="table" aria-label="Verfügbare Funktionen" style="border-top:1px solid var(--line)">`;
+  html += _compatFeatureRow('Bluetooth-Steuerung', c.bluetooth, c.bluetooth ? '' : 'Geräte-Steuerung per BLE ist in diesem Browser nicht möglich.');
+  html += _compatFeatureRow('Sprachausgabe (TTS)', c.tts, c.tts ? '' : 'Vorlesen ist hier deaktiviert.');
+  html += _compatFeatureRow('Sprachsteuerung (Mikrofon)', c.voice, c.voice ? '' : 'Stattdessen steht Text-Eingabe zur Verfügung.');
+  html += '</div>';
+  if(c.isIOS && !c.bluetooth){
+    html += `<p class="wiz-text" style="margin-top:12px">Für die Bluetooth-Steuerung deines Geräts brauchst du auf dem iPhone die kostenlose App <b>Bluefy</b>. Für Sorten-Recherche mit Sprachausgabe bleibt Safari ideal, du kannst beide Apps parallel nutzen.</p>`;
+  } else if(!c.bluetooth){
+    html += `<p class="wiz-text" style="margin-top:12px">Für die Bluetooth-Steuerung nutze <b>Chrome</b> oder <b>Edge</b> (Android oder Desktop).</p>`;
+  } else {
+    html += `<p class="wiz-text" style="margin-top:12px">Alles bereit, du kannst direkt loslegen.</p>`;
+  }
+  body.innerHTML = html;
+  let act = '';
+  if(c.isIOS && !c.bluetooth){
+    act += `<a class="btn block" href="https://apps.apple.com/de/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Bluefy im App Store öffnen</a>`;
+  }
+  act += `<button class="btn primary block" id="btnCompatContinue">Trotzdem weitermachen</button>`;
+  if(!force) act += `<button class="btn ghost block" id="btnCompatLater">Später erinnern</button>`;
+  actions.innerHTML = act;
+  const setSeen = ()=>{ try{ PREFS.compatibilityHintSeen = c.hash; savePrefs(); }catch(_){} };
+  document.getElementById('btnCompatContinue')?.addEventListener('click', ()=>{ setSeen(); modal.classList.remove('open'); });
+  document.getElementById('btnCompatLater')?.addEventListener('click', ()=>{ modal.classList.remove('open'); }); // bewusst KEIN setSeen -> erscheint erneut
+  modal.classList.add('open');
+  return true;
+}
+function maybeShowCompatibilityWelcome(){
+  try{
+    const c = detectBrowserCapabilities();
+    if(PREFS.compatibilityHintSeen === c.hash) return false;          // für diesen Browser schon gesehen
+    if(document.querySelector('.modal.open')){ setTimeout(maybeShowCompatibilityWelcome, 3000); return false; } // nicht über andere Modale legen
+    return _compatRenderAndOpen(false);
+  }catch(_){ return false; }
+}
+// v9.0.4 N2: Entscheidet, ob beim Boot automatisch gezeigt wird. Nur bei frischem Nutzer
+// (nach Onboarding) ODER echtem Browser-Wechsel (gespeicherter Hash != aktueller). Bereits
+// onboardete Nutzer ohne gespeicherten Hash bekommen KEIN ungefragtes Popup.
+function _maybeAutoCompat(){
+  try{
+    const c = detectBrowserCapabilities();
+    const fresh = (typeof isFreshUser === 'function') && isFreshUser();
+    const last = PREFS.compatibilityHintSeen;
+    if(fresh || (last && last !== c.hash)) return maybeShowCompatibilityWelcome();
+    return false;
+  }catch(_){ return false; }
 }
 async function connectBLE(){
   if(!('bluetooth' in navigator)){
@@ -8556,6 +8676,7 @@ function wire(){
 
   // ── Wizard wiring ──
   $('#btnHelp').addEventListener('click', ()=>openWizard(true));
+  $('#btnCompatCheck')?.addEventListener('click', ()=>_compatRenderAndOpen(true)); // v9.0.4 N2 Recall
   $('#wizNext').addEventListener('click', nextPage);
   $('#wizBack').addEventListener('click', prevPage);
   $('#wizSkip').addEventListener('click', closeWizard);
@@ -10871,7 +10992,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.3';
+const SW_VERSION_LABEL='v9.0.4';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17005,7 +17126,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.0.3 bereit.','ok');
+  log('Terp Sessions v9.0.4 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -17022,6 +17143,12 @@ async function init(){
     // v4.9.6: bestehender Tour-Trigger für Alt-Nutzer ohne abgeschlossene Tour
     setTimeout(()=>startOnboardingTour(false), 1200);
   }
+
+  // v9.0.4 Paket N2: First-Visit-Compatibility-Check. Auto-Anzeige NUR bei echtem
+  // Erst-Besuch (nach Onboarding) oder erkanntem Browser-Wechsel — bestehende, bereits
+  // onboardete Nutzer bekommen kein Dauer-Popup (Recall-Button im Setup verfügbar).
+  // maybeShowCompatibilityWelcome legt sich nie über ein offenes Modal/Welcome/Tour.
+  setTimeout(()=>{ try{ _maybeAutoCompat(); }catch(_){} }, 2600);
 
   // v8.4.0 Modul 3: Wake-Word starten falls vom Nutzer eingeschaltet
   setupWakeWord();
