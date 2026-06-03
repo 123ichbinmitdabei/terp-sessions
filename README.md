@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.1)
+# Terp Sessions — Vape Controller (v9.0.2)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,31 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.2 — Naming-Konsistenz „Terp Sessions" (Paket N1)
+
+Der Produktname ist jetzt überall konsistent „Terp Sessions", wo vorher „Sessions" oder „Volcano Controller" als Markenname stand. Rein chirurgisch, das generische Wort „Sessions" (also Konsum-Sessions, Session-Tracking, Reinigung „alle X Sessions", Statistik-Labels) bleibt unverändert, sonst würde die App-Sprache unsinnig.
+
+**Geändert (Produktname/Brand/technischer Name):**
+- `manifest.json`: `name` = „Terp Sessions — Vape Controller", `short_name` = „Terp Sessions".
+- `index.html` Head: `<title>`, `apple-mobile-web-app-title`, `meta description`.
+- Header-Brand-Element, Lock-Screen-Überschrift („Terp Sessions gesperrt").
+- Welcome-Flow + Geräte-Touren + Migrations-Wizard + Onboarding-Tour-Titel.
+- Alt-Wizard-Titel „Willkommen beim Volcano Controller" zu „Willkommen bei Terp Sessions".
+- Console-ASCII-Art + `sessions.about()`-Credits (die JS-API `window.sessions` bleibt).
+- „Sessions PWA" (technische Sicht) zu „Terp Sessions PWA" an allen 5 Stellen (HA-Export, Diagnose, PDF-Report).
+- Update-Prompt, Diagnose-Export-Label, zwei „Sessions-Community"-Strings.
+- `sw.js`: Cache-Name `sessions-` zu `terp-sessions-` (erzwingt einmaliges Cache-Update bei allen PWA-Usern, akzeptiert) plus Datei-Kommentar.
+- Console-Log „Terp Sessions v9.0.2 bereit".
+
+**Bewusst NICHT geändert (Begründung):**
+- Generisches Wort „Sessions" (Vape-Sessions, Tracking, Reminder, Stat-Labels, CSV, Achievements).
+- Code-Identifier: `window.sessions`, `sessions.about()`, Storage-Keys (`sessions_onboarded_v1`, `sessions_migration_v5_seen`), Variablen/Funktionen (`renderSessions`, `exportSessionsCSV`, `cleanReminderSessions` etc.), IDs, CSS-Klassen.
+- Wake-Word „Hey Sessions" (fester Sprach-Trigger, Umbenennen würde die Erkennung und UX verändern). Offen für N2/spätere Runde, falls gewünscht.
+- Programm-/Feature-Name „Sessions Pioneers" (etablierter Eigenname des Tester-Programms). Offen falls Andre Vereinheitlichung wünscht.
+- Repo-Name `terp-sessions`, Domain, historische Code-Kommentare („formerly Volcano Controller"), historische Changelog-Abschnitte in dieser README.
+
+**Tests:** neue Suite `v902rename.mjs`, volle Regression grün.
 
 ## v9.0.1 — Hotfix: Self-Test-Findings (B4, B5, B1/B2, B6, B7)
 

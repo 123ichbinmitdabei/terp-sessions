@@ -1,6 +1,6 @@
-// Sessions (formerly Volcano Controller) — app-shell SW
-const VERSION = 'v9.0.1';
-const CACHE = `sessions-${VERSION}`;
+// Terp Sessions (formerly Volcano Controller) — app-shell SW
+const VERSION = 'v9.0.2';
+const CACHE = `terp-sessions-${VERSION}`;
 const SHELL = [
   './',
   './index.html',

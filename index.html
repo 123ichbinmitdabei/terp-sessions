@@ -7,14 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sessions">
-<meta name="description" content="Sessions — Storz & Bickel Bluetooth Controller für Volcano, Crafty, Mighty und Venty">
+<meta name="apple-mobile-web-app-title" content="Terp Sessions">
+<meta name="description" content="Terp Sessions — Storz & Bickel Bluetooth Controller für Volcano, Crafty, Mighty und Venty">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="shortcut icon" href="icon-192.png">
-<title>Sessions — S&B Vape Controller</title>
+<title>Terp Sessions — Vape Controller</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- v9.0.1 (B1/B2): KEIN crossorigin am Stylesheet-Link (kanonisches Google-Fonts-Snippet).
@@ -2272,7 +2272,7 @@ button[data-sch-day].active{
 <!-- v4.6: PIN overlay -->
 <div class="pin-overlay" id="pinOverlay" role="dialog" aria-modal="true" aria-label="PIN-Sperre">
   <div class="lock-ico" aria-hidden="true">🔒</div>
-  <h2>Sessions gesperrt</h2>
+  <h2>Terp Sessions gesperrt</h2>
   <div class="sub">PIN eingeben um fortzufahren</div>
   <input type="password" inputmode="numeric" pattern="[0-9]*" id="pinInput" maxlength="8" autocomplete="off" aria-label="PIN-Eingabe">
   <button class="btn primary" id="pinSubmit">Entsperren</button>
@@ -2292,7 +2292,7 @@ button[data-sch-day].active{
 <header class="topbar" role="banner">
   <div class="brand">
     <span class="brand-dot" id="dot" aria-hidden="true"></span>
-    <span>Sessions</span>
+    <span>Terp Sessions</span>
   </div>
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
@@ -2600,7 +2600,7 @@ button[data-sch-day].active{
   <!-- v5.1.0 Modul 2: Home Assistant Export -->
   <div class="card" id="haExportCard">
     <h3>Home Assistant Export</h3>
-    <p class="wiz-text"><small>Sessions ist eine Browser-App (kein Server). Du kannst die Statistik an einen eigenen WebHook (z.B. NodeRed, n8n) senden und in Home Assistant per REST-Sensor einbinden. Das YAML-Snippet unten kommt in deine <b>configuration.yaml</b> unter <b>sensor:</b>. Senden passiert nur auf Knopfdruck (keine Auto-Übertragung).</small></p>
+    <p class="wiz-text"><small>Terp Sessions ist eine Browser-App (kein Server). Du kannst die Statistik an einen eigenen WebHook (z.B. NodeRed, n8n) senden und in Home Assistant per REST-Sensor einbinden. Das YAML-Snippet unten kommt in deine <b>configuration.yaml</b> unter <b>sensor:</b>. Senden passiert nur auf Knopfdruck (keine Auto-Übertragung).</small></p>
     <label style="font-size:12px;font-weight:600;display:block;margin:8px 0 4px">WebHook-URL</label>
     <input class="input mono" id="haWebhookUrl" type="url" placeholder="https://dein-webhook/sessions-stats" style="width:100%;box-sizing:border-box" aria-label="Home Assistant WebHook-URL">
     <label style="font-size:12px;font-weight:600;display:block;margin:10px 0 4px">YAML-Snippet</label>
@@ -2920,7 +2920,7 @@ button[data-sch-day].active{
     <h2 id="commRegTitle">🌿 Community beitreten</h2>
     <!-- Schritt 1 -->
     <div data-comm-step="1">
-      <p class="wiz-text" style="white-space:pre-line">Mit Sorten und Programmen kannst du der Sessions-Community helfen. Bewertungen, Empfehlungen, eigene Beiträge — alles optional, alles unter Pseudonym.
+      <p class="wiz-text" style="white-space:pre-line">Mit Sorten und Programmen kannst du der Terp-Sessions-Community helfen. Bewertungen, Empfehlungen, eigene Beiträge, alles optional, alles unter Pseudonym.
 
 Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <p style="font-size:11px;color:var(--muted);margin-top:8px">Mehr in der Datenschutzerklärung.</p>
@@ -3244,7 +3244,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <div class="sheet">
     <div class="grab"></div>
     <h2 id="noBtTitle">📡 Bluetooth nicht verfügbar</h2>
-    <p class="wiz-text">Dein Browser kann kein Web-Bluetooth. Damit du Sessions mit deinem Verdampfer verbinden kannst, hast du diese Optionen:</p>
+    <p class="wiz-text">Dein Browser kann kein Web-Bluetooth. Damit du Terp Sessions mit deinem Verdampfer verbinden kannst, hast du diese Optionen:</p>
     <ul class="wiz-text" style="margin:8px 0 14px 22px;line-height:1.6">
       <li><b>iPhone / iPad:</b> Lade die kostenlose App „Bluefy — Web BLE Browser" aus dem App Store und öffne diese Seite dort.</li>
       <li><b>Android:</b> Nutze Chrome (Web-Bluetooth ist standardmäßig dabei).</li>
@@ -3303,7 +3303,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
 <!-- v8.7.1 Modul 3: Heuristik-Banner (nicht aufdrängend) -->
 <div class="sr-hint-banner" id="srHeuristicBanner" role="status" aria-live="polite" hidden>
-  <span>Es sieht aus als nutzt du Tastatur/Screen-Reader. Soll Sessions sich entsprechend einstellen?</span>
+  <span>Es sieht aus als nutzt du Tastatur/Screen-Reader. Soll Terp Sessions sich entsprechend einstellen?</span>
   <div class="row">
     <button class="btn sm ghost" id="srHeurNo" type="button">Nein danke</button>
     <button class="btn sm hot" id="srHeurYes" type="button">Ja, Screen-Reader-Modus an</button>
@@ -3437,7 +3437,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
     <div class="wiz-page active" data-page="1">
       <div class="wiz-art">🌋</div>
-      <h2 class="wiz-title">Willkommen beim Volcano Controller</h2>
+      <h2 class="wiz-title">Willkommen bei Terp Sessions</h2>
       <p class="wiz-text">
         Diese App steuert deinen Storz & Bickel Vaporizer per Bluetooth direkt aus dem Browser. Du kannst Temperatur und Pumpe regeln und eigene Programme bauen, die automatisch ablaufen.
         <small>Dauer der Einrichtung: ca. 2 Minuten.</small>
@@ -10703,10 +10703,10 @@ function wireSlides(){
    alte-User-Migration (vol_tour_completed → maybeMigrationWizard)
    bleibt unverändert. */
 const WELCOME_SLIDES = [
-  {h:'Willkommen bei Sessions', t:'Sessions ist dein Multi-Gerät-Vape-Controller — heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud (außer du aktivierst die optionale Community-DB).'},
+  {h:'Willkommen bei Terp Sessions', t:'Terp Sessions ist dein Multi-Gerät-Vape-Controller, heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud (außer du aktivierst die optionale Community-DB).'},
   {h:'Welche Geräte?', t:'• Storz & Bickel: Volcano, Crafty, Mighty, Venty, Veazy — voll unterstützt\n• PAX 3, Puffco Peak Pro — Beta (Tester gesucht)\n• Firefly — Probe-Only (Reverse-Engineering-Hilfe willkommen)'},
   {h:'So verbindest du', t:'1. Bluetooth einschalten\n2. Oben rechts auf „Verbinden" tippen\n3. Dein Gerät aus der Liste wählen\n\nHinweis: Es geht nur in Chrome oder Edge (Android/Desktop). iOS Safari unterstützt Web-Bluetooth leider nicht.'},
-  {h:'Was Sessions kann', t:'• Temperatur + Heizer steuern\n• Programme und visueller Heizkurven-Editor\n• Aroma-Bibliothek mit Filter und Empfehlungen\n• Session-Tracking (optional, lokal)\n• Sprachsteuerung und Wake-Word (experimentell)'},
+  {h:'Was Terp Sessions kann', t:'• Temperatur + Heizer steuern\n• Programme und visueller Heizkurven-Editor\n• Aroma-Bibliothek mit Filter und Empfehlungen\n• Session-Tracking (optional, lokal)\n• Sprachsteuerung und Wake-Word (experimentell)'},
   {h:'Sicherheit zuerst', t:'• Gerät nie unbeaufsichtigt heizen lassen\n• Sicherheits-Timer ist automatisch aktiv (Default 25 Min)\n• Bei Beta-Geräten: du testest mit — Vorsicht und Rückmeldung willkommen\n\nLos geht\'s!'},
 ];
 function isFreshUser(){
@@ -10720,7 +10720,7 @@ function isFreshUser(){
 function maybeWelcomeFlow(force, opts){
   try{
     if(!force && !isFreshUser()) return false;
-    setTimeout(()=>showSlides('Willkommen bei Sessions', WELCOME_SLIDES, ()=>{
+    setTimeout(()=>showSlides('Willkommen bei Terp Sessions', WELCOME_SLIDES, ()=>{
       try{ LS.set('sessions_onboarded_v1', true); }catch(_){}
       if(opts && typeof opts.onDone==='function') opts.onDone();
     }), (opts && opts.delay) || 700);
@@ -10758,7 +10758,7 @@ function hideConnectHint(){
 
 const DEVICE_TOURS = {
   volcano: { title:'🌋 Volcano', slides:[
-    {h:'Willkommen, Volcano-User', t:'Sessions kann jetzt mehr, dein Volcano funktioniert weiterhin genau wie gewohnt.'},
+    {h:'Willkommen, Volcano-User', t:'Terp Sessions kann jetzt mehr, dein Volcano funktioniert weiterhin genau wie gewohnt.'},
     {h:'Heizen + Pumpe getrennt', t:'Heizer und Pumpe steuerst du wie immer einzeln.'},
     {h:'Programme', t:'Definiere Temperaturstufen und Pumpzeiten als Reihen, automatisch ablaufend.'},
     {h:'Sicherheits-Timer', t:'Automatischer Heizer-Stop nach X Minuten, einstellbar im Setup.'},
@@ -10800,7 +10800,7 @@ function maybeMigrationWizard(){
     if(!wasV4) return;                       // frischer Nutzer -> kein Wizard
     if(LS.get('sessions_migration_v5_seen', false)) return;
     const slides=[
-      {h:'Sessions ist da!', t:'Aus „Volcano Controller" wurde Sessions (v5.1.0), gleiches Tool, neuer Name.'},
+      {h:'Terp Sessions ist da!', t:'Aus „Volcano Controller" wurde Terp Sessions (v5.1.0), gleiches Tool, neuer Name.'},
       {h:'Jetzt 3 Geräte-Familien', t:'Volcano (wie immer), Crafty/Mighty (neu, Beta), Venty/Veazy (neu, hardware-getestet).'},
       {h:'Deine Daten bleiben', t:'Programme und Einstellungen sind erhalten, schau einmal im Setup-Tab dass alles da ist.'},
       {h:'Neue Features', t:'Statistik pro Gerät, Home-Assistant-Export, gerätespezifische Touren, Mikrofon-Sprachsteuerung.'},
@@ -10861,7 +10861,7 @@ function exportDiagnostics(){
   const lines=[...document.querySelectorAll('#log div')].slice(-100).map(d=>d.textContent).join('\n');
   const t=State.adapter && State.adapter.constructor.deviceType;
   const info=[
-    'Sessions Diagnose-Export',
+    'Terp Sessions Diagnose-Export',
     'Version: '+SW_VERSION_LABEL,
     'Adapter: '+((State.adapter&&State.adapter.constructor.displayName)||'–')+' ('+(t||'–')+', Beta:'+(t?getBetaLevel(t):'–')+')',
     'Gerät: '+((State.device&&State.device.name)||'–')+(State.device&&State.device.subtype?(' / '+State.device.subtype):''),
@@ -10871,7 +10871,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.1';
+const SW_VERSION_LABEL='v9.0.2';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -10927,7 +10927,7 @@ function generateHaYaml(url){
     {key:'crafty_mighty', name:'Crafty Mighty'},
     {key:'venty_veazy', name:'Venty Veazy'},
   ];
-  let out = '# Home Assistant config snippet\n# Generated by Sessions PWA v5.1.0\n# In configuration.yaml unter "sensor:" einfuegen.\nsensor:\n';
+  let out = '# Home Assistant config snippet\n# Generated by Terp Sessions PWA v5.1.0\n# In configuration.yaml unter "sensor:" einfuegen.\nsensor:\n';
   for(const f of fam){
     out += `  - platform: rest\n`
         +  `    name: "Sessions ${f.name} Heat"\n`
@@ -10946,7 +10946,7 @@ async function haTestSend(){
   const url = ($('#haWebhookUrl')?.value || '').trim();
   if(!/^https?:\/\//i.test(url)){ toast('Bitte gültige WebHook-URL (https://…) eingeben'); return; }
   try{
-    const payload = { generatedBy:'Sessions PWA v5.1.0', ts:Date.now(), stats:DEVSTATS };
+    const payload = { generatedBy:'Terp Sessions PWA v5.1.0', ts:Date.now(), stats:DEVSTATS };
     await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     toast('Stats an WebHook gesendet (no-cors, keine Antwort lesbar)');
     log('HA-Export an '+url+' gesendet','ok');
@@ -13942,7 +13942,7 @@ function setupPwaUpdate(){
       nw.addEventListener('statechange', ()=>{
         if(nw.state === 'installed' && navigator.serviceWorker.controller){
           // Neue Version verfügbar
-          if(confirm('Eine neue Version von Sessions ist verfügbar. Jetzt aktualisieren?')){
+          if(confirm('Eine neue Version von Terp Sessions ist verfügbar. Jetzt aktualisieren?')){
             nw.postMessage({type:'SKIP_WAITING'});
             window.location.reload();
           }
@@ -14773,7 +14773,7 @@ function generateStrainName(){
 ═══════════════════════════════════════════════════════════════ */
 function printAsciiVolcano(){
   const art = `
-      Sessions — S&B Vape Controller
+      Terp Sessions — Vape Controller
       ═══════════════════════════════════
               ___
             /\\___\\
@@ -14786,7 +14786,7 @@ function printAsciiVolcano(){
      /     N O       \\
     /__________________\\
 
-      [ Sessions Pioneer Build ]
+      [ Terp Sessions Pioneer Build ]
       [ Web Bluetooth · PWA ]
       [ Type sessions.about() for credits ]
   `;
@@ -14816,7 +14816,7 @@ function setupEasterEggs(){
   // sessions.about() console command
   window.sessions = {
     about: ()=>{
-      console.log('%cSessions — Privates Pioneer-Projekt', 'font-size:18px;color:#ff5722;font-weight:bold');
+      console.log('%cTerp Sessions — Privates Pioneer-Projekt', 'font-size:18px;color:#ff5722;font-weight:bold');
       console.log('Single-file PWA · Web Bluetooth · CC BY-NC 4.0');
       console.log('UUIDs verified against firsttris/reactive-volcano-app');
       console.log('Try the Konami code: ↑↑↓↓←→←→ba');
@@ -15409,7 +15409,7 @@ th{background:#f0f0f0;font-weight:600}
 @media print { body{margin:0} }
 </style></head><body>
 <h1>Cannabis-Konsum-Protokoll</h1>
-<div style="color:#666;font-size:13px">Generiert am ${new Date().toLocaleString('de-DE')} · App: Sessions PWA</div>
+<div style="color:#666;font-size:13px">Generiert am ${new Date().toLocaleString('de-DE')} · App: Terp Sessions PWA</div>
 <h2>Zusammenfassung</h2>
 <div class="summary">
   <div><div class="num">${sessions.length}</div><div class="lbl">Sessions</div></div>
@@ -15418,7 +15418,7 @@ th{background:#f0f0f0;font-weight:600}
 </div>
 ${rows ? `<h2>Sessions (letzte 90)</h2><table><thead><tr><th>Datum/Zeit</th><th>Ballons</th><th>Heizdauer</th><th>Notizen</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
 ${symRows ? `<h2>Symptom-Tracker (letzte 40)</h2><table><thead><tr><th>Datum/Zeit</th><th>Phase</th><th>Schmerz</th><th>Schlaf</th><th>Appetit</th><th>Stimmung</th><th>Angst</th></tr></thead><tbody>${symRows}</tbody></table><div style="font-size:11px;color:#666;margin-top:4px">Skala: 1 (sehr gering) bis 10 (sehr hoch)</div>` : ''}
-<div class="foot">Selbst-Dokumentation · keine ärztliche Diagnose · keine Beratung<br>Generiert mit Sessions PWA · Privates Pioneer-Projekt</div>
+<div class="foot">Selbst-Dokumentation · keine ärztliche Diagnose · keine Beratung<br>Generiert mit Terp Sessions PWA · Privates Pioneer-Projekt</div>
 <div style="margin-top:20px;text-align:center"><button onclick="window.print()" style="padding:10px 22px;font-size:14px;cursor:pointer;background:#c83a0e;color:#fff;border:none;border-radius:6px">🖨 Drucken / als PDF speichern</button></div>
 </body></html>`;
 }
@@ -15519,7 +15519,7 @@ function renderUserPanelCommunity(){
 function _userPanelCommAction(action){
   // Wenn Community-DB noch nicht aktiv: erst Confirm, dann aktivieren
   if(!PREFS.communityEnabled){
-    if(!confirm('Community-DB einschalten? Sorten und Programme werden dann mit der Sessions-Community ausgetauscht. Du kannst das jederzeit wieder in den Einstellungen deaktivieren.')) return;
+    if(!confirm('Community-DB einschalten? Sorten und Programme werden dann mit der Terp-Sessions-Community ausgetauscht. Du kannst das jederzeit wieder in den Einstellungen deaktivieren.')) return;
     PREFS.communityEnabled = true;
     try{ savePrefs(); }catch(_){}
     try{ if(typeof _commSetupRefresh === 'function') _commSetupRefresh(); }catch(_){}
@@ -16201,7 +16201,7 @@ function exportProgramAsHaYaml(p){
   const slug = (p.name||'sessions_program').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
   const steps = expandLoops(p.steps);
   const lines = [];
-  lines.push(`# Home Assistant Script — exportiert von Sessions PWA`);
+  lines.push(`# Home Assistant Script — exportiert von Terp Sessions PWA`);
   lines.push(`# Programm: ${p.name}`);
   lines.push(``);
   lines.push(`script:`);
@@ -16559,7 +16559,7 @@ function renderShortcutExamples(){
 const TOUR_STEPS = [
   {
     target:null,
-    title:'👋 Willkommen bei Sessions',
+    title:'👋 Willkommen bei Terp Sessions',
     text:'Ich zeige dir in wenigen Schritten die wichtigsten Funktionen. Du kannst die Tour jederzeit überspringen oder später wiederholen (Einstellungen → Daten → „Onboarding neu zeigen").',
     placement:'center',
   },
@@ -17003,7 +17003,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Sessions v9.0.1 bereit.','ok');
+  log('Terp Sessions v9.0.2 bereit.','ok');
 
   setupPwaUpdate();
 
