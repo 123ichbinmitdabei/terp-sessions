@@ -2591,9 +2591,9 @@ button[data-sch-day].active{
     <button class="btn sm ghost block" id="btnResetTours" style="margin-top:10px">🎓 Geräte-Touren zurücksetzen</button>
   </div>
 
-  <!-- v5.2.0 Phase 6a: Sessions Pioneers -->
+  <!-- v5.2.0 Phase 6a: Pioneers (v9.0.3 N1.5: Programm-Eigenname gekuerzt) -->
   <div class="card" id="pioneersCard">
-    <h3>🚀 Sessions Pioneers</h3>
+    <h3>🚀 Pioneers</h3>
     <div id="pioneersBody"></div>
   </div>
 
@@ -2884,7 +2884,7 @@ button[data-sch-day].active{
   <div class="back"></div>
   <div class="sheet">
     <div class="grab"></div>
-    <h2>🚀 Sessions Pioneers</h2>
+    <h2>🚀 Pioneers</h2>
     <p class="wiz-text" style="white-space:pre-line">Du verbindest ein Gerät, das wir noch nicht selbst getestet haben: <b id="betaDeviceName">Gerät</b>. Das Protokoll ist aus Open-Source-Referenzen portiert und sollte funktionieren, 100% sicher können wir es aber erst sagen, wenn Tester wie du es bestätigen.
 
 ⚠️ WICHTIG:
@@ -2909,7 +2909,7 @@ button[data-sch-day].active{
 <!-- v8.4.0: Wake-Word-Indikator (sichtbar wenn Wake-Word aktiv hört) -->
 <div class="wake-indicator" id="wakeIndicator" role="status" aria-live="polite" hidden>
   <span class="wake-dot" aria-hidden="true"></span>
-  <span id="wakeIndicatorText">🎙 hört auf „Hey Sessions"</span>
+  <span id="wakeIndicatorText">🎙 hört auf „Hey (Terp) Sessions"</span>
 </div>
 
 <!-- v8.7.2-prep Phase 1b.1: Community-Register-Wizard (3 Schritte) -->
@@ -3843,7 +3843,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <div class="toggle-row"><div class="info"><b>Generische Aktion (z.B. QR-Code generiert)</b></div><button class="toggle" data-tts="actionDone" role="switch"></button></div>
       </details>
       <div class="toggle-row" data-sr-affected="wake">
-        <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
+        <div class="info"><b>Wake-Word „Hey Sessions" 🧪</b><small>Sag „Hey Sessions" oder „Hey Terp Sessions", um die Sprachsteuerung zu starten. Experimentell. Mikrofon dauer-aktiv (Akku), Chrome-only, geht über Google-Cloud. Default aus.</small></div>
         <button class="toggle" id="togWakeWord" role="switch" aria-checked="false" aria-label="Wake-Word"></button>
       </div>
 
@@ -8714,7 +8714,7 @@ function wire(){
     }
     PREFS.wakeWord = v; savePrefs();
     setupWakeWord();
-    if(v) toast('Wake-Word aktiv — „Hey Sessions" sagen. Mikrofon dauer-an.');
+    if(v) toast('Wake-Word aktiv, „Hey Sessions" oder „Hey Terp Sessions" sagen. Mikrofon dauer-an.');
   });
   document.querySelectorAll('[data-vc]').forEach(b=>{
     b.addEventListener('click', ()=>{
@@ -9837,7 +9837,7 @@ class VentyVeazyAdapter extends DeviceAdapter {
 /* ── v6.0.0: PAX 3 (BETA) ─────────────────────────────────────────
    BLE-Protokoll 1:1 portiert aus evertonstz/pax-romana (MIT-Lizenz).
    BETA: NICHT auf Hardware verifiziert (Andre besitzt kein PAX). Geht
-   live geschuetzt durch das Sessions-Pioneers-Framework (deviceType
+   live geschuetzt durch das Pioneers-Framework (deviceType
    'pax' = 'unverified' -> Beta-Bestaetigung vor Heizen + Notfall-Stop).
    NUR PAX 3 (Era/Plus/Mini sind ein anderer Handshake, nicht enthalten).
    Krypto via inline aes-js, gegen pax-romanas eigene Testvektoren
@@ -10871,7 +10871,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.0.2';
+const SW_VERSION_LABEL='v9.0.3';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -10890,7 +10890,7 @@ function togglePioneerCheck(id){ const s=getPioneerChecks(); s[id]=!s[id]; try{ 
 function pioneerMailto(){
   const t=State.adapter && State.adapter.constructor.deviceType;
   const dev=(State.adapter&&State.adapter.constructor.displayName)||(t&&BETA_DEVNAMES[t])||'Gerät';
-  const subj=encodeURIComponent('[Sessions Pioneers] Beta-Test '+dev);
+  const subj=encodeURIComponent('[Pioneers] Beta-Test '+dev);
   const body=encodeURIComponent('Gerät: '+dev+'\nModell/Subtype: '+((State.device&&State.device.subtype)||'')+'\nBrowser: '+navigator.userAgent+'\n\nMein Feedback:\n');
   // v8.8.0: Fallback auf GitHub-Issue wenn keine PIONEERS_EMAIL gesetzt
   if(!PIONEERS_EMAIL) return pioneerIssueUrl();
@@ -14181,7 +14181,9 @@ function setupVoiceReadoutInterval(){
    - Reliability: Chrome desktop/Android = ok; iOS Safari/Firefox = nein
    - Recognition stoppt periodisch von alleine → onend startet neu
    Default AUS, Toggle im Setup, klares Indicator-Pill wenn aktiv. */
-const WAKE_WORDS = ['hey sessions','okay sessions','ok sessions','sessions'];
+// v9.0.3 Paket N1.5: zusaetzlich "Hey Terp Sessions" erkennen (laengste Prefixe zuerst,
+// damit _wakeMatchPrefix den korrekten Rest extrahiert). Bestehende Trigger bleiben.
+const WAKE_WORDS = ['hey terp sessions','okay terp sessions','ok terp sessions','terp sessions','hey sessions','okay sessions','ok sessions','sessions'];
 const WAKE_DIALOG_TIMEOUT_MS = 10000;
 let wakeRec = null;
 let wakeWordActive = false;
@@ -14202,7 +14204,7 @@ function updateWakeIndicator(){
   if(!wakeWordActive) return;
   el.classList.toggle('dialog', _wakeDialogActive);
   const txt = $('#wakeIndicatorText');
-  if(txt) txt.textContent = _wakeDialogActive ? '🎤 Befehl bitte…' : '🎙 hört auf „Hey Sessions"';
+  if(txt) txt.textContent = _wakeDialogActive ? '🎤 Befehl bitte…' : '🎙 hört auf „Hey (Terp) Sessions"';
 }
 function _wakeSay(msg){
   if(PREFS.screenReaderMode === true) return;   // v8.7.1
@@ -16919,7 +16921,7 @@ async function init(){
   wireSlides();          // v5.1.0 Modul 3+4
   $('#btnResetTours')?.addEventListener('click', resetDeviceTours);
   maybeMigrationWizard();// v5.1.0 Modul 4: v4->v5 Wizard beim ersten Start
-  // v5.2.0 Phase 6a: Sessions Pioneers
+  // v5.2.0 Phase 6a: Pioneers
   renderPioneersCard();
   $('#btnBetaConfirm')?.addEventListener('click', ()=>resolveBeta(true));
   $('#btnBetaCancel')?.addEventListener('click', ()=>resolveBeta(false));
@@ -17003,7 +17005,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.0.2 bereit.','ok');
+  log('Terp Sessions v9.0.3 bereit.','ok');
 
   setupPwaUpdate();
 

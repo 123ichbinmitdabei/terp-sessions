@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.0.2)
+# Terp Sessions — Vape Controller (v9.0.3)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.0.3 — Wake-Word „Hey Terp Sessions" + Pioneers-Naming (Paket N1.5)
+
+Mini-Patch zwischen N1 und N2, zieht die zwei in N1 bewusst offen gelassenen Grenzfälle nach.
+
+**Wake-Word erweitert:** Das Wake-Word erkennt jetzt zusätzlich „Hey Terp Sessions" (plus „Terp Sessions", „Okay/Ok Terp Sessions"). Die bisherigen Trigger („Hey Sessions" usw.) funktionieren weiter. `WAKE_WORDS` ist nach Prefix-Länge absteigend sortiert, damit `_wakeMatchPrefix` den korrekten Befehls-Rest extrahiert. Indikator-Pille, Einstellungs-Hilfetext und Aktivierungs-Toast nennen beide Trigger.
+
+**„Sessions Pioneers" zu „Pioneers":** Der Programm-Eigenname heißt in der UI jetzt nur noch „Pioneers" (Setup-Karte, Beta-Bestätigungs-Modal, E-Mail-Betreff `[Pioneers]`, interne Kommentare/Framework-Bezeichnung). Bewusst unverändert: der Feature-Name „Pioneer-Test-Modus" und alle Code-Identifier (`PIONEER_TESTS`, `pioneerTestState`, `pioneerWizard` usw.).
+
+**Tests:** neue Suiten `v903wakeword.mjs` + `v903pioneers.mjs`, volle Regression grün.
 
 ## v9.0.2 — Naming-Konsistenz „Terp Sessions" (Paket N1)
 
