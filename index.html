@@ -12375,6 +12375,7 @@ const VOICE_HELP = [
   ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
   ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
   ['Programm', '„starte Programm <Name>"'],
+  ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Sternen", „bewerte mit <1 bis 5> Sternen" (geöffnete Sorte)'],
   ['Sonstiges', '„wiederhole", „Hilfe"'],
 ];
 function _voiceHelpText(){ return VOICE_HELP.map(g=>g[0]+': '+g[1]).join('. '); }
@@ -12410,6 +12411,75 @@ function _voiceNavClose(){
   }
 }
 
+/* ═══ v9.5.0 Paket B2.2: Aroma/Sorten per Voice (mit Multi-Turn-Mehrdeutigkeits-Dialog) ═══ */
+let _voiceAmbiguityState = null;   // { type:'pickStrain', candidates:[...], expiresAt, context:'open'|'rate', rateStars }
+const _VOICE_STARS = { '1':1,'2':2,'3':3,'4':4,'5':5, eins:1, zwei:2, drei:3, vier:4, fuenf:5 };
+function _voiceParseStars(s){ return _VOICE_STARS[String(s)] || null; }
+function _voiceParsePick(t){
+  if(/(^|\s)(1|eins|nummer\s*eins|die\s*erste|erste)(\s|$)/.test(t)) return 0;
+  if(/(^|\s)(2|zwei|nummer\s*zwei|die\s*zweite|zweite)(\s|$)/.test(t)) return 1;
+  if(/(^|\s)(3|drei|nummer\s*drei|die\s*dritte|dritte)(\s|$)/.test(t)) return 2;
+  return null;
+}
+function _voiceFindStrains(query){
+  const q = _normalizeGerman(String(query||'')).trim();
+  if(!q) return [];
+  const out = [];
+  try{ (allAromasNorm()||[]).forEach(a=>{ if(a && a.name && _normalizeGerman(a.name).includes(q)) out.push({ name:a.name, source:'aroma', ref:a }); }); }catch(_){}
+  try{ (Array.isArray(_commStrainCache)?_commStrainCache:[]).forEach(s=>{ if(s && s.name && _normalizeGerman(s.name).includes(q)) out.push({ name:s.name, source:'community', ref:s, id:s.id }); }); }catch(_){}
+  return out;
+}
+function _voiceOpenStrainMatch(m){
+  try{
+    if(m.source==='community') _commStrainDetailOpen(m.ref);
+    else openAromaDetail(m.ref);
+    voiceFeedback('✓ '+m.name); _voiceSpeakConfirm(m.name+' geöffnet');
+  }catch(_){ voiceFeedback('Konnte Sorte nicht öffnen'); }
+}
+async function _voiceRateStrainMatch(m, stars){
+  if(m.source!=='community' || !m.ref || !m.ref.id){ voiceFeedback('Diese Sorte kann nicht bewertet werden'); _voiceSpeakConfirm('Diese Sorte kann nicht bewertet werden'); return; }
+  if(!(typeof communityClient==='object' && communityClient && communityClient.isLoggedIn && communityClient.isLoggedIn())){ voiceFeedback('Bitte zuerst in der Community anmelden'); _voiceSpeakConfirm('Bitte zuerst in der Community anmelden'); return; }
+  try{ await _commStrainRateClick(m.ref, stars); voiceFeedback('✓ '+stars+' Sterne für '+m.name); _voiceSpeakConfirm(stars+' Sterne für '+m.name+' gespeichert'); }
+  catch(_){ voiceFeedback('Bewerten fehlgeschlagen'); }
+}
+function _voiceAnnounceCandidates(cands, context, rateStars){
+  const top = cands.slice(0,3);
+  _voiceAmbiguityState = { type:'pickStrain', candidates:top, expiresAt: Date.now()+30000, context, rateStars };
+  const msg = top.map((m,i)=>(i+1)+': '+m.name).join(', ') + '. Welche meinst du?';
+  voiceFeedback('🔊 '+msg, 6000); try{ ttsSay(msg); }catch(_){}
+}
+function _voiceOpenStrainCmd(name){
+  const matches = _voiceFindStrains(name);
+  if(matches.length===0){ voiceFeedback('Sorte „'+name+'" nicht gefunden'); _voiceSpeakConfirm('Sorte '+name+' nicht gefunden'); return; }
+  if(matches.length===1){ _voiceOpenStrainMatch(matches[0]); return; }
+  _voiceAnnounceCandidates(matches, 'open', null);
+}
+async function _voiceRateStrainCmd(name, stars){
+  const matches = _voiceFindStrains(name).filter(m=>m.source==='community');
+  if(matches.length===0){ voiceFeedback('Bewertbare Sorte „'+name+'" nicht gefunden'); _voiceSpeakConfirm('Sorte '+name+' nicht gefunden oder nicht bewertbar'); return; }
+  if(matches.length===1){ await _voiceRateStrainMatch(matches[0], stars); return; }
+  _voiceAnnounceCandidates(matches, 'rate', stars);
+}
+async function _voiceRateCurrentStrain(stars){
+  const s = (typeof _commCurrentStrain==='object') ? _commCurrentStrain : null;
+  if(!s || !s.id){ voiceFeedback('Keine bewertbare Sorte geöffnet'); _voiceSpeakConfirm('Es ist keine bewertbare Sorte geöffnet'); return; }
+  await _voiceRateStrainMatch({ name:s.name, source:'community', ref:s, id:s.id }, stars);
+}
+function _voiceSearchStrainCmd(kw){
+  const matches = _voiceFindStrains(kw);
+  if(matches.length===0){ voiceFeedback('Keine Sorten zu „'+kw+'"'); _voiceSpeakConfirm('Keine Sorten gefunden zu '+kw); return; }
+  const top = matches.slice(0,3).map((m,i)=>(i+1)+': '+m.name).join(', ');
+  voiceFeedback('🔊 '+top, 6000); try{ ttsSay(top); }catch(_){}
+}
+async function _voiceResolvePick(index){
+  const st = _voiceAmbiguityState;
+  if(!st || !Array.isArray(st.candidates) || index >= st.candidates.length){ _voiceAmbiguityState = null; voiceFeedback('Auswahl ungültig'); return; }
+  const m = st.candidates[index], ctx = st.context, stars = st.rateStars;
+  _voiceAmbiguityState = null;
+  if(ctx==='rate') await _voiceRateStrainMatch(m, stars);
+  else _voiceOpenStrainMatch(m);
+}
+
 function parseVoiceCommand(txt){
   const raw = String(txt||'');
   const tOrig = raw.toLowerCase().trim();
@@ -12420,6 +12490,31 @@ function parseVoiceCommand(txt){
   if(/(^|\s)(hilfe|welche\s*befehle|was\s*kann\s*ich\s*sagen|befehle|kommandos)(\s|$)/.test(t)) return { action:'help', raw };
   // v9.4.0 B1: Wiederhole letzte Ansage
   if(/(wiederhole|nochmal|noch\s*mal|was\s*hast\s*du\s*gesagt|letzter\s*satz)/.test(t)) return { action:'repeat', raw };
+
+  // v9.5.0 B2.2: aktive Mehrdeutigkeit zuerst pruefen (Nummer-Auswahl), mit 30s-Timeout
+  if(_voiceAmbiguityState && _voiceAmbiguityState.type==='pickStrain'){
+    if(Date.now() > _voiceAmbiguityState.expiresAt){ _voiceAmbiguityState = null; }
+    else {
+      if(/(abbrechen|egal|vergiss\s*es|vergessen)/.test(t)) return { action:'pickStrainCancel', raw };
+      const pick = _voiceParsePick(t);
+      if(pick !== null) return { action:'pickStrain', value: pick, raw };
+      // sonst: normaler Parser, Mehrdeutigkeit bleibt bis Timeout
+    }
+  }
+  // v9.5.0 B2.2: Sorten-Befehle (VOR der Navigation, damit "oeffne sorte X" nicht als Tab-Wechsel endet)
+  let _sm;
+  if((_sm = t.match(/(?:oeffne|zeige?)\s+sorte\s+(.+)/)))                      return { action:'openStrain', value:_sm[1].trim(), raw };
+  if((_sm = t.match(/bewerte?\s+(?:sorte\s+)?(.+?)\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*stern/))){
+    const st=_voiceParseStars(_sm[2]); if(st) return { action:'rateStrain', value:{ name:_sm[1].trim(), stars:st }, raw };
+  }
+  if((_sm = t.match(/^bewerte?\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*stern/))){
+    const st=_voiceParseStars(_sm[1]); if(st) return { action:'rateCurrentStrain', value:st, raw };
+  }
+  if((_sm = t.match(/(\d|eins|zwei|drei|vier|fuenf)\s*stern\w*\s+fuer\s+(.+)/))){
+    const st=_voiceParseStars(_sm[1]); if(st) return { action:'rateStrain', value:{ name:_sm[2].trim(), stars:st }, raw };
+  }
+  if((_sm = t.match(/(?:suche?\s+sorte|sorten\s+mit)\s+(.+)/)))                return { action:'searchStrain', value:_sm[1].trim(), raw };
+
   // v9.4.0 B1: Navigation, schliessen/zurueck (nicht wenn es um ein Programm/eine Sorte geht)
   if(/(schliesse|schliess|zurueck|geh\s*zurueck|close)/.test(t) && !/(programm|sorte)/.test(t)) return { action:'navClose', raw };
   // v9.4.0 B1: Navigation zu Tab/Ansicht (funktioniert ohne BLE)
@@ -12538,6 +12633,13 @@ async function executeVoiceCommand(cmd){
       case 'repeat': _voiceRepeatLast(); return true;
       case 'navClose': _voiceNavClose(); return true;
       case 'navTo': _voiceNavTo(cmd.value); return true;
+      // v9.5.0 B2.2: Aroma/Sorten per Voice
+      case 'openStrain': _voiceOpenStrainCmd(cmd.value); return true;
+      case 'rateStrain': await _voiceRateStrainCmd(cmd.value.name, cmd.value.stars); return true;
+      case 'rateCurrentStrain': await _voiceRateCurrentStrain(cmd.value); return true;
+      case 'searchStrain': _voiceSearchStrainCmd(cmd.value); return true;
+      case 'pickStrain': await _voiceResolvePick(cmd.value); return true;
+      case 'pickStrainCancel': _voiceAmbiguityState=null; voiceFeedback('Abgebrochen'); return true;
       case 'stopAll':
         if(State.running) State.running.stopFlag = true;
         if(State.heater) await cmdHeaterOff();
