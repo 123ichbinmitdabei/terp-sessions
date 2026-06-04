@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.2.1)
+# Terp Sessions — Vape Controller (v9.3.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,22 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.3.0 — Programm-Templates + Editor-Vereinheitlichung + Veröffentlichen (Paket P)
+
+Größeres Feature in drei Phasen (P1 bis P3). Ziel (aus `docs/P-AUDIT-PROGRAMME-2026-06-03.md`): Community-Programme bekommen denselben reichen Editor wie eigene Programme, jedes Programm kann als Vorlage dienen, und eigene Programme lassen sich in die Community veröffentlichen. Kein Backend-Eingriff, die nötigen RPCs (`community_program_create`, `community_program_list`) existierten bereits.
+
+**Andres fünf Design-Entscheidungen:** (1) In-Editor-Template-Picker als Modal mit Suche/Filter, (2) Sorten-Verknüpfungen beim Laden mitkopieren, (3) alle Community-Programme als Templates verfügbar, (4) Veröffentlichen lokal nach Community mit Bestätigungs-Dialog, (5) toten Code aufräumen.
+
+**P1, Editor-Vereinheitlichung (Delegation):** Der simple Inline-Step-Editor des Community-Modals wurde durch eine Read-Only-Summary plus Button „🛠 Schritte bearbeiten" ersetzt, der den bestehenden reichen `#modalEditor` auf die Community-Schritte öffnet (Sub-Modal). `openEditor(id, opts)` ist rückwärtskompatibel und kennt jetzt einen Delegations-Modus (`opts.onSave/onClose/title/steps`, `editorState.__source`). Werks-Programme bleiben schreibgeschützt (read-only Summary, kein Editor-Button). Architektur-Entscheidung war Delegation statt Inline-Komponente, weil das reiche Editor-DOM fest in `#modalEditor` verdrahtet ist.
+
+**P2, Template-Picker:** Button „📚 Aus Vorlage laden" im Editor öffnet das Sub-Modal `#modalTemplatePicker` mit Suche, Quellen-Filter (Alle/Built-in/Community) und gemergten Quellen: 19 Built-in-Presets plus alle Community-Programme (`programList`, lazy). Werks-Programme mit 🔒-Badge, ladbar aber nicht editierbar. „Laden" macht Deep-Copy der Schritte (Confirm bei nicht-leeren Schritten); im Community-Modus werden die Sorten-Verknüpfungen mitkopiert.
+
+**P3, Veröffentlichen + Cleanup:** Eigene Programme (nicht-Preset) zeigen bei eingeloggten Community-Nutzern einen „🌐"-Button, der einen Bestätigungs-Dialog mit Vorschau (Name, Schritt-Anzahl, Dauer, Sichtbarkeit, Pseudonym) öffnet. Bestätigung ruft `programCreate` auf, invalidiert die Listen-Caches und meldet Erfolg oder Fehler (Dialog bleibt bei Fehler offen). Toter Code entfernt: `duplicatePreset` (nirgends aufgerufen) und `_commProgValidActions` (seit P1 ungenutzt).
+
+**Sub-Modal-Stack:** `#modalCommunityProgramEdit` zu `#modalEditor` zu `#modalTemplatePicker`, z-index und Esc-Isolation laufen automatisch über den bestehenden Modal-Stack- und A11Y-Observer. Alle neuen Karten/Listen sind Buttons (Tastatur/VoiceOver-fokussierbar, K1-konform).
+
+**Unberührt:** cscCrypto, Backend, Schema, Werks-Sorten/-Programme. **Tests:** `v930editor.mjs` (29) + `v930picker.mjs` (24) + `v930publish.mjs` (22); bestehende Programm-Suiten auf die Delegation aktualisiert; volle Regression grün.
 
 ## v9.2.1 — Karten fokussierbar für VoiceOver (Paket A K1)
 

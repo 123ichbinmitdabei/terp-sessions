@@ -3384,6 +3384,21 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 </nav>
 
 <!-- ── Modals ───────────────────────────────────────────────── -->
+<!-- v9.3.0 Paket P3: Programm in Community veroeffentlichen (Bestaetigungs-Dialog) -->
+<div class="modal" id="modalPublishProgram" role="dialog" aria-modal="true" aria-labelledby="pubTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="pubTitle">🌐 In Community veröffentlichen</h2>
+    <div id="pubBody"></div>
+    <div id="pubStatus" style="font-size:12px;color:var(--hot,#ff5722);margin-top:8px" role="status" aria-live="polite"></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn ghost block" id="pubCancel" type="button">Abbrechen</button>
+      <button class="btn primary block" id="pubConfirm" type="button">Jetzt veröffentlichen</button>
+    </div>
+  </div>
+</div>
+
 <!-- v9.3.0-prep Paket P2: Template-Picker (Sub-Modal ueber #modalEditor) -->
 <div class="modal" id="modalTemplatePicker" role="dialog" aria-modal="true" aria-labelledby="tplTitle">
   <div class="back"></div>
@@ -7563,7 +7578,7 @@ function _commProgramEditOpen(mode, source){
   document.getElementById('modalCommunityProgramEdit')?.classList.add('open');
 }
 
-const _commProgValidActions = ['heat_on','heat_off','pump_on','pump_off','set_temperature','wait_until','wait','pump_for','loop_start','loop_end'];
+// v9.3.0 Paket P3: _commProgValidActions entfernt (toter Code seit P1, Inline-Step-Editor durch Delegation ersetzt).
 
 // v9.3.0-prep Paket P1: Statt eigenem simplen Step-Editor jetzt eine Read-Only-Summary plus
 // Button, der den reichen #modalEditor auf _commProgEditSteps oeffnet (Delegation, Option 1).
@@ -7914,6 +7929,7 @@ function progCard(p, kind){
       <button class="btn sm ghost" data-act="share2" data-tip="Teilen: Link / JSON / QR-Code (alles lokal)" aria-label="Programm teilen">📤</button>
       <button class="btn sm ghost" data-act="share" data-tip="QR-Code (klassisch, kurzes Hash-Format)" aria-label="Programm per QR teilen">🔗</button>
       <button class="btn sm ghost" data-act="ha" data-tip="Als Home-Assistant-Script-YAML herunterladen (Phase 2)" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
+      ${(kind==='saved' && _publishAvailable()) ? `<button class="btn sm ghost" data-act="publish" data-tip="Dieses Programm in die Community veröffentlichen" aria-label="In Community veröffentlichen">🌐</button>` : ''}
       ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" data-tip="Programm dauerhaft löschen" aria-label="Programm löschen">🗑</button>` : ''}
     </div>
   `;
@@ -7926,6 +7942,7 @@ function progCard(p, kind){
       else if(a==='share') openQRShare(p);
       else if(a==='share2') shareProgramV2(p.id);
       else if(a==='ha') downloadHaYaml(p);
+      else if(a==='publish') _publishOpen(p);   // v9.3.0 P3
       else if(a==='del') deleteProgram(p.id);
     });
   });
@@ -7946,14 +7963,68 @@ function deleteProgram(id){
   });
 }
 
-function duplicatePreset(p){
-  const id='wf-'+Date.now();
-  const copy={id, name:p.name+' (Kopie)', desc:p.desc, steps:JSON.parse(JSON.stringify(p.steps)), isPreset:false};
-  State.programs.unshift(copy);
-  LS.set('vol_programs', State.programs);
-  renderPrograms();
-  toast('Kopiert');
-  openEditor(id);
+// v9.3.0 Paket P3: duplicatePreset entfernt (toter Code, nirgends aufgerufen).
+
+/* ═══ v9.3.0 Paket P3: Eigenes Programm in die Community veroeffentlichen ═══
+   Bestaetigungs-Dialog mit Vorschau, dann communityClient.programCreate.
+   Nur fuer eigene (nicht-PRESET) Programme + eingeloggte Community-Nutzer.
+   Backend unveraendert. */
+let _publishProg = null;
+function _publishAvailable(){
+  return !!(PREFS.communityEnabled && typeof communityClient === 'object' && communityClient
+            && typeof communityClient.isLoggedIn === 'function' && communityClient.isLoggedIn());
+}
+function _publishOpen(prog){
+  if(!prog || prog.isPreset) return;
+  if(!_publishAvailable()){ try{ toast('Bitte zuerst in der Community anmelden'); }catch(_){} return; }
+  _publishProg = prog;
+  const steps = Array.isArray(prog.steps) ? prog.steps : [];
+  let dur=''; try{ dur = fmtDuration(estimateDuration(expandLoops(steps))); }catch(_){}
+  const sess = (communityClient.currentSession && communityClient.currentSession()) || null;
+  const withPseu = !PREFS.communityLastAnonymous;
+  const pseuLabel = withPseu ? ('mit Pseudonym ' + ((sess && sess.pseudonym) || '')) : 'anonym';
+  const body = document.getElementById('pubBody');
+  if(body) body.innerHTML = `
+    <p class="wiz-text">Du veröffentlichst dieses Programm in die Community:</p>
+    <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin:8px 0">
+      <b>${escapeHtml(prog.name || '(ohne Name)')}</b>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${steps.length} Schritt${steps.length===1?'':'e'}${dur?', ~'+escapeHtml(dur):''}</div>
+    </div>
+    <ul style="font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0 18px">
+      <li>Sichtbar für: alle Community-Nutzer</li>
+      <li>Bearbeiten kann: nur du</li>
+      <li>Verknüpfte Sorten: keine (lokale Programme haben keine)</li>
+      <li>Veröffentlicht als: ${escapeHtml(pseuLabel)}</li>
+    </ul>`;
+  const st = document.getElementById('pubStatus'); if(st) st.textContent='';
+  const cb = document.getElementById('pubConfirm'); if(cb) cb.disabled = false;
+  document.getElementById('modalPublishProgram')?.classList.add('open');
+}
+function _publishClose(){ document.getElementById('modalPublishProgram')?.classList.remove('open'); _publishProg = null; }
+async function _publishConfirm(){
+  const prog = _publishProg; if(!prog) return;
+  const btn = document.getElementById('pubConfirm');
+  const status = document.getElementById('pubStatus');
+  const steps = (Array.isArray(prog.steps) ? prog.steps : []).filter(s => s && s.action);
+  const data = {
+    name: (prog.name || '').trim(),
+    description: (prog.desc || '').trim() || null,
+    steps,
+    total_duration_sec: steps.reduce((s, st) => s + (parseInt(st.seconds)||0), 0) || null,
+  };
+  const showPseu = !PREFS.communityLastAnonymous;
+  if(btn) btn.disabled = true; if(status) status.textContent='';
+  try{
+    await communityClient.programCreate(showPseu, data);
+    // Picker- + Programm-Listen-Cache invalidieren, damit das neue Programm sofort auftaucht
+    _tplAll = [];
+    try{ _commProgCache = []; _commProgOffset = 0; _commProgHasMore = false; }catch(_){}
+    try{ toast('Programm in Community veröffentlicht'); }catch(_){}
+    _publishClose();
+  }catch(e){
+    if(status) status.textContent = 'Veröffentlichen fehlgeschlagen: ' + ((e && e.message) || 'Fehler');
+    if(btn) btn.disabled = false;   // Dialog bleibt offen, neuer Versuch moeglich
+  }
 }
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -8834,6 +8905,9 @@ function wire(){
   document.querySelectorAll('#modalTemplatePicker [data-tpl-filter]').forEach(b=>b.addEventListener('click', ()=>{ _tplFilter=b.dataset.tplFilter; _tplRender(); }));
   document.getElementById('tplCancel')?.addEventListener('click', _tplClose);
   document.getElementById('tplLoadBtn')?.addEventListener('click', _tplApply);
+  // v9.3.0 Paket P3: Veroeffentlichen-Dialog
+  document.getElementById('pubCancel')?.addEventListener('click', _publishClose);
+  document.getElementById('pubConfirm')?.addEventListener('click', _publishConfirm);
   $('#btnAddStepCancel').addEventListener('click', closeAddStep);
   $$('#modalAddStep .act').forEach(a=>a.addEventListener('click',()=>addStepWithAction(a.dataset.action)));
   $('#btnStepCancel').addEventListener('click', closeStepEdit);
@@ -11177,7 +11251,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.2.1';
+const SW_VERSION_LABEL='v9.3.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17316,7 +17390,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.2.1 bereit.','ok');
+  log('Terp Sessions v9.3.0 bereit.','ok');
 
   setupPwaUpdate();
 
