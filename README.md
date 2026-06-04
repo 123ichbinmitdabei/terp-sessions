@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.5.0)
+# Terp Sessions — Vape Controller (v9.6.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.6.0 — iOS/Bluefy/Siri-Bridge (Paket C)
+
+Umsetzung der Quick Wins aus `docs/C-AUDIT-2026-06-04.md`. MINOR, iOS- und Siri-Erweiterung. Kein Backend-Eingriff, cscCrypto unberührt. Andres sechs Design-Entscheidungen umgesetzt.
+
+- **C1, Bluefy-Live-Regions:** Eine assertive `aria-live`-Region `#ttsLive` direkt nach `<body>`. `ttsSay` spiegelt jede Bestätigung dorthin (Clear plus verzögertes Setzen, damit der Screen-Reader die Änderung sicher ankündigt). Damit hören VoiceOver-Nutzer auch in Bluefy eine Bestätigung, wo `SpeechSynthesis` systembedingt blockiert ist. Im Screen-Reader-Modus nur die Live-Region, keine zusätzliche App-TTS (vermeidet Doppel-Vorlesen). Auf normalen Browsern läuft die Sprachausgabe wie bisher, plus stiller Live-Region-Spiegel.
+- **C2, Haptik-Label ehrlich:** Neue Erkennung `_vibrationUsable()` (iOS = nie nutzbar, da Apple `navigator.vibrate` in WebKit nicht implementiert). `_applyHapticLabel()` ergänzt auf iPhone den Hinweis „(auf iPhone systembedingt nicht verfügbar)". Der Schalter bleibt funktional für Android und Desktop, das Versprechen wird nur ehrlich gemacht statt versteckt.
+- **C3, URL-Commands erweitert:** Drei neue Befehle ohne BLE: `abort` (nutzt die `abortProgram`-Logik aus B2.3), `help` (öffnet `#modalVoiceHelp`), `open_strain` (`?value=<Name>`, ruft die Sorten-Suche). Dazu deutsche Siri-Aliase `abbrechen`, `hilfe`, `sorte`. Alle parallel zu den bestehenden 15 Commands.
+- **C4, Shortcuts-Modal erweitert:** Prominenter BLE-Hinweis am Anfang (nicht in einem Akkordeon versteckt) plus ein iPhone-Bluefy-Tipp, und die neuen Befehle in der kopierbaren URL-Liste. **Bugfix nebenbei:** `openShortcutsModal` öffnete fälschlich `#modalKbdShortcuts` (Tastatur-Hilfe), während es die Liste in `#modalShortcuts` (Siri/URL) füllte. Die Siri-Modal wurde dadurch nie angezeigt. Jetzt öffnet und schließt der Button korrekt `#modalShortcuts`.
+- **C5, Siri-Anleitung:** Neue `docs/SIRI-SHORTCUTS-ANLEITUNG.md` mit Schritt-für-Schritt-Aufbau, vollständiger Befehlsliste, fertigen URL-Strings zum Nachbauen und einem ehrlichen Abschnitt zu den Grenzen (BLE-Wiederverbindung, kein Siri-Rückkanal, keine Vibration). Keine iCloud-Shortcut-Dateien, das geht nicht aus dem Code.
+
+**Bewusst NICHT in Paket C** (Plattformgrenzen, kein Bug): TTS in Bluefy „reparieren", echte iOS-Haptik, Siri-Rückkanal oder Hintergrund-BLE. Run-Engine-Refactor (Pause/Skip) bleibt ein eigenes Paket. **Unberührt:** cscCrypto, Backend, Run-Engine, Wake-Word. **Tests:** `v96live.mjs` (11) + `v96haptic.mjs` (8) + `v96urlcmds.mjs` (14) + `v96shortcuts.mjs` (11); volle Regression grün.
 
 ## v9.5.0 — Voice Big Tickets (Paket B2)
 

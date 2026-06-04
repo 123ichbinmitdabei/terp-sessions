@@ -2269,6 +2269,10 @@ button[data-sch-day].active{
 </head>
 <body>
 
+<!-- v9.6.0 Paket C1: Live-Region fuer Sprach-Bestaetigungen. VoiceOver/TalkBack liest Aenderungen hier vor.
+     Greift besonders in Bluefy, wo SpeechSynthesis (ttsSay) systembedingt blockiert ist. -->
+<div id="ttsLive" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+
 <!-- v9.3.1 Paket A W1: Seitenueberschrift fuer Screen-Reader-Rotor (visuell versteckt) -->
 <h1 class="sr-only">Terp Sessions</h1>
 
@@ -4415,6 +4419,16 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <h2>🎙 Sprachsteuerung</h2>
     <p class="wiz-text"><small>Sessions kann über URL-Befehle gesteuert werden. Lege in der Kurzbefehle-App (iOS) oder Google-Routinen die folgenden URLs an mit einer Sprach-Phrase deiner Wahl.</small></p>
 
+    <!-- v9.6.0 C4: prominenter BLE-Hinweis, bewusst NICHT in einem Akkordeon versteckt -->
+    <div class="schedule-safety" style="margin-top:12px">
+      <span style="font-size:14px" aria-hidden="true">⚠️</span>
+      <div><b>Wichtig:</b> Siri-Kurzbefehle öffnen die App und senden den Befehl. Damit Geräte-Befehle (Heizen, Pumpe, Ballon) funktionieren, muss vorher mindestens einmal manuell mit dem Gerät verbunden worden sein. Befehle ohne Gerät (Notaus, Status, Hilfe, Vorheizen planen) funktionieren auch ohne Verbindung.</div>
+    </div>
+    <div class="schedule-safety" style="margin-top:8px">
+      <span style="font-size:14px" aria-hidden="true">🍎</span>
+      <div><b>Tipp für iPhone:</b> Füge die App im Bluefy-Browser als Lesezeichen oder zum Homescreen hinzu. Siri kann dann per Kurzbefehl die Bluefy-URL öffnen, sodass Bluetooth verfügbar ist.</div>
+    </div>
+
     <details style="margin-top:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0" open>
       <summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px"><span aria-hidden="true">🍎</span> Einrichtung iOS (Siri)</summary>
       <div style="padding:0 14px 14px;font-size:12px;color:var(--text);line-height:1.6">
@@ -6066,6 +6080,28 @@ function haptic(pattern=20){
   if(navigator.vibrate){
     try{ navigator.vibrate(pattern); }catch{}
   }
+}
+// v9.6.0 C2: ehrlich erkennen, ob die Vibration-API auf diesem Geraet ueberhaupt wirkt.
+// Apple implementiert navigator.vibrate weder in Safari noch in Bluefy/WKWebView -> iOS = nie nutzbar.
+function _vibrationUsable(){
+  try{
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isIOS) return false;
+    // v9.6.0 C2: gestenfreie Feature-Erkennung. KEIN navigator.vibrate(0)-Probe-Aufruf,
+    // der wuerde ohne User-Geste eine Chrome-Konsolenwarnung ausloesen (Regressions-Bruch).
+    return ('vibrate' in navigator) && typeof navigator.vibrate === 'function';
+  }catch(_){ return false; }
+}
+// v9.6.0 C2: Schalter bleibt funktional (Android etc.), Label sagt auf iPhone ehrlich, dass es nichts tut.
+function _applyHapticLabel(){
+  try{
+    const info = document.querySelector('#togHaptic')?.closest('.toggle-row')?.querySelector('.info small');
+    if(!info) return;
+    info.textContent = _vibrationUsable()
+      ? 'Vibrieren bei Aktionen'
+      : 'Vibrieren bei Aktionen (auf iPhone systembedingt nicht verfügbar)';
+  }catch(_){}
 }
 function flashReach(temp){
   const f = $('#reachFlash');
@@ -9086,6 +9122,7 @@ function wire(){
     savePrefs();
     if(v) haptic(20);
   });
+  _applyHapticLabel();  // v9.6.0 C2: Label an Geraete-Realitaet anpassen
   wireToggle('#togVoice', ()=>PREFS.voice, v=>{
     PREFS.voice = v;
     savePrefs();
@@ -9622,7 +9659,7 @@ function wire(){
     $('#modalSettings').classList.remove('open');
     setTimeout(openShortcutsModal, 250);
   });
-  $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalKbdShortcuts').classList.remove('open'));
+  $('#btnShortcutsClose')?.addEventListener('click', ()=>$('#modalShortcuts')?.classList.remove('open'));  // v9.6.0 C4: schliesst die Siri/URL-Modal (gehoert zu #modalShortcuts)
 
   // ═════ v4.9.8 wiring: Session-Scheduler ═════
   $('#btnScheduleClose')?.addEventListener('click', ()=>$('#modalSchedule').classList.remove('open'));
@@ -11316,7 +11353,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.5.0';
+const SW_VERSION_LABEL='v9.6.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17048,12 +17085,41 @@ const URL_COMMANDS = {
     ttsSay(`Vorheizen in ${min} Minuten auf ${temp} Grad`);
   }},
   'schedule':      {label:'Schedule öffnen',   needsBle:false, fn:async()=>{ openScheduleModal(); ttsSay('Session-Planer'); }},
+  // v9.6.0 C3: zusaetzliche Siri-Befehle (ohne BLE). abort nutzt die abortProgram-Logik aus B2.3.
+  'abort':         {label:'Programm abbrechen', needsBle:false, fn:async()=>{
+    try{ if(typeof executeVoiceCommand === 'function'){ await executeVoiceCommand({action:'abortProgram'}); } }catch(_){}
+  }},
+  'help':          {label:'Hilfe',             needsBle:false, fn:async()=>{
+    try{ if(typeof _voiceShowHelp === 'function'){ _voiceShowHelp(false); } else { document.getElementById('modalVoiceHelp')?.classList.add('open'); } }catch(_){}
+    ttsSay('Sprachbefehle');
+  }},
+  'open_strain':   {label:'Sorte öffnen',      needsBle:false, fn:async(params)=>{
+    const n = String((params && (params.value || params.name)) || '').trim();
+    if(!n){ ttsSay('Sortenname fehlt'); return; }
+    try{ if(typeof _voiceOpenStrainCmd === 'function') _voiceOpenStrainCmd(n); }catch(_){}
+  }},
 };
 
+// v9.6.0 C1: Bestaetigung in die assertive Live-Region schreiben, damit ein Screen-Reader sie vorliest.
+// Clear + verzoegertes Setzen erzwingt eine DOM-Aenderung, die VoiceOver/TalkBack sicher ankuendigt.
+let _ttsLiveTimer = null;
+function _ttsLiveAnnounce(text){
+  try{
+    const el = document.getElementById('ttsLive');
+    if(!el) return;
+    el.textContent = '';
+    if(_ttsLiveTimer){ clearTimeout(_ttsLiveTimer); }
+    _ttsLiveTimer = setTimeout(()=>{ try{ el.textContent = text; }catch(_){} }, 60);
+  }catch(_){}
+}
 function ttsSay(text){
   if(text) _lastTtsText = String(text);   // v9.4.0 B1: fuer "wiederhole" merken (auch wenn Ausgabe blockiert)
+  // v9.6.0 C1: immer in die Live-Region spiegeln, damit VoiceOver-Nutzer auch in Bluefy eine Bestaetigung hoeren
+  if(text) _ttsLiveAnnounce(String(text));
+  // v9.6.0 C1: im Screen-Reader-Modus KEINE App-TTS (VoiceOver kuendigt selbst an), nur die Live-Region oben
+  try{ if(typeof PREFS === 'object' && PREFS && PREFS.screenReaderMode === true) return; }catch(_){}
   if(!('speechSynthesis' in window)) return;
-  // v9.0.0 P3.3: Bluefy hat inkonsistent funktionierende SpeechSynthesis — explizit blocken
+  // v9.0.0 P3.3: Bluefy hat inkonsistent funktionierende SpeechSynthesis — explizit blocken (Live-Region oben greift stattdessen)
   try{
     const ua = navigator.userAgent || '';
     if(ua.indexOf('Bluefy') !== -1) return;
@@ -17085,6 +17151,10 @@ const _URL_COMMAND_ALIASES = {
   'heat_off':  { cmd:'heat-off',  valueParam:null },
   'stop_all':  { cmd:'stop',      valueParam:null },
   'status':    { cmd:'status',    valueParam:null },
+  // v9.6.0 C3: deutsche Siri-Phrasen auf die neuen Befehle mappen
+  'abbrechen': { cmd:'abort',       valueParam:null },
+  'hilfe':     { cmd:'help',        valueParam:null },
+  'sorte':     { cmd:'open_strain', valueParam:'value' },
 };
 async function handleUrlCommand(){
   const params = new URLSearchParams(location.search);
@@ -17164,11 +17234,17 @@ function generateShortcutExamples(){
     {label:'Notaus',              url:base+'?cmd=stop'},
     {label:'Status vorlesen',     url:base+'?cmd=status'},
     {label:'Pre-Heat 10 Min/185°',url:base+'?cmd=preheat&temp=185&min=10'},
+    // v9.6.0 C3/C4: neue Befehle ohne BLE
+    {label:'Programm abbrechen',  url:base+'?command=abort'},
+    {label:'Sprachbefehl-Hilfe',  url:base+'?command=help'},
+    {label:'Sorte öffnen (Blue Dream)', url:base+'?command=open_strain&value=Blue Dream'},
   ];
 }
 function openShortcutsModal(){
   renderShortcutExamples();
-  $('#modalKbdShortcuts').classList.add('open');
+  // v9.6.0 C4 Bugfix: zuvor wurde faelschlich #modalKbdShortcuts (Tastatur-Hilfe) geoeffnet,
+  // waehrend die Liste in #modalShortcuts gefuellt wird. Jetzt korrekt die Siri/URL-Modal oeffnen.
+  $('#modalShortcuts')?.classList.add('open');
 }
 function renderShortcutExamples(){
   const root = $('#shortcutsList');
@@ -17647,7 +17723,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.5.0 bereit.','ok');
+  log('Terp Sessions v9.6.0 bereit.','ok');
 
   setupPwaUpdate();
 
