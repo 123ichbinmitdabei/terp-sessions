@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.3.1)
+# Terp Sessions — Vape Controller (v9.4.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,19 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.4.0 — Voice Quick Wins für Accessibility (Paket B1)
+
+Erste Ausbaustufe der Sprachsteuerung, gezielt auf die Lücken aus `docs/B-AUDIT-2026-06-04.md`, die blinde Tester (iPhone + VoiceOver) am stärksten entlasten. MINOR-Bump (neues Feature-Set). Deutsch only für neue Befehle, kein neuer Englisch-Ausbau. Backend und cscCrypto unberührt.
+
+- **Hilfe-Befehl:** „Hilfe", „was kann ich sagen", „Befehle" lesen die verfügbaren Sprachbefehle vor (gruppiert nach Navigation, Gerät, Programm, Sonstiges) und öffnen ein neues `#modalVoiceHelp`. Bei aktivem Screen-Reader-Modus nur das Modal (VoiceOver liest es selbst), sonst zusätzlich vorgelesen. Dazu ein Button „📋 Voice-Befehle anzeigen" in den Einstellungen.
+- **Navigations-Befehle (ohne BLE-Verbindung):** „öffne Steuerung/Programme/Sorten/Setup", „öffne Community" (öffnet die Sorten-Ansicht), „öffne Sessions", sowie „schließe" und „zurück" für das oberste offene Modal. Mit kurzer Bestätigung.
+- **Wiederhole:** „wiederhole", „nochmal", „was hast du gesagt" geben die letzte Ansage erneut aus, auch im Screen-Reader-Modus (explizit angefordert).
+- **Text-Befehl-FAB und iOS-Diktat:** klareres `aria-label` und Platzhalter, plus ein einmaliger Tipp in iOS-Bluefy, dass die Mikrofon-Taste der Tastatur zum Diktieren funktioniert. Das ist der realistische Voice-Pfad in Bluefy, wo die Web-Speech-API fehlt.
+- **TTS-Ausführlichkeit:** neuer Schalter „Knappe Ansagen" (Einstellungen, Sprachsteuerung). `PREFS.ttsVerbosity` = `verbose` (Default) oder `compact`. `ttsEvent` wählt per `_ttsPickText` die passende Variante, Beispiel-Event „Ziel-Temperatur erreicht" kurz als „185 Grad".
+- **Bugfix (aus dem Audit):** der `runProgram`-Regex war ein Catch-all, „starte X" konnte fast alles als Programm-Start fehl-interpretieren. Jetzt ist das Schlüsselwort „Programm" Pflicht („starte Programm <Name>"), das reduziert Fehl-Trigger deutlich. Nebenbei ein HTML-Bug im Text-Input-Platzhalter gefixt (gerades Anführungszeichen im Attribut).
+
+**Bewusst nicht in B1** (kommt in B2 oder Paket C): Programm-Lauf-Steuerung per Stimme, Aroma/Sorten per Stimme, TTS-Tempo/Lautstärke, Siri-Shortcuts-Brücke. **Tests:** `v940voice.mjs` (30), volle Regression grün.
 
 ## v9.3.1 — A11Y-Polish W1+W2+W3 (Paket A)
 

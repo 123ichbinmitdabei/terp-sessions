@@ -3293,13 +3293,27 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 </div>
 
 <!-- v8.9.0 Modul 4: Text-Befehl-Modal als Voice-Alternative -->
+<!-- v9.4.0 Paket B1: Voice-Befehls-Liste -->
+<div class="modal" id="modalVoiceHelp" role="dialog" aria-modal="true" aria-labelledby="voiceHelpTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="voiceHelpTitle">📋 Sprachbefehle</h2>
+    <p class="wiz-text" style="margin-bottom:10px">Sag „Hilfe", um diese Liste vorgelesen zu bekommen. Diese Befehle versteht die App:</p>
+    <div id="voiceHelpBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost block" id="btnVoiceHelpClose" type="button">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modalTextCommand" role="dialog" aria-modal="true" aria-labelledby="txtCmdTitle">
   <div class="back"></div>
   <div class="sheet">
     <div class="grab"></div>
     <h2 id="txtCmdTitle">⌨️ Text-Befehl</h2>
     <p class="wiz-text"><small>Tippe einen Befehl ein. Funktioniert wie Sprache, nur via Tastatur. Beispiele unten.</small></p>
-    <input class="input" id="txtCmdInput" type="text" placeholder="z.B. Heize auf 185 Grad" autocomplete="off" autocapitalize="sentences">
+    <input class="input" id="txtCmdInput" type="text" placeholder="z.B. öffne Sorten, oder die Mikrofon-Taste der Tastatur" autocomplete="off" autocapitalize="sentences">
     <div id="txtCmdStatus" role="status" aria-live="polite" style="min-height:18px;font-size:12px;color:var(--muted);margin-top:6px"></div>
     <div style="margin-top:10px">
       <small style="color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Tipps</small>
@@ -3890,6 +3904,13 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
           <button class="btn sm" id="btnTtsVoiceTest" type="button" style="flex:1" aria-label="Stimme testen">▶ Test</button>
         </div>
       </div>
+      <!-- v9.4.0 Paket B1: TTS-Ausfuehrlichkeit -->
+      <div class="toggle-row" data-sr-affected="tts">
+        <div class="info"><b>Knappe Ansagen</b><small>Aus = ausführliche Sätze, An = kurz und knackig (z.B. „185 Grad")</small></div>
+        <button class="toggle" id="togTtsCompact" role="switch" aria-checked="false" aria-label="Knappe Ansagen"></button>
+      </div>
+      <!-- v9.4.0 Paket B1: Voice-Befehls-Liste -->
+      <button class="btn sm ghost block" id="btnVoiceHelp" type="button" style="margin:6px 0 0" aria-label="Liste der Sprachbefehle anzeigen">📋 Voice-Befehle anzeigen</button>
       <details id="ttsEventsSub" class="sub-toggles-details">
         <summary>Welche Events vorlesen?</summary>
         <div class="toggle-row"><div class="info"><b>Ziel-Temperatur erreicht</b><small>einmalig pro Heiz-Zyklus, ±2 °C Hysterese</small></div><button class="toggle" data-tts="tempReached" role="switch"></button></div>
@@ -5391,6 +5412,8 @@ const PREFS_DEFAULTS = {
   voiceReadout:false,     // automatischer TTS jede 30s
   // v8.4.0 Modul 2/3: Voice-Erweiterung
   voiceTts:true,          // Sprachausgabe für Status-Antworten + Wake-Dialog
+  ttsVerbosity:'verbose', // v9.4.0 B1: 'verbose' (volle Saetze) | 'compact' (knapp)
+  dictationHintShown:false,// v9.4.0 B1: iOS-Diktat-Tipp beim Text-FAB einmalig gezeigt
   wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
   // v8.7.1: Screen-Reader-Modus (Master über allen TTS/Voice-Optionen).
   // Wenn true: ttsEvent() macht nichts, Wake-Word ist gesperrt, Voice-Tts-Master
@@ -9055,6 +9078,12 @@ function wire(){
     PREFS.voiceTts = v; savePrefs();
     if(typeof syncTtsEventsUi==='function') syncTtsEventsUi();
   });
+  // v9.4.0 B1: TTS-Ausfuehrlichkeit (Knappe Ansagen) + Voice-Befehls-Liste
+  wireToggle('#togTtsCompact', ()=>PREFS.ttsVerbosity === 'compact', v=>{
+    PREFS.ttsVerbosity = v ? 'compact' : 'verbose'; savePrefs();
+  });
+  document.getElementById('btnVoiceHelp')?.addEventListener('click', ()=>_voiceShowHelp(false));
+  document.getElementById('btnVoiceHelpClose')?.addEventListener('click', ()=>document.getElementById('modalVoiceHelp')?.classList.remove('open'));
   // v8.5.0 Modul 7: Tracking-Settings (jetzt im Wirebereich nach wireToggle-Definition)
   wireToggle('#togTrackingEnabled', ()=>PREFS.trackingEnabled !== false, v=>{
     PREFS.trackingEnabled = v; savePrefs();
@@ -11254,7 +11283,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.3.1';
+const SW_VERSION_LABEL='v9.4.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12173,7 +12202,7 @@ function initVoice(){
       // FAB als Text-Befehl-Button (Tastatur-Icon)
       fab.style.display = 'flex';
       fab.innerHTML = '⌨';
-      fab.setAttribute('aria-label', 'Text-Befehl eingeben (Sprache in diesem Browser nicht verfügbar)');
+      fab.setAttribute('aria-label', 'Text- oder Diktat-Befehl eingeben (die iOS-Tastatur unterstützt die Mikrofon-Taste)');
       fab.dataset.mode = 'text';
     } else {
       fab.style.display = 'none';
@@ -12299,11 +12328,75 @@ const _GER_TEN = '(?:zwanzig|dreissig|vierzig|fuenfzig|sechzig|siebzig|achtzig|n
 const _GER_TEEN = '(?:zehn|elf|zwoelf|dreizehn|vierzehn|fuenfzehn|sechzehn|siebzehn|achtzehn|neunzehn)';
 const _GER_NUM_RE = new RegExp(`(?:${_GER_HUNDREDS}(?:${_GER_UNIT}und${_GER_TEN}|${_GER_TEEN}|${_GER_TEN}|${_GER_UNIT})?|${_GER_UNIT}und${_GER_TEN}|${_GER_TEEN}|${_GER_TEN}|${_GER_UNIT})`);
 
+/* ═══ v9.4.0 Paket B1: Voice Quick Wins (Hilfe / Navigation / Wiederhole / Verbosity) ═══ */
+let _lastTtsText = '';
+function _ttsPickText(verbose, compact){ return (PREFS.ttsVerbosity === 'compact' && compact) ? compact : verbose; }
+function _voiceSpeakConfirm(text){
+  // Bestaetigung sprechen, aber NICHT wenn screenReaderMode aktiv (VoiceOver kuendigt die Ansicht selbst an).
+  if(PREFS.screenReaderMode !== true){ try{ ttsSay(text); }catch(_){} }
+}
+const VOICE_HELP = [
+  ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
+  ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
+  ['Programm', '„starte Programm <Name>"'],
+  ['Sonstiges', '„wiederhole", „Hilfe"'],
+];
+function _voiceHelpText(){ return VOICE_HELP.map(g=>g[0]+': '+g[1]).join('. '); }
+function _voiceShowHelp(viaVoice){
+  const body = document.getElementById('voiceHelpBody');
+  if(body) body.innerHTML = VOICE_HELP.map(g=>`<div style="margin-bottom:10px"><b>${escapeHtml(g[0])}</b><div style="font-size:13px;color:var(--muted);margin-top:2px">${escapeHtml(g[1])}</div></div>`).join('');
+  document.getElementById('modalVoiceHelp')?.classList.add('open');
+  // Per Voice-Befehl und ohne Screen-Reader: zusaetzlich vorlesen (bei screenReaderMode liest VoiceOver das Modal selbst).
+  if(viaVoice && PREFS.screenReaderMode !== true){ try{ ttsSay(_voiceHelpText()); }catch(_){} }
+}
+function _voiceRepeatLast(){
+  if(_lastTtsText){ voiceFeedback('🔊 '+_lastTtsText, 4000); try{ ttsSay(_lastTtsText); }catch(_){} }  // explizit angefordert -> auch bei screenReaderMode
+  else voiceFeedback('Nichts zu wiederholen');
+}
+function _voiceNavTo(dest){
+  const names = { ctl:'Steuerung', prog:'Programme', setup:'Setup', sessions:'Setup', aroma:'Sorten' };
+  try{
+    if(dest==='aroma'){ if(typeof openAroma==='function') openAroma(); }
+    else if(typeof switchTab==='function'){ switchTab(dest==='sessions'?'setup':dest); }
+  }catch(_){}
+  const label = names[dest] || dest;
+  voiceFeedback('✓ '+label+' geöffnet');
+  _voiceSpeakConfirm(label+' geöffnet');
+}
+function _voiceNavClose(){
+  const open = [...document.querySelectorAll('.modal.open')];
+  if(open.length){
+    open.sort((a,b)=>(parseInt(getComputedStyle(b).zIndex)||0)-(parseInt(getComputedStyle(a).zIndex)||0));
+    open[0].classList.remove('open');
+    voiceFeedback('✓ Geschlossen'); _voiceSpeakConfirm('Geschlossen');
+  } else {
+    voiceFeedback('Nichts zu schließen');
+  }
+}
+
 function parseVoiceCommand(txt){
   const raw = String(txt||'');
   const tOrig = raw.toLowerCase().trim();
   if(!tOrig) return { action:null, raw };
   const t = _normalizeGerman(tOrig);
+
+  // v9.4.0 B1: Hilfe (vor allem anderen)
+  if(/(^|\s)(hilfe|welche\s*befehle|was\s*kann\s*ich\s*sagen|befehle|kommandos)(\s|$)/.test(t)) return { action:'help', raw };
+  // v9.4.0 B1: Wiederhole letzte Ansage
+  if(/(wiederhole|nochmal|noch\s*mal|was\s*hast\s*du\s*gesagt|letzter\s*satz)/.test(t)) return { action:'repeat', raw };
+  // v9.4.0 B1: Navigation, schliessen/zurueck (nicht wenn es um ein Programm/eine Sorte geht)
+  if(/(schliesse|schliess|zurueck|geh\s*zurueck|close)/.test(t) && !/(programm|sorte)/.test(t)) return { action:'navClose', raw };
+  // v9.4.0 B1: Navigation zu Tab/Ansicht (funktioniert ohne BLE)
+  const nav = t.match(/(?:oeffne|zeige?|geh\s*zu|wechsle?\s*(?:zu|auf)|tab)\s+(.+)/);
+  if(nav){
+    const d = nav[1];
+    if(/steuerung|haupt|control/.test(d))            return { action:'navTo', value:'ctl', raw };
+    if(/programme?/.test(d))                          return { action:'navTo', value:'prog', raw };
+    if(/setup|einstellung|settings/.test(d))          return { action:'navTo', value:'setup', raw };
+    if(/sorte|aroma|strain/.test(d))                  return { action:'navTo', value:'aroma', raw };
+    if(/community|gemeinschaft/.test(d))              return { action:'navTo', value:'aroma', raw };
+    if(/session|sitzung|protokoll/.test(d))           return { action:'navTo', value:'sessions', raw };
+  }
 
   // Status
   if(/(\bstatus\b|wie\s*warm|wie\s*heiss|aktuelle\s*temp|how\s*(hot|warm)|temp(eratur)?\s*\?|whats?\s+the\s+temp)/.test(t)){
@@ -12372,13 +12465,12 @@ function parseVoiceCommand(txt){
     if(v !== null) return { action:'setTemp', value: v, raw };
   }
 
-  // Run program: "starte X" (nach Heater-Match, damit "starte heizen" nicht hier landet)
-  const pr = t.match(/(?:starte?|spiele?|run|start|play)\s+(?:das\s+|the\s+)?(?:programm\s+|program\s+)?(.+)/);
+  // Run program: v9.4.0 B1 strikter — das Schluesselwort "programm" ist jetzt Pflicht,
+  // damit nicht jedes beliebige "starte X" als Programm-Start fehl-interpretiert wird.
+  const pr = t.match(/(?:starte?|spiele?|run|play|start)\s+(?:das\s+|the\s+)?programm?\s+([\w\s-]+)/);
   if(pr){
     const name = pr[1].trim();
-    if(name && !/^(heizen|pumpe|aufheizen|heating|pump)/.test(name)){
-      return { action:'runProgram', value: name, raw };
-    }
+    if(name) return { action:'runProgram', value: name, raw };
   }
 
   return { action:null, raw };
@@ -12405,6 +12497,11 @@ async function executeVoiceCommand(cmd){
   const ok = (msg)=>voiceFeedback('✓ '+msg);
   try{
     switch(cmd.action){
+      // v9.4.0 B1: Hilfe / Wiederhole / Navigation (funktionieren ohne BLE)
+      case 'help': _voiceShowHelp(true); return true;
+      case 'repeat': _voiceRepeatLast(); return true;
+      case 'navClose': _voiceNavClose(); return true;
+      case 'navTo': _voiceNavTo(cmd.value); return true;
       case 'stopAll':
         if(State.running) State.running.stopFlag = true;
         if(State.heater) await cmdHeaterOff();
@@ -14491,7 +14588,7 @@ function installKeyboardShortcuts(){
 /* ═══ v8.5.0 MODUL 3: TTS-Events (konfigurierbar pro Event) ════════
    Master-Schalter: PREFS.voiceTts. Per-Event: PREFS.ttsEvents[name].
    Aufrufer (cmdHeaterOn, runProgram-Steps, etc.) rufen ttsEvent('name', text). */
-function ttsEvent(eventName, text){
+function ttsEvent(eventName, text, compactText){
   try{
     if(!text) return;
     if(PREFS.screenReaderMode === true) return;  // v8.7.1: Screen-Reader-Modus blockt ALLE app-eigenen TTS-Events (verhindert Konflikt mit VoiceOver/TalkBack/NVDA/JAWS)
@@ -14499,9 +14596,11 @@ function ttsEvent(eventName, text){
     const ev = PREFS.ttsEvents || {};
     if(!(eventName in ev)) return;        // unbekannter Event-Name → ignorieren
     if(!ev[eventName]) return;            // Event deaktiviert
+    const out = _ttsPickText(text, compactText);   // v9.4.0 B1: Verbosity (verbose | compact)
+    _lastTtsText = out;                            // fuer "wiederhole"
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(String(text));
+    const u = new SpeechSynthesisUtterance(String(out));
     u.lang='de-DE'; u.rate=1.05;
     speechSynthesis.speak(u);
   }catch{}
@@ -14518,7 +14617,7 @@ function ttsCheckTempReached(){
     const dT = Math.abs((State.cur||0) - (State.target||0));
     if(dT <= 2){
       _ttsTempReachedAnnounced = true;
-      ttsEvent('tempReached', `Ziel ${Math.round(State.target)} Grad erreicht`);
+      ttsEvent('tempReached', `Ziel ${Math.round(State.target)} Grad erreicht`, `${Math.round(State.target)} Grad`);
     }
   }catch{}
 }
@@ -16173,6 +16272,7 @@ function toggleBlindMode(){
   syncToggle('togVoiceReadout', PREFS.voiceReadout);
   syncToggle('togTooltipsVoice', PREFS.tooltipsVoice);
   syncToggle('togVoiceTts', PREFS.voiceTts !== false);
+  syncToggle('togTtsCompact', PREFS.ttsVerbosity === 'compact');   // v9.4.0 B1
   syncToggle('togWakeWord', !!PREFS.wakeWord);
   syncToggle('togScreenReader', !!PREFS.screenReaderMode);   // v8.7.1
   if(typeof _syncSrOverride === 'function') _syncSrOverride();
@@ -16798,6 +16898,7 @@ const URL_COMMANDS = {
 };
 
 function ttsSay(text){
+  if(text) _lastTtsText = String(text);   // v9.4.0 B1: fuer "wiederhole" merken (auch wenn Ausgabe blockiert)
   if(!('speechSynthesis' in window)) return;
   // v9.0.0 P3.3: Bluefy hat inkonsistent funktionierende SpeechSynthesis — explizit blocken
   try{
@@ -17393,7 +17494,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.3.1 bereit.','ok');
+  log('Terp Sessions v9.4.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -19495,6 +19596,14 @@ function _openTextCommandModal(){
   const st = document.getElementById('txtCmdStatus'); if(st){ st.textContent=''; }
   m.classList.add('open');
   setTimeout(()=>{ try{ inp && inp.focus(); }catch(_){} }, 100);
+  // v9.4.0 B1: einmaliger Diktat-Tipp fuer iOS+Bluefy (dort fehlt Web-Speech, aber die iOS-Tastatur kann diktieren)
+  try{
+    const caps = (typeof browserCapabilities === 'function') ? browserCapabilities() : {};
+    if(caps.isIOS && caps.isBluefy && !PREFS.dictationHintShown){
+      PREFS.dictationHintShown = true; try{ savePrefs(); }catch(_){}
+      toast('Tipp: Mikrofon-Taste deiner Tastatur (unten) für Diktat nutzen.');
+    }
+  }catch(_){}
 }
 async function _runTextCommand(){
   const inp = document.getElementById('txtCmdInput');
