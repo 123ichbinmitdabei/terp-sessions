@@ -1985,6 +1985,14 @@ summary.tab-section-header:hover{color:var(--text)}
   outline:2px solid var(--hot,#ff5722);
   outline-offset:2px;
 }
+/* v9.3.0-prep Paket P2: Template-Picker-Eintraege */
+.tpl-item{display:block;width:100%;text-align:left;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;color:var(--text)}
+.tpl-item:hover{border-color:#3d3225}
+.tpl-item.tpl-sel{border-color:var(--hot,#ff5722);background:rgba(255,87,34,.08)}
+.tpl-item-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tpl-item-name{font-weight:600;font-size:14px}
+.tpl-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--muted);white-space:nowrap}
+.tpl-item-sub{font-size:11px;color:var(--muted);margin-top:3px}
 .sess-when{font-weight:600;font-size:13px}
 .sess-sub{font-size:12px;color:var(--muted)}
 .sess-badges{display:flex;gap:4px;flex-shrink:0}
@@ -3376,6 +3384,26 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 </nav>
 
 <!-- ── Modals ───────────────────────────────────────────────── -->
+<!-- v9.3.0-prep Paket P2: Template-Picker (Sub-Modal ueber #modalEditor) -->
+<div class="modal" id="modalTemplatePicker" role="dialog" aria-modal="true" aria-labelledby="tplTitle">
+  <div class="back"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2 id="tplTitle">📚 Vorlage wählen</h2>
+    <input class="input" id="tplSearch" type="search" placeholder="Suchen (Name oder Beschreibung)" aria-label="Vorlagen durchsuchen" style="margin-bottom:10px">
+    <div class="editor-mode-toggle" role="tablist" aria-label="Quelle filtern" style="margin-bottom:10px">
+      <button data-tpl-filter="all" class="active" role="tab" aria-selected="true" type="button">Alle</button>
+      <button data-tpl-filter="preset" role="tab" aria-selected="false" type="button">Built-in</button>
+      <button data-tpl-filter="community" role="tab" aria-selected="false" type="button">Community</button>
+    </div>
+    <div id="tplList" role="listbox" aria-label="Vorlagen" style="max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:6px"></div>
+    <div class="row" style="gap:8px;margin-top:14px">
+      <button class="btn ghost block" id="tplCancel" type="button">Abbrechen</button>
+      <button class="btn primary block" id="tplLoadBtn" type="button" disabled>Laden</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modalEditor" role="dialog" aria-modal="true" aria-label="Programm bearbeiten">
   <div class="back"></div>
   <div class="sheet">
@@ -3391,6 +3419,8 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <button data-edit-mode="timeline" role="tab" aria-selected="false">📊 Timeline</button>
       <button data-edit-mode="curve" role="tab" aria-selected="false">🌡 Kurve</button>
     </div>
+    <!-- v9.3.0-prep Paket P2: Vorlage laden -->
+    <button class="btn sm ghost block" id="btnEditorLoadTpl" type="button" aria-label="Vorlage zum Laden auswählen" style="margin:0 0 8px">📚 Aus Vorlage laden</button>
     <div class="builder" id="builder"></div>
     <div class="timeline-view" id="builderTimeline" hidden></div>
     <!-- v8.3.0 Modul 1: visueller Heizkurven-Editor -->
@@ -8304,6 +8334,114 @@ function deleteEditor(){
   toast('Gelöscht');
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   v9.3.0-prep Paket P2: Template-Picker (Sub-Modal ueber #modalEditor)
+   Quellen: PRESETS (Built-in) + alle Community-Programme (programList, lazy).
+   "Laden" macht Deep-Copy der Schritte in editorState.steps; im Community-Modus
+   werden auch die Sorten-Verknuepfungen mitkopiert. Backend unveraendert.
+═══════════════════════════════════════════════════════════════════════════ */
+let _tplAll = [];           // gemergte Template-Liste
+let _tplFilter = 'all';     // 'all' | 'preset' | 'community'
+let _tplSearch = '';
+let _tplSelected = null;    // id
+let _tplError = null;
+let _tplLoading = false;
+
+function _tplStepSummary(steps){
+  const n = Array.isArray(steps) ? steps.length : 0;
+  let dur = '';
+  try{ dur = ', ~' + fmtDuration(estimateDuration(expandLoops(steps||[]))); }catch(_){}
+  return n + ' Schritt' + (n===1?'':'e') + dur;
+}
+
+async function _tplLoad(){
+  _tplLoading = true; _tplError = null; _tplRender();
+  const presets = (typeof PRESETS!=='undefined'?PRESETS:[]).map((p,i)=>({
+    id:'preset-'+i, name:p.name, desc:p.desc||'', steps:p.steps||[], source:'preset', isFactory:false, strainLinks:[],
+  }));
+  let community = [];
+  try{
+    const items = (typeof communityClient==='object' && communityClient && communityClient.programList)
+      ? await communityClient.programList(null, null, 200, 0) : [];
+    community = (Array.isArray(items)?items:[]).map(p=>({
+      id:'comm-'+p.id, name:p.name||'(ohne Name)', desc:p.description||'', steps:Array.isArray(p.steps)?p.steps:[],
+      source:'community', isFactory:!!p.is_factory_seed, strainLinks:Array.isArray(p.strains)?p.strains.slice():[],
+    }));
+    community.sort((a,b)=>String(a.name).localeCompare(String(b.name)));   // Built-in zuerst, Community alphabetisch
+  }catch(e){ _tplError = (e&&e.message) || 'Community-Programme konnten nicht geladen werden.'; }
+  _tplAll = presets.concat(community);
+  _tplLoading = false; _tplRender();
+}
+
+function _tplOpen(){
+  _tplFilter='all'; _tplSearch=''; _tplSelected=null;
+  const s=document.getElementById('tplSearch'); if(s) s.value='';
+  document.getElementById('modalTemplatePicker')?.classList.add('open');
+  _tplLoad();
+}
+function _tplClose(){ document.getElementById('modalTemplatePicker')?.classList.remove('open'); }
+
+function _tplFiltered(){
+  const q = _tplSearch.trim().toLowerCase();
+  return _tplAll.filter(t=>{
+    if(_tplFilter==='preset'    && t.source!=='preset')    return false;
+    if(_tplFilter==='community' && t.source!=='community') return false;
+    if(q) return String(t.name).toLowerCase().includes(q) || String(t.desc).toLowerCase().includes(q);
+    return true;
+  });
+}
+
+function _tplRender(){
+  const list=document.getElementById('tplList'); if(!list) return;
+  document.querySelectorAll('#modalTemplatePicker [data-tpl-filter]').forEach(b=>{
+    const on = b.dataset.tplFilter===_tplFilter;
+    b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on));
+  });
+  if(_tplLoading){
+    list.innerHTML='<div class="comm-empty">Lade Vorlagen…</div>';
+  } else {
+    const items=_tplFiltered();
+    let html='';
+    if(_tplError && _tplFilter!=='preset'){
+      html += `<div style="font-size:12px;color:var(--hot,#ff5722);margin-bottom:8px">${escapeHtml(_tplError)} <button class="btn sm ghost" id="tplRetry" type="button">Erneut versuchen</button></div>`;
+    }
+    if(items.length===0){
+      html += `<div class="comm-empty">Keine Vorlagen gefunden.<br><button class="btn sm ghost" id="tplReset" type="button" style="margin-top:8px">Suche zuruecksetzen</button></div>`;
+    } else {
+      html += items.map(t=>{
+        const badge = t.source==='preset' ? '<span class="tpl-badge">Built-in</span>'
+                    : (t.isFactory ? '<span class="tpl-badge">🔒 Werk</span>' : '<span class="tpl-badge">Community</span>');
+        const sel = t.id===_tplSelected ? ' tpl-sel' : '';
+        return `<button type="button" class="tpl-item${sel}" data-tpl-id="${escapeHtml(t.id)}" role="option" aria-selected="${t.id===_tplSelected}">
+          <div class="tpl-item-h"><span class="tpl-item-name">${escapeHtml(t.name)}</span>${badge}</div>
+          <div class="tpl-item-sub">${escapeHtml(_tplStepSummary(t.steps))}${t.desc?' · '+escapeHtml(t.desc):''}</div>
+        </button>`;
+      }).join('');
+    }
+    list.innerHTML=html;
+    list.querySelectorAll('[data-tpl-id]').forEach(b=>b.addEventListener('click',()=>{ _tplSelected=b.dataset.tplId; _tplRender(); }));
+    document.getElementById('tplRetry')?.addEventListener('click', _tplLoad);
+    document.getElementById('tplReset')?.addEventListener('click', ()=>{ _tplSearch=''; const s=document.getElementById('tplSearch'); if(s) s.value=''; _tplRender(); });
+  }
+  const loadBtn=document.getElementById('tplLoadBtn'); if(loadBtn) loadBtn.disabled = !_tplSelected;
+}
+
+function _tplApply(){
+  const t = _tplAll.find(x=>x.id===_tplSelected); if(!t || !editorState) return;
+  if(Array.isArray(editorState.steps) && editorState.steps.length>0){
+    if(!confirm('Aktuelle Schritte werden überschrieben. Fortfahren?')) return;   // Picker bleibt offen bei Abbruch
+  }
+  editorState.steps = JSON.parse(JSON.stringify(t.steps||[]));   // Deep-Copy
+  // Antwort 2: Sorten-Verknuepfungen mitkopieren — nur im Community-Modus (eigene Programme haben kein Sorten-Feld)
+  if(editorState.__source==='community' && Array.isArray(t.strainLinks)){
+    _commProgEditStrainIds = t.strainLinks.slice();
+    try{ if(typeof _commProgStrainsRender==='function') _commProgStrainsRender(); }catch(_){}
+  }
+  renderBuilder();
+  _tplClose();
+  toast('Vorlage geladen');
+}
+
 /* ── Run engine ─────────────────────────────────────────────── */
 let _runCountdownTimer = null;
 function _stepDurations(steps, startTemp){
@@ -8690,6 +8828,12 @@ function wire(){
   $('#btnEditorSave').addEventListener('click', saveEditor);
   $('#btnEditorDelete').addEventListener('click', deleteEditor);
   $('#btnAddStep').addEventListener('click', openAddStep);
+  // v9.3.0-prep Paket P2: Template-Picker-Verdrahtung
+  document.getElementById('btnEditorLoadTpl')?.addEventListener('click', _tplOpen);
+  document.getElementById('tplSearch')?.addEventListener('input', e=>{ _tplSearch=e.target.value; _tplRender(); });
+  document.querySelectorAll('#modalTemplatePicker [data-tpl-filter]').forEach(b=>b.addEventListener('click', ()=>{ _tplFilter=b.dataset.tplFilter; _tplRender(); }));
+  document.getElementById('tplCancel')?.addEventListener('click', _tplClose);
+  document.getElementById('tplLoadBtn')?.addEventListener('click', _tplApply);
   $('#btnAddStepCancel').addEventListener('click', closeAddStep);
   $$('#modalAddStep .act').forEach(a=>a.addEventListener('click',()=>addStepWithAction(a.dataset.action)));
   $('#btnStepCancel').addEventListener('click', closeStepEdit);
