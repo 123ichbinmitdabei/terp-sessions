@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.2.0)
+# Terp Sessions — Vape Controller (v9.2.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.2.1 — Karten fokussierbar für VoiceOver (Paket A K1)
+
+Reiner A11Y-Patch, kein neues Feature. Behebt den kritischen Befund **K1** aus `docs/A-AUDIT-2026-06-03.md`: klickbare Karten waren nicht-fokussierbare `<div>` ohne `role`/`tabindex`/Tastatur-Handler, dadurch konnten die 5+ blinden Tester (iPhone + VoiceOver) Sorten- und Programm-Details nicht öffnen.
+
+- Neuer A11Y-Helfer `makeActivatable(el, {label, role, onActivate})`: setzt `role="button"`, `tabindex="0"`, optionales `aria-label` und bindet Enter + Leertaste zusätzlich zum Klick.
+- Angewendet auf **alle 7 als Ganzes klickbaren Karten/Zeilen** (im Audit waren nur 2 bis 4 genannt, der Rest kam beim Implementieren dazu): Community-Sorten-Karte, Community-Programm-Karte, Session-Zeile, Geräte-Auswahl, Ballon-Auswahl, Profil-Karte, Touch-Macro-Karte. Werks-Sorten/-Programme tragen 🔒 im Label.
+- Reine Button-Container (`aroma-card`, eigene `prog`-Karte) und die bereits als `<button>` umgesetzte Theme-Karte blieben unberührt.
+- Sichtbarer Fokus-Ring per `:focus-visible` (kein Ring bei reinen Maus-Klicks).
+- Version v9.2.0 → v9.2.1 (PATCH). W1 (`<h1>`), W2 (Fokus-Stack) und die Nice-to-haves bleiben bewusst für separate Pakete.
+
+**Tests:** `v921a11y.mjs` (29, inkl. echter Enter/Leertaste/Klick-Aktivierung), volle Regression grün.
 
 ## v9.2.0 — Werks-Sorten Polish (Paket N4, final)
 
