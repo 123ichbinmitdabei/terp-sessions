@@ -7535,31 +7535,35 @@ function _commProgramEditOpen(mode, source){
 
 const _commProgValidActions = ['heat_on','heat_off','pump_on','pump_off','set_temperature','wait_until','wait','pump_for','loop_start','loop_end'];
 
+// v9.3.0-prep Paket P1: Statt eigenem simplen Step-Editor jetzt eine Read-Only-Summary plus
+// Button, der den reichen #modalEditor auf _commProgEditSteps oeffnet (Delegation, Option 1).
+// Werks-Programme (is_factory_seed) bleiben schreibgeschuetzt (N4): nur Anzeige, kein Editor-Button.
 function _commProgStepsRender(){
   const host = document.getElementById('cpSteps'); if(!host) return;
-  host.innerHTML = _commProgEditSteps.map((s, i) => {
-    const optsHtml = _commProgValidActions.map(a => `<option value="${a}"${a===s.action?' selected':''}>${a}</option>`).join('');
-    return `<div class="row" style="gap:4px;align-items:center" data-step-row="${i}">
-      <span style="font-size:11px;color:var(--muted);width:18px">${i+1}.</span>
-      <select class="select" data-step-action style="flex:2;font-size:12px;padding:4px 6px">${optsHtml}</select>
-      <input class="input mono" data-step-value type="number" placeholder="°C" value="${s.value!=null?s.value:''}" style="flex:1;font-size:12px;padding:4px 6px">
-      <input class="input mono" data-step-sec type="number" placeholder="sec" value="${s.seconds!=null?s.seconds:''}" style="flex:1;font-size:12px;padding:4px 6px">
-      <button type="button" class="btn sm ghost" data-step-remove aria-label="entfernen" style="padding:4px 8px;color:var(--err)">✕</button>
-    </div>`;
-  }).join('');
-  host.querySelectorAll('[data-step-row]').forEach(row => {
-    const i = parseInt(row.dataset.stepRow);
-    row.querySelector('[data-step-action]').addEventListener('change', e => { _commProgEditSteps[i].action = e.target.value; });
-    // v8.7.5 (Paket 12c C): NaN-Safe — leere/nicht-numerische Eingaben → null statt NaN
-    row.querySelector('[data-step-value]').addEventListener('input', e => {
-      const raw = e.target.value; const n = parseInt(raw);
-      _commProgEditSteps[i].value = (raw === '' || isNaN(n)) ? null : n;
+  const addBtn = document.getElementById('cpStepAdd'); if(addBtn) addBtn.style.display = 'none'; // alter "+ Schritt" entfaellt
+  const steps = Array.isArray(_commProgEditSteps) ? _commProgEditSteps : [];
+  const locked = !!(_commProgEditOriginal && _commProgEditOriginal.is_factory_seed);
+  let html = '';
+  if(steps.length === 0){
+    html += '<div style="font-size:12px;color:var(--muted)">Noch keine Schritte.' + (locked ? '' : ' Tippe „Schritte bearbeiten", um anzufangen.') + '</div>';
+  } else {
+    html += '<div style="display:flex;flex-direction:column;gap:3px">' + steps.map((s,i)=>
+      `<div style="font-size:12px;display:flex;gap:8px"><span style="color:var(--muted);width:18px">${i+1}.</span><span>${escapeHtml(stepLabel(s))}</span></div>`
+    ).join('') + '</div>';
+    try{ const est = estimateDuration(expandLoops(steps)); html += `<div style="font-size:11px;color:var(--muted);margin-top:4px">~${fmtDuration(est)} Gesamtdauer</div>`; }catch(_){}
+  }
+  if(locked){
+    html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">🔒 Werks-Programm, Schritte sind schreibgeschützt.</div>';
+  } else {
+    html += `<button type="button" class="btn sm" id="btnCpEditSteps" style="margin-top:8px" aria-label="Programm-Schritte im Editor bearbeiten">🛠 Schritte bearbeiten (${steps.length})</button>`;
+  }
+  host.innerHTML = html;
+  document.getElementById('btnCpEditSteps')?.addEventListener('click', ()=>{
+    openEditor(null, {
+      steps: _commProgEditSteps,
+      title: 'Programm-Schritte bearbeiten',
+      onSave: (newSteps)=>{ _commProgEditSteps = newSteps; _commProgStepsRender(); },
     });
-    row.querySelector('[data-step-sec]').addEventListener('input', e => {
-      const raw = e.target.value; const n = parseInt(raw);
-      _commProgEditSteps[i].seconds = (raw === '' || isNaN(n)) ? null : n;
-    });
-    row.querySelector('[data-step-remove]').addEventListener('click', () => { _commProgEditSteps.splice(i, 1); _commProgStepsRender(); });
   });
 }
 
@@ -7926,19 +7930,33 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 
 /* ── Editor ────────────────────────────────────────────────── */
 let editorState=null;
-function openEditor(id){
+// v9.3.0-prep Paket P1: openEditor akzeptiert optionales opts fuer den Delegations-Modus.
+// opts.onSave(steps) -> Community-Editor liefert die bearbeiteten Schritte zurueck (statt in
+// State.programs zu schreiben). opts.title, opts.onClose, opts.steps (Quell-Array zum Kopieren).
+// Alle bisherigen Aufrufe openEditor(id) / openEditor(null) bleiben unveraendert.
+function openEditor(id, opts){
+  opts = opts || {};
+  const deleg = typeof opts.onSave === 'function';
   let p;
-  if(id){
+  if(deleg){
+    p={ id:'wf-deleg', name: opts.title || 'Schritte', desc:'', steps: Array.isArray(opts.steps)?opts.steps:[] };
+  } else if(id){
     p=State.programs.find(x=>x.id===id);
     if(!p) return;
   }else{
     p={id:'wf-'+Date.now(), name:'Neues Programm', desc:'', steps:[{action:'heat_on'}]};
   }
-  editorState = JSON.parse(JSON.stringify(p));
-  State.editingId = id;
-  $('#editorTitle').textContent = id?'Programm bearbeiten':'Neues Programm';
+  editorState = JSON.parse(JSON.stringify(p));   // arbeitet auf einer Kopie
+  editorState.__source = deleg ? 'community' : 'own';   // P1
+  editorState.__onSave  = deleg ? opts.onSave  : null;
+  editorState.__onClose = (typeof opts.onClose === 'function') ? opts.onClose : null;
+  State.editingId = deleg ? null : id;
+  $('#editorTitle').textContent = opts.title || (id?'Programm bearbeiten':'Neues Programm');
   $('#editorName').value = editorState.name;
-  $('#btnEditorDelete').style.display = id ? '' : 'none';
+  // Im Delegations-Modus ist der Programm-Name irrelevant (lebt im Community-Modal) -> Namensfeld + Loeschen aus
+  const nameRow = document.getElementById('editorName')?.closest('.field');
+  if(nameRow) nameRow.style.display = deleg ? 'none' : '';
+  $('#btnEditorDelete').style.display = (id && !deleg) ? '' : 'none';
   renderBuilder();
   setEditorMode(LS.get('vol_editor_mode','list'));   // v8.3.0 Modul 1: gespeicherte Ansicht wiederherstellen
   $('#modalEditor').classList.add('open');
@@ -7946,7 +7964,11 @@ function openEditor(id){
 
 function closeEditor(){
   $('#modalEditor').classList.remove('open');
+  const onClose = editorState && editorState.__onClose;
+  const nameRow = document.getElementById('editorName')?.closest('.field');
+  if(nameRow) nameRow.style.display = '';   // P1: Namensfeld wieder einblenden
   editorState=null; State.editingId=null;
+  if(typeof onClose === 'function'){ try{ onClose(); }catch(_){} }
 }
 
 let editorMode = 'list';
@@ -8250,6 +8272,15 @@ function saveStepEdit(){
 }
 
 function saveEditor(){
+  // v9.3.0-prep P1: Delegations-Modus -> Schritte an den Aufrufer zurueckgeben, NICHT in State.programs
+  if(editorState && editorState.__source === 'community'){
+    const cb = editorState.__onSave;
+    const steps = JSON.parse(JSON.stringify(editorState.steps));
+    closeEditor();
+    if(typeof cb === 'function'){ try{ cb(steps); }catch(_){} }
+    toast('Schritte übernommen');
+    return;
+  }
   editorState.name = $('#editorName').value.trim() || 'Programm';
   if(State.editingId){
     const idx=State.programs.findIndex(p=>p.id===State.editingId);
