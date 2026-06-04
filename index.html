@@ -12374,7 +12374,7 @@ function _voiceSpeakConfirm(text){
 const VOICE_HELP = [
   ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
   ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
-  ['Programm', '„starte Programm <Name>"'],
+  ['Programm', '„starte Programm <Name>", „stoppe das Programm" (nur Programm, Gerät bleibt an)'],
   ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Sternen", „bewerte mit <1 bis 5> Sternen" (geöffnete Sorte)'],
   ['Sonstiges', '„wiederhole", „Hilfe"'],
 ];
@@ -12551,6 +12551,12 @@ function parseVoiceCommand(txt){
     return { action:'heaterOff', raw };
   }
 
+  // v9.5.0 B2.3: NUR das laufende Programm beenden (programm-spezifisch, VOR stopAll;
+  // bares "abbrechen" bleibt bewusst stopAll = alles aus).
+  if(/(stoppe?\s+das\s+programm|programm\s+(abbrechen|beenden|stoppen?)|brich\s+das\s+programm\s+ab)/.test(t)){
+    return { action:'abortProgram', raw };
+  }
+
   // Stop everything (steht NACH heater, damit „stop heating" nicht hier gefangen wird)
   if(/(\bstopp?\b|\bstop\b|alles\s*aus|alles\s*stoppen|abbrechen|notaus|emergency|all\s*stop|stop\s*all)/.test(t)){
     return { action:'stopAll', raw };
@@ -12640,6 +12646,12 @@ async function executeVoiceCommand(cmd){
       case 'searchStrain': _voiceSearchStrainCmd(cmd.value); return true;
       case 'pickStrain': await _voiceResolvePick(cmd.value); return true;
       case 'pickStrainCancel': _voiceAmbiguityState=null; voiceFeedback('Abgebrochen'); return true;
+      // v9.5.0 B2.3: nur das laufende Programm beenden (Heizer/Pumpe bleiben unberuehrt -> anders als stopAll)
+      case 'abortProgram':
+        if(!State.running){ voiceFeedback('Es läuft gerade kein Programm'); _voiceSpeakConfirm('Es läuft gerade kein Programm'); return true; }
+        try{ if(typeof stopRun === 'function') stopRun(); else State.running.stopFlag = true; }catch(_){ try{ if(State.running) State.running.stopFlag = true; }catch(__){} }
+        voiceFeedback('✓ Programm wird beendet'); _voiceSpeakConfirm('Programm wird beendet');
+        return true;
       case 'stopAll':
         if(State.running) State.running.stopFlag = true;
         if(State.heater) await cmdHeaterOff();
