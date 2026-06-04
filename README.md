@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.4.0)
+# Terp Sessions — Vape Controller (v9.5.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,20 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.5.0 — Voice Big Tickets (Paket B2)
+
+Zweite Voice-Ausbaustufe aus `docs/B-AUDIT-2026-06-04.md`, in drei Phasen, ein Release. MINOR, große A11Y-Erweiterung. Deutsch only für neue Befehle, kein Backend-Eingriff.
+
+**B2.1, TTS-Tempo + Lautstärke:** Auswahl Sprechgeschwindigkeit (langsam 0,7 / normal 1,05 / schnell 1,5 / sehr schnell 2,0) mit „▶ Test", plus Lautstärke-Slider 0 bis 100 Prozent (Live-Vorschau). `PREFS.ttsRate` / `PREFS.ttsVolume`. Zentrale, geclampte Helfer `_ttsRate()` / `_ttsVolume()` gelten für alle app-eigenen Ansagen (die sechs vorher hart auf 1,05 gesetzten Stellen nutzen sie jetzt). Besonders für VoiceOver-erfahrene blinde Nutzer, die schneller hören wollen.
+
+**B2.2, Aroma/Sorten per Voice:** „öffne Sorte <Name>" (Werks aus `AROMA_DB`, Community aus dem Cache), „suche Sorte <Wort>" (Top 3 per TTS), „bewerte Sorte <Name> mit <1 bis 5> Sternen" / „<N> Sterne für <Name>" / „bewerte mit <N> Sternen" (geöffnete Sorte). Bewerten nur für Community-Sorten (Login nötig). Bei mehreren Treffern ein Multi-Turn-Dialog: die App liest die ersten drei vor, der Nutzer wählt per „eins/zwei/drei" oder „die erste", „vergiss es" bricht ab, nach 30 Sekunden Timeout. Substring-Match mit Umlaut-Normalisierung.
+
+**B2.3, Programm abbrechen (Subset):** „stoppe das Programm", „Programm abbrechen/beenden", „brich das Programm ab" beenden nur das laufende Programm (Heizer und Pumpe bleiben an, anders als „alles aus"). Bares „abbrechen" bleibt bewusst „alles aus".
+
+**Bewusst NICHT gebaut:** Pause, nächster Schritt und vorheriger Schritt während eines laufenden Programms. Der Architektur-Check ergab, dass die Run-Engine (eine `for`-Schleife mit nicht abbrechbaren `await`-Schritten) dafür keine sauberen Hooks hat. Das bräuchte einen Run-Engine-Refactor (Pause-Schleife plus abbrechbare Waits) und wird, nach Andres Entscheidung, in einem eigenen Engine-Paket adressiert. Aktuell ist nur „abbrechen" verfügbar.
+
+**Unberührt:** cscCrypto, Backend, Run-Engine, Wake-Word. **Tests:** `v95tts.mjs` (21) + `v95strains.mjs` (26) + `v95runtime.mjs` (13); volle Regression grün.
 
 ## v9.4.0 — Voice Quick Wins für Accessibility (Paket B1)
 
