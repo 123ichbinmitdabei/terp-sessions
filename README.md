@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.3.0)
+# Terp Sessions — Vape Controller (v9.3.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.3.1 — A11Y-Polish W1+W2+W3 (Paket A)
+
+Reiner A11Y-Patch, kein neues Feature. Arbeitet die letzten offenen WICHTIG-Befunde aus `docs/A-AUDIT-2026-06-03.md` ab, besonders relevant geworden durch die gestapelten Sub-Modale aus Paket P.
+
+- **W1 erledigt:** Ein visuell verstecktes `<h1 class="sr-only">Terp Sessions</h1>` direkt nach `<body>` gibt der VoiceOver-Rotor-Navigation eine Seitenüberschrift. Vorher hatte die App kein `<h1>` (nur das PDF-Export-Template). Die `.sr-only`-Klasse existierte bereits.
+- **W2 erledigt:** Die Fokus-Rückgabe beim Schließen von Modalen läuft jetzt über einen Stack (`_a11yModalFocusStack`) statt eines einzelnen globalen Werts. Bei gestapelten Sub-Modalen (`#modalCommunityProgramEdit` zu `#modalEditor` zu `#modalTemplatePicker`) kehrt der Fokus beim Schließen jeweils zum auslösenden Element der darunterliegenden Ebene zurück. Push beim Öffnen, Pop beim Schließen.
+- **W3 erledigt:** Ein `childList`-MutationObserver auf `document.body` versieht auch zur Laufzeit hinzugefügte Modale (z. B. `#modalKbdShortcuts`) automatisch mit Esc, Fokus-Trap und Fokus-Management. Vorher griff das nur für beim Start vorhandene Modale. Die Modal-Enhancement-Logik wurde dafür in `_a11yEnhanceOneModal` ausgelagert.
+
+**Unberührt:** cscCrypto, Backend, Schema. Die Nice-to-have-Befunde (Sterne-Anzahl im Label, veralteter Tooltip usw.) bleiben bewusst für separate Mini-Pakete. **Tests:** `v931a11y.mjs` (16, inkl. LIFO-Fokus-Rückgabe und dynamischem Modal), volle Regression grün.
 
 ## v9.3.0 — Programm-Templates + Editor-Vereinheitlichung + Veröffentlichen (Paket P)
 

@@ -2269,6 +2269,9 @@ button[data-sch-day].active{
 </head>
 <body>
 
+<!-- v9.3.1 Paket A W1: Seitenueberschrift fuer Screen-Reader-Rotor (visuell versteckt) -->
+<h1 class="sr-only">Terp Sessions</h1>
+
 <a href="#main" class="skip-link">Zum Hauptinhalt springen</a>
 
 <!-- v4.8: Offline indicator -->
@@ -11251,7 +11254,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.3.0';
+const SW_VERSION_LABEL='v9.3.1';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17390,7 +17393,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.3.0 bereit.','ok');
+  log('Terp Sessions v9.3.1 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18800,63 +18803,81 @@ function _a11yAutoLabel(){
 }
 
 // Modal-Verbesserungen: Esc schließt, Fokus-Trap, Initial-Fokus, srAnnounce.
+// v9.3.1 Paket A W2: Fokus-Rueckgabe ueber einen STACK statt einem globalen Wert,
+// damit gestapelte Sub-Modale (#modalCommunityProgramEdit -> #modalEditor ->
+// #modalTemplatePicker) den Fokus beim Schliessen jeweils an ihren Ausloeser zurueckgeben.
+let _a11yModalFocusStack = [];
+// Backwards-Kompat-Alias (zeigt auf den obersten Stack-Eintrag), falls extern referenziert.
 let _a11yModalLastFocus = null;
+
+function _a11yEnsureModalObserver(){
+  if(window.__a11yModalObserver) return window.__a11yModalObserver;
+  const obs = new MutationObserver(muts=>{
+    for(const mu of muts){
+      if(mu.attributeName !== 'class') continue;
+      const t = mu.target;
+      if(!(t instanceof Element) || !t.classList.contains('modal')) continue;
+      const isOpen = t.classList.contains('open');
+      const wasOpen = mu.oldValue ? /\bopen\b/.test(mu.oldValue) : false;
+      if(isOpen && !wasOpen){
+        _a11yModalFocusStack.push(document.activeElement);   // W2: push beim Open
+        _a11yModalLastFocus = document.activeElement;
+        // initialer Fokus auf erstes fokussierbares Element
+        const f = t.querySelector('button:not([disabled]), input:not([disabled]):not([type="hidden"]), [tabindex]:not([tabindex="-1"])');
+        if(f){ setTimeout(()=>{ try{ f.focus(); }catch{} }, 50); }
+        const label = t.getAttribute('aria-label') || (t.querySelector('h2,h3') && t.querySelector('h2,h3').textContent.trim()) || 'Dialog';
+        if(typeof ttsEvent === 'function') ttsEvent('modalOpen', 'Dialog geöffnet: ' + label);
+      } else if(!isOpen && wasOpen){
+        if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
+        const back = _a11yModalFocusStack.pop();   // W2: pop beim Close -> Fokus zum Ausloeser zurueck
+        _a11yModalLastFocus = _a11yModalFocusStack[_a11yModalFocusStack.length-1] || null;
+        if(back && typeof back.focus === 'function'){ try{ back.focus(); }catch{} }
+      }
+    }
+  });
+  window.__a11yModalObserver = obs;
+  return obs;
+}
+
+function _a11yEnhanceOneModal(m){
+  if(!m || m.__a11yEnhanced) return;
+  m.__a11yEnhanced = true;
+  m.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Escape' && m.classList.contains('open')){
+      ev.preventDefault();
+      m.classList.remove('open');   // Fokus-Rueckgabe macht der class-Observer (W2-Stack)
+    }
+    // Fokus-Trap: Tab-Loop
+    if(ev.key === 'Tab' && m.classList.contains('open')){
+      const focusables = m.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if(focusables.length === 0) return;
+      const first = focusables[0], last = focusables[focusables.length-1];
+      if(ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+      else if(!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+    }
+  });
+  try{ _a11yEnsureModalObserver().observe(m, {attributes:true, attributeOldValue:true, attributeFilter:['class']}); }catch{}
+}
+
 function _a11yModalEnhance(){
   try{
-    document.querySelectorAll('.modal').forEach(m=>{
-      if(m.__a11yEnhanced) return;
-      m.__a11yEnhanced = true;
-      // Esc-Listener
-      m.addEventListener('keydown', (ev)=>{
-        if(ev.key === 'Escape' && m.classList.contains('open')){
-          ev.preventDefault();
-          m.classList.remove('open');
-          if(_a11yModalLastFocus && typeof _a11yModalLastFocus.focus === 'function'){
-            try{ _a11yModalLastFocus.focus(); }catch{}
-          }
-          if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
-        }
-        // Fokus-Trap: Tab-Loop
-        if(ev.key === 'Tab' && m.classList.contains('open')){
-          const focusables = m.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])');
-          if(focusables.length === 0) return;
-          const first = focusables[0], last = focusables[focusables.length-1];
-          if(ev.shiftKey && document.activeElement === first){
-            ev.preventDefault(); last.focus();
-          } else if(!ev.shiftKey && document.activeElement === last){
-            ev.preventDefault(); first.focus();
-          }
-        }
-      });
-    });
-    // MutationObserver: wenn ein Modal aufgeht (Klasse 'open' gesetzt),
-    // setze initialen Fokus + announce + merke letzten Fokus.
-    if(!window.__a11yModalObserver){
-      const obs = new MutationObserver(muts=>{
+    _a11yEnsureModalObserver();
+    document.querySelectorAll('.modal').forEach(_a11yEnhanceOneModal);
+    // v9.3.1 Paket A W3: dynamisch hinzugefuegte Modale (z.B. #modalKbdShortcuts) automatisch
+    // mit Esc/Trap/Fokus-Management versehen. Modale sind direkte body-Kinder -> childList genuegt.
+    if(!window.__a11yBodyObserver){
+      const bo = new MutationObserver(muts=>{
         for(const mu of muts){
-          if(mu.attributeName !== 'class') continue;
-          const t = mu.target;
-          if(!(t instanceof Element) || !t.classList.contains('modal')) continue;
-          const isOpen = t.classList.contains('open');
-          const wasOpen = mu.oldValue ? /\bopen\b/.test(mu.oldValue) : false;
-          if(isOpen && !wasOpen){
-            _a11yModalLastFocus = document.activeElement;
-            // initialer Fokus auf erstes fokussierbares Element
-            const f = t.querySelector('button:not([disabled]), input:not([disabled]):not([type="hidden"]), [tabindex]:not([tabindex="-1"])');
-            if(f){ setTimeout(()=>{ try{ f.focus(); }catch{} }, 50); }
-            const label = t.getAttribute('aria-label') || (t.querySelector('h2,h3') && t.querySelector('h2,h3').textContent.trim()) || 'Dialog';
-            if(typeof ttsEvent === 'function') ttsEvent('modalOpen', 'Dialog geöffnet: ' + label);
-          } else if(!isOpen && wasOpen){
-            if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
-            // Fokus zurück (Esc-Pfad macht das oben schon, click-on-backdrop fängt hier)
-            if(_a11yModalLastFocus && document.activeElement === document.body){
-              try{ _a11yModalLastFocus.focus(); }catch{}
-            }
-          }
+          if(!mu.addedNodes) continue;
+          mu.addedNodes.forEach(n=>{
+            if(!n || n.nodeType !== 1) return;
+            if(n.classList && n.classList.contains('modal')) _a11yEnhanceOneModal(n);
+            else if(n.querySelectorAll) n.querySelectorAll('.modal').forEach(_a11yEnhanceOneModal);
+          });
         }
       });
-      document.querySelectorAll('.modal').forEach(m => obs.observe(m, {attributes:true, attributeOldValue:true, attributeFilter:['class']}));
-      window.__a11yModalObserver = obs;
+      bo.observe(document.body, {childList:true});
+      window.__a11yBodyObserver = bo;
     }
   }catch(e){ /* a11y darf nie crashen */ }
 }
