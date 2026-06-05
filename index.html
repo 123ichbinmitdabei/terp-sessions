@@ -2299,6 +2299,46 @@ button[data-sch-day].active{
   <div class="sub">PIN eingeben um fortzufahren</div>
   <input type="password" inputmode="numeric" pattern="[0-9]*" id="pinInput" maxlength="8" autocomplete="off" aria-label="PIN-Eingabe">
   <button class="btn primary" id="pinSubmit">Entsperren</button>
+  <!-- v9.9.0 REC-1: PIN vergessen -> Recovery-Code (nur sichtbar wenn Recovery aktiv) -->
+  <button class="btn sm ghost" id="pinForgot" hidden style="margin-top:12px">PIN vergessen?</button>
+  <div id="pinRecoverBox" hidden style="width:100%;max-width:320px;margin-top:12px">
+    <div class="sub">Recovery-Code (4 Wörter):</div>
+    <input type="text" id="pinRecoverInput" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Recovery-Code eingeben" placeholder="wort wort wort wort" style="width:100%">
+    <button class="btn primary" id="pinRecoverSubmit" style="margin-top:8px">Prüfen</button>
+    <div id="pinRecoverMsg" role="status" aria-live="assertive" style="font-size:12px;margin-top:6px;min-height:16px;color:var(--hot)"></div>
+  </div>
+</div>
+
+<!-- v9.9.0 REC-1: Recovery-Code-Dialog beim PIN-Setzen (oder via Settings) -->
+<div class="modal" id="modalPinRecovery" role="dialog" aria-modal="true" aria-labelledby="pinRecTitle">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:440px">
+    <div class="grab"></div>
+    <h2 id="pinRecTitle">🔑 Recovery-Code</h2>
+    <div id="pinRecOffer" hidden>
+      <p class="wiz-text">PIN gesetzt. Möchten Sie einen Recovery-Code generieren? Damit können Sie die App entsperren, falls Sie die PIN vergessen.</p>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn primary" id="pinRecYes">Ja, generieren</button>
+        <button class="btn ghost" id="pinRecNo">Nein, ohne Recovery</button>
+      </div>
+    </div>
+    <div id="pinRecShow" hidden>
+      <p class="wiz-text">Notieren Sie diesen Code an einem sicheren Ort. Wir können ihn Ihnen nicht erneut zeigen.</p>
+      <div id="pinRecCode" aria-live="polite" style="font-family:var(--font-mono);font-size:20px;font-weight:700;letter-spacing:.04em;text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-sm);margin:10px 0"></div>
+      <button class="btn sm ghost block" id="pinRecCopy">📋 Code kopieren</button>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="pinRecNoted"> Ich habe den Code sicher notiert
+      </label>
+      <button class="btn primary block" id="pinRecConfirm" style="margin-top:10px" disabled>Bestätigen</button>
+    </div>
+    <div id="pinRecWarn" hidden>
+      <p class="wiz-text" style="color:var(--hot)"><span aria-hidden="true">⚠️</span> Ohne Recovery-Code können Sie bei vergessener PIN nicht mehr in die App. Sicher?</p>
+      <div class="row" style="gap:8px;margin-top:14px">
+        <button class="btn ghost" id="pinRecWarnBack">Doch generieren</button>
+        <button class="btn" id="pinRecWarnConfirm">Ja, ohne Recovery</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- v4.6: Vape Buddy -->
@@ -3758,6 +3798,11 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="toggle-row">
         <div class="info"><b>PIN-Sperre</b><small id="pinStatus">Aus</small></div>
         <button class="btn sm" id="btnPinSetup">PIN ändern</button>
+      </div>
+      <!-- v9.9.0 REC-1: Recovery-Code-Status (nur sichtbar wenn PIN aktiv) -->
+      <div class="toggle-row" id="pinRecoveryRow" style="display:none">
+        <div class="info"><b>Recovery-Code</b><small id="pinRecoveryStatus">Nicht aktiv</small></div>
+        <button class="btn sm" id="btnPinRecovery">Generieren</button>
       </div>
       <div class="toggle-row">
         <div class="info"><b>Auto-Lock</b><small>Inaktivität in Minuten (0 = aus)</small></div>
@@ -9573,7 +9618,11 @@ function wire(){
       await setupPin();
     }
     const ps = $('#pinStatus'); if(ps) ps.textContent = PREFS.pinEnabled?'Aktiv':'Aus';
+    _updatePinRecoveryStatus();   // v9.9.0 REC-1
   });
+  // v9.9.0 REC-1: Recovery-Code via Settings generieren/neu generieren (direkt zur Code-Anzeige)
+  $('#btnPinRecovery')?.addEventListener('click', ()=>{ _offerRecoveryCode(true); });
+  _updatePinRecoveryStatus();
   $('#autoLockInput')?.addEventListener('change', ()=>{
     PREFS.autoLockMin = clamp(parseInt($('#autoLockInput').value)||0, 0, 60);
     savePrefs();
@@ -11539,7 +11588,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.8.0';
+const SW_VERSION_LABEL='v9.9.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -13242,6 +13291,7 @@ function openSettings(){
   const ssIn = $('#sieveSessionsInput'); if(ssIn) ssIn.value = PREFS.sieveReminderSessions||50;
   const fwIn = $('#firmwareInput'); if(fwIn) fwIn.value = PREFS.firmware||'';
   const ps = $('#pinStatus'); if(ps) ps.textContent = PREFS.pinEnabled?'Aktiv':'Aus';
+  _updatePinRecoveryStatus();   // v9.9.0 REC-1
   $('#voiceCmdSub').hidden = !PREFS.voice;
   document.querySelectorAll('[data-vc]').forEach(b=>{
     const k = b.dataset.vc;
@@ -15203,6 +15253,82 @@ function haptiPattern(kind){
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   v9.9.0 Paket REC-1: BIP39-Recovery fuer PIN
+   Eigene Crypto-Domain (SHA-256 + 16-Byte-Salt), NICHT cscCrypto.
+   Recovery-Code: 4 BIP39-Woerter (44 Bit Entropie), mehrfach nutzbar,
+   gehasht in localStorage. Brute-Force-Schutz nur fuer Recovery-Eingabe.
+═══════════════════════════════════════════════════════════════ */
+const BIP39_WORDS=['abandon','ability','able','about','above','absent','absorb','abstract','absurd','abuse','access','accident','account','accuse','achieve','acid','acoustic','acquire','across','act','action','actor','actress','actual','adapt','add','addict','address','adjust','admit','adult','advance','advice','aerobic','affair','afford','afraid','again','age','agent','agree','ahead','aim','air','airport','aisle','alarm','album','alcohol','alert','alien','all','alley','allow','almost','alone','alpha','already','also','alter','always','amateur','amazing','among','amount','amused','analyst','anchor','ancient','anger','angle','angry','animal','ankle','announce','annual','another','answer','antenna','antique','anxiety','any','apart','apology','appear','apple','approve','april','arch','arctic','area','arena','argue','arm','armed','armor','army','around','arrange','arrest','arrive','arrow','art','artefact','artist','artwork','ask','aspect','assault','asset','assist','assume','asthma','athlete','atom','attack','attend','attitude','attract','auction','audit','august','aunt','author','auto','autumn','average','avocado','avoid','awake','aware','away','awesome','awful','awkward','axis','baby','bachelor','bacon','badge','bag','balance','balcony','ball','bamboo','banana','banner','bar','barely','bargain','barrel','base','basic','basket','battle','beach','bean','beauty','because','become','beef','before','begin','behave','behind','believe','below','belt','bench','benefit','best','betray','better','between','beyond','bicycle','bid','bike','bind','biology','bird','birth','bitter','black','blade','blame','blanket','blast','bleak','bless','blind','blood','blossom','blouse','blue','blur','blush','board','boat','body','boil','bomb','bone','bonus','book','boost','border','boring','borrow','boss','bottom','bounce','box','boy','bracket','brain','brand','brass','brave','bread','breeze','brick','bridge','brief','bright','bring','brisk','broccoli','broken','bronze','broom','brother','brown','brush','bubble','buddy','budget','buffalo','build','bulb','bulk','bullet','bundle','bunker','burden','burger','burst','bus','business','busy','butter','buyer','buzz','cabbage','cabin','cable','cactus','cage','cake','call','calm','camera','camp','can','canal','cancel','candy','cannon','canoe','canvas','canyon','capable','capital','captain','car','carbon','card','cargo','carpet','carry','cart','case','cash','casino','castle','casual','cat','catalog','catch','category','cattle','caught','cause','caution','cave','ceiling','celery','cement','census','century','cereal','certain','chair','chalk','champion','change','chaos','chapter','charge','chase','chat','cheap','check','cheese','chef','cherry','chest','chicken','chief','child','chimney','choice','choose','chronic','chuckle','chunk','churn','cigar','cinnamon','circle','citizen','city','civil','claim','clap','clarify','claw','clay','clean','clerk','clever','click','client','cliff','climb','clinic','clip','clock','clog','close','cloth','cloud','clown','club','clump','cluster','clutch','coach','coast','coconut','code','coffee','coil','coin','collect','color','column','combine','come','comfort','comic','common','company','concert','conduct','confirm','congress','connect','consider','control','convince','cook','cool','copper','copy','coral','core','corn','correct','cost','cotton','couch','country','couple','course','cousin','cover','coyote','crack','cradle','craft','cram','crane','crash','crater','crawl','crazy','cream','credit','creek','crew','cricket','crime','crisp','critic','crop','cross','crouch','crowd','crucial','cruel','cruise','crumble','crunch','crush','cry','crystal','cube','culture','cup','cupboard','curious','current','curtain','curve','cushion','custom','cute','cycle','dad','damage','damp','dance','danger','daring','dash','daughter','dawn','day','deal','debate','debris','decade','december','decide','decline','decorate','decrease','deer','defense','define','defy','degree','delay','deliver','demand','demise','denial','dentist','deny','depart','depend','deposit','depth','deputy','derive','describe','desert','design','desk','despair','destroy','detail','detect','develop','device','devote','diagram','dial','diamond','diary','dice','diesel','diet','differ','digital','dignity','dilemma','dinner','dinosaur','direct','dirt','disagree','discover','disease','dish','dismiss','disorder','display','distance','divert','divide','divorce','dizzy','doctor','document','dog','doll','dolphin','domain','donate','donkey','donor','door','dose','double','dove','draft','dragon','drama','drastic','draw','dream','dress','drift','drill','drink','drip','drive','drop','drum','dry','duck','dumb','dune','during','dust','dutch','duty','dwarf','dynamic','eager','eagle','early','earn','earth','easily','east','easy','echo','ecology','economy','edge','edit','educate','effort','egg','eight','either','elbow','elder','electric','elegant','element','elephant','elevator','elite','else','embark','embody','embrace','emerge','emotion','employ','empower','empty','enable','enact','end','endless','endorse','enemy','energy','enforce','engage','engine','enhance','enjoy','enlist','enough','enrich','enroll','ensure','enter','entire','entry','envelope','episode','equal','equip','era','erase','erode','erosion','error','erupt','escape','essay','essence','estate','eternal','ethics','evidence','evil','evoke','evolve','exact','example','excess','exchange','excite','exclude','excuse','execute','exercise','exhaust','exhibit','exile','exist','exit','exotic','expand','expect','expire','explain','expose','express','extend','extra','eye','eyebrow','fabric','face','faculty','fade','faint','faith','fall','false','fame','family','famous','fan','fancy','fantasy','farm','fashion','fat','fatal','father','fatigue','fault','favorite','feature','february','federal','fee','feed','feel','female','fence','festival','fetch','fever','few','fiber','fiction','field','figure','file','film','filter','final','find','fine','finger','finish','fire','firm','first','fiscal','fish','fit','fitness','fix','flag','flame','flash','flat','flavor','flee','flight','flip','float','flock','floor','flower','fluid','flush','fly','foam','focus','fog','foil','fold','follow','food','foot','force','forest','forget','fork','fortune','forum','forward','fossil','foster','found','fox','fragile','frame','frequent','fresh','friend','fringe','frog','front','frost','frown','frozen','fruit','fuel','fun','funny','furnace','fury','future','gadget','gain','galaxy','gallery','game','gap','garage','garbage','garden','garlic','garment','gas','gasp','gate','gather','gauge','gaze','general','genius','genre','gentle','genuine','gesture','ghost','giant','gift','giggle','ginger','giraffe','girl','give','glad','glance','glare','glass','glide','glimpse','globe','gloom','glory','glove','glow','glue','goat','goddess','gold','good','goose','gorilla','gospel','gossip','govern','gown','grab','grace','grain','grant','grape','grass','gravity','great','green','grid','grief','grit','grocery','group','grow','grunt','guard','guess','guide','guilt','guitar','gun','gym','habit','hair','half','hammer','hamster','hand','happy','harbor','hard','harsh','harvest','hat','have','hawk','hazard','head','health','heart','heavy','hedgehog','height','hello','helmet','help','hen','hero','hidden','high','hill','hint','hip','hire','history','hobby','hockey','hold','hole','holiday','hollow','home','honey','hood','hope','horn','horror','horse','hospital','host','hotel','hour','hover','hub','huge','human','humble','humor','hundred','hungry','hunt','hurdle','hurry','hurt','husband','hybrid','ice','icon','idea','identify','idle','ignore','ill','illegal','illness','image','imitate','immense','immune','impact','impose','improve','impulse','inch','include','income','increase','index','indicate','indoor','industry','infant','inflict','inform','inhale','inherit','initial','inject','injury','inmate','inner','innocent','input','inquiry','insane','insect','inside','inspire','install','intact','interest','into','invest','invite','involve','iron','island','isolate','issue','item','ivory','jacket','jaguar','jar','jazz','jealous','jeans','jelly','jewel','job','join','joke','journey','joy','judge','juice','jump','jungle','junior','junk','just','kangaroo','keen','keep','ketchup','key','kick','kid','kidney','kind','kingdom','kiss','kit','kitchen','kite','kitten','kiwi','knee','knife','knock','know','lab','label','labor','ladder','lady','lake','lamp','language','laptop','large','later','latin','laugh','laundry','lava','law','lawn','lawsuit','layer','lazy','leader','leaf','learn','leave','lecture','left','leg','legal','legend','leisure','lemon','lend','length','lens','leopard','lesson','letter','level','liar','liberty','library','license','life','lift','light','like','limb','limit','link','lion','liquid','list','little','live','lizard','load','loan','lobster','local','lock','logic','lonely','long','loop','lottery','loud','lounge','love','loyal','lucky','luggage','lumber','lunar','lunch','luxury','lyrics','machine','mad','magic','magnet','maid','mail','main','major','make','mammal','man','manage','mandate','mango','mansion','manual','maple','marble','march','margin','marine','market','marriage','mask','mass','master','match','material','math','matrix','matter','maximum','maze','meadow','mean','measure','meat','mechanic','medal','media','melody','melt','member','memory','mention','menu','mercy','merge','merit','merry','mesh','message','metal','method','middle','midnight','milk','million','mimic','mind','minimum','minor','minute','miracle','mirror','misery','miss','mistake','mix','mixed','mixture','mobile','model','modify','mom','moment','monitor','monkey','monster','month','moon','moral','more','morning','mosquito','mother','motion','motor','mountain','mouse','move','movie','much','muffin','mule','multiply','muscle','museum','mushroom','music','must','mutual','myself','mystery','myth','naive','name','napkin','narrow','nasty','nation','nature','near','neck','need','negative','neglect','neither','nephew','nerve','nest','net','network','neutral','never','news','next','nice','night','noble','noise','nominee','noodle','normal','north','nose','notable','note','nothing','notice','novel','now','nuclear','number','nurse','nut','oak','obey','object','oblige','obscure','observe','obtain','obvious','occur','ocean','october','odor','off','offer','office','often','oil','okay','old','olive','olympic','omit','once','one','onion','online','only','open','opera','opinion','oppose','option','orange','orbit','orchard','order','ordinary','organ','orient','original','orphan','ostrich','other','outdoor','outer','output','outside','oval','oven','over','own','owner','oxygen','oyster','ozone','pact','paddle','page','pair','palace','palm','panda','panel','panic','panther','paper','parade','parent','park','parrot','party','pass','patch','path','patient','patrol','pattern','pause','pave','payment','peace','peanut','pear','peasant','pelican','pen','penalty','pencil','people','pepper','perfect','permit','person','pet','phone','photo','phrase','physical','piano','picnic','picture','piece','pig','pigeon','pill','pilot','pink','pioneer','pipe','pistol','pitch','pizza','place','planet','plastic','plate','play','please','pledge','pluck','plug','plunge','poem','poet','point','polar','pole','police','pond','pony','pool','popular','portion','position','possible','post','potato','pottery','poverty','powder','power','practice','praise','predict','prefer','prepare','present','pretty','prevent','price','pride','primary','print','priority','prison','private','prize','problem','process','produce','profit','program','project','promote','proof','property','prosper','protect','proud','provide','public','pudding','pull','pulp','pulse','pumpkin','punch','pupil','puppy','purchase','purity','purpose','purse','push','put','puzzle','pyramid','quality','quantum','quarter','question','quick','quit','quiz','quote','rabbit','raccoon','race','rack','radar','radio','rail','rain','raise','rally','ramp','ranch','random','range','rapid','rare','rate','rather','raven','raw','razor','ready','real','reason','rebel','rebuild','recall','receive','recipe','record','recycle','reduce','reflect','reform','refuse','region','regret','regular','reject','relax','release','relief','rely','remain','remember','remind','remove','render','renew','rent','reopen','repair','repeat','replace','report','require','rescue','resemble','resist','resource','response','result','retire','retreat','return','reunion','reveal','review','reward','rhythm','rib','ribbon','rice','rich','ride','ridge','rifle','right','rigid','ring','riot','ripple','risk','ritual','rival','river','road','roast','robot','robust','rocket','romance','roof','rookie','room','rose','rotate','rough','round','route','royal','rubber','rude','rug','rule','run','runway','rural','sad','saddle','sadness','safe','sail','salad','salmon','salon','salt','salute','same','sample','sand','satisfy','satoshi','sauce','sausage','save','say','scale','scan','scare','scatter','scene','scheme','school','science','scissors','scorpion','scout','scrap','screen','script','scrub','sea','search','season','seat','second','secret','section','security','seed','seek','segment','select','sell','seminar','senior','sense','sentence','series','service','session','settle','setup','seven','shadow','shaft','shallow','share','shed','shell','sheriff','shield','shift','shine','ship','shiver','shock','shoe','shoot','shop','short','shoulder','shove','shrimp','shrug','shuffle','shy','sibling','sick','side','siege','sight','sign','silent','silk','silly','silver','similar','simple','since','sing','siren','sister','situate','six','size','skate','sketch','ski','skill','skin','skirt','skull','slab','slam','sleep','slender','slice','slide','slight','slim','slogan','slot','slow','slush','small','smart','smile','smoke','smooth','snack','snake','snap','sniff','snow','soap','soccer','social','sock','soda','soft','solar','soldier','solid','solution','solve','someone','song','soon','sorry','sort','soul','sound','soup','source','south','space','spare','spatial','spawn','speak','special','speed','spell','spend','sphere','spice','spider','spike','spin','spirit','split','spoil','sponsor','spoon','sport','spot','spray','spread','spring','spy','square','squeeze','squirrel','stable','stadium','staff','stage','stairs','stamp','stand','start','state','stay','steak','steel','stem','step','stereo','stick','still','sting','stock','stomach','stone','stool','story','stove','strategy','street','strike','strong','struggle','student','stuff','stumble','style','subject','submit','subway','success','such','sudden','suffer','sugar','suggest','suit','summer','sun','sunny','sunset','super','supply','supreme','sure','surface','surge','surprise','surround','survey','suspect','sustain','swallow','swamp','swap','swarm','swear','sweet','swift','swim','swing','switch','sword','symbol','symptom','syrup','system','table','tackle','tag','tail','talent','talk','tank','tape','target','task','taste','tattoo','taxi','teach','team','tell','ten','tenant','tennis','tent','term','test','text','thank','that','theme','then','theory','there','they','thing','this','thought','three','thrive','throw','thumb','thunder','ticket','tide','tiger','tilt','timber','time','tiny','tip','tired','tissue','title','toast','tobacco','today','toddler','toe','together','toilet','token','tomato','tomorrow','tone','tongue','tonight','tool','tooth','top','topic','topple','torch','tornado','tortoise','toss','total','tourist','toward','tower','town','toy','track','trade','traffic','tragic','train','transfer','trap','trash','travel','tray','treat','tree','trend','trial','tribe','trick','trigger','trim','trip','trophy','trouble','truck','true','truly','trumpet','trust','truth','try','tube','tuition','tumble','tuna','tunnel','turkey','turn','turtle','twelve','twenty','twice','twin','twist','two','type','typical','ugly','umbrella','unable','unaware','uncle','uncover','under','undo','unfair','unfold','unhappy','uniform','unique','unit','universe','unknown','unlock','until','unusual','unveil','update','upgrade','uphold','upon','upper','upset','urban','urge','usage','use','used','useful','useless','usual','utility','vacant','vacuum','vague','valid','valley','valve','van','vanish','vapor','various','vast','vault','vehicle','velvet','vendor','venture','venue','verb','verify','version','very','vessel','veteran','viable','vibrant','vicious','victory','video','view','village','vintage','violin','virtual','virus','visa','visit','visual','vital','vivid','vocal','voice','void','volcano','volume','vote','voyage','wage','wagon','wait','walk','wall','walnut','want','warfare','warm','warrior','wash','wasp','waste','water','wave','way','wealth','weapon','wear','weasel','weather','web','wedding','weekend','weird','welcome','west','wet','whale','what','wheat','wheel','when','where','whip','whisper','wide','width','wife','wild','will','win','window','wine','wing','wink','winner','winter','wire','wisdom','wise','wish','witness','wolf','woman','wonder','wood','wool','word','work','world','worry','worth','wrap','wreck','wrestle','wrist','write','wrong','yard','year','yellow','you','young','youth','zebra','zero','zone','zoo'];
+const _REC_KEYS = { hash:'pin_recovery_hash', salt:'pin_recovery_salt', fails:'pin_recovery_fails', lock:'pin_recovery_lock_until' };
+const _REC_MAX_FAILS = 5, _REC_LOCK_MS = 60*1000;
+function _bip39Random(){
+  const out = [], arr = new Uint32Array(4);
+  crypto.getRandomValues(arr);
+  for(let i=0;i<4;i++){ out.push(BIP39_WORDS[arr[i] % 2048]); }
+  return out;
+}
+function _generateRecoveryCode(){ return _bip39Random(); }
+function _formatRecoveryCode(arr){ return (arr||[]).join(' '); }
+function _normalizeRecoveryInput(input){ if(Array.isArray(input)) input = input.join(' '); return String(input||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function _recHex(buf){ return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function _recRandomHex(bytes){ const a=new Uint8Array(bytes); crypto.getRandomValues(a); return _recHex(a.buffer); }
+async function _hashRecoveryCode(code, saltHex){
+  if(!crypto?.subtle) return null;
+  const data = new TextEncoder().encode(String(saltHex)+':'+_normalizeRecoveryInput(code));
+  return _recHex(await crypto.subtle.digest('SHA-256', data));
+}
+function _recoveryActive(){ return !!LS.get(_REC_KEYS.hash, '') && !!LS.get(_REC_KEYS.salt, ''); }
+async function _recoverySave(code){
+  const salt = _recRandomHex(16);
+  const hash = await _hashRecoveryCode(code, salt);
+  LS.set(_REC_KEYS.salt, salt); LS.set(_REC_KEYS.hash, hash);
+  LS.set(_REC_KEYS.fails, 0); LS.del(_REC_KEYS.lock);
+}
+function _recoveryClear(){ LS.del(_REC_KEYS.hash); LS.del(_REC_KEYS.salt); LS.del(_REC_KEYS.fails); LS.del(_REC_KEYS.lock); }
+async function _recoveryVerify(input){
+  const salt = LS.get(_REC_KEYS.salt, ''), stored = LS.get(_REC_KEYS.hash, '');
+  if(!salt || !stored) return false;
+  return (await _hashRecoveryCode(input, salt)) === stored;
+}
+function _recoveryLockRemainingMs(){ return Math.max(0, (Number(LS.get(_REC_KEYS.lock, 0))||0) - Date.now()); }
+function _recoveryNoteFail(){
+  let fails = (Number(LS.get(_REC_KEYS.fails,0))||0) + 1;
+  LS.set(_REC_KEYS.fails, fails);
+  if(fails >= _REC_MAX_FAILS){ LS.set(_REC_KEYS.lock, Date.now()+_REC_LOCK_MS); LS.set(_REC_KEYS.fails, 0); }
+  return fails;
+}
+function _recoveryResetFails(){ LS.set(_REC_KEYS.fails, 0); LS.del(_REC_KEYS.lock); }
+function _recoveryAttemptsLeft(){ return Math.max(0, _REC_MAX_FAILS - (Number(LS.get(_REC_KEYS.fails,0))||0)); }
+
+// REC1.4: Recovery-Code beim PIN-Setzen anbieten (oder via Settings direkt anzeigen).
+function _offerRecoveryCode(directShow){
+  const m = document.getElementById('modalPinRecovery'); if(!m) return;
+  const offer=document.getElementById('pinRecOffer'), show=document.getElementById('pinRecShow'), warn=document.getElementById('pinRecWarn');
+  const codeEl=document.getElementById('pinRecCode'), noted=document.getElementById('pinRecNoted'), confirmBtn=document.getElementById('pinRecConfirm');
+  let currentCode=null;
+  const close=()=>{ m.classList.remove('open'); };
+  const toShow=()=>{ currentCode=_generateRecoveryCode(); if(codeEl) codeEl.textContent=_formatRecoveryCode(currentCode); offer.hidden=true; warn.hidden=true; show.hidden=false; if(noted) noted.checked=false; if(confirmBtn) confirmBtn.disabled=true; };
+  offer.hidden=true; show.hidden=true; warn.hidden=true;
+  document.getElementById('pinRecYes').onclick=toShow;
+  document.getElementById('pinRecNo').onclick=()=>{ offer.hidden=true; show.hidden=true; warn.hidden=false; };
+  document.getElementById('pinRecWarnBack').onclick=toShow;
+  document.getElementById('pinRecWarnConfirm').onclick=()=>{ close(); toast('PIN ohne Recovery-Code gesetzt'); };
+  document.getElementById('pinRecCopy').onclick=async()=>{ try{ await navigator.clipboard.writeText(_formatRecoveryCode(currentCode)); toast('Code kopiert'); }catch{ toast('Kopieren fehlgeschlagen, bitte manuell notieren'); } };
+  if(noted) noted.onchange=()=>{ if(confirmBtn) confirmBtn.disabled=!noted.checked; };
+  document.getElementById('pinRecConfirm').onclick=async()=>{ if(!currentCode) return; await _recoverySave(currentCode); close(); toast('Recovery-Code aktiviert'); _updatePinRecoveryStatus(); };
+  if(directShow){ toShow(); } else { offer.hidden=false; }
+  m.classList.add('open');
+}
+function _updatePinRecoveryStatus(){
+  const row=document.getElementById('pinRecoveryRow'), st=document.getElementById('pinRecoveryStatus'), btn=document.getElementById('btnPinRecovery');
+  if(!row) return;
+  row.style.display = PREFS.pinEnabled ? '' : 'none';
+  const active=_recoveryActive();
+  if(st) st.textContent = active ? 'Aktiv' : 'Nicht aktiv';
+  if(btn) btn.textContent = active ? 'Neu generieren' : 'Generieren';
+}
+
+/* ═══════════════════════════════════════════════════════════════
    v4.6: PIN-LOCK & AUTO-LOCK
 ═══════════════════════════════════════════════════════════════ */
 async function sha256(str){
@@ -15223,6 +15349,10 @@ async function setupPin(){
   PREFS.pinEnabled = true;
   savePrefs();
   toast('PIN aktiv. Wird beim nächsten Start abgefragt.');
+  // v9.9.0 REC-1: bestehende Recovery-Daten verfallen bei PIN-Aenderung (Decision 2); neuen Code anbieten (Decision 4)
+  _recoveryClear();
+  _updatePinRecoveryStatus();
+  _offerRecoveryCode();
 }
 async function removePin(){
   const pin = prompt('Aktuelle PIN zum Entfernen:');
@@ -15231,6 +15361,8 @@ async function removePin(){
   if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
   PREFS.pinSalt = ''; PREFS.pinHash = ''; PREFS.pinEnabled = false;
   savePrefs();
+  _recoveryClear();              // v9.9.0 REC-1: Recovery mit PIN entfernen (Decision REC1.7/I)
+  _updatePinRecoveryStatus();
   toast('PIN entfernt');
 }
 async function requirePin(){
@@ -15258,6 +15390,40 @@ async function requirePin(){
       }
     };
     const enterHandler = (e)=>{ if(e.key==='Enter') handler(); };
+    // v9.9.0 REC-1: „PIN vergessen?" -> Recovery-Code-Eingabe (eigener Brute-Force-Schutz, PIN-Eingabe selbst unveraendert)
+    const forgot=$('#pinForgot'), recBox=$('#pinRecoverBox'), recInp=$('#pinRecoverInput'), recBtn=$('#pinRecoverSubmit'), recMsg=$('#pinRecoverMsg');
+    let _recLockTimer=null;
+    const recLockUI=()=>{
+      const rem=_recoveryLockRemainingMs();
+      if(rem>0){ if(recBtn) recBtn.disabled=true; if(recMsg) recMsg.textContent='Bitte warten: '+Math.ceil(rem/1000)+' Sekunden'; if(_recLockTimer) clearTimeout(_recLockTimer); _recLockTimer=setTimeout(recLockUI,1000); }
+      else { if(recBtn) recBtn.disabled=false; if(_recLockTimer){ clearTimeout(_recLockTimer); _recLockTimer=null; } }
+    };
+    if(forgot && recBox){
+      forgot.hidden = !_recoveryActive();
+      recBox.hidden = true;
+      forgot.onclick=()=>{ recBox.hidden=false; forgot.hidden=true; if(recInp){ recInp.value=''; recInp.focus(); } if(recMsg) recMsg.textContent=''; recLockUI(); };
+    }
+    if(recBtn){
+      recBtn.onclick=async()=>{
+        if(_recoveryLockRemainingMs()>0){ recLockUI(); return; }
+        const valid = await _recoveryVerify(recInp ? recInp.value : '');
+        if(valid){
+          _recoveryResetFails();
+          if(_recLockTimer){ clearTimeout(_recLockTimer); _recLockTimer=null; }
+          overlay.style.display='none';
+          if(recBox) recBox.hidden=true;
+          btn.removeEventListener('click', handler);
+          inp.removeEventListener('keydown', enterHandler);
+          toast('Recovery erfolgreich');
+          resolve(true);
+        } else {
+          _recoveryNoteFail();
+          if(_recoveryLockRemainingMs()>0){ recLockUI(); }
+          else if(recMsg){ recMsg.textContent='Falscher Code. Versuche übrig: '+_recoveryAttemptsLeft(); }
+          if(recInp) recInp.value='';
+        }
+      };
+    }
     btn.addEventListener('click', handler);
     inp.addEventListener('keydown', enterHandler);
   });
@@ -17920,7 +18086,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.8.0 bereit.','ok');
+  log('Terp Sessions v9.9.0 bereit.','ok');
 
   setupPwaUpdate();
 

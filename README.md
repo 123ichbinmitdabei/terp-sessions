@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.8.0)
+# Terp Sessions — Vape Controller (v9.9.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,20 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.9.0 — Recovery-Mechanismus für PIN (Paket REC-1)
+
+Bei vergessener PIN waren bisher alle lokalen Daten verloren (localStorage musste gelöscht werden). Ein Recovery-Code löst das. MINOR, neues Feature, kein Breaking Change. Eigene Crypto-Domain (nicht cscCrypto), kein Backend-Eingriff.
+
+- **Recovery-Code:** 4 BIP39-Wörter aus der englischen Standard-Wortliste (2048 Wörter, inline eingebaut), zum Beispiel „hammer table river forest". 44 Bit Entropie, kryptografisch sicher per `crypto.getRandomValues`. Der Code wird nie im Klartext gespeichert, sondern als SHA-256-Hash mit einem 16-Byte-Salt (`crypto.getRandomValues`) in localStorage.
+- **Optional beim PIN-Setzen** (Andres Entscheidung 4): nach dem Setzen erscheint ein Dialog mit der Frage, ob ein Recovery-Code generiert werden soll. „Nein" zeigt eine deutliche Warnung. „Ja" zeigt den Code groß an, mit Kopier-Button und einer Pflicht-Checkbox „Ich habe den Code sicher notiert", die das Bestätigen freischaltet (der Code wird danach nicht erneut angezeigt).
+- **Mehrfach nutzbar** (Entscheidung 2): der Code bleibt gültig, solange die PIN nicht geändert wird. Beim PIN-Ändern oder Entfernen werden die Recovery-Daten gelöscht (und beim Ändern ein neuer Code angeboten).
+- **Direct-Unlock** (Entscheidung 3): nach erfolgreicher Recovery entsperrt die App direkt, kein erzwungener PIN-Reset. Der Nutzer kann später in den Einstellungen selbst eine neue PIN setzen oder die Sperre deaktivieren.
+- **„PIN vergessen?"** erscheint im PIN-Sperrbildschirm nur, wenn ein Recovery-Code aktiv ist. Ein Klick öffnet ein Eingabefeld für die vier Wörter (Eingabe wird normalisiert: getrimmt, kleingeschrieben, Mehrfach-Leerzeichen zusammengefasst).
+- **Brute-Force-Schutz** (nur für die Recovery-Eingabe): nach 5 Fehlversuchen 60 Sekunden Sperre mit Countdown, danach Zähler-Reset. Die bestehende PIN-Eingabe selbst wurde bewusst nicht verändert (separates Thema).
+- **Einstellungen:** unter Zugriffsschutz zeigt eine neue Zeile den Recovery-Status (Aktiv / Nicht aktiv) mit einem Button zum Generieren oder Neu-Generieren. Nur sichtbar, wenn die PIN-Sperre aktiv ist.
+
+Der Dialog ist ein `role=dialog`-Modal und wird vom Modal-Inert-System aus v9.7.0 korrekt behandelt. **Unberührt:** cscCrypto, Backend, die bestehende PIN-Eingabe-Logik, das PIN-Storage-Format. **Tests:** `v99recovery.mjs` (35: BIP39-Liste, Generierung, Normalisierung, Hashing, Modal-Ja/Nein-Pfad, Verify plus Brute-Force, E2E-Unlock über `requirePin`, Clear-Wiring, Settings-Status). Volle Regression grün.
 
 ## v9.8.0 — Run-Engine-Refactor: Voice-Pause/Skip/Previous + responsiver Abbruch (Paket R1)
 
