@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.7.1)
+# Terp Sessions — Vape Controller (v9.8.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,24 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.8.0 — Run-Engine-Refactor: Voice-Pause/Skip/Previous + responsiver Abbruch (Paket R1)
+
+Implementiert die in B2.3 zurückgestellten Programm-Lauf-Befehle (A Pause, B Skip, C Previous) plus einen responsiveren Abbruch. Grundlage: `docs/R0-AUDIT-2026-06-05.md`. MINOR, neues Feature-Set. Kein Backend-Eingriff, cscCrypto unberührt.
+
+**Architektur** (vom Audit empfohlen): Da `expandLoops` alle Schleifen vor dem Lauf zu einem flachen Array auflöst, ist die Engine zur Laufzeit nur ein Index in eine flache Liste. Der `for`-Loop wurde zu einem index-gesteuerten `while`-Loop, kombiniert mit einer unterbrechbaren Warteprimitive, die alle 200 Millisekunden stop, skip, previous und paused prüft.
+
+- **Pause/Weiter:** `_engineWait` und `_engineCheckpoint` halten den Fortschritt an, ohne den Gerätezustand zu ändern (Heizer bleibt an wie zum Pause-Zeitpunkt, Andres Entscheidung 1). Der Countdown friert bei Pause ein und setzt beim Weitermachen nahtlos fort (`_stepStartedAt`-Verschiebung um die Pausendauer).
+- **Skip:** bricht die laufende Wartezeit ab und springt zum nächsten Schritt. Ein laufendes `pump_for` schaltet die Pumpe dabei sofort aus (Andres Entscheidung 2, garantiert über `finally` in der engine-eigenen `_enginePumpFor`). Der globale `cmdPumpFor` (UI-Buttons, Voice „pumpe für X") bleibt unangetastet (Entscheidung 7).
+- **Previous:** setzt nur den Index zurück und führt ab dort normal weiter, kein Rückgängig-Machen bereits ausgeführter Aktionen (Entscheidung 3). Am ersten Schritt passiert nichts.
+- **Pause-Timeout:** nach 30 Minuten Pause automatischer Abbruch mit Sprach-Hinweis (Entscheidung 5).
+- **Voice (Entscheidung 6):** „pause"/„pausiere"/„anhalten", „weiter"/„fortsetzen", „nächster Schritt", „vorheriger Schritt". Die Phrasen stehen bewusst vor der Navigations-Erkennung, damit bare „zurück"/„weiter" nicht mit „schließe das Modal" oder der Tab-Navigation kollidieren, und Skip vor Resume, damit „weiter zum nächsten" als Skip zählt.
+- **UI:** die Run-Card hat jetzt Pause/Weiter-, Zurück- und Schritt-Buttons plus eine assertive „⏸ Pausiert"-Anzeige, sodass Tester es auch ohne Stimme bedienen können. Voice und Buttons teilen sich dieselbe `_engineCtl*`-Logik.
+- **Responsiver Abbruch (Bonus D):** weil `stopFlag` jetzt alle 200 Millisekunden in den Wartezeiten geprüft wird, reagiert der B2.3-Abbruch sofort (vorher erst am Schritt-Ende, bei einem `wait_until` bis zu mehrere Minuten Verzögerung).
+
+**Race-Verhalten:** Stop hat Vorrang vor Skip und Pause. Skip oder Previous während einer Pause heben die Pause auf. BLE-Disconnect während Pause hält die Pause (der Nutzer entscheidet, Entscheidung 4).
+
+**Unberührt:** cscCrypto, Backend, der globale `cmdPumpFor`, Wake-Word, die Step-Action-Typen, Werks-Programme. Der `prompt()`-Nebenbefund beim Programmstart bleibt für ein separates Paket (Entscheidung 8). **Tests:** `v98engine.mjs` (54: State-Felder, `_engineWait`, Pause/Resume, Skip, Previous, Pause-Timeout, `pump_for`-Cleanup, Race Pause plus Stop, Abbruch unter 500 Millisekunden, Parser, executeVoiceCommand, UI). Volle Regression grün. Finale Geräte-Abnahme bleibt ein manueller Lauf am echten Vaporizer.
 
 ## v9.7.1 — A11Y Nice-to-haves + Blätter-Konsistenz (Paket A11Y-N1)
 
