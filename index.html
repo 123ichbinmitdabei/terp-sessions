@@ -8637,7 +8637,7 @@ function _renderRunSteps(){
   if(cur && typeof cur.scrollIntoView==='function'){ try{ cur.scrollIntoView({block:'nearest'}); }catch{} }
 }
 function _updateRunCountdown(){
-  const r = State.running; if(!r) return;
+  const r = State.running; if(!r || r.paused) return;   // v9.8.0 R1: bei Pause Countdown einfrieren
   const now = Date.now();
   const stepDur = r.stepDurations[r.idx] || 0;
   const elapsedSec = r._stepStartedAt ? Math.floor((now - r._stepStartedAt)/1000) : 0;
@@ -8656,6 +8656,141 @@ function _stopRunCountdown(){
   if(_runCountdownTimer){ clearInterval(_runCountdownTimer); _runCountdownTimer=null; }
   const sr=$('#runStepRemain'); if(sr) sr.textContent='--:--';
   const tr=$('#runTotalRemain'); if(tr) tr.textContent='--:--';
+}
+
+/* ═══ v9.8.0 Paket R1: unterbrechbare Run-Engine (Pause/Skip/Previous + responsiver Abbruch) ═══
+   Grundlage: docs/R0-AUDIT-2026-06-05.md. Loops sind vorab flach (expandLoops), daher index-gesteuert.
+   Andre-Entscheidungen: Pause haelt Geraet wie es ist; pump_for bei Skip sofort aus; Previous nur Zeiger;
+   BLE-Disconnect bei Pause haelt; Pause-Timeout 30 Min; cmdPumpFor global unangetastet. */
+let _ENGINE_PAUSE_TIMEOUT_MS = 30*60*1000;   // 30 Min; im Test ueberschreibbar
+const _ENGINE_POLL_MS = 200;
+
+// Unterbrechbare Wartezeit. Bei Pause wird die Zeit NICHT heruntergezaehlt.
+// Rueckgabe: 'done' | 'skipped' | 'previous'. Wirft 'Abgebrochen' bei stopFlag.
+async function _engineWait(totalMs){
+  let waited = 0;
+  while(waited < totalMs){
+    const r = State.running;
+    if(!r) return 'done';
+    if(r.stopFlag) throw new Error('Abgebrochen');
+    if(r.skipFlag) return 'skipped';
+    if(r.previousFlag) return 'previous';
+    if(r.paused){ await sleep(_ENGINE_POLL_MS); continue; }   // pausiert: Zeit nicht zaehlen
+    await sleep(_ENGINE_POLL_MS);
+    waited += _ENGINE_POLL_MS;
+  }
+  return 'done';
+}
+
+// Pause-Schranke zwischen Schritten. Wartet solange paused, reagiert auf stop/skip/previous.
+// Rueckgabe: 'continue' | 'skipped' | 'previous'. Wirft 'Abgebrochen' bei stopFlag.
+async function _engineCheckpoint(){
+  while(true){
+    const r = State.running;
+    if(!r) return 'continue';
+    if(r.stopFlag) throw new Error('Abgebrochen');
+    if(r.skipFlag) return 'skipped';
+    if(r.previousFlag) return 'previous';
+    if(!r.paused) return 'continue';
+    await sleep(_ENGINE_POLL_MS);
+  }
+}
+
+// Engine-eigene Pump-Variante (globaler cmdPumpFor bleibt unangetastet, Andre-Entscheidung 7).
+// Garantiert pumpOff im finally, auch bei Skip/Stop (Andre-Entscheidung 2).
+async function _enginePumpFor(seconds){
+  let result = 'done';
+  try{
+    await cmdPumpOn();
+    log(`Pumpe läuft ${seconds}s …`);
+    result = await _engineWait((seconds||0)*1000);
+  } finally {
+    try{ await cmdPumpOff(); }catch(_){}
+  }
+  return result;
+}
+
+// 30-Min-Pause-Timeout (Andre-Entscheidung 5): danach Auto-Abbruch mit Hinweis.
+function _engineArmPauseTimeout(){
+  _engineClearPauseTimeout();
+  if(!State.running) return;
+  State.running.pausePollHandle = setTimeout(()=>{
+    if(State.running && State.running.paused){
+      State.running.stopFlag = true;
+      State.running.paused = false;
+      try{ ttsSay('Programm nach 30 Minuten Pause automatisch beendet'); }catch(_){}
+      try{ voiceFeedback('Programm nach 30 Minuten Pause automatisch beendet'); }catch(_){}
+      try{ _renderPauseState(); }catch(_){}
+    }
+  }, _ENGINE_PAUSE_TIMEOUT_MS);
+}
+function _engineClearPauseTimeout(){
+  if(State.running && State.running.pausePollHandle){
+    clearTimeout(State.running.pausePollHandle);
+    State.running.pausePollHandle = null;
+  }
+}
+
+// Steuer-Funktionen (von Voice UND UI-Buttons genutzt). Geben true zurueck wenn behandelt.
+function _engineCtlPause(){
+  const r = State.running;
+  if(!r){ voiceFeedback('Es läuft gerade kein Programm'); _voiceSpeakConfirm('Es läuft gerade kein Programm'); return false; }
+  if(r.paused){ voiceFeedback('Programm ist bereits pausiert'); return true; }
+  r.paused = true; r.pausedAt = Date.now();
+  _engineArmPauseTimeout();
+  _renderPauseState();
+  voiceFeedback('⏸ Programm pausiert'); _voiceSpeakConfirm('Programm pausiert');
+  return true;
+}
+function _engineCtlResume(){
+  const r = State.running;
+  if(!r || !r.paused){ voiceFeedback('Programm ist nicht pausiert'); _voiceSpeakConfirm('Programm ist nicht pausiert'); return false; }
+  _engineClearPauseTimeout();
+  // Countdown nahtlos fortsetzen: Schritt-Start um die Pausendauer nach vorn schieben.
+  if(r.pausedAt && r._stepStartedAt){ r._stepStartedAt += (Date.now() - r.pausedAt); }
+  r.paused = false; r.pausedAt = null;
+  _renderPauseState();
+  voiceFeedback('▶ Programm wird fortgesetzt'); _voiceSpeakConfirm('Programm wird fortgesetzt');
+  return true;
+}
+// Skip/Previous setzen das Flag; bei aktiver Pause wird paused zurueckgesetzt (sonst blockiert der naechste Checkpoint).
+function _engineUnpauseForJump(r){
+  if(r.paused){
+    _engineClearPauseTimeout();
+    if(r.pausedAt && r._stepStartedAt){ r._stepStartedAt += (Date.now() - r.pausedAt); }
+    r.paused = false; r.pausedAt = null;
+    _renderPauseState();
+  }
+}
+function _engineCtlSkip(){
+  const r = State.running;
+  if(!r){ voiceFeedback('Es läuft gerade kein Programm'); _voiceSpeakConfirm('Es läuft gerade kein Programm'); return false; }
+  r.skipFlag = true;
+  _engineUnpauseForJump(r);
+  voiceFeedback('⏭ Schritt übersprungen'); _voiceSpeakConfirm('Schritt übersprungen');
+  return true;
+}
+function _engineCtlPrevious(){
+  const r = State.running;
+  if(!r){ voiceFeedback('Es läuft gerade kein Programm'); _voiceSpeakConfirm('Es läuft gerade kein Programm'); return false; }
+  if((r.idx||0) === 0){ voiceFeedback('Erster Schritt, kein zurück möglich'); _voiceSpeakConfirm('Erster Schritt, kein zurück möglich'); return true; }
+  r.previousFlag = true;
+  _engineUnpauseForJump(r);
+  voiceFeedback('⏮ Vorheriger Schritt'); _voiceSpeakConfirm('Vorheriger Schritt');
+  return true;
+}
+
+// Pause-Anzeige in der Run-Card (R1.6). No-op solange die Elemente fehlen (vor R1.6-HTML).
+function _renderPauseState(){
+  const r = State.running;
+  const badge = document.getElementById('runPausedBadge');
+  const btn = document.getElementById('btnRunPause');
+  const paused = !!(r && r.paused);
+  if(badge){ badge.hidden = !paused; }
+  if(btn){
+    btn.textContent = paused ? '▶ Weiter' : '⏸ Pause';
+    btn.setAttribute('aria-label', paused ? 'Programm fortsetzen' : 'Programm pausieren');
+  }
 }
 
 async function runProgram(p){
@@ -8683,7 +8818,8 @@ async function runProgram(p){
   const stepDurations = _stepDurations(expanded, isFinite(State.cur) ? State.cur : 23);
 
   State.running = {
-    programName:p.name, idx:0, total:expanded.length, stopFlag:false,
+    programName:p.name, idx:0, currentStep:0, total:expanded.length, stopFlag:false,
+    paused:false, skipFlag:false, previousFlag:false, pausedAt:null, pausePollHandle:null,   // v9.8.0 R1
     expandedSteps:expanded, stepDurations, _stepStartedAt: Date.now(),
   };
   $('#runTitle').textContent = p.name;
@@ -8698,17 +8834,34 @@ async function runProgram(p){
   ttsEvent('programStart', p.name+' gestartet');
   rememberLastProgram(p);
   try{
-    for(let i=0;i<expanded.length;i++){
-      if(State.running.stopFlag) throw new Error('Abgebrochen');
-      State.running.idx=i;
+    // v9.8.0 R1.2: index-gesteuerter while-Loop (statt for), damit Skip/Previous den Index bewegen koennen.
+    let i = 0;
+    while(i < expanded.length){
+      if(State.running.stopFlag) break;
+      State.running.idx = i; State.running.currentStep = i;
+      // Pause-Schranke VOR jedem Schritt (haelt bei paused, reagiert auf stop/skip/previous).
+      let cp;
+      try{ cp = await _engineCheckpoint(); }
+      catch(e){ if(e && e.message === 'Abgebrochen') break; throw e; }
+      if(State.running.stopFlag) break;
+      if(cp === 'skipped'){ State.running.skipFlag = false; i++; continue; }
+      if(cp === 'previous'){ State.running.previousFlag = false; i = Math.max(0, i-1); continue; }
+
+      const step = expanded[i];
       State.running._stepStartedAt = Date.now();
-      updateRunUI(expanded[i]);
-      ttsEvent('programStepChange', `Schritt ${i+1} von ${expanded.length}: ${stepLabel(expanded[i]).replace(/<[^>]+>/g,'')}`);
-      await runStep(expanded[i]);
+      State.running.skipFlag = false; State.running.previousFlag = false;   // sauberer Schritt-Start
+      updateRunUI(step);
+      ttsEvent('programStepChange', `Schritt ${i+1} von ${expanded.length}: ${stepLabel(step).replace(/<[^>]+>/g,'')}`);
+
+      let result;
+      try{ result = await runStepInterruptible(step); }
+      catch(e){ if(e && e.message === 'Abgebrochen') break; throw e; }
+      if(result === 'skipped'){ State.running.skipFlag = false; i++; continue; }
+      if(result === 'previous'){ State.running.previousFlag = false; i = Math.max(0, i-1); continue; }
+      i++;
     }
-    log(`✓ Fertig: ${p.name}`,'ok');
-    toast('Programm fertig');
-    ttsEvent('programEnd', 'Programm beendet');
+    if(State.running && State.running.stopFlag){ log('Programm abgebrochen','warn'); }
+    else { log(`✓ Fertig: ${p.name}`,'ok'); toast('Programm fertig'); ttsEvent('programEnd', 'Programm beendet'); }
   }catch(e){
     log('Programmfehler: '+e.message,'err');
     ttsEvent('errors', 'Programmfehler: '+e.message);
@@ -8716,8 +8869,10 @@ async function runProgram(p){
     try{ await cmdPump(false); }catch{}
     try{ await cmdHeater(false); }catch{}
   }finally{
+    _engineClearPauseTimeout();   // v9.8.0 R1.4: Pause-Timeout aufraeumen
     _stopRunCountdown();
     State.running=null;
+    _renderPauseState();          // v9.8.0 R1.6: Pause-Anzeige zuruecksetzen
     $('#runCard').classList.remove('show');
     $('#connChip').classList.remove('run');
     if(!State.heater) releaseWakeLock();
@@ -8735,21 +8890,35 @@ function updateRunUI(currentStep){
   _updateRunCountdown();
 }
 
-async function runStep(s){
+// v9.8.0 R1.2: unterbrechbare Schritt-Ausfuehrung. Rueckgabe: 'done' | 'skipped' | 'previous'.
+// Sofortige Schritte (heat/pump/set) liefern 'done'; Wartezeiten reagieren auf stop/skip/previous/pause.
+async function runStepInterruptible(s){
   switch(s.action){
-    case 'heat_on':  return cmdHeater(true);
-    case 'heat_off': return cmdHeater(false);
-    case 'pump_on':  return cmdPump(true);
-    case 'pump_off': return cmdPump(false);
-    case 'set_temperature': return cmdSetTemp(s.value);
-    case 'wait': await sleep((s.seconds||0)*1000); return;
+    case 'heat_on':  await cmdHeater(true);  return 'done';
+    case 'heat_off': await cmdHeater(false); return 'done';
+    case 'pump_on':  await cmdPump(true);    return 'done';
+    case 'pump_off': await cmdPump(false);   return 'done';
+    case 'set_temperature': await cmdSetTemp(s.value); return 'done';
+    case 'wait': return await _engineWait((s.seconds||0)*1000);
     case 'wait_until': {
-      const ok = await waitUntilReached(s.value, 240);
-      if(!ok) log(`Timeout: ${s.value}°C nicht erreicht`,'warn');
-      return;
+      const target = s.value;
+      const timeoutMs = 240*1000;
+      let waited = 0;
+      while(waited < timeoutMs){
+        const r = State.running;
+        if(!r) return 'done';
+        if(r.stopFlag) throw new Error('Abgebrochen');
+        if(r.skipFlag) return 'skipped';
+        if(r.previousFlag) return 'previous';
+        if(r.paused){ await sleep(_ENGINE_POLL_MS); continue; }   // pausiert: Zeit nicht zaehlen, weiter heizen
+        if(isFinite(State.cur) && State.cur >= target-0.5) return 'done';
+        await sleep(_ENGINE_POLL_MS); waited += _ENGINE_POLL_MS;
+      }
+      log(`Timeout: ${target}°C nicht erreicht`,'warn');
+      return 'done';
     }
-    case 'pump_for': return cmdPumpFor(s.seconds||20);
-    default: log('Unbekannter Schritt: '+s.action,'warn');
+    case 'pump_for': return await _enginePumpFor(s.seconds||20);
+    default: log('Unbekannter Schritt: '+s.action,'warn'); return 'done';
   }
 }
 
