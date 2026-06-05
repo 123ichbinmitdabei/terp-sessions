@@ -4463,6 +4463,21 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
+<!-- v9.11.0 DLG-1: barrierefreie Dialog-Bausteine (ersetzen native alert/confirm/prompt; vom Inert-System erfasst) -->
+<div class="modal" id="modalDlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="back"></div>
+  <div class="sheet" style="max-width:420px">
+    <div class="grab"></div>
+    <h2 id="dlgTitle">Hinweis</h2>
+    <div id="dlgMsg" class="wiz-text" style="white-space:pre-line"></div>
+    <input type="text" id="dlgInput" autocomplete="off" autocapitalize="off" style="width:100%;margin-top:10px" hidden>
+    <div class="row" style="gap:8px;margin-top:16px">
+      <button class="btn primary" id="dlgOk" style="flex:1">OK</button>
+      <button class="btn ghost" id="dlgCancel" style="flex:1">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ─── v4.9.4: Siri/Google-Shortcuts Anleitung ────────────────── -->
 <div class="modal" id="modalShortcuts" role="dialog" aria-modal="true" aria-label="Sprachsteuerung über Siri und Google">
   <div class="back"></div>
@@ -6302,6 +6317,43 @@ function toast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
+/* ═══ v9.11.0 Paket DLG-1: barrierefreie Dialoge statt nativer alert/confirm/prompt ═══
+   Promise-basiert, als echte .modal (Inert-System + Fokus-Trap + Esc greifen).
+   uiAlert(msg[,title]) -> Promise<void>; uiConfirm(msg[,opts]) -> Promise<bool>;
+   uiPrompt(msg[,default][,opts]) -> Promise<string|null> (null = abgebrochen). */
+let _dlgResolve = null;
+function _dlgSettle(val){
+  const m = document.getElementById('modalDlg');
+  if(m) m.classList.remove('open');
+  const r = _dlgResolve; _dlgResolve = null;
+  if(r) r(val);
+}
+function _dlgOkClick(){ const inp=document.getElementById('dlgInput'); _dlgSettle(inp && !inp.hidden ? inp.value : true); }
+function _dlgCancelClick(){ const inp=document.getElementById('dlgInput'); _dlgSettle(inp && !inp.hidden ? null : false); }
+function _dlgOpen(opts){
+  return new Promise(resolve=>{
+    const m = document.getElementById('modalDlg');
+    if(!m){ resolve(opts.input ? null : false); return; }
+    if(_dlgResolve){ const prev=_dlgResolve; _dlgResolve=null; prev(opts.input ? null : false); }   // laufenden Dialog abbrechen
+    _dlgResolve = resolve;
+    const tEl=document.getElementById('dlgTitle'); if(tEl) tEl.textContent = opts.title || '';
+    const msg=document.getElementById('dlgMsg'); if(msg){ msg.textContent = opts.message || ''; msg.hidden = !opts.message; }
+    const inp=document.getElementById('dlgInput');
+    if(inp){
+      if(opts.input){ inp.hidden=false; inp.type=opts.inputType||'text'; inp.value=(opts.inputValue!=null)?String(opts.inputValue):''; inp.placeholder=opts.placeholder||''; inp.setAttribute('aria-label', opts.title||opts.message||'Eingabe'); }
+      else { inp.hidden=true; inp.value=''; }
+    }
+    const ok=document.getElementById('dlgOk'), cancel=document.getElementById('dlgCancel');
+    if(ok) ok.textContent = opts.okText || 'OK';
+    if(cancel){ cancel.textContent = opts.cancelText || 'Abbrechen'; cancel.hidden = (opts.cancel === false); }
+    m.classList.add('open');
+    setTimeout(()=>{ try{ (opts.input && inp ? inp : ok).focus(); }catch(_){} }, 60);
+  });
+}
+function uiAlert(message, title){ return _dlgOpen({title: title||'Hinweis', message: message, cancel:false, okText:'OK'}).then(()=>undefined); }
+function uiConfirm(message, opts){ opts=opts||{}; return _dlgOpen({title: opts.title||'Bestätigen', message: message, okText: opts.okText||'OK', cancelText: opts.cancelText||'Abbrechen'}).then(v=> v===true); }
+function uiPrompt(message, defaultValue, opts){ opts=opts||{}; return _dlgOpen({title: opts.title||'Eingabe', message: message, input:true, inputValue: defaultValue, inputType: (opts.type||'text'), placeholder: opts.placeholder}).then(v=> (v==null ? null : String(v))); }
+
 /* ═══ v8.1.0 MODUL 2: Benutzerfreundliche Fehlermeldungen ═══
    Wandelt technische BLE-/Adapter-Fehler in {title,message,action,severity}.
    Reihenfolge der Treffer ist wichtig (spezifisch vor generisch). */
@@ -7642,7 +7694,7 @@ async function _commProgramRateClick(p, stars){
 }
 
 async function _commProgramDeleteConfirm(p){
-  if(!confirm(`Programm „${p.name}" wirklich löschen? Auch Bewertungen + Sorten-Verknüpfungen werden gelöscht. Nicht rückgängig.`)) return;
+  if(!(await uiConfirm(`Programm „${p.name}" wirklich löschen? Auch Bewertungen + Sorten-Verknüpfungen werden gelöscht. Nicht rückgängig.`))) return;
   try{
     await communityClient.programDeleteOwn(p.id);
     document.getElementById('modalCommunityProgramDetail')?.classList.remove('open');
@@ -7977,7 +8029,7 @@ function _commModItemHtml(p){
 async function _commModResolve(propId, accept){
   let note = null;
   if(!accept){
-    note = prompt('Optional: Begründung (max 500 Zeichen)') || null;
+    note = await uiPrompt('Optional: Begründung (max 500 Zeichen)') || null;
   }
   try{
     await communityClient.adminResolveProposal(propId, accept, note);
@@ -8088,10 +8140,10 @@ function progCard(p, kind){
   return div;
 }
 
-function deleteProgram(id){
+async function deleteProgram(id){
   const p = State.programs.find(x=>x.id===id);
   if(!p) return;
-  if(!confirm(`Programm „${p.name}" wirklich löschen?`)) return;
+  if(!(await uiConfirm(`Programm „${p.name}" wirklich löschen?`))) return;
   const before = JSON.parse(JSON.stringify(State.programs));   // v8.7.0 UX: Undo-Snapshot
   State.programs = State.programs.filter(x=>x.id!==id);
   LS.set('vol_programs', State.programs);
@@ -8376,9 +8428,9 @@ function curveAdjustDuration(stepIdx, delta){
   s.seconds=Math.max(s.action==='pump_for'?5:0, (s.seconds||0)+delta);
   renderBuilder();
 }
-function curveDeletePoint(stepIdx){
+async function curveDeletePoint(stepIdx){
   const s=editorState.steps[stepIdx]; if(!s||s.action!=='set_temperature') return;
-  if(!confirm('Diesen Temperatur-Punkt löschen?')) return;
+  if(!(await uiConfirm('Diesen Temperatur-Punkt löschen?'))) return;
   editorState.steps.splice(stepIdx,1);
   // verwaistes folgendes wait_until des gleichen Punktes ebenfalls entfernen
   const nxt=editorState.steps[stepIdx]; if(nxt && nxt.action==='wait_until') editorState.steps.splice(stepIdx,1);
@@ -8534,9 +8586,9 @@ function saveEditor(){
   renderPrograms();
   toast('Gespeichert');
 }
-function deleteEditor(){
+async function deleteEditor(){
   if(!State.editingId) return;
-  if(!confirm('Programm wirklich löschen?')) return;
+  if(!(await uiConfirm('Programm wirklich löschen?'))) return;
   State.programs = State.programs.filter(p=>p.id!==State.editingId);
   LS.set('vol_programs', State.programs);
   closeEditor();
@@ -8636,10 +8688,10 @@ function _tplRender(){
   const loadBtn=document.getElementById('tplLoadBtn'); if(loadBtn) loadBtn.disabled = !_tplSelected;
 }
 
-function _tplApply(){
+async function _tplApply(){
   const t = _tplAll.find(x=>x.id===_tplSelected); if(!t || !editorState) return;
   if(Array.isArray(editorState.steps) && editorState.steps.length>0){
-    if(!confirm('Aktuelle Schritte werden überschrieben. Fortfahren?')) return;   // Picker bleibt offen bei Abbruch
+    if(!(await uiConfirm('Aktuelle Schritte werden überschrieben. Fortfahren?'))) return;   // Picker bleibt offen bei Abbruch
   }
   editorState.steps = JSON.parse(JSON.stringify(t.steps||[]));   // Deep-Copy
   // Antwort 2: Sorten-Verknuepfungen mitkopieren — nur im Community-Modus (eigene Programme haben kein Sorten-Feld)
@@ -8860,7 +8912,7 @@ async function runProgram(p){
   if(programHasVars(p)){
     const vars = {};
     for(const name of collectVarNames(p)){
-      const v = prompt(`Wert für {${name}}:`, '');
+      const v = await uiPrompt(`Wert für {${name}}:`, '');
       if(v === null){ toast('Abgebrochen'); return; }
       vars[name] = isNaN(v) ? v : Number(v);
     }
@@ -9174,7 +9226,7 @@ function wire(){
 
   // UUIDs
   $('#btnSaveUUIDs').addEventListener('click', saveUUIDs);
-  $('#btnResetUUIDs').addEventListener('click', ()=>{ if(confirm('Auf Standardwerte zurücksetzen?')) resetUUIDs(); });
+  $('#btnResetUUIDs').addEventListener('click', async()=>{ if(await uiConfirm('Auf Standardwerte zurücksetzen?')) resetUUIDs(); });
 
   // Manual control
   const stepperWire=(minus,plus,input,lo,hi,delta=1)=>{
@@ -9233,6 +9285,12 @@ function wire(){
 
   // Run engine
   $('#btnRunStop').addEventListener('click', stopRun);
+  // v9.11.0 DLG-1: Dialog-Bausteine verdrahten
+  $('#dlgOk')?.addEventListener('click', _dlgOkClick);
+  $('#dlgCancel')?.addEventListener('click', _dlgCancelClick);
+  $('#modalDlg .back')?.addEventListener('click', _dlgCancelClick);
+  $('#dlgInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); _dlgOkClick(); } });
+  $('#modalDlg')?.addEventListener('keydown', e=>{ if(e.key==='Escape'){ _dlgCancelClick(); } });
   // v9.8.0 R1.6: Pause/Resume-Toggle + Zurueck/Schritt (teilen sich die _engineCtl*-Logik mit Voice)
   $('#btnRunPause')?.addEventListener('click', ()=>{ const r=State.running; if(r && r.paused) _engineCtlResume(); else _engineCtlPause(); });
   $('#btnRunPrev')?.addEventListener('click', ()=>{ _engineCtlPrevious(); });
@@ -9538,11 +9596,11 @@ function wire(){
   // Replay last program
   $('#btnReplayLast')?.addEventListener('click', replayLastProgram);
   // Safety auto-start toggle
-  $('#togSafetyAuto')?.addEventListener('click', ()=>{
+  $('#togSafetyAuto')?.addEventListener('click', async ()=>{
     const wouldDisable = PREFS.safetyAutoStart; // aktuell an -> Klick schaltet aus
     // v5.0.1 K1: bei portablen Geraeten Warnung beim Deaktivieren
     if(wouldDisable && State.adapter && State.adapter.constructor.capabilities.requiresAppSafetyTimer){
-      const ok = confirm('Achtung: ohne App-Timer schaltet das Geraet erst nach seiner Hardware-Default-Inaktivitaet ab. Dieses Geraet hat keinen BLE-Auto-Aus. Trotzdem deaktivieren?');
+      const ok = await uiConfirm('Achtung: ohne App-Timer schaltet das Geraet erst nach seiner Hardware-Default-Inaktivitaet ab. Dieses Geraet hat keinen BLE-Auto-Aus. Trotzdem deaktivieren?');
       if(!ok){ return; } // Toggle bleibt an
     }
     PREFS.safetyAutoStart = !PREFS.safetyAutoStart;
@@ -9613,7 +9671,7 @@ function wire(){
   // Sicherheit
   $('#btnPinSetup')?.addEventListener('click', async ()=>{
     if(PREFS.pinEnabled){
-      if(confirm('PIN entfernen?')) await removePin();
+      if(await uiConfirm('PIN entfernen?')) await removePin();
       else await setupPin();
     } else {
       await setupPin();
@@ -9657,9 +9715,9 @@ function wire(){
   wireToggle('#togBuddy', ()=>PREFS.vapeBuddy, v=>{
     PREFS.vapeBuddy = v; savePrefs(); renderVapeBuddy();
   });
-  $('#btnGenName')?.addEventListener('click', ()=>{
+  $('#btnGenName')?.addEventListener('click', async ()=>{
     const n = generateStrainName();
-    if(confirm(`Generiert: „${n}"\n\nAls eigene Sorte in die Aroma-DB übernehmen?`)){
+    if(await uiConfirm(`Generiert: „${n}"\n\nAls eigene Sorte in die Aroma-DB übernehmen?`)){
       addCustomAroma({name:n, temps:[180,190,200], desc:'Generiert · Eigenes Aroma', kind:'custom', terps:''});
       toast('Sorte „'+n+'" hinzugefügt');
     }
@@ -9682,8 +9740,8 @@ function wire(){
   // v8.3.0 Modul 1: Kurven-Editor-Buttons
   $('#curveAddPoint')?.addEventListener('click', curveAddPoint);
   $('#curvePreview')?.addEventListener('click', curvePreviewToggle);
-  $('#btnAddLoop')?.addEventListener('click', ()=>{
-    const r = prompt('Wie oft wiederholen? (2-20)', '2');
+  $('#btnAddLoop')?.addEventListener('click', async()=>{
+    const r = await uiPrompt('Wie oft wiederholen? (2-20)', '2');
     if(!r) return;
     const repeat = clamp(parseInt(r)||2, 2, 20);
     editorState.steps.push({action:'loop_start', repeat});
@@ -10637,7 +10695,7 @@ function setPaxSerialStored(s){ const n=paxNormalizeSerial(s); if(paxSerialValid
 async function ensurePaxSerial(){
   let s = getPaxSerial();
   if(paxSerialValid(s)) return s;
-  const inp = (typeof window!=='undefined' && window.prompt) ? window.prompt('PAX 3 Seriennummer (8 Zeichen, steht im Akkufach / in der PAX-App):','') : '';
+  const inp = await uiPrompt('PAX 3 Seriennummer (8 Zeichen, steht im Akkufach / in der PAX-App):','');   // v9.11.0 DLG-1
   s = paxNormalizeSerial(inp);
   if(!paxSerialValid(s)) throw new Error('PAX-Seriennummer ungueltig (genau 8 Zeichen A-Z/0-9 erwartet).');
   setPaxSerialStored(s);
@@ -11359,7 +11417,7 @@ function devStatHeatSec(sec){ try{ if(sec>0){ devStatsBucket().totalHeatSec+=sec
 function devStatPump(){ try{ devStatsBucket().pumpEvents++; saveDevStats(); }catch(_){} }
 function devStatBoost(sup){ try{ const b=devStatsBucket(); if(sup) b.superBoostEvents++; else b.boostEvents++; saveDevStats(); }catch(_){} }
 function devStatBagFill(){ try{ devStatsBucket().bagFills++; saveDevStats(); renderDeviceStats(); }catch(_){} }
-function resetDeviceStats(type){ if(DEVSTATS[type] && confirm('Statistik für '+(DEVSTATS_LABELS[type]||type)+' wirklich zurücksetzen?')){ delete DEVSTATS[type]; saveDevStats(); renderDeviceStats(); toast('Statistik zurückgesetzt'); } }
+async function resetDeviceStats(type){ if(DEVSTATS[type] && await uiConfirm('Statistik für '+(DEVSTATS_LABELS[type]||type)+' wirklich zurücksetzen?')){ delete DEVSTATS[type]; saveDevStats(); renderDeviceStats(); toast('Statistik zurückgesetzt'); } }
 function fmtHeatLong(sec){ if(!sec) return '0 min'; const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60); return (h?h+'h ':'')+m+'min'; }
 function fmtDateShort(ts){ return ts ? new Date(ts).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '–'; }
 function renderDeviceStats(){
@@ -11594,7 +11652,7 @@ function exportDiagnostics(){
     toast('Kopieren nicht möglich, Diagnose-Log bitte manuell auswählen');
   }
 }
-const SW_VERSION_LABEL='v9.10.1';
+const SW_VERSION_LABEL='v9.11.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -11752,16 +11810,16 @@ function renderBagCurrent(){
 async function startBagFill(){
   if(!State.connected){ toast('Erst verbinden'); return; }
   if(!State.heater){
-    if(!confirm('Heizer ist aus. Erst aufheizen und dann starten?')) return;
+    if(!(await uiConfirm('Heizer ist aus. Erst aufheizen und dann starten?'))) return;
   }
   // v4.7: T-Break Check
   if(PREFS.tBreakActive){
     const startedAt = new Date(PREFS.tBreakStartDate).getTime();
     const days = Math.floor((Date.now() - startedAt) / 86400000);
-    if(!confirm(`🛑 Tolerance-Break aktiv (Tag ${days} / ${PREFS.tBreakGoalDays}).\n\nWirklich brechen?`)) return;
+    if(!(await uiConfirm(`🛑 Tolerance-Break aktiv (Tag ${days} / ${PREFS.tBreakGoalDays}).\n\nWirklich brechen?`))) return;
   }
   // v4.6: Bags-Limit prüfen
-  if(!checkBagsLimit()){ return; }
+  if(!(await checkBagsLimit())){ return; }
   // v4.9.3: Total aus selektiertem Profil
   const currentBag = getCurrentBag();
   const total = currentBag.seconds;
@@ -12034,7 +12092,7 @@ function renderAromaList(query){
       else if(act==='set'){ if(typeof ttsEvent==='function') ttsEvent('sortSelect', 'Sorte '+a.name+', '+b.dataset.temp+' Grad'); await aromaSetTemp(a, parseInt(b.dataset.temp)); }
       else if(act==='program'){ const prog=buildProgramFromAroma(a); State.programs.unshift(prog); LS.set('vol_programs',State.programs); renderPrograms(); toast('Programm „'+a.name+'" angelegt'); $('#modalAroma').classList.remove('open'); switchTab('prog'); }
       else if(act==='share'){ shareAromaV2(a.name); }
-      else if(act==='del-custom'){ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); renderAromaList(); toast('Gelöscht'); } }
+      else if(act==='del-custom'){ if(await uiConfirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); renderAromaList(); toast('Gelöscht'); } }
     }));
   });
 }
@@ -12242,7 +12300,7 @@ async function _commStrainRateClick(s, stars){
 
 // ── Delete eigene (Modul 6) ──────────────────────────────────────────────────
 async function _commStrainDeleteConfirm(s){
-  if(!confirm(`Sorte „${s.name}" wirklich löschen? Auch alle Bewertungen werden gelöscht. Diese Aktion ist nicht rückgängig zu machen.`)) return;
+  if(!(await uiConfirm(`Sorte „${s.name}" wirklich löschen? Auch alle Bewertungen werden gelöscht. Diese Aktion ist nicht rückgängig zu machen.`))) return;
   try{
     await communityClient.strainDeleteOwn(s.id);
     document.getElementById('modalCommunityStrainDetail')?.classList.remove('open');
@@ -12478,18 +12536,18 @@ function openAromaDetail(a){
     ${a.userAdded?`<div class="row" style="gap:6px;margin-top:10px"><button class="btn sm danger" id="aromaDetailDel" style="flex:1">🗑 Löschen</button></div>`:''}
   `;
   $('#aromaDetailBody').querySelectorAll('[data-detail-temp]').forEach(b=>b.addEventListener('click',()=>aromaSetTemp(a, parseInt(b.dataset.detailTemp))));
-  $('#aromaDetailDel')?.addEventListener('click',()=>{ if(confirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); m.classList.remove('open'); renderAromaList(); toast('Gelöscht'); } });
+  $('#aromaDetailDel')?.addEventListener('click',async()=>{ if(await uiConfirm('Eigene Sorte „'+a.name+'" löschen?')){ removeCustomAroma(a.id); m.classList.remove('open'); renderAromaList(); toast('Gelöscht'); } });
   m.classList.add('open');
 }
 
-function addCustomAromaPrompt(){
-  const name = prompt('Name der Sorte:');
+async function addCustomAromaPrompt(){
+  const name = await uiPrompt('Name der Sorte:');
   if(!name || !name.trim()) return;
-  const tempsStr = prompt('3 empfohlene Temperaturen in °C, komma-getrennt (z.B. 175,185,200):', '175,185,200');
+  const tempsStr = await uiPrompt('3 empfohlene Temperaturen in °C, komma-getrennt (z.B. 175,185,200):', '175,185,200');
   if(!tempsStr) return;
   const temps = tempsStr.split(',').map(s=>parseInt(s.trim())).filter(t=>t>=40 && t<=230);
-  if(temps.length !== 3){ alert('Bitte genau 3 Temperaturen zwischen 40 und 230 angeben.'); return; }
-  const desc = prompt('Kurze Beschreibung:', '') || 'Eigene Sorte';
+  if(temps.length !== 3){ await uiAlert('Bitte genau 3 Temperaturen zwischen 40 und 230 angeben.'); return; }
+  const desc = await uiPrompt('Kurze Beschreibung:', '') || 'Eigene Sorte';
   addCustomAroma({name:name.trim(), temps, desc:desc.trim(), kind:'custom', terps:''});
   renderAromaList('');
   toast('Sorte „'+name+'" hinzugefügt');
@@ -13068,7 +13126,7 @@ async function shareQRUrl(){
     copyQRUrl();
   }
 }
-function checkImportFromUrl(){
+async function checkImportFromUrl(){
   // Check URL hash for #prog=<base64>
   const hash = location.hash;
   if(!hash.startsWith('#prog=')) return;
@@ -13077,7 +13135,7 @@ function checkImportFromUrl(){
     const json = decodeURIComponent(escape(atob(b64)));
     const data = JSON.parse(json);
     if(!data.n || !Array.isArray(data.s)) throw new Error('Ungültiges Format');
-    if(confirm(`Programm "${data.n}" importieren?\n\n${data.s.length} Schritte\nDauer: ~${fmtDuration(estimateDuration(data.s))}`)){
+    if(await uiConfirm(`Programm "${data.n}" importieren?\n\n${data.s.length} Schritte\nDauer: ~${fmtDuration(estimateDuration(data.s))}`)){
       const np = {
         id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
         name:data.n,
@@ -13120,8 +13178,8 @@ function getAllPrograms(){
   // returns all programs (both presets and user-saved) from storage
   return State.programs;
 }
-function resetPresetsToDefault(){
-  if(!confirm('Alle Vorlagen auf Werkseinstellungen zurücksetzen?\nDeine eigenen Programme bleiben erhalten.')) return;
+async function resetPresetsToDefault(){
+  if(!(await uiConfirm('Alle Vorlagen auf Werkseinstellungen zurücksetzen?\nDeine eigenen Programme bleiben erhalten.'))) return;
   // Remove all isPreset items, re-add fresh
   State.programs = State.programs.filter(p=>!p.isPreset);
   for(const p of PRESETS){
@@ -13244,8 +13302,8 @@ function finishSession(){
   // v4.7: Symptom-Tracker optional anbieten
   const hasPreToday = (LS.get('vol_symptoms', [])||[]).some(s=>s.when==='pre' && (Date.now()-s.at) < 24*3600000);
   if(hasPreToday){
-    setTimeout(()=>{
-      if(confirm('Symptome jetzt NACH der Session erfassen?')) openSymptomTracker('post');
+    setTimeout(async()=>{
+      if(await uiConfirm('Symptome jetzt NACH der Session erfassen?')) openSymptomTracker('post');
     }, 600);
   }
   toast('Session abgeschlossen ✓');
@@ -13396,7 +13454,7 @@ function applyAutoBagSec(){
   const sec = calcBagSeconds(vol, PREFS.pumpLpm);
   $('#bagEdSec').value = sec;
 }
-function calibrateBagPumpLpm(){
+async function calibrateBagPumpLpm(){
   // Aus aktueller Länge + Durchmesser + manuelle Sekunden die Pumpleistung ableiten
   const len = parseFloat($('#bagEdLen').value) || 0;
   const dia = parseFloat($('#bagEdDia').value) || 10;
@@ -13416,7 +13474,7 @@ function calibrateBagPumpLpm(){
     toast('Ergebnis unrealistisch: '+newLpm.toFixed(1)+' L/min');
     return;
   }
-  if(!confirm(`Neue Pumpleistung: ${newLpm.toFixed(2)} L/min (war ${(PREFS.pumpLpm||4.5).toFixed(2)}).\n\nÜbernehmen? Dann werden alle anderen Profile mit dieser Annahme neu berechnet.`)) return;
+  if(!(await uiConfirm(`Neue Pumpleistung: ${newLpm.toFixed(2)} L/min (war ${(PREFS.pumpLpm||4.5).toFixed(2)}).\n\nÜbernehmen? Dann werden alle anderen Profile mit dieser Annahme neu berechnet.`))) return;
   PREFS.pumpLpm = parseFloat(newLpm.toFixed(2));
   $('#bagEdLpmOut').textContent = PREFS.pumpLpm.toFixed(1);
   updateBagEditorCalc();
@@ -13452,13 +13510,13 @@ function saveBagEditor(){
   $('#modalBagEditor').classList.remove('open');
   toast('Profil gespeichert');
 }
-function deleteBagEditor(){
+async function deleteBagEditor(){
   if(!_bagEditingId) return;
   if(PREFS.bagProfilesV2.length <= 1){
     toast('Mindestens ein Profil muss bleiben');
     return;
   }
-  if(!confirm('Profil löschen?')) return;
+  if(!(await uiConfirm('Profil löschen?'))) return;
   PREFS.bagProfilesV2 = PREFS.bagProfilesV2.filter(p=>p.id!==_bagEditingId);
   if(PREFS.selectedBagId === _bagEditingId){
     PREFS.selectedBagId = PREFS.bagProfilesV2[0].id;
@@ -13496,7 +13554,7 @@ function importAllData(){
     try{
       const txt = await f.text();
       const data = JSON.parse(txt);
-      if(!confirm('Daten wirklich überschreiben? Aktuelle Einstellungen, Programme und Sessions gehen verloren.')) return;
+      if(!(await uiConfirm('Daten wirklich überschreiben? Aktuelle Einstellungen, Programme und Sessions gehen verloren.'))) return;
       if(data.prefs) Object.assign(PREFS, data.prefs);
       if(Array.isArray(data.programs)) State.programs = data.programs;
       if(Array.isArray(data.sessions)) LS.set('vol_sessions', data.sessions);
@@ -13926,7 +13984,7 @@ function renderSessions(){
   $('#sessFillFirst')?.addEventListener('click',()=>{ const o=sessionsAll().find(s=>s.strength==null); if(o) openSessionNoteModal(o, o.id); });
   root.querySelectorAll('[data-sess-toggle]').forEach(el=>makeActivatable(el, { label:'Session-Eintrag, Details ein- oder ausblenden', onActivate:()=>{ const d=el.closest('.sess-item').querySelector('.sess-detail'); if(d) d.hidden=!d.hidden; } }));  // v9.2.1 K1
   root.querySelectorAll('[data-sess-edit]').forEach(el=>el.addEventListener('click',e=>{ e.stopPropagation(); const id=el.dataset.sessEdit; const s=sessionsAll().find(x=>x.id===id); if(s) openSessionNoteModal(s, id); }));
-  root.querySelectorAll('[data-sess-del]').forEach(el=>el.addEventListener('click',e=>{ e.stopPropagation(); const id=el.dataset.sessDel; if(confirm('Diese Session löschen?')){ sessionDelete(id); renderSessions(); toast('Session gelöscht'); } }));
+  root.querySelectorAll('[data-sess-del]').forEach(el=>el.addEventListener('click',async e=>{ e.stopPropagation(); const id=el.dataset.sessDel; if(await uiConfirm('Diese Session löschen?')){ sessionDelete(id); renderSessions(); toast('Session gelöscht'); } }));
 }
 function sessionRowHtml(s){
   const d=new Date(s.startedAt);
@@ -14123,11 +14181,11 @@ let preheatTimer = null;
 let preheatEndAt = null;
 let preheatTargetTemp = 185;
 
-function schedulePreheat(){
-  const minStr = prompt('In wievielen Minuten aufheizen? (1–180)', '10');
+async function schedulePreheat(){
+  const minStr = await uiPrompt('In wievielen Minuten aufheizen? (1–180)', '10');
   if(!minStr) return;
   const min = clamp(parseInt(minStr)||10, 1, 180);
-  const tStr = prompt('Auf welche Temperatur? (40–230 °C)', String(PREFS.preferredTemp||185));
+  const tStr = await uiPrompt('Auf welche Temperatur? (40–230 °C)', String(PREFS.preferredTemp||185));
   if(!tStr) return;
   const temp = clamp(parseInt(tStr)||185, 40, 230);
   preheatTargetTemp = temp;
@@ -14454,8 +14512,8 @@ function renderScheduleList(){
       updateScheduleHero();
     });
     div.querySelector('[data-edit-sch]').addEventListener('click', ()=>openScheduleEditor(sch.id));
-    div.querySelector('[data-del-sch]').addEventListener('click', ()=>{
-      if(!confirm(`Schedule „${sch.name}" wirklich löschen?`)) return;
+    div.querySelector('[data-del-sch]').addEventListener('click', async()=>{
+      if(!(await uiConfirm(`Schedule „${sch.name}" wirklich löschen?`))) return;
       SCHEDULES = SCHEDULES.filter(s=>s.id !== sch.id);
       saveSchedules();
       renderScheduleList();
@@ -14783,9 +14841,9 @@ function setupFavLongPress(){
   $$('.pill').forEach((p, i)=>{
     let pressTimer = null;
     const start = (e)=>{
-      pressTimer = setTimeout(()=>{
+      pressTimer = setTimeout(async()=>{
         const cur = p.dataset.temp || '180';
-        const newT = prompt('Neue Lieblings-Temperatur (°C):', cur);
+        const newT = await uiPrompt('Neue Lieblings-Temperatur (°C):', cur);
         if(newT){
           const t = clamp(parseInt(newT)||180, 40, 230);
           setQuickFav(i, t);
@@ -14867,10 +14925,10 @@ function setupPwaUpdate(){
     reg.addEventListener('updatefound', ()=>{
       const nw = reg.installing;
       if(!nw) return;
-      nw.addEventListener('statechange', ()=>{
+      nw.addEventListener('statechange', async()=>{
         if(nw.state === 'installed' && navigator.serviceWorker.controller){
           // Neue Version verfügbar
-          if(confirm('Eine neue Version von Terp Sessions ist verfügbar. Jetzt aktualisieren?')){
+          if(await uiConfirm('Eine neue Version von Terp Sessions ist verfügbar. Jetzt aktualisieren?')){
             nw.postMessage({type:'SKIP_WAITING'});
             window.location.reload();
           }
@@ -15374,10 +15432,10 @@ async function _pinVerify(pin){
   return true;
 }
 async function setupPin(){
-  const pin1 = prompt('Neue PIN (4-8 Ziffern):');
-  if(!pin1 || !/^\d{4,8}$/.test(pin1)){ alert('PIN muss 4-8 Ziffern haben'); return; }
-  const pin2 = prompt('PIN bestätigen:');
-  if(pin1 !== pin2){ alert('PINs stimmen nicht überein'); return; }
+  const pin1 = await uiPrompt('Neue PIN (4-8 Ziffern):');
+  if(!pin1 || !/^\d{4,8}$/.test(pin1)){ await uiAlert('PIN muss 4-8 Ziffern haben'); return; }
+  const pin2 = await uiPrompt('PIN bestätigen:');
+  if(pin1 !== pin2){ await uiAlert('PINs stimmen nicht überein'); return; }
   const salt = _pinRandomSalt();                  // v9.10.0 SEC-1: CSPRNG statt Math.random
   const hash = await _pinHashPbkdf2(pin1, salt);  // v9.10.0 SEC-1: PBKDF2(100k) statt einfaches SHA-256
   PREFS.pinSalt = salt;
@@ -15392,9 +15450,9 @@ async function setupPin(){
   _offerRecoveryCode();
 }
 async function removePin(){
-  const pin = prompt('Aktuelle PIN zum Entfernen:');
+  const pin = await uiPrompt('Aktuelle PIN zum Entfernen:');
   if(!pin) return;
-  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
+  if(!(await _pinVerify(pin))){ await uiAlert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   PREFS.pinSalt = ''; PREFS.pinHash = ''; PREFS.pinEnabled = false;
   savePrefs();
   _recoveryClear();              // v9.9.0 REC-1: Recovery mit PIN entfernen (Decision REC1.7/I)
@@ -15495,11 +15553,11 @@ function bagsTodayCount(){
   count += PREFS.stats.bagsFilled || 0;
   return count;
 }
-function checkBagsLimit(){
+async function checkBagsLimit(){
   if(!PREFS.bagsLimitPerDay || PREFS.bagsLimitPerDay<1) return true;
   const count = bagsTodayCount();
   if(count >= PREFS.bagsLimitPerDay){
-    const ok = confirm(`Tageslimit erreicht (${count}/${PREFS.bagsLimitPerDay}). Trotzdem fortsetzen?`);
+    const ok = await uiConfirm(`Tageslimit erreicht (${count}/${PREFS.bagsLimitPerDay}). Trotzdem fortsetzen?`);
     return ok;
   }
   return true;
@@ -15509,8 +15567,8 @@ function checkBagsLimit(){
    v4.6: FORGET-ME (alles löschen)
 ═══════════════════════════════════════════════════════════════ */
 async function forgetMe(){
-  if(!confirm('Wirklich ALLE Daten dauerhaft löschen?\n\nEinstellungen, Programme, Sessions, Notizen, PIN, History — alles weg.\nDie App wird sich danach neu starten.')) return;
-  if(!confirm('LETZTE BESTÄTIGUNG: Daten weg, kein Zurück. Fortfahren?')) return;
+  if(!(await uiConfirm('Wirklich ALLE Daten dauerhaft löschen?\n\nEinstellungen, Programme, Sessions, Notizen, PIN, History — alles weg.\nDie App wird sich danach neu starten.'))) return;
+  if(!(await uiConfirm('LETZTE BESTÄTIGUNG: Daten weg, kein Zurück. Fortfahren?'))) return;
   // Clear all LS keys
   try{
     const keys = Object.keys(localStorage);
@@ -15552,9 +15610,9 @@ async function deriveKey(pin, salt){
 }
 async function encryptSensitive(){
   if(!PREFS.pinEnabled){ toast('Erst PIN setzen'); return; }
-  const pin = prompt('PIN zum Verschlüsseln:');
+  const pin = await uiPrompt('PIN zum Verschlüsseln:');
   if(!pin) return;
-  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
+  if(!(await _pinVerify(pin))){ await uiAlert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   try{
     const key = await deriveKey(pin, PREFS.pinSalt);
     const enc = new TextEncoder();
@@ -15578,9 +15636,9 @@ async function encryptSensitive(){
 async function decryptSensitive(){
   const blob = LS.get('vol_encrypted', null);
   if(!blob){ toast('Keine verschlüsselten Daten'); return; }
-  const pin = prompt('PIN zum Entschlüsseln:');
+  const pin = await uiPrompt('PIN zum Entschlüsseln:');
   if(!pin) return;
-  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
+  if(!(await _pinVerify(pin))){ await uiAlert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   try{
     const key = await deriveKey(pin, PREFS.pinSalt);
     const iv = new Uint8Array(blob.iv);
@@ -15612,8 +15670,8 @@ function checkMaintenanceReminders(){
     if(since >= PREFS.cleanReminderSessions || heatSince >= PREFS.cleanReminderHours){
       const last = LS.get('vol_clean_last_shown', 0);
       if(Date.now() - last > 3600000){ // nicht öfter als 1x/Std
-        setTimeout(()=>{
-          if(confirm(`Reinigung empfohlen!\n${since} Sessions / ${heatSince.toFixed(1)} h seit letzter Reinigung.\n\nJetzt als erledigt markieren?`)){
+        setTimeout(async()=>{
+          if(await uiConfirm(`Reinigung empfohlen!\n${since} Sessions / ${heatSince.toFixed(1)} h seit letzter Reinigung.\n\nJetzt als erledigt markieren?`)){
             markCleaningDone();
           }
         }, 800);
@@ -15627,8 +15685,8 @@ function checkMaintenanceReminders(){
     if(since >= PREFS.sieveReminderSessions){
       const last = LS.get('vol_sieve_last_shown', 0);
       if(Date.now() - last > 24*3600000){
-        setTimeout(()=>{
-          if(confirm(`Sieb-Wechsel empfohlen!\n${since} Sessions seit letztem Wechsel.\n\nJetzt als erledigt markieren?`)){
+        setTimeout(async()=>{
+          if(await uiConfirm(`Sieb-Wechsel empfohlen!\n${since} Sessions seit letztem Wechsel.\n\nJetzt als erledigt markieren?`)){
             markSieveDone();
           }
         }, 1200);
@@ -16399,8 +16457,8 @@ function openSymptomTracker(when='pre'){
 /* ═══════════════════════════════════════════════════════════════
    v4.7: T-BREAK (Toleranz-Pause-Modus)
 ═══════════════════════════════════════════════════════════════ */
-function startTBreak(){
-  const days = prompt('Wie viele Tage Pause anstreben? (typisch 14-21)', '14');
+async function startTBreak(){
+  const days = await uiPrompt('Wie viele Tage Pause anstreben? (typisch 14-21)', '14');
   if(!days) return;
   PREFS.tBreakActive = true;
   PREFS.tBreakStartDate = new Date().toISOString();
@@ -16409,8 +16467,8 @@ function startTBreak(){
   toast('T-Break gestartet — viel Erfolg!');
   renderTBreak();
 }
-function endTBreak(){
-  if(!confirm('T-Break wirklich beenden?\n\nDeine Toleranz wird ab jetzt wieder normal zählen.')) return;
+async function endTBreak(){
+  if(!(await uiConfirm('T-Break wirklich beenden?\n\nDeine Toleranz wird ab jetzt wieder normal zählen.'))) return;
   const startedAt = PREFS.tBreakStartDate ? new Date(PREFS.tBreakStartDate).getTime() : Date.now();
   const days = Math.floor((Date.now() - startedAt) / 86400000);
   // Save to history
@@ -16526,19 +16584,19 @@ function switchUser(id){
   toast('Profil: '+currentUser().name);
   renderUserAvatar();
 }
-function addUserProfile(){
-  const name = prompt('Name des neuen Profils:');
+async function addUserProfile(){
+  const name = await uiPrompt('Name des neuen Profils:');
   if(!name || !name.trim()) return;
-  const icon = prompt('Emoji als Avatar (optional):', '🌱') || '👤';
+  const icon = await uiPrompt('Emoji als Avatar (optional):', '🌱') || '👤';
   const profiles = getUserProfiles();
   profiles.push({id:'user_'+Date.now(), name:name.trim(), icon});
   LS.set('vol_user_profiles', profiles);
   renderUserList();
   toast('Profil angelegt');
 }
-function removeUserProfile(id){
+async function removeUserProfile(id){
   if(id === 'default'){ toast('Standard-Profil kann nicht entfernt werden'); return; }
-  if(!confirm('Profil wirklich löschen?')) return;
+  if(!(await uiConfirm('Profil wirklich löschen?'))) return;
   let profiles = getUserProfiles().filter(u=>u.id!==id);
   LS.set('vol_user_profiles', profiles);
   if(PREFS.currentUserId === id){ switchUser('default'); }
@@ -16591,10 +16649,10 @@ function renderUserPanelCommunity(){
   }
 }
 
-function _userPanelCommAction(action){
+async function _userPanelCommAction(action){
   // Wenn Community-DB noch nicht aktiv: erst Confirm, dann aktivieren
   if(!PREFS.communityEnabled){
-    if(!confirm('Community-DB einschalten? Sorten und Programme werden dann mit der Terp-Sessions-Community ausgetauscht. Du kannst das jederzeit wieder in den Einstellungen deaktivieren.')) return;
+    if(!(await uiConfirm('Community-DB einschalten? Sorten und Programme werden dann mit der Terp-Sessions-Community ausgetauscht. Du kannst das jederzeit wieder in den Einstellungen deaktivieren.'))) return;
     PREFS.communityEnabled = true;
     try{ savePrefs(); }catch(_){}
     try{ if(typeof _commSetupRefresh === 'function') _commSetupRefresh(); }catch(_){}
@@ -16657,7 +16715,7 @@ function broadcastShared(action){
    v4.7: PROGRAMM-BIBLIOTHEK (JSON-URL-Import)
 ═══════════════════════════════════════════════════════════════ */
 async function importLibraryFromUrl(){
-  const url = prompt('URL einer Programm-Sammlung (JSON):', 'https://123ichbinmitdabei.github.io/terp-sessions/programs.json');
+  const url = await uiPrompt('URL einer Programm-Sammlung (JSON):', 'https://123ichbinmitdabei.github.io/terp-sessions/programs.json');
   if(!url) return;
   try{
     const res = await fetch(url);
@@ -16665,7 +16723,7 @@ async function importLibraryFromUrl(){
     const data = await res.json();
     const list = Array.isArray(data) ? data : (data.programs || []);
     if(!list.length) throw new Error('Keine Programme gefunden');
-    if(!confirm(`${list.length} Programme importieren?\n\nVorschau: "${list[0].name||'Unbenannt'}" mit ${list[0].steps?.length||0} Schritten`)) return;
+    if(!(await uiConfirm(`${list.length} Programme importieren?\n\nVorschau: "${list[0].name||'Unbenannt'}" mit ${list[0].steps?.length||0} Schritten`))) return;
     let count = 0;
     for(const p of list){
       if(!p.name || !Array.isArray(p.steps)) continue;
@@ -17080,11 +17138,11 @@ function setupOfflineIndicator(){
    v4.8: CUSTOM BLE PROFILES
 ═══════════════════════════════════════════════════════════════ */
 function getCustomProfiles(){ return PREFS.customBleProfiles || []; }
-function addCustomBleProfile(){
-  const name = prompt('Profil-Name (z.B. „Mein Gerät"):');
+async function addCustomBleProfile(){
+  const name = await uiPrompt('Profil-Name (z.B. „Mein Gerät"):');
   if(!name || !name.trim()) return;
-  const serviceState = prompt('Service-UUID (notify):', '10100000-5354-4f52-5a26-4249434b454c');
-  const serviceControl = prompt('Service-UUID (control):', '10110000-5354-4f52-5a26-4249434b454c');
+  const serviceState = await uiPrompt('Service-UUID (notify):', '10100000-5354-4f52-5a26-4249434b454c');
+  const serviceControl = await uiPrompt('Service-UUID (control):', '10110000-5354-4f52-5a26-4249434b454c');
   if(!serviceState || !serviceControl) return;
   const id = 'custom_'+Date.now();
   const profile = {
@@ -17107,8 +17165,8 @@ function addCustomBleProfile(){
   toast('Custom-Profil „'+name+'" angelegt');
   renderCustomProfiles();
 }
-function removeCustomBleProfile(id){
-  if(!confirm('Profil löschen?')) return;
+async function removeCustomBleProfile(id){
+  if(!(await uiConfirm('Profil löschen?'))) return;
   PREFS.customBleProfiles = (PREFS.customBleProfiles||[]).filter(p=>p.id!==id);
   delete DEVICE_PROFILES[id];
   savePrefs();
@@ -17256,10 +17314,10 @@ function dslParse(){
     return null;
   }
 }
-function dslSaveAsProgram(){
+async function dslSaveAsProgram(){
   const steps = dslParse();
   if(!steps) return;
-  const name = prompt('Name für das Programm:', 'DSL-Programm '+new Date().toLocaleTimeString('de-DE'));
+  const name = await uiPrompt('Name für das Programm:', 'DSL-Programm '+new Date().toLocaleTimeString('de-DE'));
   if(!name) return;
   const prog = {id:'dsl_'+Date.now(), name, desc:'Aus DSL-Editor', steps, isPreset:false};
   State.programs.unshift(prog);
@@ -18119,7 +18177,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.10.1 bereit.','ok');
+  log('Terp Sessions v9.11.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -20531,11 +20589,11 @@ function _pioneerInit(){
   _pioneerRenderWizard();
 }
 
-function _pioneerToggleClicked(){
+async function _pioneerToggleClicked(){
   const tog = document.getElementById('togPioneerTest');
   const newState = !PREFS.pioneerTestMode;
   if(newState){
-    if(!confirm('Pioneer-Test-Modus aktivieren?\n\nDu bekommst einen zusaetzlichen Tab mit Test-Aufgaben (15 pro Pfad) und kannst Bugs direkt melden. Kann jederzeit deaktiviert werden.')) return;
+    if(!(await uiConfirm('Pioneer-Test-Modus aktivieren?\n\nDu bekommst einen zusaetzlichen Tab mit Test-Aufgaben (15 pro Pfad) und kannst Bugs direkt melden. Kann jederzeit deaktiviert werden.'))) return;
   }
   PREFS.pioneerTestMode = newState;
   if(tog) tog.setAttribute('aria-checked', String(newState));
@@ -20566,17 +20624,17 @@ function _pioneerApplyTabVisibility(){
 
 // v9.0.1 (B4): DEPRECATED Backup — nicht mehr aufgerufen. Pfad-Wahl laeuft jetzt ueber die
 // barrierefreien Buttons in _pioneerRenderWizard (!st.path). Funktion bleibt nur als Fallback drin.
-function _pioneerShowPathChoice(){
+async function _pioneerShowPathChoice(){
   // v9.10.1 DOC-2: Zahlen dynamisch aus PIONEER_TESTS (sonst veralten sie wie zuvor „12")
   const nVisual = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='visual').length : 0;
   const nSr = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='screenreader').length : 0;
-  const path = prompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A ('+nVisual+' Tests, normale Sicht)\n  "screenreader" — fuer Pfad B ('+nSr+' Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
+  const path = await uiPrompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A ('+nVisual+' Tests, normale Sicht)\n  "screenreader" — fuer Pfad B ('+nSr+' Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
   if(!path) return;
   const p = String(path).toLowerCase().trim();
   let chosen = null;
   if(/^(sehend|sehende|visual|a)$/.test(p)) chosen = 'visual';
   else if(/^(blind|screen|screenreader|sr|b)$/.test(p)) chosen = 'screenreader';
-  if(!chosen){ alert('Eingabe nicht erkannt. Bitte "sehend" oder "screenreader" eingeben.'); return; }
+  if(!chosen){ await uiAlert('Eingabe nicht erkannt. Bitte "sehend" oder "screenreader" eingeben.'); return; }
   PREFS.pioneerTestState.path = chosen;
   PREFS.pioneerTestState.currentIndex = 0;
   PREFS.pioneerTestState.startedAt = new Date().toISOString();
@@ -20786,15 +20844,15 @@ function _pioneerNav(delta){
   _pioneerRenderWizard();
 }
 
-function _pioneerSwitchPath(){
+async function _pioneerSwitchPath(){
   const cur = PREFS.pioneerTestState && PREFS.pioneerTestState.path;
   const next = cur === 'visual' ? 'screenreader' : 'visual';
-  if(!confirm('Pfad wechseln zu ' + (next === 'visual' ? 'A (sehend)' : 'B (Screen-Reader)') + '?\nDeine bisherigen Ergebnisse bleiben erhalten — beide Pfade haben unterschiedliche Tests.')) return;
+  if(!(await uiConfirm('Pfad wechseln zu ' + (next === 'visual' ? 'A (sehend)' : 'B (Screen-Reader)') + '?\nDeine bisherigen Ergebnisse bleiben erhalten — beide Pfade haben unterschiedliche Tests.'))) return;
   _pioneerSetPath(next);
 }
 
-function _pioneerResetState(){
-  if(!confirm('Test-Pfad-Ergebnisse komplett zuruecksetzen? Alle bisherigen Antworten + Punkte werden geloescht.')) return;
+async function _pioneerResetState(){
+  if(!(await uiConfirm('Test-Pfad-Ergebnisse komplett zuruecksetzen? Alle bisherigen Antworten + Punkte werden geloescht.'))) return;
   PREFS.pioneerTestState = { path:null, currentIndex:0, results:{}, startedAt:null, completedAt:null, points:0, combo:0, achievements:[] };
   try{ savePrefs(); }catch(_){}
   _pioneerRenderWizard();
@@ -21172,9 +21230,9 @@ function _macroSave(){
   toast(idx >= 0 ? 'Macro aktualisiert' : 'Macro angelegt');
   _macroEditingId = null;
 }
-function _macroDelete(){
+async function _macroDelete(){
   if(!_macroEditingId) return;
-  if(!confirm('Macro wirklich loeschen?')) return;
+  if(!(await uiConfirm('Macro wirklich loeschen?'))) return;
   PREFS.touchMacros = (PREFS.touchMacros || []).filter(x => x.id !== _macroEditingId);
   try{ savePrefs(); }catch(_){}
   renderTouchMacrosSettings();

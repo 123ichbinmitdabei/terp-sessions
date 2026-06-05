@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.10.1)
+# Terp Sessions — Vape Controller (v9.11.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,17 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.11.0 — Barrierefreie Dialoge statt nativer alert/confirm/prompt (Paket DLG-1)
+
+Ersetzt alle nativen Browser-Dialoge durch barrierefreie In-App-Modale. Native `alert`/`confirm`/`prompt` sind für die blinde Pioneer-Tester-Kohorte (iPhone, VoiceOver, Bluefy) unzuverlässig bis unbenutzbar. Größter A11Y-Befund aus dem QA-1-Audit (Backlog 4). MINOR, neues Dialog-System mit Verhaltensänderung. Kein Backend-Eingriff, cscCrypto unberührt.
+
+- **Neue Bausteine:** `uiAlert(msg)`, `uiConfirm(msg)` und `uiPrompt(msg, default)` geben Promises zurück und rendern ein echtes `role="dialog"`-Modal (`#modalDlg`), das vom Inert-System (v9.7.0) erfasst wird, eine Fokus-Falle und Esc/Enter hat und Bestätigungen vorliest. `uiConfirm` löst zu `true`/`false`, `uiPrompt` zum eingegebenen Text oder `null` bei Abbruch, jeweils analog zu den nativen Pendants.
+- **Voller Sweep:** Alle 70 nativen Aufrufe (7 `alert`, 38 `confirm`, 24 `prompt` plus ein verstecktes `window.prompt`) wurden ersetzt. Funktionen, die einen Dialog gaten, wurden dafür zu `async` und nutzen `await`. Aufrufer-Ketten wurden geprüft, der eine synchrone Sonderfall (`checkBagsLimit`, in `startBagFill` per `if(...)` genutzt) wurde sauber auf `await` umgestellt.
+- **Blind-kritische Flows** profitieren besonders: PIN setzen/entfernen/Backup-Ver- und Entschlüsseln, der Programm-Variablen-Dialog beim Programmstart (der R0-Nebenbefund), Sorten/Profile/Geräte-Eingaben sowie alle Löschen- und Zurücksetzen-Bestätigungen.
+- **Verhalten erhalten:** Die Texte, Validierungen und Abbruch-Semantik sind unverändert (Abbrechen = `null`/`false`, Eingabe = Wert). Nur der Dialog-Mechanismus wurde ausgetauscht.
+
+**Unberührt:** cscCrypto, Backend, die App-Logik (nur der Dialog-Mechanismus). **Tests:** `v911dlg.mjs` (22: Bausteine, uiConfirm/uiPrompt/uiAlert, Source-Guard „keine nativen Dialoge mehr", migrierte E2E-Flows für confirm-gated Delete und prompt-Flow). Mehrere bestehende Suiten, die native Dialoge stubten (`v51`, `v901hotfix`, `v930picker`, `v90pioneer-s3`), wurden auf das neue Modell (uiConfirm-Stub plus `await`) umgestellt. Volle Regression grün.
 
 ## v9.10.1 — Doku-Staleness-Patch (Paket DOC-2)
 
