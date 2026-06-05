@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.9.0)
+# Terp Sessions — Vape Controller (v9.10.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.10.0 — Sicherheits- und A11Y-Härtung (Paket SEC-1)
+
+Umsetzung der kleinen, hochwirksamen Befunde aus dem QA-1-Audit (`docs/QA-1-AUDIT-2026-06-06.md`). MINOR, weil das PIN-Sicherheitsmodell mit Migration geändert wird. Kein Backend-Eingriff, cscCrypto unberührt.
+
+- **PIN-Härtung:** Die PIN-Sperre nutzte bisher einen `Math.random()`-Salt und ein einfaches `sha256(salt+pin)` ohne Key-Stretching, offline brute-forcebar wenn `vol_prefs` abfließt. Neu: bei jedem Setzen einer PIN ein kryptografisch sicherer 16-Byte-Salt (`crypto.getRandomValues`) plus PBKDF2 mit 100.000 Iterationen (`_pinHashPbkdf2`). Ein Format-Marker `PREFS.pinKdf` unterscheidet Legacy (`sha256`) von gehärtet (`pbkdf2`).
+- **Transparente Migration:** Bestehende PINs (Legacy-SHA-256) werden beim ersten korrekten Eingeben automatisch auf PBKDF2 hochgestuft (`_pinVerify`), ohne dass der Nutzer etwas tun muss. **Wichtig:** der bestehende `pinSalt` wird dabei NICHT geändert, weil er zugleich der Salt der optionalen Backup-Verschlüsselung ist (`deriveKey(pin, pinSalt)` für `vol_encrypted`). Ein Salt-Wechsel hätte vorhandene verschlüsselte Backups unbrauchbar gemacht; daher wird nur der Hash-Algorithmus migriert, der Salt bleibt. Die Backup-Verschlüsselung (`deriveKey`, ebenfalls PBKDF2-100k) ist unverändert.
+- **A11Y-Labels:** Zwei dynamisch gerenderte Controls, die der Laufzeit-Auto-Labeler strukturell nicht erreicht, bekommen jetzt statische `aria-label`: die Session-Tagebuch-Filter-Dropdowns (`#sessFilterDev` / `#sessFilterDays`) und der Zeitplan-Schalter im Session-Planer (mit dem Zeitplan-Namen). Für VoiceOver-Nutzer waren diese vorher namenlos.
+- **Diagnose-Melde-Pfad barrierefrei:** `exportDiagnostics` greift jetzt nur noch auf `navigator.clipboard` zu, wenn es existiert (in Bluefy/insecure context kann es fehlen und synchron werfen, genau der Kopier-Pfad, den blinde Tester brauchen). Der Hardware-Fehler-Toast sagt nicht mehr „Screenshot an Andre" (für blinde Nutzer unbrauchbar), sondern verweist auf „Diagnose-Log kopieren und an Andre senden".
+- **`#hotelOverlay`** bekam `aria-modal="true"` für Konsistenz mit `#pinOverlay`.
+
+**Unberührt:** cscCrypto, Backend, die Backup-Verschlüsselung (`deriveKey`), die PIN-Eingabe-UX (gleiche Overlay-Flows), das Recovery-System aus v9.9.0. **Tests:** `v910sec1.mjs` (28: Hash-Primitiven, `_pinVerify` pbkdf2, Legacy-Migration mit Salt-Erhalt, E2E-Unlock mit Migration, A11Y-Labels, Diagnose-Härtung). Volle Regression grün.
 
 ## v9.9.0 — Recovery-Mechanismus für PIN (Paket REC-1)
 

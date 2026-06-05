@@ -2284,7 +2284,7 @@ button[data-sch-day].active{
 </div>
 
 <!-- v4.8: Hotel-Mode Overlay -->
-<div class="hotel-overlay" id="hotelOverlay" role="dialog" aria-label="Wetter">
+<div class="hotel-overlay" id="hotelOverlay" role="dialog" aria-modal="true" aria-label="Wetter">
   <div id="hotelExitArea" style="position:absolute;inset:0;cursor:pointer" aria-label="5 Sekunden drücken zum Entsperren"></div>
   <div class="hotel-icon" id="hotelIcon" aria-hidden="true">🌤</div>
   <div class="hotel-temp" id="hotelTemp">–°</div>
@@ -5555,8 +5555,9 @@ const PREFS_DEFAULTS = {
   ttsVoiceURI:null,
   haptiCustom:true,       // differenzierte Patterns
   pinEnabled:false,
-  pinHash:'',             // bcrypt-like, gespeichert nach SHA-256 + Salt
+  pinHash:'',             // v9.10.0 SEC-1: PBKDF2(pin,salt) hex; legacy = SHA-256(salt+pin)
   pinSalt:'',
+  pinKdf:'',              // v9.10.0 SEC-1: '' oder 'sha256' = legacy, 'pbkdf2' = gehaertet (transparente Migration)
   autoLockMin:0,          // 0 = aus, sonst Minuten Inaktivität
   bagsLimitPerDay:0,      // 0 = aus
   // Wartung
@@ -6723,7 +6724,7 @@ async function connectBLE(){
     if(!AdapterClass){
       log('FEHLER: Geraet "'+(State.device.name||'?')+'" nicht erkannt.','err');
       log('Bitte den DIAGNOSE-DUMP oben screenshotten und an Andre schicken.','err');
-      toast('Geraet nicht erkannt - Diagnose-Log oeffnen und Screenshot an Andre');
+      toast('Geraet nicht erkannt. Setup, Diagnose-TXT, Diagnose-Log kopieren und an Andre senden.');
       try{ State.server?.disconnect(); }catch(_){}
       State.adapter = null;
       setConn(false);
@@ -11586,9 +11587,14 @@ function exportDiagnostics(){
     'Zeit: '+new Date().toISOString(),
     '--- letzte Log-Zeilen ---', lines,
   ].join('\n');
-  navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
+  // v9.10.0 SEC-1: clipboard-Zugriff absichern (in Bluefy/insecure context kann navigator.clipboard fehlen und synchron werfen)
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich, Diagnose-Log bitte manuell auswählen'));
+  } else {
+    toast('Kopieren nicht möglich, Diagnose-Log bitte manuell auswählen');
+  }
 }
-const SW_VERSION_LABEL='v9.9.0';
+const SW_VERSION_LABEL='v9.10.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -13897,8 +13903,8 @@ function renderSessions(){
   html += `<div id="sessHint" class="sess-hint"></div>`;
   if(open.length) html += `<div class="sess-open-banner">⏳ ${open.length} offene Session${open.length>1?'s':''} — <button class="linklike" id="sessFillFirst">jetzt ausfüllen</button></div>`;
   html += `<div class="row" style="gap:8px;margin:10px 0">
-      <select class="select" id="sessFilterDev" style="flex:1">${devOpts}</select>
-      <select class="select" id="sessFilterDays" style="flex:1">${dayOpts}</select>
+      <select class="select" id="sessFilterDev" style="flex:1" aria-label="Sessions nach Gerät filtern">${devOpts}</select>
+      <select class="select" id="sessFilterDays" style="flex:1" aria-label="Sessions nach Zeitraum filtern">${dayOpts}</select>
     </div>`;
   if(!all.length){
     html += `<p class="set-section-desc">Noch keine Sessions. Sobald du heizt (oder „Session beginnen" nutzt), wird sie hier erfasst.</p>`;
@@ -14433,7 +14439,7 @@ function renderScheduleList(){
         <small>${escapeHtml(actionLabel)} · ${escapeHtml(triggerLabel)} · ${escapeHtml(repeatLabel)}</small>
         ${nextLabel ? `<div class="next-run">${escapeHtml(nextLabel)}</div>` : ''}
       </div>
-      <button class="toggle" role="switch" aria-checked="${sch.enabled?'true':'false'}" data-toggle-sch="${sch.id}" data-tip="Schedule ein/aus"></button>
+      <button class="toggle" role="switch" aria-checked="${sch.enabled?'true':'false'}" aria-label="Zeitplan ${escapeHtml(sch.name||'Unbenannt')} aktiv" data-toggle-sch="${sch.id}" data-tip="Schedule ein/aus"></button>
       <div class="acts">
         <button class="btn sm ghost" data-edit-sch="${sch.id}" data-tip="Bearbeiten" aria-label="Bearbeiten">✎</button>
         <button class="btn sm ghost" data-del-sch="${sch.id}" data-tip="Löschen" aria-label="Löschen">🗑</button>
@@ -15337,15 +15343,46 @@ async function sha256(str){
   const hash = await crypto.subtle.digest('SHA-256', buf);
   return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+// v9.10.0 SEC-1: gehaerteter PIN-Hash. CSPRNG-Salt + PBKDF2(100k) statt Math.random + einfaches SHA-256.
+// WICHTIG: pinSalt wird bei der Migration NICHT geaendert, weil er zugleich der Salt der Backup-
+// Verschluesselung ist (deriveKey(pin, pinSalt) fuer vol_encrypted). Ein Salt-Wechsel wuerde vorhandene
+// verschluesselte Backups unbrauchbar machen. Daher: nur der Hash-Algorithmus wird migriert, der Salt bleibt.
+function _pinRandomSalt(){
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _pinHashPbkdf2(pin, saltStr){
+  if(!crypto?.subtle) return null;
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt:enc.encode(String(saltStr)), iterations:100000, hash:'SHA-256'}, km, 256);
+  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+// Verifiziert die PIN und migriert einen Legacy-SHA-256-Hash beim ersten korrekten Eingeben transparent auf PBKDF2.
+async function _pinVerify(pin){
+  if(!PREFS.pinHash) return false;
+  if(PREFS.pinKdf === 'pbkdf2'){
+    const h = await _pinHashPbkdf2(pin, PREFS.pinSalt);
+    return h != null && h === PREFS.pinHash;
+  }
+  const legacy = await sha256(PREFS.pinSalt + pin);
+  if(legacy == null || legacy !== PREFS.pinHash) return false;
+  try{
+    const upgraded = await _pinHashPbkdf2(pin, PREFS.pinSalt);   // Salt bleibt -> Backup-Kompat
+    if(upgraded){ PREFS.pinHash = upgraded; PREFS.pinKdf = 'pbkdf2'; savePrefs(); }
+  }catch(_){}
+  return true;
+}
 async function setupPin(){
   const pin1 = prompt('Neue PIN (4-8 Ziffern):');
   if(!pin1 || !/^\d{4,8}$/.test(pin1)){ alert('PIN muss 4-8 Ziffern haben'); return; }
   const pin2 = prompt('PIN bestätigen:');
   if(pin1 !== pin2){ alert('PINs stimmen nicht überein'); return; }
-  const salt = Math.random().toString(36).slice(2,18);
-  const hash = await sha256(salt + pin1);
+  const salt = _pinRandomSalt();                  // v9.10.0 SEC-1: CSPRNG statt Math.random
+  const hash = await _pinHashPbkdf2(pin1, salt);  // v9.10.0 SEC-1: PBKDF2(100k) statt einfaches SHA-256
   PREFS.pinSalt = salt;
   PREFS.pinHash = hash;
+  PREFS.pinKdf = 'pbkdf2';
   PREFS.pinEnabled = true;
   savePrefs();
   toast('PIN aktiv. Wird beim nächsten Start abgefragt.');
@@ -15357,8 +15394,7 @@ async function setupPin(){
 async function removePin(){
   const pin = prompt('Aktuelle PIN zum Entfernen:');
   if(!pin) return;
-  const hash = await sha256(PREFS.pinSalt + pin);
-  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   PREFS.pinSalt = ''; PREFS.pinHash = ''; PREFS.pinEnabled = false;
   savePrefs();
   _recoveryClear();              // v9.9.0 REC-1: Recovery mit PIN entfernen (Decision REC1.7/I)
@@ -15378,8 +15414,7 @@ async function requirePin(){
     const handler = async ()=>{
       const v = inp.value.trim();
       if(!v) return;
-      const hash = await sha256(PREFS.pinSalt + v);
-      if(hash === PREFS.pinHash){
+      if(await _pinVerify(v)){   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
         overlay.style.display='none';
         btn.removeEventListener('click', handler);
         inp.removeEventListener('keydown', enterHandler);
@@ -15519,8 +15554,7 @@ async function encryptSensitive(){
   if(!PREFS.pinEnabled){ toast('Erst PIN setzen'); return; }
   const pin = prompt('PIN zum Verschlüsseln:');
   if(!pin) return;
-  const hash = await sha256(PREFS.pinSalt + pin);
-  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   try{
     const key = await deriveKey(pin, PREFS.pinSalt);
     const enc = new TextEncoder();
@@ -15546,8 +15580,7 @@ async function decryptSensitive(){
   if(!blob){ toast('Keine verschlüsselten Daten'); return; }
   const pin = prompt('PIN zum Entschlüsseln:');
   if(!pin) return;
-  const hash = await sha256(PREFS.pinSalt + pin);
-  if(hash !== PREFS.pinHash){ alert('PIN falsch'); return; }
+  if(!(await _pinVerify(pin))){ alert('PIN falsch'); return; }   // v9.10.0 SEC-1: gehaertet + Legacy-Migration
   try{
     const key = await deriveKey(pin, PREFS.pinSalt);
     const iv = new Uint8Array(blob.iv);
@@ -18086,7 +18119,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.9.0 bereit.','ok');
+  log('Terp Sessions v9.10.0 bereit.','ok');
 
   setupPwaUpdate();
 
