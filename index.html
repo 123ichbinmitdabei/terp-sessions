@@ -2812,6 +2812,13 @@ button[data-sch-day].active{
     </div>
     <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen">Stop</button>
   </div>
+  <!-- v9.8.0 R1.6: Pause/Zurueck/Schritt-Steuerung (auch ohne Voice nutzbar) -->
+  <div class="run-ctl" id="runCtl" style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap">
+    <button class="btn sm" id="btnRunPause" aria-label="Programm pausieren">⏸ Pause</button>
+    <button class="btn sm ghost" id="btnRunPrev" aria-label="Vorheriger Schritt">⏮ Zurück</button>
+    <button class="btn sm ghost" id="btnRunSkip" aria-label="Nächster Schritt">⏭ Schritt</button>
+  </div>
+  <div id="runPausedBadge" role="status" aria-live="assertive" hidden style="margin:2px 0 6px;color:var(--hot);font-weight:600">⏸ Pausiert</div>
   <div class="bar" role="progressbar" aria-label="Programm-Fortschritt" aria-valuemin="0" aria-valuemax="100"><div id="runBar"></div></div>
   <div class="run-countdown" id="runCountdown">
     <div><small>Schritt-Restzeit</small><b id="runStepRemain">--:--</b></div>
@@ -8824,6 +8831,7 @@ async function runProgram(p){
   };
   $('#runTitle').textContent = p.name;
   $('#runCard').classList.add('show');
+  _renderPauseState();   // v9.8.0 R1.6: Pause-Anzeige initial zuruecksetzen
   $('#connChip').classList.add('run');
   // v8.5.0 Modul 2: Steuerung-Tab anzeigen, damit Hero/Temp live sichtbar bleibt
   try{ if(typeof switchTab==='function') switchTab('ctl'); }catch{}
@@ -9179,6 +9187,10 @@ function wire(){
 
   // Run engine
   $('#btnRunStop').addEventListener('click', stopRun);
+  // v9.8.0 R1.6: Pause/Resume-Toggle + Zurueck/Schritt (teilen sich die _engineCtl*-Logik mit Voice)
+  $('#btnRunPause')?.addEventListener('click', ()=>{ const r=State.running; if(r && r.paused) _engineCtlResume(); else _engineCtlPause(); });
+  $('#btnRunPrev')?.addEventListener('click', ()=>{ _engineCtlPrevious(); });
+  $('#btnRunSkip')?.addEventListener('click', ()=>{ _engineCtlSkip(); });
 
   // Export/Import
   $('#btnExportAll').addEventListener('click', exportPrograms);
@@ -12586,6 +12598,7 @@ const VOICE_HELP = [
   ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
   ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
   ['Programm', '„starte Programm <Name>", „stoppe das Programm" (nur Programm, Gerät bleibt an)'],
+  ['Programm-Lauf', '„pause", „weiter", „nächster Schritt", „vorheriger Schritt" (während ein Programm läuft)'],
   ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Blättern", „bewerte mit <1 bis 5> Blättern" (geöffnete Sorte; „Sterne" funktioniert weiterhin)'],
   ['Sonstiges', '„wiederhole", „Hilfe"'],
 ];
@@ -12727,6 +12740,13 @@ function parseVoiceCommand(txt){
   }
   if((_sm = t.match(/(?:suche?\s+sorte|sorten\s+mit)\s+(.+)/)))                return { action:'searchStrain', value:_sm[1].trim(), raw };
 
+  // v9.8.0 R1.5: Programm-Lauf-Steuerung (Pause/Weiter/Skip/Previous). Spezifische Phrasen ZUERST,
+  // damit bare „zurueck"/„weiter" nicht mit navClose/Navigation kollidieren. Skip vor Resume (wegen „weiter zum naechsten").
+  if(/(naechster schritt|naechsten schritt|weiter zum naechsten|schritt ueberspringen|ueberspringe)/.test(t)) return { action:'skipStep', raw };
+  if(/(vorheriger schritt|vorherigen schritt|zurueck zum letzten|letzter schritt|schritt zurueck)/.test(t)) return { action:'previousStep', raw };
+  if(/(pausiere|pause|programm anhalten|anhalten|halt das programm)/.test(t)) return { action:'pauseProgram', raw };
+  if(/(weitermachen|fortsetzen|fortfahren|programm weiter|\bweiter\b)/.test(t)) return { action:'resumeProgram', raw };
+
   // v9.4.0 B1: Navigation, schliessen/zurueck (nicht wenn es um ein Programm/eine Sorte geht)
   if(/(schliesse|schliess|zurueck|geh\s*zurueck|close)/.test(t) && !/(programm|sorte)/.test(t)) return { action:'navClose', raw };
   // v9.4.0 B1: Navigation zu Tab/Ansicht (funktioniert ohne BLE)
@@ -12864,6 +12884,11 @@ async function executeVoiceCommand(cmd){
         try{ if(typeof stopRun === 'function') stopRun(); else State.running.stopFlag = true; }catch(_){ try{ if(State.running) State.running.stopFlag = true; }catch(__){} }
         voiceFeedback('✓ Programm wird beendet'); _voiceSpeakConfirm('Programm wird beendet');
         return true;
+      // v9.8.0 R1.5: Programm-Lauf-Steuerung. Die _engineCtl*-Funktionen geben Feedback selbst.
+      case 'pauseProgram':    _engineCtlPause();    return true;
+      case 'resumeProgram':   _engineCtlResume();   return true;
+      case 'skipStep':        _engineCtlSkip();     return true;
+      case 'previousStep':    _engineCtlPrevious(); return true;
       case 'stopAll':
         if(State.running) State.running.stopFlag = true;
         if(State.heater) await cmdHeaterOff();
