@@ -1,6 +1,6 @@
 # Terp Sessions per Siri steuern (iPhone-Anleitung)
 
-Stand: 2026-06-04, App-Version v9.6.0
+Stand: 2026-06-06, App-Version v9.10.1 (URL-Befehle unveraendert seit v9.6.0)
 
 Mit der iPhone-App **Kurzbefehle** (vorinstalliert, Symbol mit bunten Quadraten) kannst du Terp Sessions per Sprache steuern, zum Beispiel „Hey Siri, Vape heizen". Ein Kurzbefehl oeffnet dafuer die App mit einer besonderen URL, und die App fuehrt den Befehl dann selbst aus.
 

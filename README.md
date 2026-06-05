@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.10.0)
+# Terp Sessions — Vape Controller (v9.10.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,17 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.10.1 — Doku-Staleness-Patch (Paket DOC-2)
+
+Rein redaktioneller Patch aus dem QA-1-Audit (Backlog 14), plus zwei nicht-funktionale Code-Korrekturen (Kommentare und eine ungenutzte Funktion). Keine Verhaltensänderung, kein Backend, cscCrypto unberührt.
+
+- **VOICE-BEFEHLE.md:** Header „Stand: v9.7.1 (mit Vorschau auf v9.8.0)" auf v9.10.1 aktualisiert, Überschrift „Programm-Steuerung (kommt mit v9.8.0)" auf „(seit v9.8.0)" (v9.8.0 ist live).
+- **docs/SIRI-SHORTCUTS-ANLEITUNG.md:** Stempel von „v9.6.0" auf v9.10.1 aktualisiert (die URL-Befehle sind seit v9.6.0 unverändert, daher nur der Stempel).
+- **docs/P-AUDIT-PROGRAMME:** fehlender Erledigt-Vermerk nachgetragen (umgesetzt in v9.3.0 / Paket P), für Parität mit den anderen Audit-Docs.
+- **Pioneer-Test-Zahlen:** drei veraltete Code-Kommentare („12 Tests" pro Pfad, „24 Test-Definitionen") auf die tatsächlichen 15 pro Pfad / 30 gesamt korrigiert. Die ungenutzte `_pioneerShowPathChoice`-Funktion (deprecated, kein Live-Aufrufer) leitet ihre Zahlen jetzt dynamisch aus `PIONEER_TESTS` ab, damit sie nie wieder veralten. Der Live-Pioneer-Pfad nutzte bereits dynamische Zahlen.
+
+**Unberührt:** App-Verhalten (nur Kommentare, Doku und eine tote Funktion), cscCrypto, Backend. **Tests:** keine neue Suite (rein redaktionell); volle Regression grün.
 
 ## v9.10.0 — Sicherheits- und A11Y-Härtung (Paket SEC-1)
 

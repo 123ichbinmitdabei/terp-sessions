@@ -11594,7 +11594,7 @@ function exportDiagnostics(){
     toast('Kopieren nicht möglich, Diagnose-Log bitte manuell auswählen');
   }
 }
-const SW_VERSION_LABEL='v9.10.0';
+const SW_VERSION_LABEL='v9.10.1';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -18119,7 +18119,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.10.0 bereit.','ok');
+  log('Terp Sessions v9.10.1 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -20463,7 +20463,7 @@ document.addEventListener('DOMContentLoaded', _modalStackInit);
 /* ═══════════════════════════════════════════════════════════════════════════
    v9.0.0-alpha Paket S2 Phase 1: Pioneer-Test-Modus
    - Feature-Flag PREFS.pioneerTestMode (default OFF, versteckt fuer Normal-User)
-   - 24 Test-Definitionen (12 sehende + 12 blinde Tester)
+   - 30 Test-Definitionen (15 sehende + 15 blinde Tester)
    - Wizard-UI mit Progress, Pfad-Wahl, Buttons Geschafft/Nicht/Skip
    - Lokale State-Speicherung (Resume-fähig)
    - Aria-Live + Fokus-Management
@@ -20473,7 +20473,7 @@ document.addEventListener('DOMContentLoaded', _modalStackInit);
    abgleichen (siehe ANDRE-NOTIZ.md).
 ═══════════════════════════════════════════════════════════════════════════ */
 const PIONEER_TESTS = [
-  // ── Pfad A: sehende Tester (12 Tests) ────────────────────────────────────
+  // ── Pfad A: sehende Tester (15 Tests, A1-A15) ────────────────────────────
   { id:'A1', path:'visual', title:'App-Installation', desc:'Installiere die App auf deinem Geraet (PWA-Install). Auf iOS Safari: Teilen-Symbol → "Zum Home-Bildschirm". Auf Android Chrome: Menue → "App installieren".', hint:'Wenn der Install-Knopf fehlt: ueberpruefe ob du auf der HTTPS-URL bist.' },
   { id:'A2', path:'visual', title:'Onboarding-Tour', desc:'Folge der Willkommens-Tour bis zum Ende. Skip-Button funktioniert auch — aber bitte einmal komplett durchklicken.', hint:'Tour-Reset in Settings → Wartung → Tour zuruecksetzen.' },
   { id:'A3', path:'visual', title:'Bluetooth verbinden', desc:'Klick auf "Verbinden" oben rechts. Waehle dein Geraet (Volcano, Mighty, PAX etc.). Verbindung sollte gruen anzeigen.', hint:'iPhone Safari hat KEIN Web-Bluetooth — nutze Bluefy Browser.' },
@@ -20486,7 +20486,7 @@ const PIONEER_TESTS = [
   { id:'A10', path:'visual', title:'Sprachsteuerung testen', desc:'Mikrofon-FAB unten rechts antippen. Sage: "Heize auf 185 Grad". App sollte reagieren.', hint:'Bluefy hat KEINE Speech-API — dort erscheint Text-Eingabe als Alternative.' },
   { id:'A11', path:'visual', title:'Session-Tracking', desc:'Steuerung-Tab → Session-Notiz hinzufuegen (Staerke + Effekt-Stichwort). Wird lokal gespeichert.', hint:'Setup-Tab → Sessions zeigt die Liste der gespeicherten Sessions.' },
   { id:'A12', path:'visual', title:'Datenschutz lesen + Account loeschen', desc:'Datenschutz-Link unten im Register-Modal antippen. Liest sich verstaendlich? Danach: Account loeschen via Settings.', hint:'Account-Loeschung ist endgueltig — alle eigenen Beitraege gehen weg (Cascade).' },
-  // ── Pfad B: blinde Tester mit Screen-Reader (12 Tests) ───────────────────
+  // ── Pfad B: blinde Tester mit Screen-Reader (15 Tests, B0-B15) ───────────
   { id:'B0', path:'screenreader', title:'Screen-Reader-Modus aktivieren', desc:'Settings → "♿ Ich nutze einen Screen-Reader" Toggle EIN. App-Sprache verstummt damit sich VoiceOver/TalkBack/NVDA nicht ueberlagern.', hint:'Toggle ist sehr weit oben in den Sprach-Einstellungen.' },
   { id:'B1', path:'screenreader', title:'Onboarding mit Screen-Reader', desc:'Tour-Schritte werden von VoiceOver/TalkBack vorgelesen. Jeden Schritt verstehen koennen.', hint:'Tour-Reset in Settings falls du sie schon weggeklickt hast.' },
   { id:'B2', path:'screenreader', title:'Header-Navigation per Touch-Explorer', desc:'Wische durch den Header: Brand, Connection-Status, Verbinden-Button, Profil-Button, Hilfe, Settings. Alle Elemente klar benannt?', hint:'iOS VoiceOver: 1-Finger-Wisch nach rechts geht zum naechsten Element.' },
@@ -20567,7 +20567,10 @@ function _pioneerApplyTabVisibility(){
 // v9.0.1 (B4): DEPRECATED Backup — nicht mehr aufgerufen. Pfad-Wahl laeuft jetzt ueber die
 // barrierefreien Buttons in _pioneerRenderWizard (!st.path). Funktion bleibt nur als Fallback drin.
 function _pioneerShowPathChoice(){
-  const path = prompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A (12 Tests, normale Sicht)\n  "screenreader" — fuer Pfad B (12 Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
+  // v9.10.1 DOC-2: Zahlen dynamisch aus PIONEER_TESTS (sonst veralten sie wie zuvor „12")
+  const nVisual = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='visual').length : 0;
+  const nSr = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='screenreader').length : 0;
+  const path = prompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A ('+nVisual+' Tests, normale Sicht)\n  "screenreader" — fuer Pfad B ('+nSr+' Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
   if(!path) return;
   const p = String(path).toLowerCase().trim();
   let chosen = null;
@@ -20580,7 +20583,7 @@ function _pioneerShowPathChoice(){
   try{ savePrefs(); }catch(_){}
   if(typeof switchTab === 'function') switchTab('pioneer');
   _pioneerRenderWizard();
-  _pioneerAnnounce('Pfad ' + (chosen === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. 12 Aufgaben.');
+  _pioneerAnnounce('Pfad ' + (chosen === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. ' + (chosen === 'visual' ? nVisual : nSr) + ' Aufgaben.');
 }
 
 function _pioneerTestsForCurrentPath(){

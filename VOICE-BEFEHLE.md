@@ -1,6 +1,6 @@
 # Voice-Befehle — Terp Sessions
 
-Stand: v9.7.1 (mit Vorschau auf v9.8.0)
+Stand: v9.10.1 (alle hier gelisteten Befehle sind live)
 
 Diese Anleitung listet alle Sprachbefehle der App. Die Befehle funktionieren in allen Browsern mit Mikrofon-Zugriff, inklusive Bluefy auf iOS für blinde Tester.
 
@@ -63,7 +63,7 @@ Nach jedem Befehl gibt es eine TTS-Bestätigung. Diese kann in Settings auf „K
 | „starte Programm <Name>" | Programm starten (Name aus deinen oder den Werks-Programmen) |
 | „stoppe das Programm" | Programm beenden, Gerät bleibt im aktuellen Zustand |
 
-### Programm-Steuerung (kommt mit v9.8.0)
+### Programm-Steuerung (seit v9.8.0)
 
 Diese Befehle funktionieren während ein Programm läuft:
 
