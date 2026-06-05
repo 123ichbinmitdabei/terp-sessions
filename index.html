@@ -2381,7 +2381,7 @@ button[data-sch-day].active{
       <button class="btn sm ghost" id="btnPreheatCancel" data-tip="Schedule abbrechen" style="padding:6px 10px;min-height:32px" aria-label="Schedule abbrechen">×</button>
     </div>
     <div class="temp-graph" id="tempGraph" aria-hidden="true">
-      <svg viewBox="0 0 300 46" preserveAspectRatio="none">
+      <svg viewBox="0 0 300 46" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="gradTemp" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#ff5722" stop-opacity=".5"/>
@@ -3401,7 +3401,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" data-tip="Programme — Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
   <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" data-tip="Setup — Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
   <!-- v9.0.0-alpha: Pioneer-Test-Modus-Tab, nur sichtbar wenn PREFS.pioneerTestMode -->
-  <button class="nav-btn" id="nav-pioneer" data-tab="pioneer" role="tab" aria-selected="false" aria-controls="tab-pioneer" data-tip="Pioneer-Test-Pfad — gefuehrter Wizard mit 24 Test-Aufgaben" hidden><span class="ico" aria-hidden="true">🌿</span><span>Test-Pfad</span></button>
+  <button class="nav-btn" id="nav-pioneer" data-tab="pioneer" role="tab" aria-selected="false" aria-controls="tab-pioneer" data-tip="Pioneer-Test-Pfad, gefuehrter Wizard mit 30 Test-Aufgaben" hidden><span class="ico" aria-hidden="true">🌿</span><span>Test-Pfad</span></button>
 </nav>
 
 <!-- ── Modals ───────────────────────────────────────────────── -->
@@ -3837,7 +3837,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="toggle-row">
         <div class="info">
           <b>🌿 Pioneer-Test-Pfad aktivieren</b>
-          <small>Fuegt einen zusaetzlichen Tab mit 24 gefuehrten Test-Aufgaben hinzu. Nur fuer Pioneer-Tester sinnvoll — Normal-User koennen das ignorieren.</small>
+          <small id="pioneerTestCountHint">Fuegt einen zusaetzlichen Tab mit 30 gefuehrten Test-Aufgaben hinzu. Nur fuer Pioneer-Tester sinnvoll, Normal-User koennen das ignorieren.</small>
         </div>
         <button class="toggle" id="togPioneerTest" role="switch" aria-checked="false" aria-label="Pioneer-Test-Modus"></button>
       </div>
@@ -5395,6 +5395,11 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 ═══════════════════════════════════════════════════════════════ */
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
+// v9.7.1 N1.5: global, damit aria-checked-Sync ueberall verfuegbar ist (vorher lokale const -> Aufruf bei togTrackingEnabled war toter Code).
+function syncToggle(id, v){
+  const el = document.getElementById(id);
+  if(el) el.setAttribute('aria-checked', String(!!v));
+}
 const LS={
   get:(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
   set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}},
@@ -7569,7 +7574,7 @@ async function _commProgramRateClick(p, stars){
   _commProgramDetailRender(p);
   try{
     await communityClient.programRate(p.id, stars, null);
-    toast(`✓ Bewertung: ${stars} Sterne`);
+    toast(`✓ Bewertung: ${stars} Blätter`);
     try{
       // Refresh aus Liste — kein dedicated programGet
       const fresh = await communityClient.programList(null, null, 200, 0);
@@ -11353,7 +11358,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.7.0';
+const SW_VERSION_LABEL='v9.7.1';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -11986,7 +11991,7 @@ async function _commStrainRateClick(s, stars){
   _commStrainDetailRender(s);
   try{
     await communityClient.strainRate(s.id, stars, null);
-    toast(`✓ Bewertung: ${stars} Sterne`);
+    toast(`✓ Bewertung: ${stars} Blätter`);
     // avg_stars + review_count im Hintergrund aktualisieren — neuen Stand holen
     try{
       const fresh = await communityClient.strainGet(s.id);
@@ -12412,7 +12417,7 @@ const VOICE_HELP = [
   ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
   ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
   ['Programm', '„starte Programm <Name>", „stoppe das Programm" (nur Programm, Gerät bleibt an)'],
-  ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Sternen", „bewerte mit <1 bis 5> Sternen" (geöffnete Sorte)'],
+  ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Blättern", „bewerte mit <1 bis 5> Blättern" (geöffnete Sorte; „Sterne" funktioniert weiterhin)'],
   ['Sonstiges', '„wiederhole", „Hilfe"'],
 ];
 function _voiceHelpText(){ return VOICE_HELP.map(g=>g[0]+': '+g[1]).join('. '); }
@@ -12476,7 +12481,7 @@ function _voiceOpenStrainMatch(m){
 async function _voiceRateStrainMatch(m, stars){
   if(m.source!=='community' || !m.ref || !m.ref.id){ voiceFeedback('Diese Sorte kann nicht bewertet werden'); _voiceSpeakConfirm('Diese Sorte kann nicht bewertet werden'); return; }
   if(!(typeof communityClient==='object' && communityClient && communityClient.isLoggedIn && communityClient.isLoggedIn())){ voiceFeedback('Bitte zuerst in der Community anmelden'); _voiceSpeakConfirm('Bitte zuerst in der Community anmelden'); return; }
-  try{ await _commStrainRateClick(m.ref, stars); voiceFeedback('✓ '+stars+' Sterne für '+m.name); _voiceSpeakConfirm(stars+' Sterne für '+m.name+' gespeichert'); }
+  try{ await _commStrainRateClick(m.ref, stars); voiceFeedback('✓ '+stars+' Blätter für '+m.name); _voiceSpeakConfirm(stars+' Blätter für '+m.name+' gespeichert'); }
   catch(_){ voiceFeedback('Bewerten fehlgeschlagen'); }
 }
 function _voiceAnnounceCandidates(cands, context, rateStars){
@@ -12541,13 +12546,14 @@ function parseVoiceCommand(txt){
   // v9.5.0 B2.2: Sorten-Befehle (VOR der Navigation, damit "oeffne sorte X" nicht als Tab-Wechsel endet)
   let _sm;
   if((_sm = t.match(/(?:oeffne|zeige?)\s+sorte\s+(.+)/)))                      return { action:'openStrain', value:_sm[1].trim(), raw };
-  if((_sm = t.match(/bewerte?\s+(?:sorte\s+)?(.+?)\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*stern/))){
+  // v9.7.1 N1.1: „Stern" weiter erkennen (Tester gewohnt) UND „Blatt"/„Blaetter" als Synonym (normalisiert: blaett)
+  if((_sm = t.match(/bewerte?\s+(?:sorte\s+)?(.+?)\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*(?:stern|blaett|blatt)/))){
     const st=_voiceParseStars(_sm[2]); if(st) return { action:'rateStrain', value:{ name:_sm[1].trim(), stars:st }, raw };
   }
-  if((_sm = t.match(/^bewerte?\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*stern/))){
+  if((_sm = t.match(/^bewerte?\s+mit\s+(\d|eins|zwei|drei|vier|fuenf)\s*(?:stern|blaett|blatt)/))){
     const st=_voiceParseStars(_sm[1]); if(st) return { action:'rateCurrentStrain', value:st, raw };
   }
-  if((_sm = t.match(/(\d|eins|zwei|drei|vier|fuenf)\s*stern\w*\s+fuer\s+(.+)/))){
+  if((_sm = t.match(/(\d|eins|zwei|drei|vier|fuenf)\s*(?:stern|blaett|blatt)\w*\s+fuer\s+(.+)/))){
     const st=_voiceParseStars(_sm[1]); if(st) return { action:'rateStrain', value:{ name:_sm[2].trim(), stars:st }, raw };
   }
   if((_sm = t.match(/(?:suche?\s+sorte|sorten\s+mit)\s+(.+)/)))                return { action:'searchStrain', value:_sm[1].trim(), raw };
@@ -16450,10 +16456,7 @@ function toggleBlindMode(){
   applyHighContrast();
   setupVoiceReadoutInterval();
   // UI-Toggles in Settings synchron updaten (falls offen)
-  const syncToggle = (id, v)=>{
-    const el = document.getElementById(id);
-    if(el) el.setAttribute('aria-checked', String(!!v));
-  };
+  // v9.7.1 N1.5: syncToggle ist jetzt global definiert (siehe oben), lokale Kopie entfernt.
   syncToggle('togBlindMode', PREFS.blindMode);
   syncToggle('togHighContrast', PREFS.highContrast);
   syncToggle('togVoiceReadout', PREFS.voiceReadout);
@@ -17723,7 +17726,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.7.0 bereit.','ok');
+  log('Terp Sessions v9.7.1 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18106,7 +18109,7 @@ async function init(){
     catch(e){
       // Fallback: text too long for any version → return error SVG
       const w=220;
-      return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${w}" viewBox="0 0 ${w} ${w}"><rect width="100%" height="100%" fill="#222"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#fff" font-family="monospace" font-size="12">QR: zu lang (${(e&&e.message)||'fehler'})</text></svg>`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${w}" viewBox="0 0 ${w} ${w}" role="img" aria-label="QR-Code konnte nicht erzeugt werden" focusable="false"><rect width="100%" height="100%" fill="#222"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#fff" font-family="monospace" font-size="12">QR: zu lang (${(e&&e.message)||'fehler'})</text></svg>`;
     }
     const total = (qr.size + margin*2) * moduleSize;
     // Build path d-attribute for dark modules (rect per module)
@@ -19325,11 +19328,22 @@ function _a11yWireAriaCheckedSync(){
   }catch{}
 }
 
+// v9.7.1 N1.2: Pioneer-Test-Anzahl zukunftssicher aus PIONEER_TESTS.length ableiten (statt hartem „24"/„30").
+function _a11ySyncPioneerCount(){
+  try{
+    const n = (typeof PIONEER_TESTS !== 'undefined' && Array.isArray(PIONEER_TESTS) && PIONEER_TESTS.length) || 30;
+    const nav = document.getElementById('nav-pioneer');
+    if(nav) nav.setAttribute('data-tip', 'Pioneer-Test-Pfad, gefuehrter Wizard mit '+n+' Test-Aufgaben');
+    const hint = document.getElementById('pioneerTestCountHint');
+    if(hint) hint.textContent = 'Fuegt einen zusaetzlichen Tab mit '+n+' gefuehrten Test-Aufgaben hinzu. Nur fuer Pioneer-Tester sinnvoll, Normal-User koennen das ignorieren.';
+  }catch(_){}
+}
 function initA11y(){
   _a11yAutoLabel();
   _a11yModalEnhance();
   _a11yObserveOverlays();        // v9.7.0 A11Y-D2: pin-/hotel-Overlay (style-getoggled) beobachten
   _a11yRecomputeInert();         // v9.7.0 A11Y-D2: Edge-Case, falls beim Laden schon ein Modal/Overlay offen ist
+  _a11ySyncPioneerCount();       // v9.7.1 N1.2: Tooltip-Zahl dynamisch
   _a11yConnectHooks();
   _a11yWireAriaCheckedSync();
   _a11yShortcutHelp();
@@ -20419,9 +20433,9 @@ const PIONEER_ACHIEVEMENTS = [
   { id:'terp_hunter',          title:'🔬 Terp Hunter',         desc:'Aroma-Liste navigiert (A5 oder B5)' },
   { id:'voice_warrior',        title:'🎤 Voice Warrior',       desc:'Sprachsteuerung getestet (A10 oder B10)' },
   { id:'bug_hunter',           title:'🐛 Bug Hunter',          desc:'Ersten Bug mit Report gemeldet' },
-  { id:'accessibility_champ',  title:'♿ Accessibility Champion', desc:'Alle 12 Tests von Pfad B bestanden' },
+  { id:'accessibility_champ',  title:'♿ Accessibility Champion', desc:'Alle Tests von Pfad B bestanden' },
   { id:'speed_run',            title:'⚡ Speed Run',           desc:'Alle Tests in unter 30 Min absolviert' },
-  { id:'completionist',        title:'💯 Completionist',       desc:'24 von 24 Tests bestanden (beide Pfade)' },
+  { id:'completionist',        title:'💯 Completionist',       desc:'Alle Tests bestanden (beide Pfade)' },
   { id:'patient_zero',         title:'🥇 Patient Zero',        desc:'Pioneer-Tester der ersten Stunde' },
 ];
 

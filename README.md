@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.7.0)
+# Terp Sessions — Vape Controller (v9.7.1)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.7.1 — A11Y Nice-to-haves + Blätter-Konsistenz (Paket A11Y-N1)
+
+Reine A11Y-Polish aus den A-Audit- und B-Audit-Reviews, keine Bugs. PATCH-Bump. Kein Backend-Eingriff, cscCrypto unberührt.
+
+- **N1.1 Blätter statt Sterne (Konsistenz):** Die Bewertungs-Symbole sind seit v8.9.0 Cannabis-Blätter, einige Texte sagten aber noch „Sterne". Umgestellt: die Bewertungs-Toasts („Bewertung: N Blätter"), die Voice-Bestätigung („N Blätter für X gespeichert") und der VOICE_HELP-Eintrag. Die Render-aria-labels („N von 5 Blättern", `role=radio`/`aria-checked`) waren bereits korrekt. Der **Voice-Parser versteht jetzt beides:** „bewerte mit 4 Blättern" und weiterhin „bewerte mit 4 Sternen" (das Synonym `blaett`/`blatt` wurde zur normalisierten Erkennung ergänzt, die Tester sind „Sterne" gewohnt).
+- **N1.2 Pioneer-Anzahl 24 zu 30:** Der Pioneer-Test-Pfad hat seit v9.0.0 dreißig Aufgaben (`PIONEER_TESTS.length`), mehrere Tooltips und Achievement-Texte nannten noch 24. Korrigiert und zukunftssicher gemacht: `_a11ySyncPioneerCount()` setzt den Tab-Tooltip und den Settings-Hinweis dynamisch aus `PIONEER_TESTS.length`. Die Achievement-Beschreibungen (Completionist, Accessibility Champion) sind jetzt zahl-frei formuliert, die Vergabe-Logik war ohnehin dynamisch (`PIONEER_TESTS.every`).
+- **N1.3 Dekorative SVGs:** Das dekorative Temperatur-Graph-SVG bekam `aria-hidden="true"` plus `focusable="false"`. Das QR-Fehler-Fallback-SVG (funktional) bekam `role="img"` mit `aria-label`. Die übrigen Diagramm-SVGs (Heizkurve, Statistik, QR-Code) hatten bereits `role="img"` mit Label, das Blatt-Icon bereits `aria-hidden`.
+- **N1.4 Live-Region-Politeness:** Geprüft, keine Änderung nötig. `#ttsLive` und `#srAlert` sind korrekt `assertive`, `#voiceFeedback` korrekt `polite` (Status), `#connLostBanner` korrekt `assertive`.
+- **N1.5 syncToggle global:** `syncToggle` (setzt `aria-checked` auf `role=switch`-Toggles) war eine lokale `const` in einer Funktion, ein Aufruf an anderer Stelle (`togTrackingEnabled`) lief deshalb ins Leere. Jetzt eine globale Funktion, überall verfügbar.
+
+**Unberührt:** cscCrypto, Backend, Run-Engine, Wake-Word, der Voice-Parser über N1.1 hinaus, die visuellen Symbole (Blätter bleiben Blätter). **Tests:** `v971polish.mjs` (26); volle Regression grün.
 
 ## v9.7.0 — Modal-Inert Fix (Paket A11Y-D2)
 
