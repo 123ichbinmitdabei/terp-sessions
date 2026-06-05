@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.6.0)
+# Terp Sessions — Vape Controller (v9.7.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -13,6 +13,22 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
+
+## v9.7.0 — Modal-Inert Fix (Paket A11Y-D2)
+
+Behebt einen von einem blinden Tester (iPhone, VoiceOver, Bluefy) gemeldeten Bug: Bei offenem Modal wischte VoiceOver aus dem Dialog heraus und las Buttons und Texte aus dem Hintergrund-DOM vor, die im aktiven Modal gar nicht existieren. MINOR, A11Y-Fix mit Tester-Impact. Kein Backend-Eingriff, cscCrypto unberührt.
+
+**Diagnose** (`docs/A11Y-D1-AUDIT-2026-06-05.md`): Beim Modal-Open wurde der Hintergrund nicht inertiert. Es gab kein `inert` und keine JS-gesteuerte `aria-hidden` auf Geschwister. Die einzige Eingrenzung war `aria-modal="true"`, und darauf darf man sich auf iOS Safari und in Bluefy (WKWebView) nicht verlassen. Die beiden vorhandenen Fokus-Fallen sind reine Tab-Tasten-Schleifen und gegen VoiceOver-Wischen wirkungslos. Glücksfall: Die `<body>`-Struktur ist flach, alle Modale, `#main`, Header und die Live-Regionen sind direkte body-Kinder.
+
+**Lösung:** Eine idempotente Hintergrund-Inertisierung. Bei jedem Modal-Open und -Close berechnet `_a11yRecomputeInert()` neu: erst alle Markierungen freigeben, dann das oberste offene Modal oder Overlay bestimmen und alle anderen direkten body-Kinder mit `inert` plus `aria-hidden="true"` schalten. Markierung über `data-a11y-inertified`, damit das Aufräumen nur Selbst-Gesetztes entfernt und statische Deko-`aria-hidden` (Icons) unangetastet bleiben.
+
+- **Whitelist (nie inertiert):** Live-Regionen und Status (`#ttsLive`, `#srLive`, `#srAlert`, `#voiceFeedback` und alles mit `aria-live` oder `role` in status/alert/alertdialog) plus das kritische `#connLostBanner` (Andres Entscheidung 1: Verbindungsabbruch bleibt auch bei offenem Dialog hörbar).
+- **Stacking** fällt automatisch heraus: Da immer nur das oberste Modal nicht-inert ist, wird beim Öffnen eines Sub-Modals das Eltern-Modal inert und beim Schließen wieder aktiv.
+- **`.modal`-Elemente werden nie über die Whitelist exemptiert** (Edge-Hunt-Fund): ein Hintergrund-Modal mit `role="alertdialog"` (z. B. `#modalBeta`) muss inert werden; das aktive Modal wird separat ausgenommen.
+- **PIN- und Hotel-Overlay** (`#pinOverlay`, `#hotelOverlay`) werden per `style.display` statt `.modal`-Klasse getoggled und daher von einem eigenen Style-Observer erfasst (Andres Entscheidung 2). Sie selbst bleiben von der Inertisierung ausgenommen, was zugleich eine Observer-Schleife verhindert.
+- **`#ttsLive` bleibt assertive** (Andres Entscheidung 3), keine Pro-Modal-Live-Region (Entscheidung 4), `inert` plus `aria-hidden` parallel (Entscheidung 5).
+
+Integration über Option B aus der Diagnose: kein zentraler `openModal`-Refactor, sondern Anbindung an den bereits existierenden W2/W3-Klassen-Observer plus den neuen Overlay-Style-Observer. **Unberührt:** cscCrypto, Backend, Run-Engine, Wake-Word, Voice-Parser, die beiden bestehenden Fokus-Fallen. **Tests:** `v97inert.mjs` (27, inkl. Open/Close, Stacking A über B, PIN-Overlay, Live-Region bei offenem Modal, Marker-Disziplin); volle Regression grün. Finale Abnahme bleibt ein manueller VoiceOver-Pass auf einem echten iPhone in Bluefy.
 
 ## v9.6.0 — iOS/Bluefy/Siri-Bridge (Paket C)
 

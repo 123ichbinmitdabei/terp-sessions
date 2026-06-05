@@ -11353,7 +11353,7 @@ function exportDiagnostics(){
   ].join('\n');
   navigator.clipboard.writeText(info).then(()=>toast('Diagnose in Zwischenablage kopiert')).catch(()=>toast('Kopieren nicht möglich'));
 }
-const SW_VERSION_LABEL='v9.6.0';
+const SW_VERSION_LABEL='v9.7.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17723,7 +17723,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.6.0 bereit.','ok');
+  log('Terp Sessions v9.7.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -19140,6 +19140,83 @@ let _a11yModalFocusStack = [];
 // Backwards-Kompat-Alias (zeigt auf den obersten Stack-Eintrag), falls extern referenziert.
 let _a11yModalLastFocus = null;
 
+/* ═══ v9.7.0 Paket A11Y-D2: Modal-Inert (VoiceOver-Hintergrund-Begrenzung) ═══
+   Wurzel-Ursache (docs/A11Y-D1-AUDIT-2026-06-05.md): aria-modal allein begrenzt
+   VoiceOver auf iOS/Bluefy nicht. Loesung: bei offenem Modal/Overlay alle anderen
+   direkten body-Kinder inert + aria-hidden schalten, ausser Live-Regionen/Status.
+   Stack-sicher per Neuberechnung: erst alles freigeben, dann gegen das oberste
+   offene Modal/Overlay inertieren. Markierung via data-a11y-inertified, damit das
+   Aufraeumen nur Selbst-Gesetztes entfernt (statische Deko-aria-hidden bleiben). */
+function _a11yIsInertExempt(el){
+  try{
+    if(!el || el.nodeType !== 1) return true;
+    // .modal-Elemente nie exemptieren: ein Hintergrund-Modal (auch role=alertdialog) MUSS inert werden.
+    // Das aktive Modal wird separat ueber activeEl ausgenommen, nicht ueber diese Whitelist.
+    if(el.classList && el.classList.contains('modal')) return false;
+    const id = el.id;
+    // Live-Regionen + kritisches Verbindungs-Banner duerfen auch bei offenem Modal ankuendigen
+    if(id === 'ttsLive' || id === 'srLive' || id === 'srAlert' || id === 'connLostBanner') return true;
+    // pin-/hotel-Overlay nie als Hintergrund inertieren (sie sind selbst Blocker; verhindert Observer-Schleife)
+    if(id === 'pinOverlay' || id === 'hotelOverlay') return true;
+    if(el.hasAttribute('aria-live')) return true;
+    const role = el.getAttribute('role');
+    if(role === 'status' || role === 'alert' || role === 'alertdialog') return true;
+    return false;
+  }catch(_){ return true; }
+}
+function _a11yZ(el){
+  let z = 0;
+  try{ z = parseInt(getComputedStyle(el).zIndex, 10); }catch(_){}
+  if(!z || isNaN(z)){ try{ z = parseInt(el.style.zIndex, 10) || 0; }catch(_){ z = 0; } }
+  return z || 0;
+}
+// Oberstes offenes Modal (.modal.open) oder sichtbares Overlay (pin/hotel) nach z-index, Tiebreak DOM-Reihenfolge.
+function _a11yTopBlocker(){
+  let top = null, topZ = -1;
+  try{
+    document.querySelectorAll('.modal.open').forEach(m=>{ const z=_a11yZ(m); if(z>=topZ){ topZ=z; top=m; } });
+    ['pinOverlay','hotelOverlay'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el && el.style && el.style.display && el.style.display !== 'none'){ const z=_a11yZ(el); if(z>=topZ){ topZ=z; top=el; } }
+    });
+  }catch(_){}
+  return top;
+}
+function _a11yRestoreBackground(){
+  try{
+    document.querySelectorAll('[data-a11y-inertified="1"]').forEach(el=>{
+      try{ el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); delete el.dataset.a11yInertified; }catch(_){}
+    });
+  }catch(_){}
+}
+function _a11yInertifyBackground(activeEl){
+  try{
+    Array.from(document.body.children).forEach(el=>{
+      if(el === activeEl) return;
+      if(_a11yIsInertExempt(el)) return;
+      try{ el.setAttribute('inert',''); el.setAttribute('aria-hidden','true'); el.dataset.a11yInertified='1'; }catch(_){}
+    });
+  }catch(_){}
+}
+function _a11yRecomputeInert(){
+  try{
+    _a11yRestoreBackground();
+    const top = _a11yTopBlocker();
+    if(top) _a11yInertifyBackground(top);
+  }catch(_){ /* a11y darf nie crashen */ }
+}
+// pin-/hotel-Overlay werden per style.display (nicht .modal-Klasse) getoggled -> eigener Style-Observer.
+function _a11yObserveOverlays(){
+  try{
+    ['pinOverlay','hotelOverlay'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el || el.__a11yOverlayObserved) return;
+      el.__a11yOverlayObserved = true;
+      new MutationObserver(()=>_a11yRecomputeInert()).observe(el, {attributes:true, attributeFilter:['style','class','hidden']});
+    });
+  }catch(_){}
+}
+
 function _a11yEnsureModalObserver(){
   if(window.__a11yModalObserver) return window.__a11yModalObserver;
   const obs = new MutationObserver(muts=>{
@@ -19150,14 +19227,18 @@ function _a11yEnsureModalObserver(){
       const isOpen = t.classList.contains('open');
       const wasOpen = mu.oldValue ? /\bopen\b/.test(mu.oldValue) : false;
       if(isOpen && !wasOpen){
-        _a11yModalFocusStack.push(document.activeElement);   // W2: push beim Open
+        _a11yModalFocusStack.push(document.activeElement);   // W2: push beim Open (Ausloeser ERST erfassen)
         _a11yModalLastFocus = document.activeElement;
-        // initialer Fokus auf erstes fokussierbares Element
+        // v9.7.0 A11Y-D2: erst NACH dem Erfassen des Ausloesers inertieren (inert wuerde ihn sonst wegblurren)
+        try{ _a11yRecomputeInert(); }catch(_){}
+        // initialer Fokus auf erstes fokussierbares Element (Modal selbst ist nicht inert)
         const f = t.querySelector('button:not([disabled]), input:not([disabled]):not([type="hidden"]), [tabindex]:not([tabindex="-1"])');
         if(f){ setTimeout(()=>{ try{ f.focus(); }catch{} }, 50); }
         const label = t.getAttribute('aria-label') || (t.querySelector('h2,h3') && t.querySelector('h2,h3').textContent.trim()) || 'Dialog';
         if(typeof ttsEvent === 'function') ttsEvent('modalOpen', 'Dialog geöffnet: ' + label);
       } else if(!isOpen && wasOpen){
+        // v9.7.0 A11Y-D2: erst un-inertieren (oberstes verbleibendes Modal freigeben), DANN Fokus zurueck
+        try{ _a11yRecomputeInert(); }catch(_){}
         if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
         const back = _a11yModalFocusStack.pop();   // W2: pop beim Close -> Fokus zum Ausloeser zurueck
         _a11yModalLastFocus = _a11yModalFocusStack[_a11yModalFocusStack.length-1] || null;
@@ -19247,6 +19328,8 @@ function _a11yWireAriaCheckedSync(){
 function initA11y(){
   _a11yAutoLabel();
   _a11yModalEnhance();
+  _a11yObserveOverlays();        // v9.7.0 A11Y-D2: pin-/hotel-Overlay (style-getoggled) beobachten
+  _a11yRecomputeInert();         // v9.7.0 A11Y-D2: Edge-Case, falls beim Laden schon ein Modal/Overlay offen ist
   _a11yConnectHooks();
   _a11yWireAriaCheckedSync();
   _a11yShortcutHelp();
