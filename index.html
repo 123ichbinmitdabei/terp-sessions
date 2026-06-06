@@ -2359,7 +2359,7 @@ button[data-sch-day].active{
   </div>
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
-    <button class="btn sm ghost" id="btnConnect" aria-label="Mit Volcano verbinden">Verbinden</button>
+    <button class="btn sm ghost" id="btnConnect" aria-label="Mit Vaporizer verbinden">Verbinden</button>
     <span class="connect-hint" id="connectHint" hidden aria-hidden="true">👆 hier tippen</span>
     <button class="user-avatar" id="userAvatar" aria-label="Profil wechseln">👤</button>
     <button class="help-ico" id="btnHelp" aria-label="Hilfe und Anleitung öffnen">?</button>
@@ -2829,7 +2829,7 @@ button[data-sch-day].active{
 
   </details>
 
-  <div class="foot">⚠️ Lass den Volcano niemals unbeaufsichtigt. Nutzung auf eigenes Risiko.</div>
+  <div class="foot">⚠️ Lass den Vaporizer niemals unbeaufsichtigt. Nutzung auf eigenes Risiko.</div>
 </section>
 
 <!-- v9.0.0-alpha Paket S2 Phase 1: Pioneer-Test-Pfad-Tab (nur sichtbar wenn PREFS.pioneerTestMode) -->
@@ -4149,7 +4149,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <div class="sheet">
     <div class="grab"></div>
     <h2 id="qrTitle">Programm teilen</h2>
-    <p class="wiz-text"><small>Scanne diesen Code in der Volcano-App eines anderen Geräts um das Programm zu importieren.</small></p>
+    <p class="wiz-text"><small>Scanne diesen Code in Terp Sessions auf einem anderen Gerät um das Programm zu importieren.</small></p>
     <div class="qr-box" id="qrBox"></div>
     <div class="qr-url" id="qrUrl"></div>
     <div class="row" style="gap:8px">
@@ -4528,7 +4528,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <summary style="padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px"><span aria-hidden="true">⚠️</span> Voraussetzungen</summary>
       <div style="padding:0 14px 14px;font-size:12px;color:var(--text);line-height:1.6">
         <ul style="margin:0;padding-left:18px">
-          <li>App muss bereits einmal in diesem Browser mit dem Volcano gepairt sein</li>
+          <li>App muss bereits einmal in diesem Browser mit dem Vaporizer gepairt sein</li>
           <li>Bei iOS: <b>Bluefy</b> als Standard-Browser für die App nutzen (oder mit Shortcut „URL in Bluefy öffnen")</li>
           <li>Bei Android: Chrome als Standard-Browser</li>
           <li>Browser muss schon geöffnet sein oder Auto-Connect funktioniert nur eingeschränkt</li>
@@ -4556,7 +4556,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div class="schedule-safety">
       <span style="font-size:14px">⚠️</span>
       <div>
-        <b>Sicherheit:</b> Geplante Sessions werden nur ausgeführt wenn die App geöffnet und mit dem Volcano verbunden ist. Auto-Cool-Down empfohlen (Einstellungen → Sicherheit).
+        <b>Sicherheit:</b> Geplante Sessions werden nur ausgeführt wenn die App geöffnet und mit dem Vaporizer verbunden ist. Auto-Cool-Down empfohlen (Einstellungen → Sicherheit).
       </div>
     </div>
 
@@ -5573,6 +5573,7 @@ const PREFS_DEFAULTS = {
   pinHash:'',             // v9.10.0 SEC-1: PBKDF2(pin,salt) hex; legacy = SHA-256(salt+pin)
   pinSalt:'',
   pinKdf:'',              // v9.10.0 SEC-1: '' oder 'sha256' = legacy, 'pbkdf2' = gehaertet (transparente Migration)
+  shownBetaHints:[],      // v9.13.0 MB-B (MB.3): bereits gezeigte Geraete-Beta-Hinweise (einmalig pro Geraet)
   autoLockMin:0,          // 0 = aus, sonst Minuten Inaktivität
   bagsLimitPerDay:0,      // 0 = aus
   // Wartung
@@ -5891,7 +5892,9 @@ function currentCapabilities(){
   // v5.0.0+: wenn ein Adapter aktiv ist, treibt dessen Capabilities-Map die UI.
   if(State.adapter && State.adapter.constructor && State.adapter.constructor.capabilities){
     const c = State.adapter.constructor.capabilities;
-    return { heater:c.heater, pump:c.pump, bagFill:c.balloon, directDraw:true, battery:c.battery, boost:c.boost, autoOff:c.autoShutoff };
+    // v9.13.0 MB-B (MB.2): Direkt-Zug nur fuer S&B-Kraeuter-Geraete, nicht PAX/Puffco/Firefly (vorher hartcodiert true).
+    const directDraw = ['volcano','crafty_mighty','venty_veazy'].includes(State.adapter.constructor.deviceType);
+    return { heater:c.heater, pump:c.pump, bagFill:c.balloon, directDraw, battery:c.battery, boost:c.boost, autoOff:c.autoShutoff };
   }
   const id = getCurrentDeviceId();
   const p = DEVICE_PROFILES[id];
@@ -6835,6 +6838,7 @@ async function connectBLE(){
     applyCapabilitiesUI();
     devStatSession();   // v5.1.0 Modul 1: Geraete-Session zaehlen
     maybeDeviceTour();  // v5.1.0 Modul 3: geraetespezifische Tour beim ersten Connect
+    _maybeShowBetaHint(); // v9.13.0 MB-B (MB.3): einmaliger Beta-/Status-Hinweis pro Geraet
   }catch(e){
     log('Verbindungsfehler: '+e.message,'err');
     renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
@@ -11622,6 +11626,37 @@ function resolveBeta(ok){
 }
 async function ensureBetaConfirmed(){ if(!betaNeedsConfirm()) return true; return await showBetaModal(); }
 
+// v9.13.0 MB-B (MB.3): einmaliger barrierefreier Beta-Hinweis pro Geraet beim Connect (Erwartungsmanagement).
+function _maybeShowBetaHint(){
+  try{
+    const t = State.adapter && State.adapter.constructor && State.adapter.constructor.deviceType;
+    if(!t) return;
+    const subtype = State.device && State.device.subtype;
+    const level = getBetaLevel(t);
+    let key=null, title='Hinweis zum Geraet', msg=null;
+    if(subtype === 'veazy'){
+      key='veazy'; title='Veazy';
+      msg='Veazy nutzt die gleiche Logik wie Venty. Bitte melde Abweichungen, falls etwas anders funktioniert als erwartet.';
+    } else if(level === 'mock_only'){
+      key='mock_only:'+t; title='Crafty / Mighty';
+      msg='Crafty/Mighty wurde noch nicht auf echter Hardware verifiziert. Bitte besonders aufmerksam testen und melden, falls etwas nicht stimmt.';
+    } else if(level === 'unverified'){
+      const n=(State.adapter.constructor.displayName)||BETA_DEVNAMES[t]||'Dieses Geraet';
+      key='unverified:'+t; title=n;
+      msg=n+' ist im Beta-Status. Manche Funktionen koennen fehlen. Bitte Auffaelligkeiten melden.';
+    } else if(level === 'probe_only'){
+      key='probe_only:'+t; title='Firefly';
+      msg='Firefly ist Probe-Only. Die Erkennung wird getestet, die Steuerung ist noch nicht freigegeben.';
+    } else {
+      return; // stable -> kein Hinweis
+    }
+    const shown = Array.isArray(PREFS.shownBetaHints) ? PREFS.shownBetaHints : [];
+    if(shown.includes(key)) return;
+    shown.push(key); PREFS.shownBetaHints = shown; try{ savePrefs(); }catch(_){}
+    try{ uiAlert(msg, title); }catch(_){}
+  }catch(_){}
+}
+
 // Modul F: Notfall-Stop bei unverified-Geraeten
 async function emergencyStopBeta(){
   log('NOTFALL-STOP ausgelöst','warn');
@@ -11673,7 +11708,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.12.0';
+const SW_VERSION_LABEL='v9.13.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -18198,7 +18233,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.12.0 bereit.','ok');
+  log('Terp Sessions v9.13.0 bereit.','ok');
 
   setupPwaUpdate();
 

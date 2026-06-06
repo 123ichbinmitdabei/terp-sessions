@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.12.0)
+# Terp Sessions — Vape Controller (v9.13.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.13.0 — Multi-Brand-Quick-Wins (Paket MB-B)
+
+Drei kleine geräteübergreifende Verbesserungen aus `docs/MB-A-AUDIT-2026-06-07.md`, damit die App für Nicht-Volcano-Geräte (Crafty/Mighty, Venty/Veazy, PAX, Puffco, Firefly) ehrlicher und korrekter wirkt. MINOR, rein Frontend, kein Backend, keine Adapter-/Protokoll-Änderung, cscCrypto unberührt.
+
+- **MB.1 — Generische statt Volcano-fixe Texte:** Nicht-S&B-spezifische „Volcano"-Strings wurden generisch gemacht. `#btnConnect` aria-label „Mit Volcano verbinden" → „Mit Vaporizer verbinden"; Sicherheits-Fußzeile „Lass den Volcano niemals unbeaufsichtigt" → „Lass den Vaporizer niemals unbeaufsichtigt"; QR-Import-Hinweis, Siri-Voraussetzung und Zeitplan-Sicherheitshinweis ebenso entschärft. Volcano-Hybrid-spezifische Texte (Werks-Sorten, Programm-Tags, Geräte-Profil-Beispiele) bleiben bewusst stehen.
+- **MB.2 — Direkt-Zug an echte Fähigkeit gebunden:** Die Fähigkeit `directDraw` war in `currentCapabilities` hartcodiert `true`. Jetzt nur für S&B-Kräuter-Geräte (`volcano`, `crafty_mighty`, `venty_veazy`) aktiv, für PAX/Puffco/Firefly `false`. Der Direkt-Zug-Button (Quick-Action) wird über die bereits bestehende Gate-Logik in `applyCapabilitiesUI()` entsprechend deaktiviert. Keine Adapter-Änderung.
+- **MB.3 — Einmaliger Geräte-Status-Hinweis beim Connect:** Beim ersten Verbinden eines nicht-stabilen Geräts erscheint ein barrierefreier Hinweis (uiAlert) zum Erwartungsmanagement: Crafty/Mighty „noch nicht auf echter Hardware verifiziert", PAX/Puffco „im Beta-Status, manche Funktionen können fehlen", Veazy „nutzt die gleiche Logik wie Venty, Abweichungen melden", Firefly „Probe-Only, Steuerung nicht freigegeben". Einmalig pro Gerät, gemerkt in `PREFS.shownBetaHints`. Der bestehende Heiz-Sicherheits-Gate (`ensureBetaConfirmed`) bleibt davon unberührt.
+
+**Bewusst NICHT in diesem Paket:** Puffco-Temperatur-Clamp (MB.4), S&B-Wizard-Sprache (MB.5), echte Mighty-Hardware-Verifikation (MB.7). **Unberührt:** Adapter/Protokoll/BLE-Logik, cscCrypto, Backend. **Tests:** `v913mbb.mjs`. Volle Regression grün.
 
 ## v9.12.0 — Robusteres Bug-Reporting für die Pioneer-Test-Woche (Paket BUG-B Kern)
 
