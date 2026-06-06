@@ -3270,7 +3270,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <div class="sheet">
     <div class="grab"></div>
     <h2 id="pbrTitle">🐛 Bug melden</h2>
-    <p class="wiz-text" id="pbrIntro" style="font-size:13px;color:var(--muted)">Beschreib was nicht funktioniert hat. Wir erstellen daraus ein GitHub-Issue mit allen Infos vorausgefuellt — du musst nur noch „Submit" klicken.</p>
+    <p class="wiz-text" id="pbrIntro" style="font-size:13px;color:var(--muted)">Beschreib was nicht funktioniert hat. Wir erstellen daraus ein GitHub-Issue (vorausgefuellt) und kopieren den Report zur Sicherheit in die Zwischenablage, falls GitHub sich nicht oeffnet.</p>
     <div class="field">
       <label>Was sollte passieren?</label>
       <textarea class="input" id="pbrExpected" rows="2" maxlength="600"></textarea>
@@ -11638,6 +11638,7 @@ function exportDiagnostics(){
   const t=State.adapter && State.adapter.constructor.deviceType;
   const info=[
     'Terp Sessions Diagnose-Export',
+    'Tester: '+_pioneerTesterId(),
     'Version: '+SW_VERSION_LABEL,
     'Adapter: '+((State.adapter&&State.adapter.constructor.displayName)||'–')+' ('+(t||'–')+', Beta:'+(t?getBetaLevel(t):'–')+')',
     'Gerät: '+((State.device&&State.device.name)||'–')+(State.device&&State.device.subtype?(' / '+State.device.subtype):''),
@@ -11652,7 +11653,27 @@ function exportDiagnostics(){
     toast('Kopieren nicht möglich, Diagnose-Log bitte manuell auswählen');
   }
 }
-const SW_VERSION_LABEL='v9.11.0';
+/* ═══ v9.12.0 Paket BUG-B: robusteres Bug-Reporting fuer die Pioneer-Test-Woche ═══
+   Tester-Kennung (Attribution), kompakter Diagnose-Block (Log + App-Status) im Report,
+   Clipboard-Fallback falls window.open zu GitHub scheitert (Bluefy / kein GitHub-Konto). */
+function _pioneerTesterId(){
+  try{
+    let id = LS.get('sessions_pioneer_tester_id', '');
+    if(!id){ id = 'T-' + Math.random().toString(36).slice(2,6); LS.set('sessions_pioneer_tester_id', id); }
+    return id;
+  }catch(_){ return 'T-?'; }
+}
+function _bugDiagBlock(){
+  let log = '';
+  try{ log = [...document.querySelectorAll('#log div')].slice(-25).map(d=>d.textContent).join('\n'); }catch(_){}
+  if(log.length > 1500) log = log.slice(-1500);
+  const st = (typeof State === 'object' && State) ? State : {};
+  const snap = 'connected=' + (!!st.connected) + ' heater=' + (!!st.heater) + ' pump=' + (!!st.pump)
+    + ' cur=' + (st.cur != null ? st.cur : '?') + ' target=' + (st.target != null ? st.target : '?')
+    + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
+  return { snap, log };
+}
+const SW_VERSION_LABEL='v9.12.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -11681,7 +11702,7 @@ function pioneerIssueUrl(){
   const t=State.adapter && State.adapter.constructor.deviceType;
   const dev=(State.adapter&&State.adapter.constructor.displayName)||(t&&BETA_DEVNAMES[t])||'Gerät';
   const title=encodeURIComponent('[Pioneers] Beta-Test '+dev);
-  const body=encodeURIComponent('Gerät: '+dev+'\nBrowser: '+navigator.userAgent+'\n\nBeobachtung:\n');
+  const body=encodeURIComponent('Tester: '+_pioneerTesterId()+'\nGerät: '+dev+'\nBrowser: '+navigator.userAgent+'\n\nBeobachtung:\n');   // v9.12.0 BUG-B: Tester-Kennung
   return 'https://github.com/'+PIONEERS_REPO+'/issues/new?title='+title+'&body='+body+'&labels=pioneers,beta-test';
 }
 function renderPioneersCard(){
@@ -18177,7 +18198,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.11.0 bereit.','ok');
+  log('Terp Sessions v9.12.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -20599,6 +20620,11 @@ async function _pioneerToggleClicked(){
   if(tog) tog.setAttribute('aria-checked', String(newState));
   try{ savePrefs(); }catch(_){}
   _pioneerApplyTabVisibility();
+  // v9.12.0 BUG-B: beim Aktivieren einmalig eine Tester-Kennung erfragen (fuer Attribution der Bug-Reports)
+  if(newState && !LS.get('sessions_pioneer_tester_id','')){
+    const nm = await uiPrompt('Dein Name oder Kürzel für Bug-Reports (damit Andre weiß, von wem):', '');
+    try{ LS.set('sessions_pioneer_tester_id', (nm && nm.trim()) || ('T-'+Math.random().toString(36).slice(2,6))); }catch(_){}
+  }
   // v9.0.1 (B4): KEIN browser-prompt() mehr fuer die Pfad-Wahl (unbenutzbar fuer blinde Tester).
   // Stattdessen direkt in den Test-Pfad-Tab springen — dort stehen die barrierefreien
   // Pfad-Wahl-Buttons (_pioneerRenderWizard, !st.path-Zweig). _pioneerShowPathChoice bleibt
@@ -21020,21 +21046,32 @@ function _pioneerBugReportBuildUrl(testId, expected, actual, steps){
   const ver = typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?';
   const dev = (typeof State !== 'undefined' && State.adapter && State.adapter.constructor && (State.adapter.constructor.displayName || State.adapter.constructor.deviceType)) || 'kein Geraet verbunden';
   const sess = (typeof communityClient === 'object' && communityClient && communityClient.currentSession && communityClient.currentSession()) || null;
+  const diag = _bugDiagBlock();   // v9.12.0 BUG-B: App-Status + gekuerzter Log
   const title = '[Pioneer-Test ' + t.id + '] ' + (t.title || 'Bug');
-  const body = '## Was sollte passieren?\n' + (expected || '(keine Angabe)') + '\n\n'
+  const head = '## Was sollte passieren?\n' + (expected || '(keine Angabe)') + '\n\n'
     + '## Was ist stattdessen passiert?\n' + (actual || '(keine Angabe)') + '\n\n'
     + (steps ? '## Wie hast du es gemacht?\n' + steps + '\n\n' : '')
     + '## Auto-Info\n'
+    + '- Tester: `' + _pioneerTesterId() + '`\n'
     + '- Test-ID: `' + t.id + '`\n'
     + '- App-Version: `' + ver + '`\n'
     + '- Browser-UA: `' + ua + '`\n'
     + '- Geraet: `' + dev + '`\n'
+    + '- App-Status: `' + diag.snap + '`\n'
     + '- Pseudonym: ' + (sess && sess.pseudonym ? '`' + sess.pseudonym + '`' : '(nicht eingeloggt)') + '\n'
     + '- Timestamp: `' + new Date().toISOString() + '`\n';
-  return 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new'
+  const logBlock = diag.log ? ('\n## Diagnose-Log (gekuerzt)\n```\n' + diag.log + '\n```\n') : '';
+  const fullBody = head + logBlock;
+  const base = 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new'
     + '?title=' + encodeURIComponent(title)
-    + '&body=' + encodeURIComponent(body)
-    + '&labels=' + encodeURIComponent('pioneers,bug');
+    + '&labels=' + encodeURIComponent('pioneers,bug')
+    + '&body=';
+  let url = base + encodeURIComponent(fullBody);
+  // GitHub-Issue-URLs sind praktisch begrenzt: bei Ueberlaenge Log aus der URL nehmen (bleibt im Clipboard-Report)
+  if(url.length > 7500){
+    url = base + encodeURIComponent(head + '\n_(Diagnose-Log war zu lang fuer die URL, bitte aus der Zwischenablage einfuegen.)_\n');
+  }
+  return { url, title, body: fullBody };
 }
 
 function _pioneerBugReportSubmit(){
@@ -21048,14 +21085,16 @@ function _pioneerBugReportSubmit(){
     document.getElementById('pbrStatus').style.color = 'var(--err)';
     return;
   }
-  const url = _pioneerBugReportBuildUrl(testId, expected, actual, steps);
-  // GitHub-Issue in neuem Tab oeffnen
-  try{ window.open(url, '_blank', 'noopener'); }catch(_){}
+  const rep = _pioneerBugReportBuildUrl(testId, expected, actual, steps);
+  // v9.12.0 BUG-B: Report IMMER in die Zwischenablage (Fallback, falls window.open in Bluefy scheitert / kein GitHub-Konto)
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(rep.title + '\n\n' + rep.body); }catch(_){}
+  // GitHub-Issue in neuem Tab oeffnen (kann in Bluefy unzuverlaessig sein -> daher der Clipboard-Fallback oben)
+  try{ window.open(rep.url, '_blank', 'noopener'); }catch(_){}
   // Result mit bugReported=true setzen (geht durch Punkte-Logik mit +25)
   _pioneerSetResult(testId, 'fail', { bugReported:true, note: actual, _skipBugModal:true });
   document.getElementById('modalPioneerBugReport')?.classList.remove('open');
-  toast('🐛 Bug-Issue geoeffnet · +25 Punkte');
   _pioneerBugReportFor = null;
+  uiAlert('Dein Bug-Report ist in der Zwischenablage kopiert und GitHub wurde geoeffnet. Falls sich GitHub nicht oeffnet (z.B. in Bluefy), fuege den Report aus der Zwischenablage in eine Nachricht an Andre ein. Danke, +25 Punkte!', 'Bug gemeldet');
 }
 
 // ── Komplett-Report (Issue mit Zusammenfassung aller Tests) ─────────────────

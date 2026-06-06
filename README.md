@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.11.0)
+# Terp Sessions — Vape Controller (v9.12.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,17 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.12.0 — Robusteres Bug-Reporting für die Pioneer-Test-Woche (Paket BUG-B Kern)
+
+Härtung des Bug-Report-Systems vor der betreuungsfreien Pioneer-Test-Woche, basierend auf `docs/BUG-A-AUDIT-2026-06-07.md`. Adressiert die drei High-Risiken des Audits. MINOR, rein Frontend, kein Backend, cscCrypto unberührt.
+
+- **Diagnose-Log + App-Status im Report (BUG-A.2a/5c):** Der strukturierte Pioneer-Bug-Report enthält jetzt einen kompakten Diagnose-Block, die letzten Log-Zeilen (gekürzt) plus einen Status-Snapshot (`connected`/`heater`/`pump`/`cur`/`target`/`running`). Vorher fehlte der wertvollste Debug-Inhalt im Issue. Ein URL-Längen-Guard nimmt den Log bei Überlänge aus der URL (er bleibt im Clipboard-Report, siehe unten).
+- **Clipboard-Fallback (BUG-A.5a/3a):** Beim Absenden wird der vollständige Report IMMER in die Zwischenablage kopiert, zusätzlich zum Öffnen des vorausgefüllten GitHub-Issues. Falls `window.open` scheitert (in Bluefy/WKWebView unzuverlässig) oder der Tester kein GitHub-Konto hat, geht nichts verloren. Eine barrierefreie Bestätigung (uiAlert aus DLG-1) erklärt genau das.
+- **Tester-Kennung (BUG-A.6a):** Beim Aktivieren des Pioneer-Test-Modus wird einmalig ein Name/Kürzel abgefragt (barrierefrei via uiPrompt) und in jeden Report geschrieben (strukturierter Bug, allgemeines Feedback, Diagnose-Export). Ohne Eingabe wird eine stabile zufällige Kennung vergeben. Damit kann Andre eingehende Reports zuordnen, auch ohne Community-Login.
+- **Ehrlicher Modal-Text:** Der Intro-Hinweis nennt jetzt den Clipboard-Fallback statt zu suggerieren, „Submit" passiere in der App.
+
+**Bewusst NICHT in diesem Paket** (kommt ggf. nach der Test-Woche, braucht Andres Backend-Entscheidung): direkter Supabase-Empfang von Reports (würde die GitHub-Konto-Hürde ganz entfernen), globaler Bug-melden-Einstieg außerhalb des Test-Wizards, Schweregrad-Auswahl. **Unberührt:** cscCrypto, Backend, App-Logik. **Tests:** `v912bugb.mjs` (22: Tester-Kennung, Diagnose-Block, Report-Bau mit URL-Guard, Submit mit Clipboard-Fallback + Bestätigung, Validierung, Aktivierungs-Prompt, Diagnose/Feedback mit Tester). Volle Regression grün.
 
 ## v9.11.0 — Barrierefreie Dialoge statt nativer alert/confirm/prompt (Paket DLG-1)
 
