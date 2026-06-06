@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.13.0)
+# Terp Sessions — Vape Controller (v9.14.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,15 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.14.0 — Sorten + Programme um 200% erweitert (Paket DB-EXT)
+
+Reine Daten-Erweiterung für die Pioneer-Test-Woche, damit Tester reichlich Inhalte zum Erkunden haben. Keine Code-Logik-Änderung, kein Schema-Edit, kein Backend.
+
+- **Sorten-DB (AROMA_DB): 127 → 381 Einträge (+254, +200%).** Reale, bekannte Cannabis-Sorten (Haze-Linien, OG/Kush-Familie, Cookies/Gelato/Runtz-Linien, Diesel- und Zitrus-Sorten, Landrassen u.v.m.) im bestehenden Schema `{name, temps[3], desc, kind, terps}`. Verteilung der neuen Sorten: ca. 40% Sativa-dominant, 43% Indica-dominant, 17% Hybrid. Realistische Drei-Temperatur-Profile (170-215 Grad je nach Profil), nur reale Terpene (Myrcen, Limonen, Pinen, Caryophyllen, Linalool, Humulen, Terpinolen), ehrliche Kurzbeschreibungen ohne Heilsversprechen. Keine Doubletten gegen den Bestand, keine Marken-Symbole.
+- **Programme-DB (PRESETS): 19 → 57 Einträge (+38, +200%).** Neue Vorlagen über alle Stile: Decarb-Programme, Drei-Stufen-Klassiker, Microdose, Marathon (mehrere Ballons), Aroma-optimiert (terpenschonend, niedrigere Temps), Wirkstoff-Maximierung (höhere Temps, längere Holds), sorten-spezifisch (Indica-Abend, Sativa-Tag, Hybrid-Allzweck) und geräte-spezifisch (Volcano-Bag, Mighty-Direkt-Zug, Venty-Boost-Profil, Crafty-Solo). Portable Geräte (Mighty/Crafty/Venty ohne Volcano-Tag) nutzen ausschließlich pumpfreie Aktionen, sind also gerätekompatibel.
+
+**Unberührt:** App-Logik, Schema, Adapter, cscCrypto, Backend. **Tests:** `v914dbext.mjs` (20: Umfang ≥3x, Pflicht-Schema, Temperatur-Plausibilität, keine Doubletten/Kollisionen, reale Terpene, keine Marken-Symbole/Em-Dashes, gültige Programm-Actions, Geräte-Kompatibilität). Volle Regression grün.
 
 ## v9.13.0 — Multi-Brand-Quick-Wins (Paket MB-B)
 
