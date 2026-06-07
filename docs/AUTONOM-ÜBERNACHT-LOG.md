@@ -59,4 +59,44 @@ Bewusst NICHT in der Liste (begründet):
 - **Verify-before-fix:** Schedule-Objektform (action/trigger/repeat/customDays/nextRun/enabled/createdAt) und id-Format ('sch_'+Date.now().toString(36)) aus openScheduleEditor/saveScheduleFromEditor übernommen.
 - **Test:** v935schedtpl.mjs 10/10 (Felder, nextRun-Zukunft + korrekte Stunde, weekends fällt auf Sa/So, Button-Wiring).
 - **Tester-Update-Baustein:** „Im Session-Planer legen drei Vorlagen (Morgens Decarb, Abend-Session, Wochenend-Aroma) mit einem Tipp einen fertigen Schedule an."
-- **Live:** wird nach Regression + Push bestätigt.
+- **Test/Regression:** v935schedtpl 10/10, volle Regression 2031/2031.
+- **Live:** commit 4065b8c, Tag v9.35.0, Pages verifiziert.
+
+---
+
+## Abschluss-Bericht
+
+### Initiale Prioritäten-Liste (siehe oben) vs. tatsächlich umgesetzt
+1. Crash-Recovery → **v9.33.0 LIVE** (+ Beifang: echter Mitternachts-Schedule-Bug gefixt).
+2. Settings-Tooltips → umdefiniert zu **v9.34.0 Toggle-Beschreibungen für Screen-Reader** (Verify-before-fix: sichtbare `<small>` existierten schon, nur die SR-Verknüpfung fehlte). LIVE.
+3. Schedule-Templates → **v9.35.0 LIVE**.
+4. Hover-Guard → **bewusst NICHT umgesetzt** (Begründung unten).
+5. Pioneer-Achievements (Stretch) → nicht umgesetzt (Begründung unten).
+
+### Welche autonomen Pakete kamen dazu und warum
+- Der **Beifang-Bugfix in v9.33.0** (`computeNextRun` `t.hour||8` → Mitternachts-Schedule fiel auf 08:00) war nicht geplant, sondern wurde vom zeitabhängigen Coverage-Test gegen 22 Uhr aufgedeckt. Echter Korrektheitsfehler, 1-Zeilen-Fix, in das Paket gefaltet, weil er die grüne Regression blockierte. Relevant für die Test-Woche (nächtliche Decarb-Schedules).
+
+### Bewusst nicht angefasst (mit Begründung)
+- **Hover-Guard (C):** 31 verstreute `:hover`-Einzelregeln. Sauber wäre jede in `@media(hover:hover)` zu wrappen (31 Edits, Churn-/Regressionsrisiko) oder ein fragiler „Reset"-Block, der jeden Basiswert spiegeln müsste. Severity Low/kosmetisch. Risiko/Aufwand vs. Nutzen rechtfertigt es vor der Test-Woche nicht. Bleibt als sauberes Folgepaket (jede Regel einzeln gaten, mit Screenshot-Diff).
+- **Pioneer-Achievements (J):** bräuchte Award-Logik-Hooks in die v9.28er Tester-Werkzeuge (Bug gemeldet, Feedback, Notiz), die laut Mandat NICHT umgebaut werden sollen. Integrationsfläche + Risiko zu hoch für reinen Engagement-Nutzen.
+- **Toast→showFriendlyError (B):** breiter Umbau, hohe Churn-Gefahr in String-Assertion-Tests, geringer Netto-Wert vor der Woche.
+- **datenschutz.html-Inhalt (QA2.21.x):** anwaltlich freigegeben, nicht anfassen.
+- Alle FORBIDDEN-Kategorien der Kernregel (cscCrypto, Backend, MB.7, Bundle-Split, Adapter-Protokoll, Beta-Hardware, Capacitor).
+
+### Eingegangene Risiken + Mitigation
+- **Crash-Recovery** berührt den Run-Lebenszyklus. Mitigation: nur 3 gekapselte Einhängepunkte (Marker-Write bei Start, Clear im finally, Startup-Check); sessionStorage statt localStorage (überlebt nur Reload, nicht Tab-Schließen); NIE Auto-Resume, nur Nachfrage mit Verbindung; Marker wird sofort konsumiert. 12 gezielte Tests.
+- **Beifang-Schedule-Fix** ändert Zeitberechnung. Mitigation: minimaler `t.hour!=null`-Guard, durch Coverage-Test abgedeckt, kein Verhaltenswechsel außer dem Bug.
+- **Toggle-aria-describedby** und **Schedule-Vorlagen** sind rein additiv (ARIA bzw. neue Datensätze), kein Eingriff in bestehende Logik/Engine.
+
+### Empfehlung für Andre nach der Test-Woche, zuerst anschauen
+1. **Tester-Feedback** (Issues nach Label `pioneers,*` + Schweregrad-JSON-Header), wie schon in TESTWOCHE-PREP-LOG empfohlen.
+2. **Crash-Recovery in der Praxis:** kam der „Programm X war aktiv, neu starten?"-Dialog bei echten Bluefy-Reloads sinnvoll, oder nervig? Ggf. Feinschliff (z.B. Marker-Alter prüfen, sehr alte ignorieren).
+3. **Schedule-Vorlagen-Temperaturen** an reale Vorlieben anpassen (115/190/180 sind Startwerte).
+4. **Hover-Guard** sauber nachziehen (jede Regel einzeln in `@media(hover:hover)`), wenn Sticky-Hover auf Touch gemeldet wird.
+
+### Was bleibt offen als nächste Kampagne
+- Hover-Guard (sauber), Pioneer-Achievements (nach Klärung, ob Tester-Werkzeuge angefasst werden dürfen), Statistik-Tab-Aufschlüsselungen (E), Voice-Befehle „Statistik vorlesen"/„Bags heute" (L), A11Y-D4-Reste (aria-busy auf asynchrone Community-/Template-Listen).
+- MB.7 + Beta-Adapter-Hardware-Verifikation, sobald Crafty/Mighty da ist.
+
+### Bilanz
+4 Versionen diese Nacht: v9.33.0 (Crash-Recovery + Bugfix), v9.34.0 (Toggle-SR-Beschreibungen), v9.35.0 (Schedule-Vorlagen). Alle live + Pages-verifiziert, volle Regression je grün (zuletzt 2031/2031). Drei Verify-before-fix-Korrekturen verhinderten unnötige/falsche Edits (Tour-A11Y schon da, Toggles schon beschriftet, datenschutz/info schon in SHELL). Bewusst bei drei soliden Paketen gestoppt statt mehr halbgar.
