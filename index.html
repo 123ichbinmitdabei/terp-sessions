@@ -12197,7 +12197,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.24.0';
+const SW_VERSION_LABEL='v9.25.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14938,6 +14938,11 @@ async function executeSchedule(sch){
       playSuccess();
       return;
     }
+    if(State.running){   // v9.25.0 QA2.3.5: nicht in ein laufendes Programm hineinheizen
+      toast('Schedule übersprungen: es läuft gerade ein Programm');
+      ttsSay('Schedule übersprungen, es läuft ein Programm.');
+      return;
+    }
     try{
       await cmdSetTemp(sch.action.temp || 185);
       await cmdHeaterOn();
@@ -16080,6 +16085,8 @@ async function requirePin(){
           inp.removeEventListener('keydown', enterHandler);
           toast('Recovery erfolgreich');
           resolve(true);
+          // v9.25.0 QA2.6.7: nach Recovery ist der alte PIN dem User unbekannt -> zum Neusetzen auffordern
+          setTimeout(()=>{ try{ uiAlert('Recovery erfolgreich. Bitte setze in den Einstellungen einen neuen PIN, da der bisherige PIN nicht mehr bekannt ist.', 'PIN neu setzen'); }catch(_){} }, 500);
         } else {
           _recoveryNoteFail();
           if(_recoveryLockRemainingMs()>0){ recLockUI(); }
@@ -18794,7 +18801,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.24.0 bereit.','ok');
+  log('Terp Sessions v9.25.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -21190,7 +21197,7 @@ const PIONEER_TESTS = [
   { id:'B7', path:'screenreader', title:'Community-Register via Tastatur', desc:'Tab-Taste durchs Register-Modal navigieren. Alle Felder erreichbar + benannt? Datenschutz-Haekchen findbar?', hint:'Submit ist disabled bis Haekchen gesetzt — Hinweis wird vorgelesen.' },
   { id:'B8', path:'screenreader', title:'Sorte anlegen mit Screen-Reader', desc:'Aroma → Community → Neue Sorte. Tag-Inputs (Terpene/Effekte) screen-reader-tauglich? Enter-Taste fuegt Tag hinzu.', hint:'Pro Tag: Eingabe, Enter, Tag erscheint als Chip.' },
   { id:'B9', path:'screenreader', title:'Sterne-Bewertung per Tastatur', desc:'Sorten-Detail oeffnen. Mit Tab + Pfeil-Tasten die 4 Blaetter aktivieren. Aria-Label "X von 5 Blaettern" wird angesagt.', hint:'role=radio + role=radiogroup macht Pfeil-Tasten verfuegbar.' },
-  { id:'B10', path:'screenreader', title:'Sprachsteuerung "Pumpe an"', desc:'Bei Screen-Reader-Modus EIN: Mikrofon-FAB ist (richtigerweise!) inaktiv. Stattdessen Text-Befehl-Eingabe nutzen.', hint:'Settings → Sprachsteuerung aktiv toggle. Bei Wake-Word: Konflikt mit VoiceOver.' },
+  { id:'B10', path:'screenreader', title:'Sprachsteuerung "Pumpe an"', desc:'Bei Screen-Reader-Modus EIN: das Wake-Word ist aus, der Mikrofon-FAB bleibt aber antippbar. Tippe den FAB an und sprich, oder nutze den Text-Befehl.', hint:'Settings → Sprachsteuerung aktiv toggle. Bei Wake-Word: Konflikt mit VoiceOver.' },
   { id:'B11', path:'screenreader', title:'Datenschutz vorlesen + Account loeschen', desc:'Datenschutz-Link aktivieren — Vorlesen ueber VoiceOver/TalkBack. Lesbar? Danach Account-Loeschung-Pfad.', hint:'datenschutz.html ist semantisch aufgebaut (h1, h2, sections).' },
   // v9.0.0 Paket S2 Phase 3 P3.4: S3-Features im Pioneer-Test (6 neue Tests, A13-A15 + B13-B15)
   { id:'A13', path:'visual', title:'URL-Befehl via Siri Shortcuts', desc:'Lege dir einen Siri Shortcut an (oder Android-Tasker-Action) mit der URL https://123ichbinmitdabei.github.io/terp-sessions/?command=set_temp&value=185 und teste ob die App auf 185 heizt.', hint:'Auch direkt im Browser-Adressfeld testbar: ?command=heat_on / ?command=pump_off / ?command=stop_all / ?command=status. Bei BLE-Befehlen muss Geraet verbunden sein.' },
@@ -21475,7 +21482,8 @@ function _pioneerSetResult(testId, status, opts){
     _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': Bug-Report-Formular geoeffnet.');
     return;
   }
-  _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': ' + (status==='pass'?'geschafft, +10 Punkte':status==='fail'?'Bug gemeldet':'uebersprungen') + '.');
+  // v9.25.0 QA2.19.1: bei Fehlschlag ohne Bug-Report nicht faelschlich „Bug gemeldet" ansagen
+  _pioneerAnnounce('Test ' + (t ? t.id : testId) + ': ' + (status==='pass'?'geschafft, +10 Punkte': status==='fail'?((opts && opts.bugReported)?'Bug gemeldet, +25 Punkte':'als Fehler markiert'):'uebersprungen') + '.');
   _pioneerNav(+1);
 }
 

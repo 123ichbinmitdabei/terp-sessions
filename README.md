@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.24.0)
+# Terp Sessions — Vape Controller (v9.25.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,19 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.25.0 — QA-2 Cleanup (Paket 9 der Fix-Kampagne)
+
+Neuntes Paket der QA-2-Fix-Kampagne. Schwerpunkt: kleinere Korrektheits- und Genauigkeits-Fixes. Frontend-only.
+
+- **QA2.3.5 Schedule greift nicht in laufendes Programm:** Ein zeitgesteuerter „Heizen"-Schedule wird übersprungen (mit Hinweis), wenn gerade ein Programm läuft, statt parallel einzugreifen.
+- **QA2.19.1 Korrekte Ansage:** Ein als Fehler markierter Pioneer-Test ohne abgesendeten Bug-Report sagt jetzt „als Fehler markiert" statt fälschlich „Bug gemeldet".
+- **QA2.6.7 Recovery-Hinweis:** Nach erfolgreichem PIN-Recovery weist die App darauf hin, in den Einstellungen einen neuen PIN zu setzen (der alte ist dem Nutzer ja unbekannt).
+- **QA2.4.5 Pioneer-Test B10 korrigiert:** Die Testbeschreibung sagt jetzt korrekt, dass im Screen-Reader-Modus der Mikrofon-FAB antippbar bleibt (nur das Wake-Word ist aus), statt fälschlich „FAB inaktiv".
+
+**Bewusst zurückgestellt / FALSE POSITIVE (dokumentiert in `docs/QA-2-FIX-LOG.md`):** QA2.27.6 (gatt.disconnect ist synchron, kein await nötig = FALSE POSITIVE); QA2.27.11 (toter `_pioneerShowPathChoice` ist im Code bereits als bewusster Fallback dokumentiert); QA2.27.7/8/9 (bewusst stille best-effort-catches für Vibration/Wake-Lock/Audio); QA2.18.5 (Tour-Inert, geringer Zusatznutzen, Tour hat seit v9.15.0 Dialog-Semantik + Fokus-Management).
+
+**Unberührt:** cscCrypto, Backend, App-Logik. **Tests:** `v925qa2cleanup.mjs` (7). Volle Regression grün.
 
 ## v9.24.0 — QA-2 Statistik-Korrektheit (Paket 8 der Fix-Kampagne)
 
