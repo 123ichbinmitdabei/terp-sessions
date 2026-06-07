@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.23.0)
+# Terp Sessions — Vape Controller (v9.24.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,19 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.24.0 — QA-2 Statistik-Korrektheit (Paket 8 der Fix-Kampagne)
+
+Achtes Paket der QA-2-Fix-Kampagne. Schwerpunkt: korrekte Berechnung und Darstellung der Statistiken. Frontend-only.
+
+- **QA2.17.4 Streak-Zeitzone:** Das ältere Streak-System (`noteSessionDay`) nutzt jetzt denselben lokalen Tagesschlüssel (`dayKey`) wie das neuere Streak-/Heatmap-System, statt UTC. Spät-abendliche oder früh-morgendliche Sessions landen nicht mehr im falschen Kalendertag.
+- **QA2.17.5 Heizkurven-Mittelwert:** Der Vergleich „schneller/langsamer als üblich" berechnet den Durchschnitt jetzt VOR dem Einspeichern des aktuellen Laufs, der aktuelle Wert verfälscht seinen eigenen Vergleichswert nicht mehr.
+- **QA2.17.9 Heatmap über Zeitumstellung:** Die 12-Wochen-Heatmap iteriert die Tage über `setDate` statt über feste 24-Stunden-Offsets, eine Sommer-/Winterzeit-Umstellung verschiebt keine Spalte mehr.
+- **QA2.17.8 Heizzeit-Format:** Der Konsum-Report zeigt die Heizzeit über `fmtHeat` (Stunden und Minuten) statt grob auf ganze Stunden gerundet.
+
+**Bewusst zurückgestellt (dokumentiert in `docs/QA-2-FIX-LOG.md`):** QA2.17.6 (Combo-Wortlaut „hintereinander", reine Nuance, Combo setzt korrekt bei Fehlschlag zurück) und QA2.17.7 (Bag-Zähler nur im geführten Ballon-Flow, vertretbare Design-Entscheidung; DEVSTATS labelt bereits „geschätzt").
+
+**Unberührt:** App-Logik, cscCrypto, Backend. **Tests:** `v924qa2stats.mjs` (9). Volle Regression grün.
 
 ## v9.23.0 — QA-2 PWA-Konfiguration (Paket 7 der Fix-Kampagne)
 

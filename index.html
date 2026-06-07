@@ -7300,8 +7300,8 @@ async function cmdHeaterOff(){
     // v4.5: heat curve analyse
     const sec = analyzeHeatCurve();
     if(sec){
+      const st = getHeatCurveStats();   // v9.24.0 QA2.17.5: Mittelwert VOR remember(sec), sonst geht der aktuelle Lauf in seinen eigenen Schnitt ein
       rememberHeatCurve(sec);
-      const st = getHeatCurveStats();
       if(st && st.count >= 3){
         const diff = sec - st.avg;
         if(Math.abs(diff) >= 3){
@@ -12197,7 +12197,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.23.0';
+const SW_VERSION_LABEL='v9.24.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14619,7 +14619,7 @@ function renderSessHeatmap(){
     for(let d=0;d<7;d++){
       // Tag = heute - ((weeks-1-w)*7) ausgehend, ausgerichtet pro Wochentag
       const daysBack=(weeks-1-w)*7 + (6-d);
-      const date=new Date(today - daysBack*DAY_MS);
+      const date=new Date(today); date.setDate(date.getDate()-daysBack);   // v9.24.0 QA2.17.9: DST-sicher statt fixem DAY_MS-Vielfachen
       const k=dayKey(date.getTime()); const n=counts[k]||0;
       const lvl = n===0?0 : n<=2?1 : n<=4?2 : 3;
       const op = [0.06,0.3,0.6,1][lvl];
@@ -16463,9 +16463,10 @@ function renderAchievements(){
    v4.6: STREAK COUNTER
 ═══════════════════════════════════════════════════════════════ */
 function noteSessionDay(){
-  const today = new Date().toISOString().slice(0,10);
+  // v9.24.0 QA2.17.4: lokaler Tagesschluessel (konsistent mit v8.2-Streak/Heatmap), vorher UTC -> Tagesgrenzen-Drift
+  const today = dayKey(Date.now());
   if(PREFS.streakLastDate === today) return; // bereits heute gezählt
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  const yesterday = dayKey(Date.now() - 86400000);
   if(PREFS.streakLastDate === yesterday){
     PREFS.streakDays = (PREFS.streakDays||0) + 1;
   } else {
@@ -17140,7 +17141,7 @@ th{background:#f0f0f0;font-weight:600}
 <div class="summary">
   <div><div class="num">${sessions.length}</div><div class="lbl">Sessions</div></div>
   <div><div class="num">${totalBags}</div><div class="lbl">Ballons</div></div>
-  <div><div class="num">${Math.round(totalHeat/3600)} h</div><div class="lbl">Heizzeit</div></div>
+  <div><div class="num">${fmtHeat(totalHeat)}</div><div class="lbl">Heizzeit</div></div>
 </div>
 ${rows ? `<h2>Sessions (letzte 90)</h2><table><thead><tr><th>Datum/Zeit</th><th>Ballons</th><th>Heizdauer</th><th>Notizen</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
 ${symRows ? `<h2>Symptom-Tracker (letzte 40)</h2><table><thead><tr><th>Datum/Zeit</th><th>Phase</th><th>Schmerz</th><th>Schlaf</th><th>Appetit</th><th>Stimmung</th><th>Angst</th></tr></thead><tbody>${symRows}</tbody></table><div style="font-size:11px;color:#666;margin-top:4px">Skala: 1 (sehr gering) bis 10 (sehr hoch)</div>` : ''}
@@ -18793,7 +18794,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.23.0 bereit.','ok');
+  log('Terp Sessions v9.24.0 bereit.','ok');
 
   setupPwaUpdate();
 
