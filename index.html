@@ -2285,7 +2285,7 @@ button[data-sch-day].active{
 
 <!-- v4.8: Hotel-Mode Overlay -->
 <div class="hotel-overlay" id="hotelOverlay" role="dialog" aria-modal="true" aria-label="Wetter">
-  <div id="hotelExitArea" style="position:absolute;inset:0;cursor:pointer" aria-label="5 Sekunden drücken zum Entsperren"></div>
+  <div id="hotelExitArea" role="button" tabindex="0" style="position:absolute;inset:0;cursor:pointer" aria-label="Hotel-Modus verlassen: Eingabetaste oder Escape, per Touch 5 Sekunden drücken"></div>
   <div class="hotel-icon" id="hotelIcon" aria-hidden="true">🌤</div>
   <div class="hotel-temp" id="hotelTemp">–°</div>
   <div class="hotel-cond" id="hotelCond">Wetter</div>
@@ -2594,7 +2594,7 @@ button[data-sch-day].active{
   <div class="card">
     <h3>Import / Export</h3>
     <div class="row">
-      <button class="btn ghost" id="btnExportAll" style="flex:1">Export JSON</button>
+      <button class="btn ghost" id="btnExportPrograms" style="flex:1">Export JSON</button>
       <button class="btn ghost" id="btnImport" style="flex:1">Import JSON</button>
       <input type="file" id="fileImport" accept="application/json" hidden>
     </div>
@@ -9661,7 +9661,7 @@ function wire(){
   $('#btnRunSkip')?.addEventListener('click', ()=>{ _engineCtlSkip(); });
 
   // Export/Import
-  $('#btnExportAll').addEventListener('click', exportPrograms);
+  $('#btnExportPrograms').addEventListener('click', exportPrograms);   // v9.16.0 N5: war id-Kollision mit Settings-JSON-Backup (btnExportAll)
   $('#btnImport').addEventListener('click', ()=>$('#fileImport').click());
   $('#fileImport').addEventListener('change', e=>{
     const f=e.target.files[0]; if(f) importPrograms(f); e.target.value='';
@@ -10667,6 +10667,10 @@ class DeviceAdapter {
     requiresAuth:false, authMethod:null,   // null|'aes128-ecb-serial'|'sha256-handshake'
   };
   constructor(device){ this.device = device || null; }
+  // v9.16.0 N3 (QA2.13.2): serieller BLE-Mutex pro Adapter, damit keine parallelen writeValue
+  // ans selbe Geraet gehen. Lazy-init von this._q, Fehler wird an den Aufrufer durchgereicht (N2).
+  // VentyVeazy/PAX/Puffco ueberschreiben dies mit eigenem Log-Label; Volcano/CraftyMighty erben es.
+  _enqueue(fn){ if(!this._q) this._q = Promise.resolve(); const run = this._q.then(fn); this._q = run.catch(()=>{}); return run; }
   async connect(device){ if(device) this.device = device; }
   async disconnect(){}
   async setTargetTemp(c){}
@@ -10709,30 +10713,31 @@ class VolcanoAdapter extends DeviceAdapter {
   };
   // BLE-Operationen nutzen die in bindAllChars() gebundenen State.chars.
   // Encoding exakt wie v4.9.8: SetTemp Uint32 LE x10, Heater/Pump Uint8=0.
+  // v9.16.0 N3: alle Writes ueber _enqueue (Basisklasse) serialisiert, keine parallelen writeValue.
   async setTargetTemp(c){
     if(!State.chars.setTemp) throw new Error('SetTemp-Char fehlt. Auto-Mapping ausfuehren.');
     const buf=new ArrayBuffer(4); new DataView(buf).setUint32(0, c*10, true);
-    await State.chars.setTemp.writeValue(buf);
+    return this._enqueue(()=> State.chars.setTemp.writeValue(buf));
   }
   async heaterOn(){
     if(!State.chars.heaterOn) throw new Error('HeaterOn-Char fehlt.');
     const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
-    await State.chars.heaterOn.writeValue(buf);
+    return this._enqueue(()=> State.chars.heaterOn.writeValue(buf));
   }
   async heaterOff(){
     if(!State.chars.heaterOff) throw new Error('HeaterOff-Char fehlt.');
     const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
-    await State.chars.heaterOff.writeValue(buf);
+    return this._enqueue(()=> State.chars.heaterOff.writeValue(buf));
   }
   async pumpOn(){
     if(!State.chars.pumpOn) throw new Error('PumpOn-Char fehlt.');
     const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
-    await State.chars.pumpOn.writeValue(buf);
+    return this._enqueue(()=> State.chars.pumpOn.writeValue(buf));
   }
   async pumpOff(){
     if(!State.chars.pumpOff) throw new Error('PumpOff-Char fehlt.');
     const buf=new ArrayBuffer(1); new DataView(buf).setUint8(0, 0);
-    await State.chars.pumpOff.writeValue(buf);
+    return this._enqueue(()=> State.chars.pumpOff.writeValue(buf));
   }
 }
 
@@ -10783,7 +10788,7 @@ class CraftyMightyAdapter extends DeviceAdapter {
   async setTargetTemp(c){
     if(!this.chars.target) throw new Error('Crafty TargetTemp-Char fehlt.');
     const buf=new ArrayBuffer(2); new DataView(buf).setUint16(0, Math.round(c*10), true); // Uint16 LE x10
-    await this.chars.target.writeValue(buf);
+    return this._enqueue(()=> this.chars.target.writeValue(buf));   // v9.16.0 N3: serialisiert
   }
   async getTargetTemp(){
     if(!this.chars.target) return State.target;
@@ -10797,12 +10802,12 @@ class CraftyMightyAdapter extends DeviceAdapter {
   }
   async heaterOn(){
     if(!this.chars.heaterOn) throw new Error('Crafty HeaterOn-Char fehlt.');
-    await this.chars.heaterOn.writeValue(new Uint8Array([0,0])); // 2 bytes, Wert egal
-    State.heater=true;
+    await this._enqueue(()=> this.chars.heaterOn.writeValue(new Uint8Array([0,0]))); // 2 bytes, Wert egal
+    State.heater=true;   // v9.16.0 N3/N2: erst nach erfolgreichem Write setzen
   }
   async heaterOff(){
     if(!this.chars.heaterOff) throw new Error('Crafty HeaterOff-Char fehlt.');
-    await this.chars.heaterOff.writeValue(new Uint8Array([0,0]));
+    await this._enqueue(()=> this.chars.heaterOff.writeValue(new Uint8Array([0,0])));
     State.heater=false;
   }
   async getBattery(){
@@ -10892,7 +10897,9 @@ class VentyVeazyAdapter extends DeviceAdapter {
     log('VentyVeazy: Single-Control-Char gebunden','ok');
   }
   // Alle BLE-Ops serialisieren (firsttris bluetoothQueue, concurrency 1) -> kein "GATT operation already in progress"
-  _enqueue(fn){ this._q = this._q.then(fn).catch(e=>log('VentyVeazy BLE-Op: '+e.message,'warn')); return this._q; }
+  // v9.16.0 N2 (QA2.2.1): interne Sequenz-Kette getrennt vom Rueckgabe-Promise.
+  // Frueher verschluckte das .catch den Fehler auch fuer den Aufrufer -> cmd* meldete faelschlich Erfolg.
+  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('VentyVeazy BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }
   // firsttris writeDeviceStatus: Buffer [cmd=1][mask][payload an Byte-Offsets]
   _writeCmd(mask, byteMap){
     if(!this.control) throw new Error('Venty Control-Char fehlt.');
@@ -10956,7 +10963,7 @@ class VentyVeazyAdapter extends DeviceAdapter {
       this._initDone = true;
       // firsttris Init-Sequenz nach Notify-Subscribe: CMD 0x02, 0x1D, 0x01, 0x04 (serialisiert)
       for(const cmd of [0x02,0x1d,0x01,0x04]){
-        this._enqueue(async()=>{ const b=new ArrayBuffer(20); new DataView(b).setUint8(0,cmd); await this.control.writeValue(b); });
+        this._enqueue(async()=>{ const b=new ArrayBuffer(20); new DataView(b).setUint8(0,cmd); await this.control.writeValue(b); }).catch(()=>{});   // v9.16.0 N2: fire-and-forget, Fehler wird in _enqueue geloggt
       }
       await this.setPermanentBluetooth(true);   // korrektes BLE_PERMANENT (Settings-Mask, Byte16/17)
       log('VentyVeazy: Init-Sequenz + Permanent-BLE gesendet','ok');
@@ -11090,7 +11097,7 @@ class PaxAdapter extends DeviceAdapter {
   };
   constructor(device){ super(device); this.serial=null; this.key=null; this.chars={}; this._q=Promise.resolve(); this._notifyCount=0; this._poll=null; }
 
-  _enqueue(fn){ this._q=this._q.then(fn).catch(e=>log('PAX BLE-Op: '+e.message,'warn')); return this._q; }
+  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('PAX BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2: Fehler an Aufrufer durchreichen
   _write(bytes){ return this._enqueue(()=> this.chars.write.writeValueWithoutResponse ? this.chars.write.writeValueWithoutResponse(bytes.buffer) : this.chars.write.writeValue(bytes.buffer) ); }
 
   async bindChars(server){
@@ -11221,7 +11228,7 @@ class PuffcoAdapter extends DeviceAdapter {
     pivot:    { name:'Pivot', supported:false, reason:'nicht in Quelle dokumentiert' },
   };
   constructor(device){ super(device); this.svc=null; this.chars={}; this._q=Promise.resolve(); this._poll=null; this._authed=false; }
-  _enqueue(fn){ this._q=this._q.then(fn).catch(e=>log('Puffco BLE-Op: '+e.message,'warn')); return this._q; }
+  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('Puffco BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2: Fehler an Aufrufer durchreichen
 
   async bindChars(server){
     this.svc = await server.getPrimaryService(PUFFCO_SERVICE);
@@ -12068,7 +12075,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.15.0';
+const SW_VERSION_LABEL='v9.16.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17496,6 +17503,8 @@ function enterHotelMode(){
   savePrefs();
   const ov = $('#hotelOverlay');
   if(ov) ov.style.display='flex';
+  // v9.16.0 N4 (QA2.5.1): Initial-Fokus auf den Exit-Button, damit Tastatur/VoiceOver einen Einstieg haben
+  const ex = $('#hotelExitArea'); if(ex) setTimeout(()=>{ try{ ex.focus(); }catch(_){} }, 60);
   stopSoundscape(); stopBeats();
   // Update wetter
   if(PREFS.wetterLat) fetchWetter().then(w=>{
@@ -17526,6 +17535,15 @@ function setupHotelExitGesture(){
   exitBtn.addEventListener('pointerup', cancel);
   exitBtn.addEventListener('pointerleave', cancel);
   exitBtn.addEventListener('pointercancel', cancel);
+  // v9.16.0 N4 (QA2.5.1): Tastatur-/Screen-Reader-Ausstieg, der 5s-Touch-Hold ist fuer diese Nutzer unbenutzbar.
+  // Eingabetaste/Leertaste auf dem Exit-Button und Escape (solange der Hotel-Modus sichtbar ist) verlassen sofort.
+  const kbExit = ()=>{ exitHotelMode(); toast('Hotel-Modus aus'); };
+  exitBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); kbExit(); } });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key!=='Escape') return;
+    const ov=$('#hotelOverlay');
+    if(ov && getComputedStyle(ov).display!=='none'){ e.preventDefault(); kbExit(); }
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -18613,7 +18631,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.15.0 bereit.','ok');
+  log('Terp Sessions v9.16.0 bereit.','ok');
 
   setupPwaUpdate();
 

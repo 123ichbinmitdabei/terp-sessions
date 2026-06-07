@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.15.0)
+# Terp Sessions — Vape Controller (v9.16.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,17 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.16.0 — QA-2 N2 bis N5 (BLE-Fehler, BLE-Mutex, Hotel-Exit, ID-Kollision)
+
+Die nächsten vier High-Befunde aus dem QA-2-Audit (`docs/QA-2-AUDIT-2026-06-08.md`). Frontend-only, kein Backend, keine Protokoll-/cscCrypto-Änderung.
+
+- **N2 BLE-Write-Fehler werden durchgereicht (QA2.2.1):** Die Queue-Adapter (Venty/Veazy, PAX, Puffco) fingen Schreibfehler im `_enqueue`-Promise ab und gaben das bereinigte Promise zurück, dadurch meldeten `cmdSetTemp`/`cmdHeaterOn` fälschlich Erfolg (Toast „Ziel X°C", State gesetzt), obwohl das Gerät den Befehl nie erhielt. Jetzt trennt `_enqueue` die interne Sequenz-Kette vom Rückgabe-Promise (`const run = this._q.then(fn); this._q = run.catch(()=>{}); return run;`), der Fehler erreicht den Aufrufer und läuft in den Friendly-Error-Pfad. Besonders relevant bei erwartetem Abschalten. Der Diagnose-Log-Eintrag bleibt erhalten.
+- **N3 Globaler BLE-Mutex pro Adapter (QA2.13.2):** Volcano und Crafty/Mighty schrieben direkt via `writeValue` ohne Serialisierung, parallele Befehle (Doppel-Tap, Voice plus UI) konnten überlappen. Jetzt hat die `DeviceAdapter`-Basisklasse ein `_enqueue` (lazy `this._q`), über das Volcano (setTargetTemp/heaterOn/heaterOff/pumpOn/pumpOff) und Crafty/Mighty (setTargetTemp/heaterOn/heaterOff) ihre Writes serialisieren. Re-entrant-sicher: verschachtelte Aufrufe wie `cmdPumpFor` (ruft `cmdPumpOn`/`cmdPumpOff`) laufen über die Queue ohne Deadlock.
+- **N4 Hotel-Modus barrierefrei verlassbar (QA2.5.1):** Das Hotel-Overlay war für Tastatur- und Screen-Reader-Nutzer eine Falle (Exit nur per 5-Sekunden-Touch-Hold). Die Exit-Fläche ist jetzt ein fokussierbarer `role=button` mit `tabindex=0`, beim Öffnen wird sie fokussiert, Eingabetaste/Leertaste darauf und Escape (solange das Overlay sichtbar ist) verlassen den Modus sofort. Der 5-Sekunden-Touch-Hold bleibt für die Touch-Bedienung erhalten.
+- **N5 ID-Kollision `btnExportAll` (QA2.12.1):** Der Programme-Export-Button und der Settings-JSON-Backup-Button teilten sich dieselbe id, dadurch bekam der Settings-Button nie einen Listener (tot) und der Programme-Button feuerte beide Export-Funktionen (Doppel-Download). Der Programme-Button heißt jetzt `btnExportPrograms`, der Settings-Backup-Button funktioniert wieder eigenständig.
+
+**Unberührt:** Adapter-Protokolle/Encoding, cscCrypto, Backend, Datenbanken. **Tests:** `v916qa2n2345.mjs` (25: _enqueue-Durchwurf je Adapter + Ketten-Überleben + setTargetTemp-Fehlerpfad, Write-Serialisierung Volcano/Crafty + cmdPumpFor-Deadlock-Freiheit, Hotel-Escape/Enter/Fokus, btnExportAll-Eindeutigkeit). Volle Regression grün.
 
 ## v9.15.0 — QA-2 Top-3-Fixes (Safety-Timer, Bag-Statistik, Tour-A11Y)
 
