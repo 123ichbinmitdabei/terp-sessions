@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.18.0)
+# Terp Sessions — Vape Controller (v9.19.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.19.0 — QA-2 Barrierefreiheit-Detailfixes (Paket 3 der Fix-Kampagne)
+
+Drittes Paket der QA-2-Fix-Kampagne. Schwerpunkt: Screen-Reader-Erlebnis für die blinden Pioneer-Tester. Frontend-only.
+
+- **QA2.5.2 Lade-/Fehlerzustände hörbar:** Die asynchronen Listen (Community-Programme, Community-Sorten, Moderation, Vorlagen-Picker) setzen jetzt `aria-busy` während des Ladens und spiegeln Lade- und Fehlertexte in die Live-Region (`srAnnounce`), sodass Screen-Reader-Nutzer Laden und Fehlschlag mitbekommen.
+- **QA2.5.3 Tooltip-Detail für Screen-Reader:** Der erklärende `data-tip`-Text (43 Elemente) wird in `_a11yAutoLabel` jetzt über versteckte `sr-only`-Spans als `aria-describedby` verknüpft, statt nur als CSS-Tooltip sichtbar zu sein.
+- **QA2.5.4 Dialog-Beschreibung:** Der barrierefreie Dialog (`#modalDlg`) verweist per `aria-describedby` auf seinen Nachrichtentext, der beim Öffnen damit zuverlässig angesagt wird.
+- **QA2.5.5 erste Ansage:** `_pioneerAnnounce` setzt den Text einer frisch erzeugten Live-Region jetzt verzögert (nach dem Einfügen ins DOM), sodass auch die erste Ansage von Screen-Readern erfasst wird.
+- **QA2.5.6 Fokus-Rückkehr:** Beim Schließen eines Modals prüft die Fokus-Rückgabe, ob der ursprüngliche Auslöser noch im DOM ist; sonst wird das oberste noch offene Modal fokussiert statt der Fokus auf `<body>` zu fallen.
+
+**Unberührt:** App-Logik, cscCrypto, Backend. **Tests:** `v919qa2a11y.mjs` (9), plus A11Y-Bestandssuiten grün. Volle Regression grün.
 
 ## v9.18.0 — QA-2 BLE-Lifecycle-Robustheit (Paket 2 der Fix-Kampagne)
 

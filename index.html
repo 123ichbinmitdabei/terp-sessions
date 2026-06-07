@@ -4464,7 +4464,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 </div>
 
 <!-- v9.11.0 DLG-1: barrierefreie Dialog-Bausteine (ersetzen native alert/confirm/prompt; vom Inert-System erfasst) -->
-<div class="modal" id="modalDlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+<div class="modal" id="modalDlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" aria-describedby="dlgMsg">
   <div class="back"></div>
   <div class="sheet" style="max-width:420px">
     <div class="grab"></div>
@@ -7946,15 +7946,22 @@ function _renderCommunityProgramsView(){
     <button class="btn sm hot" id="btnCommProgCreate">+ Neues Programm</button>
     <button class="btn sm ghost" id="btnCommProgReload">↻ Neu laden</button>
   </div>`;
+  // v9.19.0 QA2.5.2: Lade-/Fehlerzustand fuer Screen-Reader hoerbar machen (aria-busy + Live-Region-Spiegelung)
   if(_commProgLoading && (!_commProgCache || _commProgCache.length === 0)){
+    list.setAttribute('aria-busy','true');
     list.innerHTML = actionsHtml + '<div class="comm-loading">Lade Programme…</div>';
+    try{ srAnnounce('Lade Community-Programme'); }catch(_){}
   } else if(_commProgCache === null){
+    list.setAttribute('aria-busy','false');
     list.innerHTML = actionsHtml + `<div class="comm-error">Konnte Programme nicht laden.<br><small>${escapeHtml(window._commProgError||'')}</small><br><button class="btn sm" id="btnCommProgRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+    try{ srAnnounce('Konnte Community-Programme nicht laden', true); }catch(_){}
     document.getElementById('btnCommProgRetry')?.addEventListener('click', ()=>_commProgramListLoad(true));
   } else if(_commProgCache.length === 0){
+    list.setAttribute('aria-busy','false');
     list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Programme.<br><button class="btn sm hot" id="btnCommProgCreateEmpty">+ Neues Programm</button></div>`;
     document.getElementById('btnCommProgCreateEmpty')?.addEventListener('click', _commProgramCreateOpen);
   } else {
+    list.setAttribute('aria-busy','false');
     let html = actionsHtml + `<div class="aroma-count">${_commProgCache.length} Programme${_commProgHasMore?'+':''}</div>`;
     html += _commProgCache.map(_commProgramCardHtml).join('');
     if(_commProgHasMore){
@@ -8344,9 +8351,12 @@ async function _commModListLoad(){
 function _commModRender(){
   const list = document.getElementById('commModList'); if(!list) return;
   if(_commModLoading){
+    list.setAttribute('aria-busy','true');   // v9.19.0 QA2.5.2
     list.innerHTML = '<div class="comm-loading">Lade Vorschläge…</div>';
+    try{ srAnnounce('Lade Moderations-Vorschläge'); }catch(_){}
     return;
   }
+  list.setAttribute('aria-busy','false');
   if(_commModCache === null){
     const err = String(window._commModError||'');
     const isPatchMissing = err === 'PATCH_NOT_DEPLOYED' || err.indexOf('community_list_open_proposals') !== -1 || err.indexOf('does not exist') !== -1 || err.indexOf('PGRST202') !== -1;
@@ -8354,6 +8364,7 @@ function _commModRender(){
       list.innerHTML = `<div class="comm-error"><b>Backend-Patch noch nicht eingespielt.</b><br><small>Die Moderations-Liste benötigt die RPC <code>community_list_open_proposals</code>. Patch-Datei: <code>community-backend-patch-12b3-proposals.sql</code> im Repo-Root.</small></div>`;
     } else {
       list.innerHTML = `<div class="comm-error">Konnte Vorschläge nicht laden.<br><small>${escapeHtml(err)}</small><br><button class="btn sm" id="btnCommModRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+      try{ srAnnounce('Konnte Moderations-Vorschläge nicht laden', true); }catch(_){}
       document.getElementById('btnCommModRetry')?.addEventListener('click', _commModListLoad);
     }
     return;
@@ -9025,8 +9036,11 @@ function _tplRender(){
     b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on));
   });
   if(_tplLoading){
+    list.setAttribute('aria-busy','true');   // v9.19.0 QA2.5.2
     list.innerHTML='<div class="comm-empty">Lade Vorlagen…</div>';
+    try{ srAnnounce('Lade Vorlagen'); }catch(_){}
   } else {
+    list.setAttribute('aria-busy','false');
     const items=_tplFiltered();
     let html='';
     if(_tplError && _tplFilter!=='preset'){
@@ -12142,7 +12156,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.18.0';
+const SW_VERSION_LABEL='v9.19.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12683,14 +12697,20 @@ function _renderCommunityStrainsView(){
     <button class="btn sm ghost" id="btnCommStrainReload">↻ Neu laden</button>
   </div>`;
   if(_commStrainLoading && (!_commStrainCache || _commStrainCache.length === 0)){
+    list.setAttribute('aria-busy','true');   // v9.19.0 QA2.5.2
     list.innerHTML = actionsHtml + '<div class="comm-loading">Lade Sorten…</div>';
+    try{ srAnnounce('Lade Community-Sorten'); }catch(_){}
   } else if(_commStrainCache === null){
+    list.setAttribute('aria-busy','false');
     list.innerHTML = actionsHtml + `<div class="comm-error">Konnte Sorten nicht laden.<br><small>${escapeHtml(window._commStrainError||'')}</small><br><button class="btn sm" id="btnCommStrainRetry" style="margin-top:8px">Erneut versuchen</button></div>`;
+    try{ srAnnounce('Konnte Community-Sorten nicht laden', true); }catch(_){}
     $('#btnCommStrainRetry')?.addEventListener('click', ()=>_commStrainListLoad(true));
   } else if(_commStrainCache.length === 0){
+    list.setAttribute('aria-busy','false');
     list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Sorten — sei der erste!<br><button class="btn sm hot" id="btnCommStrainCreateEmpty">+ Neue Sorte</button></div>`;
     $('#btnCommStrainCreateEmpty')?.addEventListener('click', _commStrainCreateOpen);
   } else {
+    list.setAttribute('aria-busy','false');
     let html = actionsHtml + `<div class="aroma-count">${_commStrainCache.length} Sorten${_commStrainHasMore?'+':''}</div>`;
     html += _commStrainCache.map(_commStrainCardHtml).join('');
     if(_commStrainHasMore){
@@ -18712,7 +18732,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.18.0 bereit.','ok');
+  log('Terp Sessions v9.19.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -20118,6 +20138,16 @@ function _a11yAutoLabel(){
     });
     // 3. Bestehende Aria-checked sync für role=switch ohne sichtbaren Zustand
     document.querySelectorAll('[role="switch"]:not([aria-checked])').forEach(el=>el.setAttribute('aria-checked','false'));
+    // 4. v9.19.0 QA2.5.3: data-tip-Detailtext fuer Screen-Reader via aria-describedby (versteckte sr-only-Spans) spiegeln
+    document.querySelectorAll('[data-tip]:not([aria-describedby])').forEach(el=>{
+      const tip = (el.getAttribute('data-tip')||'').trim(); if(!tip) return;
+      if(typeof window._tipDescN!=='number') window._tipDescN=0;
+      const id = (el.id ? el.id : ('tip'+(++window._tipDescN))) + '-tipdesc';
+      let span = document.getElementById(id);
+      if(!span){ span=document.createElement('span'); span.id=id; span.className='sr-only'; document.body.appendChild(span); }
+      span.textContent = tip;
+      el.setAttribute('aria-describedby', id);
+    });
   }catch(e){ /* a11y-init darf nie crashen */ }
 }
 
@@ -20231,7 +20261,15 @@ function _a11yEnsureModalObserver(){
         if(typeof ttsEvent === 'function') ttsEvent('modalClose', 'Dialog geschlossen');
         const back = _a11yModalFocusStack.pop();   // W2: pop beim Close -> Fokus zum Ausloeser zurueck
         _a11yModalLastFocus = _a11yModalFocusStack[_a11yModalFocusStack.length-1] || null;
-        if(back && typeof back.focus === 'function'){ try{ back.focus(); }catch{} }
+        // v9.19.0 QA2.5.6: Fallback, falls der Ausloeser zwischenzeitlich aus dem DOM entfernt wurde (z.B. neu gerenderte Listen-Buttons)
+        if(back && typeof back.focus === 'function' && document.contains(back)){ try{ back.focus(); }catch{} }
+        else {
+          try{
+            const openModal=[...document.querySelectorAll('.modal.open')].pop();
+            const f = openModal && openModal.querySelector('button:not([disabled]),[href],input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])');
+            if(f) f.focus();
+          }catch(_){}
+        }
       }
     }
   });
@@ -21201,6 +21239,9 @@ function _pioneerAnnounce(text){
     live.setAttribute('aria-live','polite');
     live.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';
     document.body.appendChild(live);
+    // v9.19.0 QA2.5.5: erste Ansage verzoegern, sonst registriert mancher SR die frisch eingefuegte Region zu spaet
+    setTimeout(()=>{ try{ live.textContent = text; }catch(_){} }, 50);
+    return;
   }
   live.textContent = text;
 }
