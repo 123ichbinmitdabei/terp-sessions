@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.27.0)
+# Terp Sessions — Vape Controller (v9.28.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,17 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.28.0 — Tester-Werkzeuge (Testwoche-Prep Paket 1)
+
+Vier Werkzeuge, die der Pioneer-Test-Woche Struktur geben. Alle nur sichtbar bei aktivem Pioneer-Test-Modus, alles lokal (localStorage), kein Backend.
+
+- **W1 Strukturierte Bug-Report-Templates:** Der Bug-Report-Dialog hat jetzt Dropdowns für Bereich (Verbindung/BLE, Programm-Engine, Sorten, Voice, Pioneer-Test-Pfad, Onboarding, Sonstiges) und Schweregrad (Kritisch/Hoch/Mittel/Niedrig), eine Blätter-Bewertung „Wie schlimm für dich persönlich" (1-5, als radiogroup wie das Sorten-Rating) und „Reproduzierbar?" (Ja/Manchmal/Nein). Die Felder landen als maschinenlesbarer JSON-Header oben im Issue, dazu eine lesbare Klassifikation. So kann Andre die Reports sortieren.
+- **W2 Tester-Notizbuch:** Im Pioneer-Test-Tab ein mehrzeiliges Notizfeld (LS `vol_pioneer_notes`) mit Auto-Save (debounced 1s), „+ Zeitstempel" (fügt `[HH:MM]` auf neuer Zeile ein), „Als Markdown exportieren" (mit Geräte-/App-Kontext) und „In Bug-Report" (hängt die Notizen an den nächsten Bug-Report an).
+- **W3 Quick-Feedback-Knöpfe:** Auf Programm-, Sorten- und Schnellzugriff-Karten je ein 👍/👎 (LS `vol_quick_feedback`, Eintrag `{at, what, kind, context, note}`). Bei 👎 ein optionales 1-Satz-Feld. Im Setup-Tab unter Pioneer-Tester: „Exportieren (JSON)" mit Stats-Zusammenfassung und „An Andre senden" (GitHub-Issue vorausgefüllt + Clipboard-Fallback).
+- **W4 Audio-Memo:** Im Bug-Report-Dialog „🎤 Audio-Memo aufnehmen" (MediaRecorder, bis 60 Sek.), besonders für den blinden Tester. Das Memo wird lokal als Datei gespeichert (Download), der Report vermerkt „Audio-Memo, X Sek." mit Hinweis zum Anhängen/DM. Graceful degradation: wo MediaRecorder/Mikrofon fehlt (z.B. iOS Safari/Bluefy teils), erscheint „Audio-Memo nicht verfügbar, bitte Textbeschreibung nutzen". Hinweis: Base64-Audio wird bewusst NICHT in den Issue-Body eingebettet (würde die URL sprengen und nicht rendern), stattdessen die lokale Datei plus Vermerk.
+
+Tests: `v928tools.mjs` (27 Checks). Keine Adapter-, Krypto- oder Backend-Änderung.
 
 ## v9.27.0 — A11Y-D2 (Top-5)
 

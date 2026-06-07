@@ -2839,6 +2839,18 @@ button[data-sch-day].active{
     <h3>🌿 Pioneer-Test-Pfad</h3>
     <div id="pioneerWizard" aria-live="polite"></div>
   </div>
+  <!-- v9.28.0 W2: Tester-Notizbuch (lokal, Auto-Save) -->
+  <div class="card" id="pioneerNotebookCard">
+    <h3>📓 Tester-Notizbuch</h3>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Halte Beobachtungen während der Test-Woche fest. Wird automatisch lokal gespeichert (verlässt dein Gerät nicht).</p>
+    <textarea class="input" id="pioneerNotes" rows="8" aria-label="Tester-Notizbuch" placeholder="z.B. Direkt-Zug reagierte verzögert nach Reconnect …"></textarea>
+    <div id="pioneerNotesStatus" role="status" aria-live="polite" style="font-size:11px;color:var(--muted);min-height:15px;margin-top:4px"></div>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn sm ghost" type="button" id="btnPioneerNotesStamp" aria-label="Zeitstempel einfügen">+ Zeitstempel</button>
+      <button class="btn sm ghost" type="button" id="btnPioneerNotesExport" aria-label="Notizbuch als Markdown exportieren">⬇ Als Markdown</button>
+      <button class="btn sm ghost" type="button" id="btnPioneerNotesToBug" aria-label="Notizen an nächsten Bug-Report anhängen">→ In Bug-Report</button>
+    </div>
+  </div>
 </section>
 
 </main>
@@ -3282,6 +3294,49 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div class="field">
       <label>Wie hast du es gemacht? <small style="color:var(--muted)">(optional)</small></label>
       <textarea class="input" id="pbrSteps" rows="2" maxlength="600" placeholder="z.B. 'auf Verbinden geklickt, dann Bluefy gewaehlt, dann Crash'"></textarea>
+    </div>
+    <!-- v9.28.0 W1: strukturierte Klassifikation (maschinell sortierbar fuer Andre) -->
+    <div class="field">
+      <label for="pbrPath">Pfad / Bereich</label>
+      <select class="select" id="pbrPath">
+        <option value="">— auswählen —</option>
+        <option value="connect">Verbindung / BLE</option>
+        <option value="engine">Programm-Engine</option>
+        <option value="strains">Sorten</option>
+        <option value="voice">Voice</option>
+        <option value="pioneer">Pioneer-Test-Pfad</option>
+        <option value="onboarding">Onboarding / Tour</option>
+        <option value="other">Sonstiges</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pbrSeverity">Schweregrad</label>
+      <select class="select" id="pbrSeverity">
+        <option value="">— auswählen —</option>
+        <option value="critical">Kritisch (Gerät / Sicherheit)</option>
+        <option value="high">Hoch (Funktion kaputt)</option>
+        <option value="medium">Mittel (eingeschränkt)</option>
+        <option value="low">Niedrig (Kosmetik)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label id="pbrPersonalLabel">Wie schlimm für dich persönlich?</label>
+      <div id="pbrPersonalStars" role="radiogroup" aria-labelledby="pbrPersonalLabel" style="display:flex;gap:2px"></div>
+    </div>
+    <div class="field">
+      <label for="pbrRepro">Reproduzierbar?</label>
+      <select class="select" id="pbrRepro">
+        <option value="">— auswählen —</option>
+        <option value="yes">Ja (immer)</option>
+        <option value="sometimes">Manchmal</option>
+        <option value="no">Nein (einmalig)</option>
+      </select>
+    </div>
+    <!-- v9.28.0 W4: Audio-Memo (besonders fuer blinde Tester) -->
+    <div class="field">
+      <button class="btn sm ghost block" type="button" id="btnPbrAudio" aria-label="Audio-Memo aufnehmen">🎤 Audio-Memo aufnehmen</button>
+      <button class="btn sm ghost block" type="button" id="btnPbrAudioSave" hidden style="margin-top:6px" aria-label="Audio-Memo als Datei speichern">💾 Audio-Memo speichern</button>
+      <div id="pbrAudioStatus" role="status" aria-live="polite" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
     </div>
     <div style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;margin:8px 0;font-size:11px;color:var(--muted);font-family:monospace">
       <div id="pbrAutoInfo">Browser/Geraet-Info wird automatisch ergaenzt</div>
@@ -3900,6 +3955,14 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
           <small>Kurze Toene bei Pass/Fail/Achievement/Combo. Bei Screen-Reader-Nutzung evtl. stoerend, hier mute-bar.</small>
         </div>
         <button class="toggle" id="togPioneerSounds" role="switch" aria-checked="true" aria-label="Pioneer-Test-Sounds"></button>
+      </div>
+      <!-- v9.28.0 W3: Quick-Feedback-Export (nur sichtbar bei Pioneer-Test-Modus) -->
+      <div id="testToolsExportBox" hidden style="margin:8px 0 14px;padding:12px;background:rgba(106,255,160,.05);border:1px solid rgba(106,255,160,.2);border-radius:var(--r)">
+        <div style="font-size:13px;line-height:1.5"><b>👍/👎 Quick-Feedback</b><br><span style="color:var(--muted)">Auf Programm-, Sorten- und Schnellzugriff-Karten kannst du im Test-Modus mit Daumen-Knöpfen schnell „lief gut" oder „Problem" markieren. Hier kannst du das gesammelte Feedback exportieren.</span></div>
+        <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn sm ghost" type="button" id="btnQfbExport" aria-label="Quick-Feedback als JSON exportieren">⬇ Exportieren (JSON)</button>
+          <button class="btn sm ghost" type="button" id="btnQfbToAndre" aria-label="Quick-Feedback an Andre senden">📤 An Andre senden</button>
+        </div>
       </div>
 
       <!-- v8.7.2-prep Phase 1b.1: Community-DB-Setup -->
@@ -8510,6 +8573,7 @@ function progCard(p, kind){
       <button class="btn sm ghost" data-act="ha" data-tip="Als Home-Assistant-Script-YAML herunterladen (Phase 2)" aria-label="Als Home-Assistant-YAML exportieren">🏠</button>
       ${(kind==='saved' && _publishAvailable()) ? `<button class="btn sm ghost" data-act="publish" data-tip="Dieses Programm in die Community veröffentlichen" aria-label="In Community veröffentlichen">🌐</button>` : ''}
       ${kind==='saved' ? `<button class="btn sm ghost" data-act="del" data-tip="Programm dauerhaft löschen" aria-label="Programm löschen">🗑</button>` : ''}
+      ${_qfbCardBtns('Programm: '+p.name, 'program')}
     </div>
   `;
   div.querySelectorAll('button[data-act]').forEach(b=>{
@@ -12199,7 +12263,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.27.0';
+const SW_VERSION_LABEL='v9.28.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12536,6 +12600,7 @@ function aromaCardHtml(a){
       <button class="btn sm hot" data-act="program" style="flex:1">▶ Programm</button>
       <button class="btn sm ghost" data-act="share" aria-label="Sorte teilen" data-tip="Teilen: Link / JSON / QR-Code">📤</button>
       ${customDel}
+      ${_qfbCardBtns('Sorte: '+a.name, 'strain')}
     </div>
   </div>`;
 }
@@ -14288,13 +14353,14 @@ function renderQuickActions(){
     // v9.27.0 A11Y-D2.4.1: Meta ans aria-label anhaengen, sonst verschluckt VoiceOver die Dauer/Info (aria-label ueberschreibt den Textinhalt)
     b.setAttribute('aria-label', d.lbl + (d.meta ? ', '+d.meta : ''));
     b.innerHTML=`<span class="ico" aria-hidden="true">${d.ico}</span><span class="lbl">${escapeHtml(d.lbl)}</span><span class="meta" aria-hidden="true">${escapeHtml(d.meta||'')}</span>`;
-    b.addEventListener('click',()=>{ if(b._lp){ b._lp=false; return; } try{ d.fn(); }catch(err){ log(err.message,'err'); } });
+    b.addEventListener('click',()=>{ if(b._lp){ b._lp=false; return; } try{ State._lastQuickAction=d.lbl; }catch(_){} try{ d.fn(); }catch(err){ log(err.message,'err'); } });
     let t=null;
     const start=()=>{ t=setTimeout(()=>{ b._lp=true; toggleQuickActionPin(d.id); }, 500); };
     const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
     b.addEventListener('pointerdown',start); b.addEventListener('pointerup',cancel); b.addEventListener('pointerleave',cancel);
     root.appendChild(b);
   }
+  try{ _qfbEnsureQuickBar(root); }catch(_){}   // v9.28.0 W3
 }
 function toggleQuickActionPin(id){
   const cur=LS.get(QA_PIN_KEY,null);
@@ -18804,7 +18870,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.27.0 bereit.','ok');
+  log('Terp Sessions v9.28.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -21266,6 +21332,10 @@ function _pioneerApplyTabVisibility(){
   if(!navBtn) return;
   const show = !!PREFS.pioneerTestMode;
   navBtn.hidden = !show;
+  // v9.28.0 W3: Quick-Feedback-Export-Box + Quick-Bar an Pioneer-Modus koppeln.
+  // Nur die Quick-Bar an/abschalten, KEIN voller renderQuickActions (wuerde statische Buttons platt machen).
+  const ttBox = document.getElementById('testToolsExportBox'); if(ttBox) ttBox.hidden = !show;
+  try{ const _qaRoot = document.getElementById('quickActions'); if(_qaRoot && typeof _qfbEnsureQuickBar === 'function') _qfbEnsureQuickBar(_qaRoot); }catch(_){}
   // Wenn Tab aktiv und Mode aus → zurueck auf Steuerung
   if(!show && document.getElementById('tab-pioneer')?.classList.contains('active')){
     if(typeof switchTab === 'function') switchTab('ctl');
@@ -21653,6 +21723,12 @@ function _pioneerBugReportOpen(testId){
   document.getElementById('pbrActual').value = '';
   document.getElementById('pbrSteps').value = '';
   document.getElementById('pbrStatus').textContent = '';
+  // v9.28.0 W1/W4: strukturierte Felder + Audio-Memo zuruecksetzen
+  ['pbrPath','pbrSeverity','pbrRepro'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  _pbrPersonal = 0; try{ _pbrRenderStars(); }catch(_){}
+  _pioneerAudioMemo = null;
+  const aud=document.getElementById('pbrAudioStatus'); if(aud) aud.textContent='';
+  const audSave=document.getElementById('btnPbrAudioSave'); if(audSave) audSave.hidden=true;
   const info = document.getElementById('pbrAutoInfo');
   if(info){
     const ua = navigator.userAgent || 'unknown';
@@ -21675,8 +21751,20 @@ function _pioneerBugReportBuildUrl(testId, expected, actual, steps){
   const dev = (typeof State !== 'undefined' && State.adapter && State.adapter.constructor && (State.adapter.constructor.displayName || State.adapter.constructor.deviceType)) || 'kein Geraet verbunden';
   const sess = (typeof communityClient === 'object' && communityClient && communityClient.currentSession && communityClient.currentSession()) || null;
   const diag = _bugDiagBlock();   // v9.12.0 BUG-B: App-Status + gekuerzter Log
+  // v9.28.0 W1: strukturierte Klassifikation (maschinenlesbarer JSON-Header)
+  const fPath = (document.getElementById('pbrPath') || {}).value || '';
+  const fSev = (document.getElementById('pbrSeverity') || {}).value || '';
+  const fRepro = (document.getElementById('pbrRepro') || {}).value || '';
+  const fPersonal = _pbrPersonal || 0;
+  const metaJson = JSON.stringify({ test: t.id, path: fPath, severity: fSev, personal: fPersonal, repro: fRepro });
   const title = '[Pioneer-Test ' + t.id + '] ' + (t.title || 'Bug');
-  const head = '## Was sollte passieren?\n' + (expected || '(keine Angabe)') + '\n\n'
+  const head = '## Meta (maschinenlesbar)\n```json\n' + metaJson + '\n```\n\n'
+    + '## Klassifikation\n'
+    + '- Bereich: ' + (fPath || '(keine Angabe)') + '\n'
+    + '- Schweregrad: ' + (fSev || '(keine Angabe)') + '\n'
+    + '- Persoenliche Schwere: ' + (fPersonal ? fPersonal + '/5' : '(keine Angabe)') + '\n'
+    + '- Reproduzierbar: ' + (fRepro || '(keine Angabe)') + '\n\n'
+    + '## Was sollte passieren?\n' + (expected || '(keine Angabe)') + '\n\n'
     + '## Was ist stattdessen passiert?\n' + (actual || '(keine Angabe)') + '\n\n'
     + (steps ? '## Wie hast du es gemacht?\n' + steps + '\n\n' : '')
     + '## Auto-Info\n'
@@ -21689,7 +21777,10 @@ function _pioneerBugReportBuildUrl(testId, expected, actual, steps){
     + '- Pseudonym: ' + (sess && sess.pseudonym ? '`' + sess.pseudonym + '`' : '(nicht eingeloggt)') + '\n'
     + '- Timestamp: `' + new Date().toISOString() + '`\n';
   const logBlock = diag.log ? ('\n## Diagnose-Log (gekuerzt)\n```\n' + diag.log + '\n```\n') : '';
-  const fullBody = head + logBlock;
+  // v9.28.0 W4/W2: Audio-Memo-Hinweis + angehaengte Notizbuch-Notizen
+  const audioBlock = _pioneerAudioMemo ? ('\n## Audio-Memo\nAudio-Memo aufgenommen (' + _pioneerAudioMemo.sec + ' Sek.). Bitte als Datei anhaengen oder per DM an Andre senden, in der App per „Audio-Memo speichern" herunterladen.\n') : '';
+  const notesBlock = _pioneerPendingNotes ? ('\n## Tester-Notizen\n' + _pioneerPendingNotes + '\n') : '';
+  const fullBody = head + logBlock + audioBlock + notesBlock;
   const base = 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new'
     + '?title=' + encodeURIComponent(title)
     + '&labels=' + encodeURIComponent('pioneers,bug')
@@ -21722,6 +21813,8 @@ function _pioneerBugReportSubmit(){
   _pioneerSetResult(testId, 'fail', { bugReported:true, note: actual, _skipBugModal:true });
   document.getElementById('modalPioneerBugReport')?.classList.remove('open');
   _pioneerBugReportFor = null;
+  _pioneerPendingNotes = '';   // v9.28.0 W2: angehaengte Notizen nach Versand leeren
+  _pioneerAudioMemo = null;    // v9.28.0 W4
   uiAlert('Dein Bug-Report ist in der Zwischenablage kopiert und GitHub wurde geoeffnet. Falls sich GitHub nicht oeffnet (z.B. in Bluefy), fuege den Report aus der Zwischenablage in eine Nachricht an Andre ein. Danke, +25 Punkte!', 'Bug gemeldet');
 }
 
@@ -21766,6 +21859,224 @@ function _pioneerCompleteReportOpen(){
   toast('📋 Komplett-Report-Issue geoeffnet');
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   v9.28.0 Paket 1: TESTER-WERKZEUGE (W1-W4)
+   W1 strukturierte Bug-Report-Felder (oben in _pioneerBugReportBuildUrl)
+   W2 Tester-Notizbuch, W3 Quick-Feedback-Knoepfe, W4 Audio-Memo.
+   Alles lokal (localStorage), nur bei PREFS.pioneerTestMode sichtbar.
+═══════════════════════════════════════════════════════════════════════════ */
+const QFB_KEY = 'vol_quick_feedback';
+const NOTES_KEY = 'vol_pioneer_notes';
+let _pbrPersonal = 0;
+let _pioneerPendingNotes = '';
+let _pioneerAudioMemo = null;
+
+// generischer lokaler Datei-Download (Blob oder String)
+function _downloadFile(name, content, mime){
+  try{
+    const blob = (content instanceof Blob) ? content : new Blob([content], { type: mime || 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); a.remove(); }catch(_){} }, 1000);
+  }catch(e){ try{ log('Download fehlgeschlagen: ' + e.message, 'err'); }catch(_){} }
+}
+
+// ── W1: Sterne-Bewertung „persoenliche Schwere" (konsistent mit Sorten-Rating) ──
+function _pbrRenderStars(){
+  const wrap = document.getElementById('pbrPersonalStars'); if(!wrap) return;
+  wrap.innerHTML = '';
+  for(let i=1;i<=5;i++){
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.val = String(i);
+    b.setAttribute('role','radio');
+    b.setAttribute('aria-checked', String(i === _pbrPersonal));
+    b.setAttribute('aria-label', i + ' von 5 Blättern');
+    b.style.cssText = 'background:none;border:none;font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;filter:' + (i <= _pbrPersonal ? 'none' : 'grayscale(1) opacity(.4)');
+    b.textContent = '🌿';
+    b.addEventListener('click', ()=>{ _pbrPersonal = i; _pbrRenderStars(); try{ srAnnounce(i + ' von 5 Blättern'); }catch(_){} });
+    wrap.appendChild(b);
+  }
+}
+
+// ── W3: Quick-Feedback ───────────────────────────────────────────────────────
+function _qfbCardBtns(what, ctx){
+  if(!PREFS.pioneerTestMode) return '';
+  const w = escapeHtml(what), c = escapeHtml(ctx || '');
+  return '<button class="btn sm ghost qfb-btn" data-qfb="up" data-qfb-what="' + w + '" data-qfb-ctx="' + c + '" aria-label="Lief gut: ' + w + '" title="Lief gut" style="padding:3px 8px;min-height:auto;font-size:12px">👍</button>'
+       + '<button class="btn sm ghost qfb-btn" data-qfb="down" data-qfb-what="' + w + '" data-qfb-ctx="' + c + '" aria-label="Problem melden: ' + w + '" title="Problem" style="padding:3px 8px;min-height:auto;font-size:12px">👎</button>';
+}
+function _qfbEnsureQuickBar(root){
+  if(!root) return;
+  let bar = document.getElementById('qfbQuickBar');
+  if(!PREFS.pioneerTestMode){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'qfbQuickBar'; bar.className = 'row';
+    bar.style.cssText = 'gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap';
+    bar.innerHTML = '<small style="color:var(--muted);flex:1">Letzte Aktion bewerten:</small>'
+      + '<button class="btn sm ghost qfb-btn" data-qfb="up" data-qfb-ctx="quickaction" aria-label="Letzte Schnellzugriff-Aktion lief gut" title="Lief gut" style="padding:3px 10px;min-height:auto">👍</button>'
+      + '<button class="btn sm ghost qfb-btn" data-qfb="down" data-qfb-ctx="quickaction" aria-label="Letzte Schnellzugriff-Aktion Problem" title="Problem" style="padding:3px 10px;min-height:auto">👎</button>';
+    if(root.parentNode) root.parentNode.insertBefore(bar, root.nextSibling);
+  }
+}
+function _qfbRecord(entry){
+  let arr = LS.get(QFB_KEY, []) || [];
+  if(!Array.isArray(arr)) arr = [];
+  arr.push(entry);
+  if(arr.length > 500) arr.splice(0, arr.length - 500);
+  LS.set(QFB_KEY, arr);
+}
+async function _qfbHandle(kind, what, ctx){
+  let note = '';
+  if(kind === 'down'){
+    try{ note = (await uiPrompt('Was war das Problem? (optional, 1 Satz)', '', { title: '👎 Problem' })) || ''; }catch(_){ note = ''; }
+  }
+  _qfbRecord({ at: new Date().toISOString(), what: what || '', kind: kind === 'up' ? 'good' : 'problem', context: ctx || '', note: note ? String(note).slice(0,200) : '' });
+  toast(kind === 'up' ? '👍 Danke!' : '👎 Notiert, danke!');
+}
+function _qfbStats(){
+  let arr = LS.get(QFB_KEY, []) || [];
+  if(!Array.isArray(arr)) arr = [];
+  const by = {};
+  arr.forEach(e=>{
+    const k = e.what || e.context || '?';
+    by[k] = by[k] || { good:0, problem:0 };
+    if(e.kind === 'good') by[k].good++; else by[k].problem++;
+  });
+  return { count: arr.length, by, entries: arr };
+}
+function _qfbExport(){
+  const s = _qfbStats();
+  if(!s.count){ toast('Noch kein Quick-Feedback gesammelt'); return; }
+  const summary = Object.keys(s.by).map(k=>{ const v = s.by[k]; return v.good + 'x gut, ' + v.problem + 'x Problem auf ' + k; }).join('\n');
+  const payload = { tester: _pioneerTesterId(), app: (typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?'), exportedAt: new Date().toISOString(), count: s.count, summary, entries: s.entries };
+  _downloadFile('quick-feedback-' + _pioneerTesterId() + '.json', JSON.stringify(payload, null, 2), 'application/json');
+  toast('Quick-Feedback exportiert (' + s.count + ')');
+}
+function _qfbToAndre(){
+  const s = _qfbStats();
+  if(!s.count){ toast('Noch kein Quick-Feedback gesammelt'); return; }
+  const summary = Object.keys(s.by).map(k=>{ const v = s.by[k]; return '- **' + k + '**: ' + v.good + 'x 👍, ' + v.problem + 'x 👎'; }).join('\n');
+  const probs = s.entries.filter(e=>e.kind === 'problem' && e.note).map(e=>'- ' + (e.what || e.context) + ': ' + e.note).join('\n') || '(keine Notizen)';
+  const ver = (typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?');
+  const title = '[Pioneer Quick-Feedback] ' + _pioneerTesterId() + ' · ' + s.count + ' Eintraege';
+  const body = '## Quick-Feedback-Zusammenfassung\n' + summary + '\n\n## Problem-Notizen\n' + probs
+    + '\n\n## Auto-Info\n- Tester: `' + _pioneerTesterId() + '`\n- App: `' + ver + '`\n- Export: `' + new Date().toISOString() + '`\n';
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(title + '\n\n' + body); }catch(_){}
+  const url = 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new?title=' + encodeURIComponent(title)
+    + '&labels=' + encodeURIComponent('pioneers,feedback')
+    + '&body=' + encodeURIComponent(body.length > 6000 ? body.slice(0,6000) : body);
+  try{ window.open(url, '_blank', 'noopener'); }catch(_){}
+  uiAlert('Quick-Feedback in die Zwischenablage kopiert und GitHub geoeffnet. Falls GitHub nicht aufgeht (z.B. in Bluefy), sende den Inhalt aus der Zwischenablage an Andre.', 'Quick-Feedback');
+}
+
+// ── W2: Tester-Notizbuch ─────────────────────────────────────────────────────
+let _pioneerNotesTimer = null;
+function _pioneerNotesContextBlock(){
+  const ua = navigator.userAgent || 'unknown';
+  const dev = (typeof State !== 'undefined' && State.adapter && State.adapter.constructor && (State.adapter.constructor.displayName || State.adapter.constructor.deviceType)) || 'kein Geraet verbunden';
+  const ver = (typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?');
+  return '- Tester: ' + _pioneerTesterId() + '\n- App: ' + ver + '\n- Geraet: ' + dev + '\n- Browser: ' + ua + '\n- Export: ' + new Date().toISOString();
+}
+function _pioneerNotesExport(){
+  const v = (document.getElementById('pioneerNotes')?.value || '').trim();
+  if(!v){ toast('Notizbuch ist leer'); return; }
+  const md = '# Tester-Notizbuch\n\n' + v + '\n\n## Kontext\n' + _pioneerNotesContextBlock() + '\n';
+  _downloadFile('tester-notizen-' + _pioneerTesterId() + '.md', md, 'text/markdown');
+  toast('Notizbuch als Markdown exportiert');
+}
+function _pioneerNotesInit(){
+  const ta = document.getElementById('pioneerNotes'); if(!ta || ta.__wired) return; ta.__wired = true;
+  ta.value = LS.get(NOTES_KEY, '') || '';
+  ta.addEventListener('input', ()=>{
+    const st = document.getElementById('pioneerNotesStatus'); if(st) st.textContent = 'Speichert …';
+    if(_pioneerNotesTimer) clearTimeout(_pioneerNotesTimer);
+    _pioneerNotesTimer = setTimeout(()=>{ LS.set(NOTES_KEY, ta.value); const s2 = document.getElementById('pioneerNotesStatus'); if(s2) s2.textContent = 'Gespeichert ✓'; }, 1000);
+  });
+  document.getElementById('btnPioneerNotesStamp')?.addEventListener('click', ()=>{
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0'), mm = String(now.getMinutes()).padStart(2,'0');
+    const stamp = '[' + hh + ':' + mm + '] ';
+    const needNl = ta.value && !ta.value.endsWith('\n');
+    ta.value = ta.value + (needNl ? '\n' : '') + stamp;
+    LS.set(NOTES_KEY, ta.value);
+    ta.focus(); try{ ta.selectionStart = ta.selectionEnd = ta.value.length; }catch(_){}
+    try{ srAnnounce('Zeitstempel ' + stamp + 'eingefuegt'); }catch(_){}
+  });
+  document.getElementById('btnPioneerNotesExport')?.addEventListener('click', _pioneerNotesExport);
+  document.getElementById('btnPioneerNotesToBug')?.addEventListener('click', ()=>{
+    const v = (document.getElementById('pioneerNotes')?.value || '').trim();
+    if(!v){ toast('Notizbuch ist leer'); return; }
+    _pioneerPendingNotes = v;
+    toast('Notizen werden an den naechsten Bug-Report angehaengt');
+  });
+}
+
+// ── W4: Audio-Memo (MediaRecorder, bis 60s, graceful degradation) ────────────
+let _pioneerRec = null, _pioneerRecChunks = [], _pioneerRecTimer = null, _pioneerRecSec = 0;
+function _pioneerAudioSupported(){
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined');
+}
+async function _pioneerAudioToggle(){
+  const btn = document.getElementById('btnPbrAudio');
+  const stat = document.getElementById('pbrAudioStatus');
+  if(!_pioneerAudioSupported()){ if(stat) stat.textContent = 'Audio-Memo nicht verfuegbar, bitte Textbeschreibung nutzen.'; return; }
+  if(_pioneerRec && _pioneerRec.state === 'recording'){ try{ _pioneerRec.stop(); }catch(_){} return; }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _pioneerRecChunks = []; _pioneerRecSec = 0;
+    let mr;
+    try{ mr = new MediaRecorder(stream); }catch(_){ mr = new MediaRecorder(stream, { mimeType: 'audio/webm' }); }
+    _pioneerRec = mr;
+    mr.ondataavailable = e=>{ if(e.data && e.data.size) _pioneerRecChunks.push(e.data); };
+    mr.onstop = ()=>{
+      try{ stream.getTracks().forEach(t=>t.stop()); }catch(_){}
+      if(_pioneerRecTimer){ clearInterval(_pioneerRecTimer); _pioneerRecTimer = null; }
+      const blob = new Blob(_pioneerRecChunks, { type: (mr.mimeType || 'audio/webm') });
+      _pioneerAudioMemo = { mime: blob.type, sec: _pioneerRecSec, blob };
+      if(stat) stat.textContent = 'Audio-Memo aufgenommen (' + _pioneerRecSec + ' Sek.). Mit „Audio-Memo speichern" sichern.';
+      const dl = document.getElementById('btnPbrAudioSave'); if(dl) dl.hidden = false;
+      if(btn){ btn.textContent = '🎤 Audio-Memo aufnehmen'; btn.setAttribute('aria-label','Audio-Memo aufnehmen'); }
+    };
+    mr.start();
+    if(btn){ btn.textContent = '⏹ Aufnahme stoppen'; btn.setAttribute('aria-label','Audio-Aufnahme stoppen'); }
+    _pioneerRecTimer = setInterval(()=>{
+      _pioneerRecSec++;
+      if(stat) stat.textContent = 'Aufnahme … ' + _pioneerRecSec + ' Sek. (max 60)';
+      if(_pioneerRecSec >= 60){ try{ mr.stop(); }catch(_){} }
+    }, 1000);
+  }catch(e){ if(stat) stat.textContent = 'Mikrofon nicht freigegeben oder nicht verfuegbar. Bitte Textbeschreibung nutzen.'; }
+}
+function _pioneerAudioSave(){
+  if(!_pioneerAudioMemo || !_pioneerAudioMemo.blob){ toast('Kein Audio-Memo vorhanden'); return; }
+  const ext = (String(_pioneerAudioMemo.mime || '').indexOf('mp4') >= 0 || String(_pioneerAudioMemo.mime || '').indexOf('m4a') >= 0) ? 'm4a' : 'webm';
+  _downloadFile('audio-memo-' + _pioneerTesterId() + '.' + ext, _pioneerAudioMemo.blob, _pioneerAudioMemo.mime);
+  toast('Audio-Memo gespeichert');
+}
+
+// ── Delegierter Klick-Listener fuer Quick-Feedback-Knoepfe (einmalig) ────────
+function _testToolsWire(){
+  _pioneerNotesInit();
+  const exp = document.getElementById('btnQfbExport');
+  if(exp && !exp.__wired){ exp.__wired = true; exp.addEventListener('click', _qfbExport); }
+  const toA = document.getElementById('btnQfbToAndre');
+  if(toA && !toA.__wired){ toA.__wired = true; toA.addEventListener('click', _qfbToAndre); }
+  if(!document.__qfbDelegated){
+    document.__qfbDelegated = true;
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest && e.target.closest('[data-qfb]'); if(!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const kind = btn.getAttribute('data-qfb');
+      const ctx = btn.getAttribute('data-qfb-ctx') || '';
+      let what = btn.getAttribute('data-qfb-what') || '';
+      if(ctx === 'quickaction') what = (typeof State !== 'undefined' && State._lastQuickAction) || 'Schnellzugriff';
+      _qfbHandle(kind, what, ctx);
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_testToolsWire, 1300); });
+
 // ── Modal-Wiring (idempotent) + Sound-Toggle ────────────────────────────────
 function _pioneerPhase2Wire(){
   const m = document.getElementById('modalPioneerBugReport');
@@ -21780,6 +22091,9 @@ function _pioneerPhase2Wire(){
       _pioneerBugReportFor = null;
     });
     document.getElementById('btnPbrSubmit')?.addEventListener('click', _pioneerBugReportSubmit);
+    // v9.28.0 W4: Audio-Memo-Knoepfe
+    document.getElementById('btnPbrAudio')?.addEventListener('click', _pioneerAudioToggle);
+    document.getElementById('btnPbrAudioSave')?.addEventListener('click', _pioneerAudioSave);
   }
   const tog = document.getElementById('togPioneerSounds');
   if(tog && !tog.__wired){
