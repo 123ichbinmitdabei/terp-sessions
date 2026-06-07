@@ -4671,6 +4671,16 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
     <div id="scheduleList" style="margin:14px 0"></div>
 
+    <!-- v9.35.0 (autonom) Schedule-Vorlagen: ein Tipp legt einen fertigen Schedule an (Zeit anpassbar) -->
+    <div id="scheduleTemplates" style="margin:0 0 10px">
+      <div class="set-section-h" style="margin-bottom:6px">Vorlagen</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <button class="btn sm ghost" type="button" data-sch-tpl="decarb" aria-label="Vorlage Morgens Decarb hinzufügen">🌅 Morgens Decarb</button>
+        <button class="btn sm ghost" type="button" data-sch-tpl="evening" aria-label="Vorlage Abend-Session hinzufügen">🌙 Abend-Session</button>
+        <button class="btn sm ghost" type="button" data-sch-tpl="weekend" aria-label="Vorlage Wochenend-Aroma hinzufügen">🍃 Wochenend-Aroma</button>
+      </div>
+    </div>
+
     <div class="row" style="gap:8px;margin-bottom:8px">
       <button class="btn block primary" id="btnAddSchedule" data-tip="Neuen Schedule erstellen">+ Neuer Schedule</button>
     </div>
@@ -10609,6 +10619,10 @@ function wire(){
   // ═════ v4.9.8 wiring: Session-Scheduler ═════
   $('#btnScheduleClose')?.addEventListener('click', ()=>$('#modalSchedule').classList.remove('open'));
   $('#btnAddSchedule')?.addEventListener('click', ()=>openScheduleEditor(null));
+  // v9.35.0 (autonom) Schedule-Vorlagen
+  document.querySelectorAll('#scheduleTemplates [data-sch-tpl]').forEach(b=>{
+    b.addEventListener('click', ()=>_addScheduleFromTemplate(b.dataset.schTpl));
+  });
   $('#btnSchEditorCancel')?.addEventListener('click', ()=>{
     _schEditing = null;
     $('#modalScheduleEditor').classList.remove('open');
@@ -12444,7 +12458,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.34.0';
+const SW_VERSION_LABEL='v9.35.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15398,6 +15412,33 @@ function scheduleTriggerLabel(sch){
   return '';
 }
 
+// v9.35.0 (autonom) Schedule-Vorlagen: vordefinierte Schedules fuer haeufige Routinen.
+// Temperaturen werden bei der Ausfuehrung ohnehin an die Geraete-tempRange geklemmt (cmdSetTemp).
+const SCHEDULE_TEMPLATES = [
+  { key:'decarb',  name:'Morgens Decarb',  action:{type:'heat', temp:115}, trigger:{type:'at', hour:8,  minute:0}, repeat:'daily'    },
+  { key:'evening', name:'Abend-Session',   action:{type:'heat', temp:190}, trigger:{type:'at', hour:20, minute:0}, repeat:'daily'    },
+  { key:'weekend', name:'Wochenend-Aroma', action:{type:'heat', temp:180}, trigger:{type:'at', hour:11, minute:0}, repeat:'weekends' },
+];
+function _addScheduleFromTemplate(key){
+  const t = SCHEDULE_TEMPLATES.find(x=>x.key === key);
+  if(!t){ return; }
+  const sch = {
+    id: 'sch_'+Date.now().toString(36),
+    name: t.name,
+    action: Object.assign({}, t.action),
+    trigger: Object.assign({}, t.trigger),
+    repeat: t.repeat,
+    customDays: [],
+    enabled: true,
+    createdAt: Date.now(),
+  };
+  try{ sch.nextRun = computeNextRun(sch); }catch(_){ sch.nextRun = null; }
+  SCHEDULES.push(sch);
+  try{ saveSchedules(); }catch(_){}
+  try{ renderScheduleList(); }catch(_){}
+  try{ updateScheduleHero(); }catch(_){}
+  toast('Vorlage „' + t.name + '" angelegt, Zeit anpassbar');
+}
 function openScheduleEditor(id){
   const existing = id ? SCHEDULES.find(s=>s.id === id) : null;
   _schEditing = existing ? JSON.parse(JSON.stringify(existing)) : {
@@ -19085,7 +19126,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.34.0 bereit.','ok');
+  log('Terp Sessions v9.35.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

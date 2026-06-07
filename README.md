@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.34.0)
+# Terp Sessions — Vape Controller (v9.35.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.35.0 — Schedule-Vorlagen (autonom)
+
+Der Session-Planer hat jetzt drei Vorlagen-Knöpfe, die mit einem Tipp einen fertigen Schedule anlegen (Zeit danach anpassbar): „🌅 Morgens Decarb" (115 °C, täglich 08:00), „🌙 Abend-Session" (190 °C, täglich 20:00) und „🍃 Wochenend-Aroma" (180 °C, Sa+So 11:00). Spart Tippen für wiederkehrende Routinen. Temperaturen werden bei der Ausführung ohnehin an den Geräte-Bereich geklemmt.
+
+Tests: `v935schedtpl.mjs` (10 Checks). Additive UI + Daten, kein Eingriff in die Schedule-Engine.
 
 ## v9.34.0 — Toggle-Beschreibungen für Screen-Reader (autonom)
 

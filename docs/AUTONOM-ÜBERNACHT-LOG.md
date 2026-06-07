@@ -48,4 +48,15 @@ Bewusst NICHT in der Liste (begründet):
 - **Verify-before-fix:** Mandat vermutete „unklare Toggles ohne Erklärung". Tatsächlich haben praktisch alle Schalter bereits ein sichtbares `<small>`; die echte Lücke war die fehlende SR-Verknüpfung. Paket entsprechend umdefiniert (aria-describedby statt neuer Tooltips).
 - **Test:** v934toggledesc.mjs 10/10 (5 Stichproben-Schalter mit aufgelöstem describedby + Text, >=10 verknüpft, idempotent, keine verwaisten Refs).
 - **Tester-Update-Baustein:** „Screen-Reader lesen jetzt bei den Einstellungs-Schaltern auch die Erklärung mit vor, nicht nur den Namen."
+- **Test/Regression:** v934toggledesc 10/10, volle Regression 2021/2021.
+- **Live:** commit 0f70d35, Tag v9.34.0, Pages verifiziert.
+
+### Paket 3: Schedule-Vorlagen, v9.35.0, LIVE (Stossrichtung M)
+
+- **Was:** drei Vorlagen-Knöpfe im Session-Planer (Morgens Decarb 115°/08:00 täglich, Abend-Session 190°/20:00 täglich, Wochenend-Aroma 180°/11:00 Sa+So). `_addScheduleFromTemplate` baut ein vollständiges Schedule-Objekt (gleiche Form wie der Editor), `computeNextRun`, push + save + render. Zeit danach im Editor anpassbar.
+- **Warum jetzt:** Tester-Komfort. Wiederkehrende Routinen sind ein Tipp statt vieler Editor-Felder, senkt die Hürde, die Planer-Funktion überhaupt zu testen.
+- **Risiko:** niedrig. Additive UI + Datensatz, kein Eingriff in scheduleTick/Engine. Temperaturen werden bei Ausführung via cmdSetTemp an die Geräte-Range geklemmt.
+- **Verify-before-fix:** Schedule-Objektform (action/trigger/repeat/customDays/nextRun/enabled/createdAt) und id-Format ('sch_'+Date.now().toString(36)) aus openScheduleEditor/saveScheduleFromEditor übernommen.
+- **Test:** v935schedtpl.mjs 10/10 (Felder, nextRun-Zukunft + korrekte Stunde, weekends fällt auf Sa/So, Button-Wiring).
+- **Tester-Update-Baustein:** „Im Session-Planer legen drei Vorlagen (Morgens Decarb, Abend-Session, Wochenend-Aroma) mit einem Tipp einen fertigen Schedule an."
 - **Live:** wird nach Regression + Push bestätigt.
