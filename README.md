@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.19.0)
+# Terp Sessions — Vape Controller (v9.20.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.20.0 — QA-2 Reconnect- und Queue-Robustheit (Paket 4 der Fix-Kampagne)
+
+Viertes Paket der QA-2-Fix-Kampagne. Schwerpunkt: robuster Reconnect, BLE-Befehls-Queue und Custom-Profile. Frontend-only, keine Protokoll-Änderung.
+
+- **QA2.2.3 Reconnect-Oszillations-Schutz:** Der Reconnect-Zähler wird nicht mehr bei jedem Verbindungsabbruch sofort genullt, sondern erst nach 10 Sekunden stabiler Verbindung (`setConn` armiert einen Stabilitäts-Timer). Ein Gerät, das ständig kurz verbindet und sofort wieder abbricht, läuft nicht mehr in endlose Reconnect-Versuche, sondern erreicht nach drei Fehlversuchen den „bitte manuell neu verbinden"-Banner.
+- **QA2.2.9 Queue-Timeout:** Jede serialisierte BLE-Operation läuft jetzt gegen einen 5-Sekunden-Timeout (`_bleWithTimeout`). Eine hängende Operation (z.B. nach stillem GATT-Verlust) blockiert nicht mehr dauerhaft alle nachfolgenden Befehle; die Queue erholt sich automatisch.
+- **QA2.2.2 Custom-BLE-Profile:** Die Service-UUIDs eigener Profile werden jetzt in die `optionalServices` der Geräteauswahl aufgenommen (sonst scheitert der Zugriff am Web-Bluetooth-Permission-Modell), und `detectDevice` ordnet ein Gerät mit passender Custom-Service-UUID dem generischen Volcano-Adapter mit Auto-Mapping zu. Der Profil-Hinweis sagt jetzt ehrlich, dass Custom-Profile nur mit S&B-kompatiblen Characteristics funktionieren.
+
+**Bewusst zurückgestellt (dokumentiert in `docs/QA-2-FIX-LOG.md`):** QA2.2.4 (Puffco-Auth beim Reconnect) und QA2.2.6 (PAX-Seriennummer-Plausibilität) betreffen unverifizierte Beta-Adapter ohne verfügbare Hardware; QA2.2.5 (Paket 2) verhindert dort bereits die Anzeige von Müll-Werten. QA2.2.10 (deklarierte vs. genutzte Capabilities) ist kosmetisch.
+
+**Unberührt:** Adapter-Protokolle, cscCrypto, Backend. **Tests:** `v920qa2reconnect.mjs` (11), plus BLE-Bestandssuiten grün. Volle Regression grün.
 
 ## v9.19.0 — QA-2 Barrierefreiheit-Detailfixes (Paket 3 der Fix-Kampagne)
 

@@ -6562,7 +6562,7 @@ async function tryReconnect(){
       await startAllNotifications();
     }
     setConn(true);
-    State.reconnectAttempts = 0;
+    // v9.20.0 QA2.2.3: reconnectAttempts wird von setConn delayed (10s stabil) genullt, nicht sofort
     State.connectionLost = false;
     hideConnLostBanner();
     log('Reconnect erfolgreich','ok');
@@ -6658,7 +6658,15 @@ function showFriendlyError(error, context){
 function setConn(connected){
   const wasConnected = !!State.connected;
   State.connected=connected;
-  if(connected){ State.connectionLost=false; State.reconnectAttempts=0; if(typeof hideConnLostBanner==='function') hideConnLostBanner(); }
+  // v9.20.0 QA2.2.3: Reconnect-Zaehler NICHT sofort nullen, sondern erst nach 10s stabiler Verbindung.
+  // Sonst setzt eine oszillierende Verbindung (verbindet kurz, fliegt sofort raus) den Zaehler jedes Mal
+  // zurueck und der 3-Versuch-Deckel greift nie -> endlose Reconnects.
+  if(State._stableTimer){ clearTimeout(State._stableTimer); State._stableTimer=null; }
+  if(connected){
+    State.connectionLost=false; State._connectedAt=Date.now();
+    State._stableTimer=setTimeout(()=>{ if(State.connected){ State.reconnectAttempts=0; } }, 10000);
+    if(typeof hideConnLostBanner==='function') hideConnLostBanner();
+  }
   $('#dot').classList.toggle('on', connected);
   $('#connChip').textContent = connected?'Verbunden':'Getrennt';
   $('#connChip').classList.toggle('on', connected);
@@ -7004,7 +7012,9 @@ async function connectBLE(){
       '00000003-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 3
       '00000000-5354-4f52-5a26-4249434b454c',   // Venty/Veazy
       '8e320200-64d2-11e6-bdf4-0800200c9a66',   // v6.0.0: PAX 3 (Beta) - Pflicht fuer getPrimaryService
-      '06caf9c0-74d3-454f-9be9-e30cd999c17a'    // v7.0.0: Puffco Peak Pro (Beta) - enthaelt die f9a98c15-Chars
+      '06caf9c0-74d3-454f-9be9-e30cd999c17a',    // v7.0.0: Puffco Peak Pro (Beta) - enthaelt die f9a98c15-Chars
+      // v9.20.0 QA2.2.2: Custom-Profil-Service-UUIDs zulassen, sonst scheitert getPrimaryService am Web-Bluetooth-Permission-Modell
+      ...((PREFS.customBleProfiles||[]).flatMap(p=>[(p.uuids||{}).uuidServiceState, (p.uuids||{}).uuidServiceControl]))
       // Firefly 2+: TODO v8.0
       ].filter(Boolean))];
     log('Gerätedialog öffnen…');
@@ -7028,7 +7038,7 @@ async function connectBLE(){
       // v9.17.0 QA2.3.3: laufendes Programm bei Verbindungsverlust abbrechen, statt die Wartezeit
       // blind zu Ende laufen zu lassen, waehrend das Geraet ggf. real weiterheizt.
       if(State.running){ State.running.stopFlag = true; log('Laufendes Programm wegen Verbindungsverlust abgebrochen.','warn'); }
-      State.reconnectAttempts = 0;
+      // v9.20.0 QA2.2.3: Zaehler NICHT bei jedem Drop nullen (Oszillations-Schutz, Reset erfolgt nach 10s stabil in setConn)
       setConn(false);
       // v9.18.0 QA2.2.8/QA2.14.1: alte Poll-Intervalle + Notify-Listener abbauen, bevor tryReconnect neu subscribt.
       try{ State.adapter && State.adapter.disconnect && State.adapter.disconnect(); }catch(_){}
@@ -10707,6 +10717,16 @@ const DEVICE_PROFILES = {
    v4.9.8-Verhalten 1:1 ab (keine Verhaltensaenderung).
    Crafty/Mighty -> v5.0.1, Venty -> v5.0.2.
 ═══════════════════════════════════════════════════════════════ */
+// v9.20.0 QA2.2.9: BLE-Op mit Timeout. Eine haengende Operation (z.B. nach stillem GATT-Verlust)
+// wuerde sonst die serielle Queue dauerhaft blockieren und alle nachfolgenden Befehle verschlucken.
+// Bei Timeout rejected die Op; da this._q = run.catch(()=>{}) ist, laeuft die Queue danach weiter.
+function _bleWithTimeout(fn, ms){
+  ms = ms || 5000;
+  return Promise.race([
+    Promise.resolve().then(fn),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('BLE-Op Timeout ('+ms+'ms)')), ms)),
+  ]);
+}
 class DeviceAdapter {
   static deviceType   = 'unknown';
   static displayName  = '';
@@ -10729,7 +10749,7 @@ class DeviceAdapter {
   // v9.16.0 N3 (QA2.13.2): serieller BLE-Mutex pro Adapter, damit keine parallelen writeValue
   // ans selbe Geraet gehen. Lazy-init von this._q, Fehler wird an den Aufrufer durchgereicht (N2).
   // VentyVeazy/PAX/Puffco ueberschreiben dies mit eigenem Log-Label; Volcano/CraftyMighty erben es.
-  _enqueue(fn){ if(!this._q) this._q = Promise.resolve(); const run = this._q.then(fn); this._q = run.catch(()=>{}); return run; }
+  _enqueue(fn){ if(!this._q) this._q = Promise.resolve(); const run = this._q.then(()=>_bleWithTimeout(fn)); this._q = run.catch(()=>{}); return run; }   // v9.20.0 QA2.2.9: Timeout
   async connect(device){ if(device) this.device = device; }
   async disconnect(){}
   async setTargetTemp(c){}
@@ -10973,7 +10993,7 @@ class VentyVeazyAdapter extends DeviceAdapter {
   // Alle BLE-Ops serialisieren (firsttris bluetoothQueue, concurrency 1) -> kein "GATT operation already in progress"
   // v9.16.0 N2 (QA2.2.1): interne Sequenz-Kette getrennt vom Rueckgabe-Promise.
   // Frueher verschluckte das .catch den Fehler auch fuer den Aufrufer -> cmd* meldete faelschlich Erfolg.
-  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('VentyVeazy BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }
+  _enqueue(fn){ const run = this._q.then(()=>_bleWithTimeout(fn)); this._q = run.catch(()=>{}); return run.catch(e=>{ log('VentyVeazy BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.20.0 QA2.2.9: Timeout
   // firsttris writeDeviceStatus: Buffer [cmd=1][mask][payload an Byte-Offsets]
   _writeCmd(mask, byteMap){
     if(!this.control) throw new Error('Venty Control-Char fehlt.');
@@ -11175,7 +11195,7 @@ class PaxAdapter extends DeviceAdapter {
   };
   constructor(device){ super(device); this.serial=null; this.key=null; this.chars={}; this._q=Promise.resolve(); this._notifyCount=0; this._poll=null; }
 
-  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('PAX BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2: Fehler an Aufrufer durchreichen
+  _enqueue(fn){ const run = this._q.then(()=>_bleWithTimeout(fn)); this._q = run.catch(()=>{}); return run.catch(e=>{ log('PAX BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2 + v9.20.0 QA2.2.9 Timeout
   _write(bytes){ return this._enqueue(()=> this.chars.write.writeValueWithoutResponse ? this.chars.write.writeValueWithoutResponse(bytes.buffer) : this.chars.write.writeValue(bytes.buffer) ); }
 
   async bindChars(server){
@@ -11309,7 +11329,7 @@ class PuffcoAdapter extends DeviceAdapter {
     pivot:    { name:'Pivot', supported:false, reason:'nicht in Quelle dokumentiert' },
   };
   constructor(device){ super(device); this.svc=null; this.chars={}; this._q=Promise.resolve(); this._poll=null; this._authed=false; }
-  _enqueue(fn){ const run = this._q.then(fn); this._q = run.catch(()=>{}); return run.catch(e=>{ log('Puffco BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2: Fehler an Aufrufer durchreichen
+  _enqueue(fn){ const run = this._q.then(()=>_bleWithTimeout(fn)); this._q = run.catch(()=>{}); return run.catch(e=>{ log('Puffco BLE-Op: '+(e&&e.message||e),'warn'); throw e; }); }   // v9.16.0 N2 + v9.20.0 QA2.2.9 Timeout
 
   async bindChars(server){
     this.svc = await server.getPrimaryService(PUFFCO_SERVICE);
@@ -11466,6 +11486,11 @@ async function detectDevice(bleDevice, gattServer){
     if(uuids.includes('00000001-4c45-4b43-4942-265a524f5453')){ log('detectDevice: ✓ Crafty/Mighty-Service → CraftyMightyAdapter','ok'); return CraftyMightyAdapter; }
     if(uuids.includes('8e320200-64d2-11e6-bdf4-0800200c9a66')){ log('detectDevice: ✓ PAX-Service → PaxAdapter (BETA)','ok'); return PaxAdapter; }
     if(uuids.includes('06caf9c0-74d3-454f-9be9-e30cd999c17a')){ log('detectDevice: ✓ Puffco-Service → PuffcoAdapter (BETA)','ok'); return PuffcoAdapter; }
+    // v9.20.0 QA2.2.2: Custom-Profil-Service erkannt -> generischer S&B-Stil-Adapter (Volcano) mit Auto-Mapping
+    for(const cp of (PREFS.customBleProfiles||[])){
+      const cs = (((cp.uuids||{}).uuidServiceState || (cp.uuids||{}).uuidServiceControl) || '').toLowerCase();
+      if(cs && uuids.includes(cs)){ log('detectDevice: ✓ Custom-Profil "'+cp.name+'" → VolcanoAdapter + Auto-Mapping','ok'); return VolcanoAdapter; }
+    }
     log('detectDevice: kein bekannter Service gefunden','warn');
   }
 
@@ -12156,7 +12181,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.19.0';
+const SW_VERSION_LABEL='v9.20.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -17699,7 +17724,7 @@ async function addCustomBleProfile(){
       uuidHeaterOn:'', uuidHeaterOff:'', uuidPumpOn:'', uuidPumpOff:'',
     },
     features:{heat:true, pump:true, workflows:true},
-    notes:'Custom-Profil. Nach Verbindung „Auto-Mapping" verwenden.',
+    notes:'Custom-Profil funktioniert nur mit Geräten, die S&B-kompatible Characteristics sprechen. Nach Verbindung „Auto-Mapping" verwenden.',
     custom:true,
   };
   PREFS.customBleProfiles = (PREFS.customBleProfiles||[]).concat([profile]);
@@ -18732,7 +18757,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.19.0 bereit.','ok');
+  log('Terp Sessions v9.20.0 bereit.','ok');
 
   setupPwaUpdate();
 
