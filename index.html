@@ -5627,13 +5627,20 @@ const PREFS_DEFAULTS = {
     totalHeatSec:0,
     sessionsCount:0,
     lastSessionAt:null,
+    sessionBagsBase:0,   // v9.15.0 N6: Lebenszeit-Bag-Stand bei Start der aktuellen Session (fuer Pro-Session-Delta)
+    sessionHeatBase:0,   // v9.15.0 N6: Lebenszeit-Heizsekunden bei Start der aktuellen Session
   },
 };
 const PREFS = Object.assign({}, PREFS_DEFAULTS, LS.get('vol_prefs',{}));
 // Ensure nested objects exist
 PREFS.voiceCmds = Object.assign({}, PREFS_DEFAULTS.voiceCmds, PREFS.voiceCmds||{});
 PREFS.bagTimes  = Object.assign({}, PREFS_DEFAULTS.bagTimes, PREFS.bagTimes||{});
+// v9.15.0 N6: vor dem Merge merken, ob sessionBagsBase schon existierte (Migration ohne historische Fehlzuordnung)
+const _hadSessionBagsBase = !!(PREFS.stats && ('sessionBagsBase' in PREFS.stats));
 PREFS.stats     = Object.assign({}, PREFS_DEFAULTS.stats, PREFS.stats||{});
+// Bestandsnutzer: aktuelle Session beginnt jetzt, nicht beim Lebenszeit-Nullpunkt
+if(!_hadSessionBagsBase) PREFS.stats.sessionBagsBase = PREFS.stats.bagsFilled || 0;
+if(!_hadSessionBagsBase) PREFS.stats.sessionHeatBase = PREFS.stats.totalHeatSec || 0;
 // v8.5.0: nested defaults für neue Maps
 PREFS.ttsEvents       = Object.assign({}, PREFS_DEFAULTS.ttsEvents, PREFS.ttsEvents||{});
 PREFS.trackingFields  = Object.assign({}, PREFS_DEFAULTS.trackingFields, PREFS.trackingFields||{});
@@ -9316,8 +9323,10 @@ async function runProgram(p){
     log('Programmfehler: '+e.message,'err');
     ttsEvent('errors', 'Programmfehler: '+e.message);
     // Safety: heater + pump off
-    try{ await cmdPump(false); }catch{}
-    try{ await cmdHeater(false); }catch{}
+    // v9.15.0 N1 (QA2.27.3): Fehler beim Not-Abschalten nicht mehr verschlucken, sondern loggen
+    // (z.B. wenn der Fehler ein BLE-Disconnect war, sieht der Tester das im Diagnose-Log).
+    try{ await cmdPump(false); }catch(e){ log('Sicherheits-Abschaltung Pumpe fehlgeschlagen: '+(e&&e.message||e),'warn'); }
+    try{ await cmdHeater(false); }catch(e){ log('Sicherheits-Abschaltung Heizer fehlgeschlagen: '+(e&&e.message||e),'warn'); }
   }finally{
     _engineClearPauseTimeout();   // v9.8.0 R1.4: Pause-Timeout aufraeumen
     _stopRunCountdown();
@@ -9384,8 +9393,9 @@ function startSafety(min){
   const ms=clamp(Number(min)||0,1,60)*60000;
   State.safetyEndAt = Date.now()+ms;
   State.safetyTimer = setTimeout(async()=>{
-    try{ await cmdPump(false); }catch{}
-    try{ await cmdHeater(false); }catch{}
+    // v9.15.0 N1: Fehler beim Auto-Abschalten loggen statt verschlucken
+    try{ await cmdPump(false); }catch(e){ log('Auto-Aus Pumpe fehlgeschlagen: '+(e&&e.message||e),'warn'); }
+    try{ await cmdHeater(false); }catch(e){ log('Auto-Aus Heizer fehlgeschlagen: '+(e&&e.message||e),'warn'); }
     log('Sicherheits-Timer abgelaufen, alles AUS.','warn');
     State.safetyTimer=null; State.safetyEndAt=null; updateSafety();
   }, ms);
@@ -9403,6 +9413,16 @@ function updateSafety(){
   $('#safetyState').textContent = `⏰ Auto-Aus in ${mm}:${ss}`;
 }
 setInterval(updateSafety, 1000);
+
+// v9.15.0 N1 (QA2.13.1): Warnung beim Schliessen/Neuladen, wenn der Heizer noch laeuft.
+// Der App-Safety-Timer stirbt mit dem Tab; der Browser-Dialog ist das letzte Netz,
+// damit der Heizer nicht unbemerkt anbleibt.
+// Nicht bei App-eigenen Reloads (PWA-Update, Forget-Me, setzen _intentionalUnload) und
+// nicht unter Test-Automation (navigator.webdriver), sonst blockiert es Reload/Navigation.
+let _intentionalUnload = false;
+window.addEventListener('beforeunload', (e)=>{
+  if(State.heater && !_intentionalUnload && !navigator.webdriver){ e.preventDefault(); e.returnValue=''; return ''; }
+});
 
 /* ═══════════════════════════════════════════════════════════════
    EXPORT / IMPORT
@@ -12048,7 +12068,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.14.0';
+const SW_VERSION_LABEL='v9.15.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -13677,16 +13697,22 @@ function finishSession(){
   const notes = ta?.value||'';
   if(notes.trim()){
     const history = LS.get('vol_sessions',[]);
+    // v9.15.0 N6 (QA2.17.1): Pro-Session-Werte als Delta seit Session-Start, nicht der Lebenszeit-Zaehler
+    const sessBags = Math.max(0, (PREFS.stats.bagsFilled||0) - (PREFS.stats.sessionBagsBase||0));
+    const sessHeat = Math.max(0, (PREFS.stats.totalHeatSec||0) - (PREFS.stats.sessionHeatBase||0));
     history.unshift({
       at: Date.now(),
       notes,
-      bagsFilled: PREFS.stats.bagsFilled,
-      heatSec: PREFS.stats.totalHeatSec,
+      bagsFilled: sessBags,
+      heatSec: sessHeat,
     });
     LS.set('vol_sessions', history.slice(0,50));
   }
   if(ta) ta.value='';
   LS.set('vol_current_notes','');
+  // v9.15.0 N6: aktuelle Session abgeschlossen -> Basis fuer die naechste Session auf den aktuellen Stand setzen
+  PREFS.stats.sessionBagsBase = PREFS.stats.bagsFilled || 0;
+  PREFS.stats.sessionHeatBase = PREFS.stats.totalHeatSec || 0;
   statsAddSession();
   // v4.6: Streak + Achievements + Maintenance Check
   noteSessionDay();
@@ -15055,10 +15081,9 @@ function maybeAutoStartSafety(){
   const sInput = $('#sInput');
   const min = clamp(PREFS.safetyMinutes||25, 1, 60);
   if(sInput) sInput.value = min;
-  // existing safety start (uses sInput value)
-  if(typeof startSafetyTimer === 'function'){
-    startSafetyTimer();
-  }
+  // v9.15.0 N1 (QA2.1.2): vorher wurde das nicht existierende startSafetyTimer() aufgerufen,
+  // der Auto-Start war dadurch toter Code. Korrekt ist startSafety(min).
+  startSafety(min);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -15326,6 +15351,7 @@ function setupPwaUpdate(){
           // Neue Version verfügbar
           if(await uiConfirm('Eine neue Version von Terp Sessions ist verfügbar. Jetzt aktualisieren?')){
             nw.postMessage({type:'SKIP_WAITING'});
+            _intentionalUnload = true;   // v9.15.0 N1: App-eigener Reload, keine beforeunload-Warnung
             window.location.reload();
           }
         }
@@ -15945,8 +15971,9 @@ function bagsTodayCount(){
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   const t0 = todayStart.getTime();
   let count = sessions.filter(s=>s.at>=t0).reduce((sum,s)=>sum+(s.bagsFilled||0), 0);
-  // Plus die aktuelle Session (noch nicht archiviert)
-  count += PREFS.stats.bagsFilled || 0;
+  // v9.15.0 N6 (QA2.17.2): aktuelle, noch nicht archivierte Session = Delta seit Session-Start,
+  // NICHT der Lebenszeit-Zaehler (sonst ist das Tageslimit sofort scheinbar erreicht).
+  count += Math.max(0, (PREFS.stats.bagsFilled||0) - (PREFS.stats.sessionBagsBase||0));
   return count;
 }
 async function checkBagsLimit(){
@@ -15985,6 +16012,7 @@ async function forgetMe(){
     }catch{}
   }
   toast('Alle Daten gelöscht. Lade neu …');
+  _intentionalUnload = true;   // v9.15.0 N1: App-eigener Reload, keine beforeunload-Warnung
   setTimeout(()=>window.location.reload(), 1200);
 }
 
@@ -18159,19 +18187,19 @@ const TOUR_STEPS = [
   },
   {
     target:'#nav-prog',
-    title:'4. Programme-Tab',
+    title:'5. Programme-Tab',
     text:'Hier findest du Vorlagen und kannst eigene Programme bauen — mit Schritten, Loops und Variablen. Lange auf eine Programm-Karte tippen zeigt die Beschreibung.',
     placement:'top',
   },
   {
     target:'#nav-setup',
-    title:'5. Setup-Tab',
+    title:'6. Setup-Tab',
     text:'Hier sind: Statistik, Wartung, Werkzeuge (Audio, Wissen, Anleitung, DSL-Editor, Sprach-Shortcuts) und die App-Einstellungen.',
     placement:'top',
   },
   {
     target:'#btnHelp',
-    title:'6. ? = Anleitung',
+    title:'7. ? = Anleitung',
     text:'Das Fragezeichen oben rechts öffnet das vollständige Handbuch mit Suche. 10 Kategorien, alle Funktionen erklärt.',
     placement:'bottom',
   },
@@ -18186,12 +18214,15 @@ const TOUR_STEPS = [
 let _tourIdx = 0;
 let _tourActive = false;
 let _tourScrollRetried = false;  // v4.9.7: Endlos-Scroll-Schutz
+let _tourReturnFocus = null;     // v9.15.0 N8 (QA2.18.4): Fokus vor der Tour, danach zurueckgeben
 
 function startOnboardingTour(force){
   if(!force && LS.get('vol_tour_completed', false)) return;
   _tourIdx = 0;
   _tourActive = true;
   _tourScrollRetried = false;
+  // v9.15.0 N8: aktuell fokussiertes Element merken, um den Fokus nach der Tour zurueckzugeben
+  _tourReturnFocus = (document.activeElement && document.activeElement !== document.body) ? document.activeElement : null;
   showTourStep();
 }
 
@@ -18204,6 +18235,12 @@ function showTourStep(){
   const ov = document.createElement('div');
   ov.id = 'tourOverlay';
   ov.className = 'tour-overlay';
+  // v9.15.0 N8 (QA2.18.2): Dialog-Semantik, damit VoiceOver das Overlay als Modal ankuendigt
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.setAttribute('aria-labelledby', 'tourStepTitle');
+  // v9.15.0 N8 (QA2.18.3): Schritt-Wechsel fuer Screen-Reader ansagen
+  try{ const _sr=$('#srLive'); if(_sr) _sr.textContent = `Tour, Schritt ${_tourIdx+1} von ${TOUR_STEPS.length}: ${step.title}`; }catch(_){}
 
   // Spotlight (Loch um Target)
   let spotlight = null;
@@ -18252,7 +18289,7 @@ function showTourStep(){
   bubble.className = 'tour-bubble' + (step.placement === 'center' ? ' center' : '');
   bubble.innerHTML = `
     <div class="tour-step-num">Schritt ${_tourIdx+1} / ${TOUR_STEPS.length}</div>
-    <h3>${escapeHtml(step.title)}</h3>
+    <h3 id="tourStepTitle">${escapeHtml(step.title)}</h3>
     <p style="white-space:pre-line">${escapeHtml(step.text)}</p>
     <div class="tour-actions">
       <button class="btn sm ghost" data-tour="skip">Überspringen</button>
@@ -18308,6 +18345,9 @@ function endOnboardingTour(){
   closeTourOverlay();
   _tourActive = false;
   LS.set('vol_tour_completed', true);
+  // v9.15.0 N8 (QA2.18.4): Fokus dorthin zurueck, wo er vor der Tour war
+  try{ if(_tourReturnFocus && typeof _tourReturnFocus.focus === 'function' && document.contains(_tourReturnFocus)) _tourReturnFocus.focus(); }catch(_){}
+  _tourReturnFocus = null;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -18573,7 +18613,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.14.0 bereit.','ok');
+  log('Terp Sessions v9.15.0 bereit.','ok');
 
   setupPwaUpdate();
 

@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.14.0)
+# Terp Sessions — Vape Controller (v9.15.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.15.0 — QA-2 Top-3-Fixes (Safety-Timer, Bag-Statistik, Tour-A11Y)
+
+Die drei höchstpriorisierten Befunde aus dem QA-2-Audit (`docs/QA-2-AUDIT-2026-06-08.md`), umgesetzt vor der betreuungsfreien Pioneer-Test-Woche. Frontend-only, kein Backend, keine Adapter-/cscCrypto-Änderung.
+
+- **N1 Safety-Timer härten (QA2.1.2 / QA2.13.1 / QA2.27.3):** Der automatische Sicherheits-Timer beim Heizen war toter Code, `maybeAutoStartSafety()` rief das nicht existierende `startSafetyTimer()` auf statt `startSafety(min)`. Jetzt startet der Auto-Aus-Timer wie vorgesehen (Default an, S&B 25 min, portabel 8 min). Zusätzlich: das Not-Abschalten von Heizer und Pumpe im Fehlerpfad verschluckt Fehler nicht mehr still, sondern schreibt sie ins Diagnose-Log; und eine `beforeunload`-Warnung greift, wenn der Browser-Tab bei laufendem Heizer geschlossen wird (der App-Timer stirbt mit dem Tab, der Browser-Dialog ist das letzte Netz).
+- **N6 Bag-Tageslimit und Statistik fixen (QA2.17.1 / QA2.17.2):** `finishSession` speicherte den lebenslangen Gesamtzähler statt des Pro-Session-Werts, und `bagsTodayCount` addierte denselben lebenslangen Zähler, das Bag-Tageslimit war dadurch oft sofort scheinbar erreicht. Neu: Pro-Session-Werte werden als Delta seit Session-Start berechnet (`sessionBagsBase`/`sessionHeatBase`), archivierte Sessions und der Tageszähler stimmen jetzt. Der lebenslange `bagsFilled`-Zähler (für Anzeige und Achievements) bleibt unverändert. Bestandsnutzer werden migriert, ohne historische Bags fälschlich der aktuellen Session zuzuordnen.
+- **N8 Tour-A11Y (QA2.18.1-4):** Das Onboarding-Tour-Overlay bekommt Dialog-Semantik (`role=dialog`, `aria-modal`, `aria-labelledby`), jeder Schritt-Wechsel wird über die Live-Region (`#srLive`) für VoiceOver angesagt, der Fokus kehrt nach Tour-Ende dorthin zurück, wo er vorher war, und die doppelte Schritt-Nummer „4." wurde korrigiert (Titel jetzt durchgängig 1 bis 7).
+
+**Unberührt:** Adapter/Protokoll, cscCrypto, Backend, Datenbanken. **Tests:** `v915qa2top3.mjs` (26: Safety-Auto-Start + Fehler-Logging + beforeunload-Quelle, Bag-Delta/Tageslimit/finishSession/Migration, Tour-Dialog-Semantik/Live-Ansage/Fokus-Rückgabe/Nummerierung). Volle Regression grün.
 
 ## v9.14.0 — Sorten + Programme um 200% erweitert (Paket DB-EXT)
 
