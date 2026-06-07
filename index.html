@@ -2850,7 +2850,7 @@ button[data-sch-day].active{
       <div class="title" id="runTitle">Programm läuft</div>
       <div class="meta" id="runMeta">Schritt 0 / 0</div>
     </div>
-    <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen">Stop</button>
+    <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen und Gerät ausschalten">Stop</button>
   </div>
   <!-- v9.8.0 R1.6: Pause/Zurueck/Schritt-Steuerung (auch ohne Voice nutzbar) -->
   <div class="run-ctl" id="runCtl" style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap">
@@ -7022,6 +7022,12 @@ async function connectBLE(){
       // v5.0.1 K3: Verbindungsverlust robust behandeln
       State.connectionLost = true;
       State.lastKnownHeating = !!State.heater;
+      // v9.17.0 QA2.17.3: Heizzeit-Zaehler bei Verbindungsverlust schliessen (sonst umspannt der
+      // naechste cmdHeaterOff die gesamte Trennungs-/Leerlaufzeit -> totalHeatSec ueberhoeht).
+      try{ statsHeatStop(); }catch(_){}
+      // v9.17.0 QA2.3.3: laufendes Programm bei Verbindungsverlust abbrechen, statt die Wartezeit
+      // blind zu Ende laufen zu lassen, waehrend das Geraet ggf. real weiterheizt.
+      if(State.running){ State.running.stopFlag = true; log('Laufendes Programm wegen Verbindungsverlust abgebrochen.','warn'); }
       State.reconnectAttempts = 0;
       setConn(false);
       toast('Verbindung verloren, versuche reconnect...');
@@ -7111,6 +7117,7 @@ async function connectBLE(){
 }
 
 async function disconnectBLE(){
+  try{ statsHeatStop(); }catch(_){}   // v9.17.0 QA2.17.3: Heizzeit beim manuellen Trennen abschliessen
   try{
     if(State.device?.gatt?.connected) State.device.gatt.disconnect();
   }catch{}
@@ -7217,6 +7224,7 @@ async function withBusy(label, fn){
 
 async function cmdSetTemp(celsius){
   if(!State.adapter) throw new Error('Kein Geraet verbunden.');
+  if(!isFinite(celsius)){ toast('Ungültige Temperatur'); log('cmdSetTemp: ungueltige Temperatur ('+celsius+') ignoriert','warn'); return; }   // v9.17.0 QA2.3.6: NaN/undefined-Schutz
   // v6.0.0: PAX 3 heizt automatisch beim Setzen der Zieltemperatur (kein separater Heizer-Befehl),
   // daher greift HIER die Beta-Bestaetigung. Fuer S&B-Geraete bleibt das Gate in cmdHeaterOn.
   if(State.adapter.constructor.deviceType==='pax'){
@@ -8871,6 +8879,7 @@ function editStepAt(i){
           <input class="mono" id="seInput" type="number" min="40" max="230" step="1" value="${s.value||185}" inputmode="numeric">
           <button id="sePlus">+</button>
         </div>
+        <small style="color:var(--muted)">Wird beim Start auf das Limit des verbundenen Geräts begrenzt.</small>
       </div>`;
     $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-1,40,230)};
     $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+1,40,230)};
@@ -9129,6 +9138,7 @@ async function _engineWait(totalMs){
     const r = State.running;
     if(!r) return 'done';
     if(r.stopFlag) throw new Error('Abgebrochen');
+    if(State.connectionLost) throw new Error('Abgebrochen');   // v9.17.0 QA2.3.3: Verbindungsverlust = Abbruch, nicht blind weiterwarten
     if(r.skipFlag) return 'skipped';
     if(r.previousFlag) return 'previous';
     if(r.paused){ await sleep(_ENGINE_POLL_MS); continue; }   // pausiert: Zeit nicht zaehlen
@@ -9330,10 +9340,16 @@ async function runProgram(p){
   }finally{
     _engineClearPauseTimeout();   // v9.8.0 R1.4: Pause-Timeout aufraeumen
     _stopRunCountdown();
+    // v9.17.0 QA2.3.1: bei UI-Stop (stopRunFull) Heizer+Pumpe abschalten. Vor dem Nullen merken.
+    const _shutdownNow = !!(State.running && State.running._shutdownOnStop);
     State.running=null;
     _renderPauseState();          // v9.8.0 R1.6: Pause-Anzeige zuruecksetzen
     $('#runCard').classList.remove('show');
     $('#connChip').classList.remove('run');
+    if(_shutdownNow){
+      try{ await cmdPump(false); }catch(e){ log('Stop-Abschaltung Pumpe fehlgeschlagen: '+(e&&e.message||e),'warn'); }
+      try{ await cmdHeater(false); }catch(e){ log('Stop-Abschaltung Heizer fehlgeschlagen: '+(e&&e.message||e),'warn'); }
+    }
     if(!State.heater) releaseWakeLock();
   }
 }
@@ -9383,6 +9399,12 @@ async function runStepInterruptible(s){
 
 function stopRun(){
   if(State.running){ State.running.stopFlag=true; log('Stop angefordert…','warn'); }
+}
+// v9.17.0 QA2.3.1: Der UI-Stop-Button beendet das Programm UND schaltet Heizer/Pumpe ab
+// (Nutzer, gerade blinde Tester, erwarten beim prominenten "Stop" eine Komplettabschaltung).
+// Der Voice-Soft-Abbruch (abortProgram -> stopRun) bleibt bewusst ohne Geraete-Aus.
+function stopRunFull(){
+  if(State.running){ State.running.stopFlag=true; State.running._shutdownOnStop=true; log('Stop: Programm beenden und Geraet ausschalten…','warn'); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -9435,6 +9457,21 @@ function exportPrograms(){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
 }
+// v9.17.0 QA2.3.6: Step-Validierung fuer den lokalen Datei-Import (vorher ungeprueft -> NaN-Temp an Adapter moeglich).
+const _IMPORT_VALID_ACTIONS = new Set(['heat_on','heat_off','set_temperature','wait_until','wait','pump_on','pump_off','pump_for','loop_start','loop_end']);
+function _sanitizeImportedSteps(steps){
+  const out=[];
+  for(const s of (Array.isArray(steps)?steps:[])){
+    if(!s || !_IMPORT_VALID_ACTIONS.has(s.action)) continue;
+    const o={action:s.action};
+    if(s.action==='set_temperature'||s.action==='wait_until'){ const v=Number(s.value); if(!isFinite(v)) continue; o.value=clamp(Math.round(v),40,327); }
+    else if(s.action==='wait'){ const v=Number(s.seconds); o.seconds=isFinite(v)?clamp(Math.round(v),1,86400):10; }
+    else if(s.action==='pump_for'){ const v=Number(s.seconds); o.seconds=isFinite(v)?clamp(Math.round(v),1,600):20; }
+    else if(s.action==='loop_start'){ const v=parseInt(s.repeat); o.repeat=isFinite(v)?clamp(v,1,20):2; }
+    out.push(o);
+  }
+  return out;
+}
 function importPrograms(file){
   const r=new FileReader();
   r.onload=()=>{
@@ -9444,6 +9481,9 @@ function importPrograms(file){
       let n=0;
       for(const p of list){
         if(p && Array.isArray(p.steps) && p.name){
+          const steps=_sanitizeImportedSteps(p.steps);
+          if(!steps.length) continue;   // keine gueltigen Schritte -> ueberspringen
+          p.steps=steps;
           p.id = p.id || ('wf-'+Date.now()+'-'+Math.random().toString(36).slice(2,7));
           State.programs.unshift(p); n++;
         }
@@ -9648,7 +9688,7 @@ function wire(){
   });
 
   // Run engine
-  $('#btnRunStop').addEventListener('click', stopRun);
+  $('#btnRunStop').addEventListener('click', stopRunFull);   // v9.17.0 QA2.3.1: UI-Stop schaltet Geraet ab
   // v9.11.0 DLG-1: Dialog-Bausteine verdrahten
   $('#dlgOk')?.addEventListener('click', _dlgOkClick);
   $('#dlgCancel')?.addEventListener('click', _dlgCancelClick);
@@ -12075,7 +12115,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.16.0';
+const SW_VERSION_LABEL='v9.17.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -16188,39 +16228,53 @@ function collectVarNames(p){
   return Array.from(names);
 }
 function resolveVarsInSteps(steps, vars){
-  return JSON.parse(JSON.stringify(steps).replace(/\{(\w+)\}/g, (full, name)=>{
-    const v = vars[name];
-    return (v===undefined||v===null) ? full : String(v);
-  }));
+  // v9.17.0 QA2.3.2: Platzhalter typsicher pro Feld ersetzen statt per String-Replace ins serialisierte JSON.
+  // Frueher brach ein Wert mit " oder \ das anschliessende JSON.parse (unbehandelter Wurf vor dem try).
+  const sub = (val)=>{
+    if(typeof val === 'string'){
+      const exact = val.match(/^\{(\w+)\}$/);
+      if(exact && vars[exact[1]] !== undefined && vars[exact[1]] !== null) return vars[exact[1]];   // ganzes Feld = Platzhalter -> typisierter Wert (Zahl bleibt Zahl)
+      return val.replace(/\{(\w+)\}/g, (full, name)=> (vars[name]===undefined||vars[name]===null) ? full : String(vars[name]));   // eingebettet -> String
+    }
+    if(Array.isArray(val)) return val.map(sub);
+    if(val && typeof val === 'object'){ const o={}; for(const k in val) o[k] = sub(val[k]); return o; }
+    return val;
+  };
+  return steps.map(sub);
 }
 // Expand loop_start/loop_end into flat steps
+// v9.17.0 QA2.3.4: harte Obergrenze gegen multiplikative Schleifen-Explosion (verschachtelte 20er-Loops
+// aus JSON-/Text-Import koennten sonst 20^n Schritte erzeugen und Speicher/Render belasten).
+const EXPAND_LOOP_CAP = 2000;
 function expandLoops(steps){
   const out = [];
-  let i = 0;
-  while(i < steps.length){
-    const s = steps[i];
-    if(s.action === 'loop_start'){
-      const repeat = clamp(parseInt(s.repeat)||1, 1, 20);
-      const inner = [];
-      i++;
-      let depth = 1;
-      while(i < steps.length && depth > 0){
-        if(steps[i].action === 'loop_start') depth++;
-        else if(steps[i].action === 'loop_end'){ depth--; if(depth===0){ i++; break; } }
-        inner.push(steps[i]);
+  let capped = false;
+  (function walk(list){
+    let i = 0;
+    while(i < list.length){
+      if(out.length >= EXPAND_LOOP_CAP){ capped = true; return; }
+      const s = list[i];
+      if(s.action === 'loop_start'){
+        const repeat = clamp(parseInt(s.repeat)||1, 1, 20);
+        const inner = [];
+        i++;
+        let depth = 1;
+        while(i < list.length && depth > 0){
+          if(list[i].action === 'loop_start') depth++;
+          else if(list[i].action === 'loop_end'){ depth--; if(depth===0){ i++; break; } }
+          inner.push(list[i]);
+          i++;
+        }
+        for(let r=0; r<repeat; r++){ if(out.length >= EXPAND_LOOP_CAP){ capped = true; break; } walk(inner); }
+      } else if(s.action === 'loop_end'){
+        i++;
+      } else {
+        out.push(s);
         i++;
       }
-      const expanded = expandLoops(inner);
-      for(let r=0; r<repeat; r++){
-        out.push(...expanded);
-      }
-    } else if(s.action === 'loop_end'){
-      i++;
-    } else {
-      out.push(s);
-      i++;
     }
-  }
+  })(steps);
+  if(capped){ try{ toast('Programm gekürzt: Schleifen-Expansion über '+EXPAND_LOOP_CAP+' Schritte'); }catch(_){} }
   return out;
 }
 
@@ -18631,7 +18685,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.16.0 bereit.','ok');
+  log('Terp Sessions v9.17.0 bereit.','ok');
 
   setupPwaUpdate();
 

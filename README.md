@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.16.0)
+# Terp Sessions — Vape Controller (v9.17.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,19 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.17.0 — QA-2 Engine- und Sicherheits-Robustheit (Paket 1 der Fix-Kampagne)
+
+Erstes Paket der systematischen QA-2-Fix-Kampagne (alle Funde aus `docs/QA-2-AUDIT-2026-06-08.md`, Logbuch `docs/QA-2-FIX-LOG.md`). Schwerpunkt: Programm-Engine, Abbruch und Verbindungsverlust. Frontend-only.
+
+- **QA2.3.1 UI-Stop schaltet das Gerät ab:** Der prominente Stop-Knopf der Run-Card beendet das Programm jetzt UND schaltet Heizer und Pumpe aus (neue Funktion `stopRunFull`). Vorher blieb beim Stoppen während eines Warte- oder Heizschritts der Heizer an. Der weiche Voice-Abbruch (`abortProgram`) bleibt bewusst ohne Geräte-Aus.
+- **QA2.3.3 + QA2.17.3 Verbindungsverlust:** Bricht die BLE-Verbindung während eines laufenden Programms ab, wird das Programm jetzt aktiv abgebrochen (statt die Wartezeit blind zu Ende laufen zu lassen), und der Heizzeit-Zähler wird sauber geschlossen (vorher umspannte der nächste Heizer-Aus die ganze Trennungszeit und überzählte `totalHeatSec`). Gilt auch für manuelles Trennen.
+- **QA2.3.2 Variablen-Eingabe robust:** Programm-Variablen werden jetzt typsicher pro Feld ersetzt statt per String-Replace ins serialisierte JSON. Ein Wert mit Anführungszeichen oder Backslash brach vorher `JSON.parse` mit einem unbehandelten Fehler.
+- **QA2.3.4 Schleifen-Obergrenze:** `expandLoops` begrenzt die Gesamtzahl expandierter Schritte hart (2000), verschachtelte 20er-Schleifen aus Import/Parser können den Speicher nicht mehr multiplikativ sprengen.
+- **QA2.3.6 Import-Validierung:** Der lokale JSON-Programm-Import validiert jetzt die Schritt-Felder (gültige Aktion, endliche Werte), `cmdSetTemp` ignoriert zusätzlich NaN/undefined. Vorher konnte eine `set_temperature` ohne Wert eine NaN-Temperatur an den Adapter schicken.
+- **QA2.3.7 Editor-Hinweis:** Der Schritt-Editor weist darauf hin, dass Temperaturen beim Start auf das Limit des verbundenen Geräts begrenzt werden.
+
+**Unberührt:** Adapter-Protokolle, cscCrypto, Backend. **Tests:** `v917qa2engine.mjs` (18). Volle Regression grün.
 
 ## v9.16.0 — QA-2 N2 bis N5 (BLE-Fehler, BLE-Mutex, Hotel-Exit, ID-Kollision)
 
