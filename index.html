@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes">
-<meta name="theme-color" content="#0a0908">
+<meta name="theme-color" content="#0c0a08">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Terp Sessions">
-<meta name="description" content="Terp Sessions — Storz & Bickel Bluetooth Controller für Volcano, Crafty, Mighty und Venty">
+<meta name="description" content="Terp Sessions — Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty, Venty, PAX 3, Puffco Peak Pro und Firefly">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -52,8 +52,8 @@
   --r-sm:10px;
   --r-lg:22px;
 
-  --safe-top:env(safe-area-inset-top, 0);
-  --safe-bot:env(safe-area-inset-bottom, 0);
+  --safe-top:env(safe-area-inset-top, 0px);
+  --safe-bot:env(safe-area-inset-bottom, 0px);
   --safe-bot-padding:max(env(safe-area-inset-bottom, 0px), 16px);
 
   --font-display:'Fraunces', 'Newsreader', Georgia, serif;
@@ -12197,7 +12197,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.22.0';
+const SW_VERSION_LABEL='v9.23.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -18793,7 +18793,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.22.0 bereit.','ok');
+  log('Terp Sessions v9.23.0 bereit.','ok');
 
   setupPwaUpdate();
 

@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.22.0)
+# Terp Sessions — Vape Controller (v9.23.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,20 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.23.0 — QA-2 PWA-Konfiguration (Paket 7 der Fix-Kampagne)
+
+Siebtes Paket der QA-2-Fix-Kampagne. Schwerpunkt: PWA-Manifest, Service-Worker-Cache und Safe-Area. Frontend-only.
+
+- **QA2.9.2 Offline-Vollständigkeit:** `datenschutz.html` und `info.html` werden jetzt vom Service Worker mit in die App-Shell (`SHELL`) vorgecacht und sind offline verfügbar.
+- **QA2.9.1 theme-color konsistent:** Die `theme-color` im HTML (war `#0a0908`) entspricht jetzt dem Manifest-Wert `#0c0a08`.
+- **QA2.9.7 Manifest-`id`:** Das Manifest hat eine explizite `id` (stabile App-Identität über URL-Wechsel hinweg).
+- **QA2.9.8 Beschreibung:** Die Meta-Description nennt jetzt alle unterstützten Geräte (Volcano, Crafty, Mighty, Venty, PAX 3, Puffco Peak Pro, Firefly) statt nur vier.
+- **QA2.16.1 Safe-Area-Fallback:** Die CSS-Variablen `--safe-top`/`--safe-bot` nutzen `0px` (mit Einheit) als `env()`-Fallback, damit `calc()`-Ausdrücke auf Geräten ohne Notch korrekt rechnen.
+
+**Bewusst zurückgestellt (dokumentiert in `docs/QA-2-FIX-LOG.md`):** QA2.16.3 (Hover-Guard, systemischer CSS-Durchlauf über ~30 Regeln, rein kosmetisch und für die VoiceOver-Kohorte ohne Belang), QA2.16.2 (Safe-Area links/rechts, App ist portrait-locked), QA2.9.3 (`beforeinstallprompt`, feuert auf iOS gar nicht), QA2.9.4/9.5/9.6 (Info).
+
+**Unberührt:** App-Logik, cscCrypto, Backend. **Tests:** `v923qa2pwa.mjs` (8). Volle Regression grün.
 
 ## v9.22.0 — QA-2 Voice-Doku und UX-Konsistenz (Paket 6 der Fix-Kampagne)
 
