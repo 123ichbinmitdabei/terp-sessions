@@ -2387,7 +2387,7 @@ button[data-sch-day].active{
 <main class="wrap" id="main" role="main">
 
 <!-- ─── TAB: STEUERUNG ──────────────────────────────────────── -->
-<section class="tab active" id="tab-ctl" aria-labelledby="tab-ctl-label">
+<section class="tab active" id="tab-ctl" role="tabpanel" aria-labelledby="tab-ctl-label">
   <h2 id="tab-ctl-label" class="sr-only">Steuerung</h2>
 
   <!-- Hero: live temperature -->
@@ -2559,7 +2559,7 @@ button[data-sch-day].active{
 </section>
 
 <!-- ─── TAB: PROGRAMME ──────────────────────────────────────── -->
-<section class="tab" id="tab-prog" aria-labelledby="tab-prog-label">
+<section class="tab" id="tab-prog" role="tabpanel" aria-labelledby="tab-prog-label">
   <h2 id="tab-prog-label" class="sr-only">Programme</h2>
 
   <!-- v8.7.5 Paket 12b.3: Tab-Leiste Werk/Meine/Community fuer Programme -->
@@ -2603,7 +2603,7 @@ button[data-sch-day].active{
 </section>
 
 <!-- ─── TAB: SETUP ──────────────────────────────────────────── -->
-<section class="tab" id="tab-setup" aria-labelledby="tab-setup-label">
+<section class="tab" id="tab-setup" role="tabpanel" aria-labelledby="tab-setup-label">
   <h2 id="tab-setup-label" class="sr-only">Setup und Einstellungen</h2>
 
   <!-- ═══ Gerät ═══════════════════════════════════ -->
@@ -2833,7 +2833,7 @@ button[data-sch-day].active{
 </section>
 
 <!-- v9.0.0-alpha Paket S2 Phase 1: Pioneer-Test-Pfad-Tab (nur sichtbar wenn PREFS.pioneerTestMode) -->
-<section class="tab" id="tab-pioneer" aria-labelledby="tab-pioneer-label">
+<section class="tab" id="tab-pioneer" role="tabpanel" aria-labelledby="tab-pioneer-label">
   <h2 id="tab-pioneer-label" class="sr-only">Pioneer-Test-Pfad</h2>
   <div class="card">
     <h3>🌿 Pioneer-Test-Pfad</h3>
@@ -2848,7 +2848,7 @@ button[data-sch-day].active{
   <div class="head">
     <div>
       <div class="title" id="runTitle">Programm läuft</div>
-      <div class="meta" id="runMeta">Schritt 0 / 0</div>
+      <div class="meta" id="runMeta" aria-atomic="true">Schritt 0 / 0</div>
     </div>
     <button class="btn sm danger" id="btnRunStop" aria-label="Programm stoppen und Gerät ausschalten">Stop</button>
   </div>
@@ -4642,7 +4642,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <!-- v8.1.0 Modul 2: benutzerfreundlicher Fehler-Toast (Titel + Hinweis + Schliessen) -->
 <div class="toast friendly" id="friendlyToast" role="alert" aria-live="assertive"></div>
 
@@ -9328,6 +9328,8 @@ async function runProgram(p){
   try{ if(typeof switchTab==='function') switchTab('ctl'); }catch{}
   _startRunCountdown();
   log(`▶ Start: ${p.name} (${expanded.length} Schritte expandiert)`,'ok');
+  // v9.27.0 A11Y-D2.2.3: expliziter Start-Cue ueber die Live-Region (App-TTS ist im Screen-Reader-Modus stumm)
+  try{ srAnnounce('Programm gestartet: '+p.name+', '+expanded.length+' Schritte'); }catch(_){}
   await requestWakeLock();
   srAnnounce(`Programm gestartet: ${p.name}`);
   ttsEvent('programStart', p.name+' gestartet');
@@ -12197,7 +12199,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.26.0';
+const SW_VERSION_LABEL='v9.27.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14283,8 +14285,9 @@ function renderQuickActions(){
     const b=document.createElement('button');
     b.className='quick-action'+(d.cls?(' '+d.cls):'')+(d.pulse?' qa-pulse':'')+(pin===d.id?' qa-pinned':'');
     b.id=d.id;
-    b.setAttribute('aria-label',d.lbl);
-    b.innerHTML=`<span class="ico" aria-hidden="true">${d.ico}</span><span class="lbl">${escapeHtml(d.lbl)}</span><span class="meta">${escapeHtml(d.meta||'')}</span>`;
+    // v9.27.0 A11Y-D2.4.1: Meta ans aria-label anhaengen, sonst verschluckt VoiceOver die Dauer/Info (aria-label ueberschreibt den Textinhalt)
+    b.setAttribute('aria-label', d.lbl + (d.meta ? ', '+d.meta : ''));
+    b.innerHTML=`<span class="ico" aria-hidden="true">${d.ico}</span><span class="lbl">${escapeHtml(d.lbl)}</span><span class="meta" aria-hidden="true">${escapeHtml(d.meta||'')}</span>`;
     b.addEventListener('click',()=>{ if(b._lp){ b._lp=false; return; } try{ d.fn(); }catch(err){ log(err.message,'err'); } });
     let t=null;
     const start=()=>{ t=setTimeout(()=>{ b._lp=true; toggleQuickActionPin(d.id); }, 500); };
@@ -18801,7 +18804,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.26.0 bereit.','ok');
+  log('Terp Sessions v9.27.0 bereit.','ok');
 
   setupPwaUpdate();
 

@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.26.0)
+# Terp Sessions — Vape Controller (v9.27.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.27.0 — A11Y-D2 (Top-5)
+
+VoiceOver-Lese-Reihenfolge und Touch-Exploration fuer iPhone-Tester (Audit in `docs/A11Y-D2-AUDIT-2026-06-08.md`, Test-Anleitung in `docs/A11Y-D2-IPHONE-VOICEOVER.md`). Umgesetzt wurden die 5 Funde mit dem hoechsten Tester-Nutzen:
+
+- **A11Y-D2.5.1 (High):** Toasts sind jetzt hoerbar. `#toast` ist `role="status" aria-live="polite" aria-atomic="true"`, also werden alle Toast-Rueckmeldungen (z.B. „Verbunden mit Volcano", „Sorte gespeichert", Fehler) von VoiceOver vorgelesen. Das schliesst zugleich die Verbindungs-Ansage aus Pfad 1.
+- **A11Y-D2.4.1 (High):** Quick-Action-Buttons sagen ihre Meta-Info mit an. Die `.meta` (z.B. „5 Sek.") wird ans `aria-label` angehaengt („Direkt-Zug, 5 Sek.") und das dekorative Icon ist `aria-hidden`, statt dass das Label die Info verschluckt.
+- **A11Y-D2.2.1 (Medium):** Schritt-Wechsel im Programm-Lauf wird atomar angesagt. `#runMeta` ist `aria-atomic="true"`, VoiceOver liest „Schritt 3 / 7" als Einheit.
+- **A11Y-D2.2.2 (Medium):** Tablist-Muster vervollstaendigt. Die 4 Tab-Sektionen (`#tab-ctl/#tab-prog/#tab-setup/#tab-pioneer`) sind `role="tabpanel"`, passend zu `aria-controls` der Tabs.
+- **A11Y-D2.2.3 (Medium):** Programm-Start wird via `srAnnounce` angesagt („Programm gestartet: Name, N Schritte"), auch im Screen-Reader-Modus.
+
+Keine Logik-, Adapter-, Krypto- oder Backend-Aenderung. Reine Auszeichnung ueber die bestehende Live-Region- und sr-Infrastruktur. Tests: `v927a11yd2.mjs` (14 Checks). Weitere Punkte (Pfeiltasten-Tablist, groessere Blatt-Touch-Ziele, Geraetename im connChip-Text) sind fuer A11Y-D3 vorgemerkt.
 
 ## v9.26.0 — QA-2 Em-Dash-Sweep (Paket 10 der Fix-Kampagne)
 
