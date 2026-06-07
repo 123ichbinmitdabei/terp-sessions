@@ -2438,6 +2438,21 @@ button[data-sch-day].active{
     </div>
   </div>
 
+  <!-- v9.29.0 TEIL C: „Erster Schritt"-Block, nur wenn nie verbunden + keine eigenen Programme -->
+  <div class="card" id="firstStepCard" hidden style="border:1px solid rgba(106,255,160,.25);background:rgba(106,255,160,.05)">
+    <h3>👋 Willkommen bei Terp Sessions</h3>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px">In drei Schritten loslegen:</p>
+    <ol style="margin:0 0 12px 20px;line-height:1.7;font-size:14px">
+      <li><b>Browser prüfen:</b> Auf dem iPhone die App „Bluefy" nutzen, am Desktop Chrome oder Edge.</li>
+      <li><b>Gerät einschalten</b> und in die Nähe legen (Bluetooth am Handy/PC an).</li>
+      <li><b>„Verbinden" drücken</b> und dein Gerät aus der Liste wählen.</li>
+    </ol>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <button class="btn hot" type="button" id="btnFirstStepConnect" aria-label="Jetzt verbinden">📡 Jetzt verbinden</button>
+      <button class="btn ghost sm" type="button" id="btnFirstStepDismiss" aria-label="Willkommen ausblenden">Ausblenden</button>
+    </div>
+  </div>
+
   <!-- Quick Actions: prominent on Steuerung -->
   <div class="card">
     <h3>Schnellzugriff</h3>
@@ -2622,6 +2637,26 @@ button[data-sch-day].active{
   </div>
 
   <!-- ═══ Übersicht ═══════════════════════════════════ -->
+  </details>
+  <!-- v9.29.0 TEIL C: FAQ-Sektion (Inhalte aus README / VOICE-BEFEHLE / Datenschutz) -->
+  <details class="setup-acc" data-acc="faq"><summary class="tab-section-header"><span class="ico" aria-hidden="true">❓</span><span>Häufige Fragen (FAQ)</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
+  <div class="card" id="faqCard">
+    <details class="faq-item"><summary>Wie verbinde ich mein Gerät?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Gerät einschalten, in die Nähe legen, Bluetooth am Handy/PC aktivieren, dann „Verbinden" drücken und dein Gerät aus der Browser-Liste wählen. Pro Gerät ist nur eine Bluetooth-Verbindung gleichzeitig möglich, also in der offiziellen Hersteller-App vorher trennen.</div></details>
+    <details class="faq-item"><summary>Warum brauche ich auf dem iPhone „Bluefy"?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Safari auf iOS unterstützt kein Web-Bluetooth (Entscheidung von Apple). Die kostenlose App „Bluefy, Web BLE Browser" aus dem App Store bringt Web-Bluetooth mit. Öffne diese Seite einfach in Bluefy. Auf Android funktioniert Chrome direkt.</div></details>
+    <details class="faq-item"><summary>Braucht die App Internet?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Nein. Nach dem ersten Laden funktioniert alles offline (Progressive Web App). Die Steuerung läuft komplett lokal über Bluetooth, ohne Server.</div></details>
+    <details class="faq-item"><summary>Was macht der Sicherheits-Timer?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Er schaltet den Heizer nach einer einstellbaren Zeit automatisch ab. Bei portablen Geräten ohne eigenen Auto-Aus startet er automatisch. Einstellbar im Setup unter Sicherheit.</div></details>
+    <details class="faq-item"><summary>Was sind die Schnellzugriffe?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Die großen Knöpfe auf der Steuerung-Seite, je nach Gerät zugeschnitten (z.B. Direkt-Zug, Ballon füllen, Dab heizen, Timer). Lange drücken pinnt einen Schnellzugriff nach vorne.</div></details>
+    <details class="faq-item"><summary>Wie funktioniert die Sprachsteuerung?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Über den Mikrofon-Knopf oder den Text-Befehl-Knopf. Beispiele: „heize auf 185 Grad", „Ballon füllen", „Programm starten". Eine vollständige Liste steht in VOICE-BEFEHLE.md. Hinweis: Wake-Word funktioniert nur in Chrome.</div></details>
+    <details class="faq-item"><summary>Was ist der Pioneer-Test-Pfad?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Ein optionaler Modus für die Tester-Gruppe mit geführten Test-Aufgaben, Bug-Melden, Notizbuch und Quick-Feedback. Aktivierbar im Setup unter Pioneer-Test-Modus. Normale Nutzer können ihn ignorieren.</div></details>
+    <details class="faq-item"><summary>Was passiert mit meinen Daten?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Alles bleibt lokal auf deinem Gerät (localStorage). Es gibt keinen Tracker und kein automatisches Cloud-Backup. Die Community-Funktionen sind optional und müssen separat aktiviert werden. Details in der Datenschutzerklärung.</div></details>
+    <details class="faq-item"><summary>Wie melde ich einen Fehler?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Im Pioneer-Test-Modus gibt es einen Bug-Melden-Dialog (mit Bereich, Schweregrad, Reproduzierbarkeit und optionalem Audio-Memo). Der Report wird als GitHub-Issue vorbereitet und zusätzlich in die Zwischenablage kopiert, falls GitHub sich nicht öffnet.</div></details>
+    <details class="faq-item"><summary>Was ist das Bag-/Ballon-Profil?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Beim Volcano kannst du Ballon-Größen und Füllzeiten als Profile speichern, damit „Ballon füllen" immer die richtige Dauer pumpt. Einstellbar über den Ballon-Schnellzugriff.</div></details>
+    <details class="faq-item"><summary>Was bedeutet der Beta-Marker?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Nur der Volcano Hybrid ist voll kalibriert. Andere Geräte (Crafty, Mighty, Venty, Veazy, PAX, Puffco) sind Beta: die Verbindung läuft, einzelne Werte können fehlen oder abweichen. Firefly ist Probe-Only (nur Erkennung).</div></details>
+    <details class="faq-item"><summary>Woher kommen die Sorten-Werte?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Aus einer lokalen Aroma-Datenbank mit Temperatur-Empfehlungen und Effekten. Die Werte sind Richtwerte, kein medizinischer Rat. Eigene Sorten kannst du selbst anlegen.</div></details>
+    <details class="faq-item"><summary>Wie baue ich ein eigenes Programm?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Im Programme-Tab über „Bearbeiten" oder ein neues Programm. Schritte sind z.B. Heizer an, Temperatur setzen, Warten bis Ziel, Pumpe X Sekunden. Die Temperatur-Grenzen passen sich dem verbundenen Gerät an.</div></details>
+    <details class="faq-item"><summary>Was ist der Recovery-Code?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Falls du eine PIN gesetzt hast, kannst du sie über vier Wörter (Recovery-Code) zurücksetzen. Bewahre die Wörter sicher auf, sie sind die einzige Möglichkeit, eine vergessene PIN zu lösen.</div></details>
+    <details class="faq-item"><summary>Wie funktioniert der Offline-Cache?</summary><div style="padding:6px 2px;font-size:13px;color:var(--muted)">Ein Service Worker speichert die App lokal. Nach einem Update lädt die App die neue Version beim nächsten Start. Du kannst die App auch zum Home-Bildschirm hinzufügen und wie eine native App nutzen.</div></details>
+  </div>
   </details>
   <details class="setup-acc" data-acc="uebersicht" open><summary class="tab-section-header"><span class="ico" aria-hidden="true">📊</span><span>Übersicht</span><span class="acc-chevron" aria-hidden="true">▸</span></summary>
 
@@ -3641,7 +3676,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div class="wiz-page" data-page="3">
       <div class="wiz-art">🌡️</div>
       <h2 class="wiz-title">Welches Gerät?</h2>
-      <p class="wiz-text">Wähle dein S&B-Gerät. Für den Volcano Hybrid sind die Profile fertig kalibriert. Andere Geräte sind in Beta, die Verbindung läuft, einige Werte musst du eventuell selbst anpassen.</p>
+      <p class="wiz-text">Wähle deinen Vaporizer. Der Volcano Hybrid ist voll kalibriert. Andere Geräte (Crafty, Mighty, Venty, Veazy, PAX, Puffco) sind in Beta: die Verbindung läuft, je nach Gerät musst du einzelne Werte eventuell selbst anpassen.</p>
       <div class="dev-list" id="wizDevices"></div>
     </div>
 
@@ -3649,7 +3684,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="wiz-art">⚡</div>
       <h2 class="wiz-title">Gerät vorbereiten</h2>
       <ul class="wiz-checklist" id="wizPrep">
-        <li>Volcano (oder Crafty/Mighty/Venty) <b>einschalten</b></li>
+        <li>Deinen Vaporizer <b>einschalten</b> (Volcano, Crafty, Mighty, Venty, Veazy, PAX, Puffco)</li>
         <li>Falls die <b>offizielle S&B-App</b> verbunden ist: dort trennen</li>
         <li>Gerät in der Nähe des Handys/PCs lassen (max. 2–3 Meter)</li>
         <li>Bluetooth am Handy/PC <b>aktivieren</b></li>
@@ -6184,8 +6219,19 @@ function findAromaSuggestions(query){
   );
 }
 // Generiert ein Programm aus einer Sorte (3-Stufen-Verlauf)
+// v9.29.0 MB.4: Temperatur an die tempRange des verbundenen Geraets klemmen (Puffco-Dab 204-327 etc.)
+function _clampTempToDevice(c){
+  const tr = (State.adapter && State.adapter.constructor && State.adapter.constructor.tempRange) || { min:40, max:230 };
+  return Math.max(tr.min, Math.min(tr.max, Math.round(c)));
+}
+// v9.29.0 MB.4: Dab-Temp setzen + Heizer an (Puffco-Schnellzugriff)
+async function quickPuffcoTemp(c){
+  try{ await cmdSetTemp(c); await cmdHeaterOn(); }
+  catch(e){ try{ log(e.message,'err'); }catch(_){} }
+}
 function buildProgramFromAroma(a){
-  const [low, mid, high] = a.temps;
+  // v9.29.0 MB.4: Aroma-Temps an Geraete-Range klemmen, damit z.B. Puffco nicht mit 180° anfaengt
+  const [low, mid, high] = (a.temps || [180,190,200]).map(_clampTempToDevice);
   return {
     id:'aroma_'+Date.now()+Math.random().toString(36).slice(2,5),
     name:a.name,
@@ -8964,18 +9010,21 @@ function editStepAt(i){
   const body=$('#stepEditBody');
   $('#stepEditTitle').textContent = stepLabel(s).replace(/<[^>]+>/g,'');
   if(s.action==='set_temperature'||s.action==='wait_until'){
+    // v9.29.0 MB.4: Slider-Grenzen am verbundenen Geraet ausrichten (Puffco 204-327, PAX 175-215, ...)
+    const _tr = (State.adapter && State.adapter.constructor && State.adapter.constructor.tempRange) || { min:40, max:230 };
+    const _def = clamp(Number(s.value || 185), _tr.min, _tr.max);
     body.innerHTML=`
       <div class="field">
-        <label>Temperatur (40–230 °C)</label>
+        <label>Temperatur (${_tr.min}–${_tr.max} °C)</label>
         <div class="stepper">
           <button id="seMinus">−</button>
-          <input class="mono" id="seInput" type="number" min="40" max="230" step="1" value="${s.value||185}" inputmode="numeric">
+          <input class="mono" id="seInput" type="number" min="${_tr.min}" max="${_tr.max}" step="1" value="${_def}" inputmode="numeric">
           <button id="sePlus">+</button>
         </div>
         <small style="color:var(--muted)">Wird beim Start auf das Limit des verbundenen Geräts begrenzt.</small>
       </div>`;
-    $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-1,40,230)};
-    $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+1,40,230)};
+    $('#seMinus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)-1,_tr.min,_tr.max)};
+    $('#sePlus').onclick=()=>{$('#seInput').value=clamp(Number($('#seInput').value)+1,_tr.min,_tr.max)};
   } else if(s.action==='wait'){
     body.innerHTML=`
       <div class="field">
@@ -12113,6 +12162,24 @@ const DEVICE_TOURS = {
     {h:'Akku', t:'Akku-Anzeige mit Lade-Indikator (Blitz wenn am Netzteil).'},
     {h:'Sicherheits-Timer Pflicht', t:'App-Timer startet automatisch (8 Min) bei portablen Geräten.'},
   ]},
+  // v9.29.0 TEIL C: geraete-spezifische Touren fuer PAX, Puffco, Firefly
+  pax: { title:'📦 PAX 3', slides:[
+    {h:'PAX 3 erkannt', t:'Beta-Status. Verbindung und Temperatur-Steuerung laufen, melde bitte Abweichungen.'},
+    {h:'Temperatur', t:'Der PAX 3 arbeitet im Bereich 175 bis 215 Grad Celsius. Nutze den Schnellzugriff „Temp setzen".'},
+    {h:'Direkt-Zug', t:'Der PAX hat keine Pumpe. Du ziehst direkt am Mundstueck, die App steuert nur die Temperatur.'},
+    {h:'Sicherheits-Timer', t:'Bei portablen Geraeten startet der App-Timer automatisch.'},
+  ]},
+  puffco: { title:'🟣 Puffco Peak Pro', slides:[
+    {h:'Puffco Peak Pro erkannt', t:'Beta-Status, Dab-Geraet. Verbindung und Heizen laufen, melde bitte Auffaelligkeiten.'},
+    {h:'Dab-Temperaturen', t:'Anders als die Vaporizer arbeitet der Puffco in 204 bis 327 Grad Celsius. Schnellzugriff „Dab heizen" (232) und „Pre-Heat" (204).'},
+    {h:'Heizen', t:'Du startest das Heizen auf die gewaehlte Dab-Temperatur und brichst es mit „Heizen abbrechen" ab.'},
+    {h:'Tipp', t:'Programme aus der Sorten-Datenbank werden automatisch auf den Puffco-Bereich angepasst.'},
+  ]},
+  firefly: { title:'🦟 Firefly', slides:[
+    {h:'Firefly erkannt', t:'Probe-Only. Die App erkennt das Geraet, eine Steuerung ist noch nicht freigegeben.'},
+    {h:'Reverse Engineering', t:'Ueber „Pioneer melden" kannst du beim Reverse Engineering des Protokolls helfen.'},
+    {h:'Sicherheit', t:'Solange kein Protokoll vorliegt, steuert die App den Firefly nicht, nur Erkennung.'},
+  ]},
 };
 function maybeDeviceTour(){
   try{
@@ -12125,8 +12192,31 @@ function maybeDeviceTour(){
   }catch(_){}
 }
 function resetDeviceTours(){
-  try{ ['volcano','crafty_mighty','venty_veazy'].forEach(t=>LS.set('sessions_tour_'+t+'_seen', false)); toast('Touren zurückgesetzt, erscheinen beim nächsten Connect wieder'); }catch(_){}
+  try{ Object.keys(DEVICE_TOURS).forEach(t=>LS.set('sessions_tour_'+t+'_seen', false)); toast('Touren zurückgesetzt, erscheinen beim nächsten Connect wieder'); }catch(_){}
 }
+
+// v9.29.0 TEIL C: „Erster Schritt"-Willkommensblock auf der Steuerung (nur Neulinge)
+function _maybeShowFirstStep(){
+  const card = document.getElementById('firstStepCard'); if(!card) return;
+  let show = false;
+  try{
+    if(!LS.get('vol_firststep_dismissed', false)){
+      const connected = !!(typeof State !== 'undefined' && State.connected);
+      const everConnected = !!LS.get('vol_last_device', null);
+      const ownPrograms = (typeof State !== 'undefined' && Array.isArray(State.programs)) && State.programs.some(p=>!p.isPreset);
+      show = !connected && !everConnected && !ownPrograms;
+    }
+  }catch(_){ show = false; }
+  card.hidden = !show;
+}
+function _wireFirstStep(){
+  const c = document.getElementById('btnFirstStepConnect');
+  if(c && !c.__wired){ c.__wired = true; c.addEventListener('click', ()=>{ try{ connectBLE(); }catch(_){} }); }
+  const d = document.getElementById('btnFirstStepDismiss');
+  if(d && !d.__wired){ d.__wired = true; d.addEventListener('click', ()=>{ try{ LS.set('vol_firststep_dismissed', true); }catch(_){} const card = document.getElementById('firstStepCard'); if(card) card.hidden = true; }); }
+  _maybeShowFirstStep();
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_wireFirstStep, 1400); });
 
 /* MODUL 4: v4 -> v5 Migrations-Wizard (einmalig beim ersten Start nach Update) */
 function maybeMigrationWizard(){
@@ -12199,6 +12289,10 @@ function _maybeShowBetaHint(){
       const n=(State.adapter.constructor.displayName)||BETA_DEVNAMES[t]||'Dieses Geraet';
       key='unverified:'+t; title=n;
       msg=n+' ist im Beta-Status. Manche Funktionen koennen fehlen. Bitte Auffaelligkeiten melden.';
+      // v9.29.0 MB.4: Puffco ist ein Dab-Geraet mit anderem Temperatur-Bereich als die S&B-Vaporizer
+      if(t==='puffco'){
+        msg += ' Hinweis: Als Dab-Geraet arbeitet der Puffco in 204 bis 327 Grad Celsius. Die Schnellzugriffe sind darauf angepasst (Dab 232 Grad, Pre-Heat 204 Grad), und Temperatur-Eingaben werden auf diesen Bereich begrenzt.';
+      }
     } else if(level === 'probe_only'){
       key='probe_only:'+t; title='Firefly';
       msg='Firefly ist Probe-Only. Die Erkennung wird getestet, die Steuerung ist noch nicht freigegeben.';
@@ -12263,7 +12357,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.28.0';
+const SW_VERSION_LABEL='v9.29.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14245,6 +14339,14 @@ function applyCapabilitiesUI(){
   if(btnPumpFor) btnPumpFor.style.display = caps.pump ? '' : 'none';
   if(qaBag) qaBag.disabled = !caps.bagFill;
   if(qaDirect) qaDirect.disabled = !(caps.directDraw || caps.pump);
+  // v9.29.0 MB.4: Haupt-Temperatur-Eingabe an Geraete-Range anpassen (Puffco 204-327 etc.)
+  const tIn = $('#tInput');
+  if(tIn && State.adapter && State.adapter.constructor && State.adapter.constructor.tempRange){
+    const tr = State.adapter.constructor.tempRange;
+    tIn.min = tr.min; tIn.max = tr.max;
+    const cur = Number(tIn.value);
+    if(isFinite(cur) && (cur < tr.min || cur > tr.max)) tIn.value = clamp(cur, tr.min, tr.max);
+  }
   // Pumpe-Indikator im Hero ausblenden wenn nicht vorhanden
   const indPump = $('#indPump');
   if(indPump) indPump.style.display = caps.pump ? '' : 'none';
@@ -14326,7 +14428,9 @@ function quickActionDefs(){
     A.push({id:'qaSetTemp',ico:'🌡',lbl:'Temp setzen',meta:'',fn:()=>$('#btnSetTemp')?.click(),cls:'primary'});
     A.push(AROMA); A.push(TIMER);
   } else if(dt==='puffco'){
-    A.push({id:'qaHeatStart',ico:'🔥',lbl:'Heizen starten',meta:'',fn:()=>cmdHeaterOn(),cls:'primary',pulse:!heating});
+    // v9.29.0 MB.4: Puffco ist Dab-Geraet (Range 204-327°C). Dab-Temp ~232 (mid), Pre-Heat 204 (low).
+    A.push({id:'qaDirectDraw',ico:'🔥',lbl:'Dab heizen',meta:'232°',fn:()=>quickPuffcoTemp(232),cls:'primary',pulse:!heating});
+    A.push({id:'qaPreheat',ico:'🌡',lbl:'Pre-Heat',meta:'204°',fn:()=>quickPuffcoTemp(204)});
     A.push({id:'qaHeatStop',ico:'🛑',lbl:'Heizen abbrechen',meta:'',fn:()=>cmdHeaterOff(),pulse:heating});
     A.push(AROMA);
   } else {
@@ -14361,6 +14465,7 @@ function renderQuickActions(){
     root.appendChild(b);
   }
   try{ _qfbEnsureQuickBar(root); }catch(_){}   // v9.28.0 W3
+  try{ _maybeShowFirstStep(); }catch(_){}      // v9.29.0 TEIL C
 }
 function toggleQuickActionPin(id){
   const cur=LS.get(QA_PIN_KEY,null);
@@ -18870,7 +18975,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.28.0 bereit.','ok');
+  log('Terp Sessions v9.29.0 bereit.','ok');
 
   setupPwaUpdate();
 

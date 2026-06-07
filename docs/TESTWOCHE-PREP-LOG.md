@@ -25,7 +25,19 @@ Tests: `v928tools.mjs`, 27/27. Volle Regression: siehe unten. Vertagt: nichts au
 
 ---
 
-## Paket 2: Multi-Brand + Onboarding, v9.29.0, AUSSTEHEND
+## Paket 2: Multi-Brand + Onboarding, v9.29.0, LIVE
+
+TEIL A (MB.4 Puffco-Temp): Puffco-Schnellzugriffe „Dab heizen" 232 / „Pre-Heat" 204 (quickPuffcoTemp setzt Temp + Heizer an); `_clampTempToDevice` klemmt an tempRange; angewandt in buildProgramFromAroma (Aroma-Programme), #tInput (applyCapabilitiesUI), Editor-Step-Slider (editStepAt min/max device-aware); Beta-Hinweis um Puffco-Dab-Range ergänzt. cmdSetTemp klemmte bereits (verifiziert). Volcano unverändert.
+
+TEIL B (MB.5 Sprache): Wizard geräte-neutral formuliert (Welches-Gerät-Seite + Prep-Liste). Verifikation: die vermuteten Strings „deinem Volcano"/„Ballon befüllen" existierten im Wizard NICHT (war schon multi-device), Ballon-Quick-Actions bereits per bagFill-Capability gegated. Daher minimaler, ehrlicher Eingriff statt erfundener Ersetzungen.
+
+TEIL C (Onboarding): FAQ-Sektion (15 <details>-Fragen, #faqCard) im Setup-Tab; DEVICE_TOURS um pax/puffco/firefly erweitert + bestehende behalten, resetDeviceTours via Object.keys; „Erster Schritt"-Willkommensblock (#firstStepCard) auf der Steuerung, gegated auf nie-verbunden + keine eigenen Programme, ausblendbar (vol_firststep_dismissed), re-evaluiert in renderQuickActions.
+
+Was war schwer / Entscheidungen:
+- MB.5 premise check: Verify-before-fix zeigte, dass die Auftrag-Strings nicht existierten. Statt Pseudo-Fixes nur die real vorhandene Volcano-Zentrierung im Wizard neutralisiert, Rest dokumentiert.
+- Aroma-Programm auf Puffco wird flach auf 204 geklemmt (alle Stufen < 204). Akzeptiert: ein 3-Stufen-Aroma-Verlauf ergibt für ein Dab-Gerät ohnehin wenig Sinn, der Clamp schützt vor Out-of-Range.
+
+Tests: v929brand.mjs, 18/18. Vertagt: tiefere per-Schritt-Geräte-Texte im Wizard (nicht nötig, da generisch); MB.7 weiter vertagt (Hardware).
 
 ## Paket 3: A11Y-D3, v9.30.0, AUSSTEHEND
 

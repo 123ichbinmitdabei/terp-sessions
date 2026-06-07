@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.28.0)
+# Terp Sessions — Vape Controller (v9.29.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,21 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.29.0 — Multi-Brand + Onboarding (Testwoche-Prep Paket 2)
+
+Drei Teile, keine Adapter-/Protokoll-/Backend-Änderung.
+
+**TEIL A, MB.4 Puffco-Temp:** Der Puffco Peak Pro ist ein Dab-Gerät (204-327 °C statt der Vaporizer-Defaults). Schnellzugriffe „Dab heizen" (232 °C) und „Pre-Heat" (204 °C), die Temperatur setzen und heizen. `cmdSetTemp` klemmt schon immer an `tempRange`; neu klemmen auch die Haupt-Temperatur-Eingabe (`#tInput`), der Programm-Editor-Step-Slider (Grenzen je Gerät) und Aroma-Auto-Programme (`buildProgramFromAroma`) an den Geräte-Bereich. Der Beta-Hinweis nennt den Puffco-Dab-Bereich. Volcano und die anderen Geräte bleiben unverändert.
+
+**TEIL B, MB.5 Geräte-Sprache:** Der Einrichtungs-Wizard ist jetzt geräte-neutral formuliert („Wähle deinen Vaporizer", „Deinen Vaporizer einschalten" mit Geräte-Beispielen). Hinweis: die vom Auftrag vermuteten Strings „deinem Volcano"/„Ballon befüllen" existierten im Wizard gar nicht (er war schon multi-device); die Ballon-Schnellzugriffe sind bereits per Capability (`bagFill`) gegated.
+
+**TEIL C, Onboarding-Tiefe:**
+- **FAQ** im Setup-Tab: ausklappbare Sektion mit 15 Fragen (Gerät verbinden, Bluefy, Offline, Sicherheits-Timer, Schnellzugriffe, Voice, Pioneer-Tests, Datenschutz, Bug melden, Ballon-Profil, Beta-Marker, Sorten-Werte, Programm-Editor, Recovery-Code, Offline-Cache), Inhalte aus README/VOICE-BEFEHLE/Datenschutz.
+- **Geräte-Touren** erweitert: neue Touren für PAX, Puffco und Firefly (zusätzlich zu Volcano/Crafty-Mighty/Venty-Veazy), `resetDeviceTours` deckt jetzt alle ab.
+- **„Erster Schritt"-Block** auf der Steuerung: drei Schritte (Browser prüfen, Gerät einschalten, Verbinden), nur sichtbar wenn nie verbunden und keine eigenen Programme, verschwindet nach erstem Connect oder per Ausblenden.
+
+Tests: `v929brand.mjs` (18 Checks).
 
 ## v9.28.0 — Tester-Werkzeuge (Testwoche-Prep Paket 1)
 
