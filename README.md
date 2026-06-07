@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.29.0)
+# Terp Sessions — Vape Controller (v9.30.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,19 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.30.0 — A11Y-D3 (Testwoche-Prep Paket 3)
+
+Barrierefreiheit, dritte Runde. Audit in `docs/A11Y-D3-AUDIT-2026-06-08.md`, VoiceOver-Anhang in `docs/A11Y-D3-IPHONE-VOICEOVER-V2.md`.
+
+**Top-3:**
+- **Pfeiltasten-Navigation im Haupt-Tablist:** Pfeil-Links/-Rechts wechseln zwischen Steuerung/Programme/Setup (umlaufend), Pos1/Ende zum ersten/letzten Tab. Roving tabindex (aktiver Tab 0, andere -1), Selection-follows-Focus, versteckte Tabs werden übersprungen. Touch/Wisch bleibt unverändert.
+- **Größere Touch-Ziele der Blatt-Bewertung:** `.comm-stars-btn` hat jetzt eine 44×44-Punkte-Trefferfläche (min-width/height, zentriertes Glyph), das Blatt bleibt visuell 20px. role=radio/aria-label unverändert.
+- **Gerätename in der Verbindungs-Anzeige:** „Verbunden mit [Name]" und „Getrennt (war: [Name])" statt nur „Verbunden"/„Getrennt". Da `#connChip` aria-live=polite ist, hört VoiceOver den Namen.
+
+**Subsystem-Stichproben:** Symptom-Tracker (Slider beschriftet), Sessions-Tagebuch (fokussierbar + beschriftet), DSL-Editor (aria-label), Touch-Macros (beschriftete Buttons) sind ok. Ein Fix: die T-Break-/Streak-Anzeige ist jetzt `role="status" aria-live="polite"`.
+
+Tests: `v930a11yd3.mjs` (14 Checks). Vertagt nach A11Y-D4: Panel-Fokus beim Tabwechsel, Kontrast-Audit, Screen-Reader-Abnahme der dynamischen Listen am Gerät.
 
 ## v9.29.0 — Multi-Brand + Onboarding (Testwoche-Prep Paket 2)
 

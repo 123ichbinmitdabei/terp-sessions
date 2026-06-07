@@ -39,7 +39,17 @@ Was war schwer / Entscheidungen:
 
 Tests: v929brand.mjs, 18/18. Vertagt: tiefere per-Schritt-Geräte-Texte im Wizard (nicht nötig, da generisch); MB.7 weiter vertagt (Hardware).
 
-## Paket 3: A11Y-D3, v9.30.0, AUSSTEHEND
+## Paket 3: A11Y-D3, v9.30.0, LIVE
+
+TEIL A Top-3: (1) Pfeiltasten-Tablist (roving tabindex in switchTab + HTML, _wireTablistKeys keydown ArrowLeft/Right/Home/End, Selection-follows-Focus, versteckte Tabs übersprungen). (2) .comm-stars-btn min 44x44 Trefferfläche bei gleichbleibendem 20px-Glyph. (3) connChip „Verbunden mit [Name]"/„Getrennt (war: [Name])" via setConn + State._lastConnName.
+
+TEIL B Subsystem-Stichproben: nur 1 Gap gefunden und gefixt (T-Break-Streak .sess-streak -> role=status aria-live=polite). Symptom-Slider, Sessions-Tagebuch, DSL-Editor, Touch-Macros read-only als ok verifiziert.
+
+TEIL C Docs: docs/A11Y-D3-AUDIT-2026-06-08.md + docs/A11Y-D3-IPHONE-VOICEOVER-V2.md.
+
+Was war schwer: Im frischen Test-Profil öffnet der v4->v5-Migrations-Wizard (showSlides) eine Fokus-Falle, die den Tab-Fokus abfing. Testseitig vor den Tastatur-Checks die Slides geschlossen (kein App-Bug). A11Y-D4-Backlog: Panel-Fokus beim Tabwechsel, Kontrast, Geräte-Screenreader-Abnahme.
+
+Tests: v930a11yd3.mjs, 14/14.
 
 ## Autonome Erweiterungen, v9.31.0+, AUSSTEHEND
 

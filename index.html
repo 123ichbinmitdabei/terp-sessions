@@ -2052,7 +2052,8 @@ summary.tab-section-header:hover{color:var(--text)}
 /* v8.9.0 Modul 1: Blätter (zuvor Sterne), gleiche Klassennamen für Backward-Compat */
 .comm-stars{display:inline-flex;gap:3px;align-items:center;font-size:14px;line-height:1;user-select:none}
 .comm-stars svg{display:inline-block}
-.comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:20px;line-height:1;transition:transform .15s ease, color .2s ease}
+/* v9.30.0 A11Y-D3: Tap-Bereich >=44pt, Blatt-Glyph bleibt 20px (zentriert), nur die Trefferflaeche waechst */
+.comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:20px;line-height:1;transition:transform .15s ease, color .2s ease;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .comm-stars-btn.on{color:#5fb84d}     /* leaf-green */
 .comm-stars-btn.mine{color:#7fd968}   /* hellerer leaf-green fuer eigene Bewertung */
 .comm-stars-btn:hover{transform:scale(1.18)}
@@ -3534,11 +3535,11 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
-  <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" data-tip="Steuerung, Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
-  <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" data-tip="Programme, Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
-  <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" data-tip="Setup, Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
+  <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" tabindex="0" data-tip="Steuerung, Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
+  <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" tabindex="-1" data-tip="Programme, Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
+  <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" tabindex="-1" data-tip="Setup, Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
   <!-- v9.0.0-alpha: Pioneer-Test-Modus-Tab, nur sichtbar wenn PREFS.pioneerTestMode -->
-  <button class="nav-btn" id="nav-pioneer" data-tab="pioneer" role="tab" aria-selected="false" aria-controls="tab-pioneer" data-tip="Pioneer-Test-Pfad, gefuehrter Wizard mit 30 Test-Aufgaben" hidden><span class="ico" aria-hidden="true">🌿</span><span>Test-Pfad</span></button>
+  <button class="nav-btn" id="nav-pioneer" data-tab="pioneer" role="tab" aria-selected="false" aria-controls="tab-pioneer" tabindex="-1" data-tip="Pioneer-Test-Pfad, gefuehrter Wizard mit 30 Test-Aufgaben" hidden><span class="ico" aria-hidden="true">🌿</span><span>Test-Pfad</span></button>
 </nav>
 
 <!-- ── Modals ───────────────────────────────────────────────── -->
@@ -6780,7 +6781,10 @@ function setConn(connected){
     if(typeof hideConnLostBanner==='function') hideConnLostBanner();
   }
   $('#dot').classList.toggle('on', connected);
-  $('#connChip').textContent = connected?'Verbunden':'Getrennt';
+  // v9.30.0 A11Y-D3: Geraetename in der Verbindungs-Anzeige (aria-live=polite sagt das an)
+  const _cn = (State.device && State.device.name) || (State.adapter && State.adapter.constructor && State.adapter.constructor.displayName) || '';
+  if(connected && _cn) State._lastConnName = _cn;
+  $('#connChip').textContent = connected ? ('Verbunden' + (_cn ? ' mit ' + _cn : '')) : ('Getrennt' + (State._lastConnName ? ' (war: ' + State._lastConnName + ')' : ''));
   $('#connChip').classList.toggle('on', connected);
   $('#btnConnect').textContent = connected?'Verbunden':'Verbinden';
   $('#btnConnect').disabled=connected;
@@ -9666,10 +9670,34 @@ function switchTab(name){
     b.classList.toggle('active', active);
     b.setAttribute('aria-selected', String(active));
     b.setAttribute('aria-current', active ? 'page' : 'false');
+    b.setAttribute('tabindex', active ? '0' : '-1');   // v9.30.0 A11Y-D3: roving tabindex
   });
   // v4.9.2: scroll to top damit User nicht in der Mitte vom vorigen Tab landet
   window.scrollTo({top:0, behavior:'smooth'});
 }
+
+// v9.30.0 A11Y-D3: Pfeiltasten-Navigation im Haupt-Tablist (WAI-ARIA Tabs-Muster, Selection-follows-Focus)
+function _wireTablistKeys(){
+  const nav = document.querySelector('.bottom-nav[role="tablist"]');
+  if(!nav || nav.__keysWired) return; nav.__keysWired = true;
+  nav.addEventListener('keydown', (e)=>{
+    if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key)) return;
+    const tabs = [...nav.querySelectorAll('.nav-btn')].filter(b=>!b.hidden && b.offsetParent !== null);
+    if(!tabs.length) return;
+    let i = tabs.indexOf(document.activeElement);
+    if(i < 0) i = tabs.findIndex(b=>b.classList.contains('active'));
+    if(i < 0) i = 0;
+    let n = i;
+    if(e.key==='ArrowRight') n = (i+1) % tabs.length;
+    else if(e.key==='ArrowLeft') n = (i-1+tabs.length) % tabs.length;
+    else if(e.key==='Home') n = 0;
+    else if(e.key==='End') n = tabs.length-1;
+    e.preventDefault();
+    const t = tabs[n];
+    if(t){ tabs.forEach(b=>b.setAttribute('tabindex','-1')); t.setAttribute('tabindex','0'); t.focus(); if(t.dataset.tab) switchTab(t.dataset.tab); }
+  });
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_wireTablistKeys, 1200); });
 
 /* ═══════════════════════════════════════════════════════════════
    v4.9: SETTINGS SUB-TABS
@@ -12357,7 +12385,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.29.0';
+const SW_VERSION_LABEL='v9.30.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14826,8 +14854,8 @@ function renderSessPauses(){
   const root=$('#sessPauses'); if(!root) return;
   const streak=sessionCurrentStreak();
   let head='';
-  if(streak.type==='today') head=`<div class="sess-streak">Heute schon ${streak.count} Session${streak.count>1?'s':''} gehabt.</div>`;
-  else if(streak.type==='pause') head=`<div class="sess-streak">Du hast seit ${streak.days} Tag${streak.days===1?'':'en'} nicht konsumiert.</div>`;
+  if(streak.type==='today') head=`<div class="sess-streak" role="status" aria-live="polite">Heute schon ${streak.count} Session${streak.count>1?'s':''} gehabt.</div>`;
+  else if(streak.type==='pause') head=`<div class="sess-streak" role="status" aria-live="polite">Du hast seit ${streak.days} Tag${streak.days===1?'':'en'} nicht konsumiert.</div>`;
   const pauses=sessionPauses();
   const list = pauses.length ? pauses.map(p=>`<li>${p.days} Tage Pause <small>(${p.from} → ${p.to})</small></li>`).join('') : '<li>Noch keine Pausen erfasst.</li>';
   root.innerHTML=head+`<ul class="sess-pauses">${list}</ul>`;
@@ -18975,7 +19003,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.29.0 bereit.','ok');
+  log('Terp Sessions v9.30.0 bereit.','ok');
 
   setupPwaUpdate();
 
