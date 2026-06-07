@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.32.0)
+# Terp Sessions — Vape Controller (v9.33.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,14 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.33.0 — Crash-Recovery (autonom)
+
+Wenn die App mitten in einem laufenden Programm neu geladen wird oder abstürzt (auf iPhone/Bluefy nicht selten), bietet sie beim nächsten Start an, das Programm neu zu starten. Sichere Variante: der Lauf-Status wird in `sessionStorage` gespiegelt, beim sauberen Ende (Fertig/Stop/Fehler) wieder gelöscht. Überlebt der Marker einen Reload, fragt die App per Dialog „Programm X war aktiv, neu starten?". **Nie** automatische Wiederaufnahme (der Geräte-/Adapter-Zustand ist nach dem Reload weg), und nur mit bestehender Verbindung. Der Marker wird beim ersten Prüfen sofort konsumiert (kein erneutes Nachfragen nach weiteren Reloads).
+
+Tests: `v933recovery.mjs` (12 Checks). Reine Anzeige-/Nachfrage-Logik, keine Adapter-Änderung.
+
+Beifang (vom zeitabhängigen Coverage-Test gegen 22 Uhr aufgedeckt): `computeNextRun` nutzte `t.hour||8`, wodurch ein auf Mitternacht (00:xx) gesetzter Schedule fälschlich auf 08:xx fiel. Behoben (`t.hour!=null`-Prüfung). Ein „Morgens decarb um 00:30"-Schedule feuert jetzt korrekt.
 
 ## v9.32.0 — Tester-Daten ins Backup (Testwoche-Prep, autonomes Paket)
 

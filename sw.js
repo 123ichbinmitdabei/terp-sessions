@@ -1,5 +1,5 @@
 // Terp Sessions (formerly Volcano Controller) — app-shell SW
-const VERSION = 'v9.32.0';
+const VERSION = 'v9.33.0';
 const CACHE = `terp-sessions-${VERSION}`;
 const SHELL = [
   './',

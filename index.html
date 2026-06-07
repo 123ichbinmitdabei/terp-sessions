@@ -9461,6 +9461,9 @@ async function runProgram(p){
   srAnnounce(`Programm gestartet: ${p.name}`);
   ttsEvent('programStart', p.name+' gestartet');
   rememberLastProgram(p);
+  // v9.33.0 (autonom) Crash-Recovery: Lauf-Marker in sessionStorage. Ueberlebt einen Reload/Crash,
+  // wird aber im finally geleert, wenn der Lauf in diesem Page-Leben sauber endet (Ende/Stop/Fehler).
+  try{ sessionStorage.setItem('vol_run_recovery', JSON.stringify({ id: p.id, name: p.name, at: Date.now() })); }catch(_){}
   try{
     // v9.8.0 R1.2: index-gesteuerter while-Loop (statt for), damit Skip/Previous den Index bewegen koennen.
     let i = 0;
@@ -9504,6 +9507,7 @@ async function runProgram(p){
     // v9.17.0 QA2.3.1: bei UI-Stop (stopRunFull) Heizer+Pumpe abschalten. Vor dem Nullen merken.
     const _shutdownNow = !!(State.running && State.running._shutdownOnStop);
     State.running=null;
+    try{ sessionStorage.removeItem('vol_run_recovery'); }catch(_){}   // v9.33.0 Crash-Recovery: Lauf sauber beendet -> Marker weg
     _renderPauseState();          // v9.8.0 R1.6: Pause-Anzeige zuruecksetzen
     $('#runCard').classList.remove('show');
     $('#connChip').classList.remove('run');
@@ -9513,6 +9517,31 @@ async function runProgram(p){
     }
     if(!State.heater) releaseWakeLock();
   }
+}
+
+// v9.33.0 (autonom) Crash-Recovery: beim App-Start pruefen, ob ein Lauf den letzten Page-Tod nicht ueberlebt hat.
+// SICHERE Variante: NUR nachfragen, NIE automatisch wiederaufnehmen (Adapter-State ist nach Reload weg).
+function _maybeRunRecovery(){
+  let raw = null;
+  try{ raw = sessionStorage.getItem('vol_run_recovery'); }catch(_){ return; }
+  if(!raw) return;
+  try{ sessionStorage.removeItem('vol_run_recovery'); }catch(_){}
+  if(State.running) return;   // laeuft schon wieder etwas -> nicht stoeren
+  let info = null;
+  try{ info = JSON.parse(raw); }catch(_){ return; }
+  if(!info || !info.name) return;
+  setTimeout(async ()=>{
+    try{
+      if(State.running) return;
+      const prog = (State.programs || []).find(p=>p.id === info.id);
+      const ok = await uiConfirm('Beim letzten Mal lief das Programm „' + info.name + '", als die App neu geladen wurde. Möchtest du es neu starten?',
+        { title: 'Programm wiederherstellen', okText: 'Neu starten', cancelText: 'Verwerfen' });
+      if(!ok) return;
+      if(!prog){ toast('Programm „' + info.name + '" nicht gefunden.'); return; }
+      if(!State.connected){ toast('Erst verbinden, dann „' + info.name + '" neu starten.'); return; }
+      runProgram(prog);
+    }catch(_){}
+  }, 1600);
 }
 
 function updateRunUI(currentStep){
@@ -12397,7 +12426,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.32.0';
+const SW_VERSION_LABEL='v9.33.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15090,7 +15119,8 @@ function computeNextRun(sch){
     const buildAt = (dayOffset)=>{
       const d = new Date();
       d.setDate(d.getDate() + dayOffset);
-      d.setHours(t.hour||8, t.minute||0, 0, 0);
+      // v9.33.0 Beifang: Stunde 0 (Mitternacht) ist gueltig, nicht "fehlend". t.hour||8 machte aus 00:xx faelschlich 08:xx.
+      d.setHours((t.hour!=null?t.hour:8), (t.minute!=null?t.minute:0), 0, 0);
       return d.getTime();
     };
     const isDayMatch = (ts, repeat, customDays)=>{
@@ -19037,9 +19067,10 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.32.0 bereit.','ok');
+  log('Terp Sessions v9.33.0 bereit.','ok');
 
   setupPwaUpdate();
+  try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery
 
   // v8.4.0: Welcome-Flow für frische Nutzer (vor der interaktiven Tour),
   // gefolgt von der bestehenden Schritt-für-Schritt-Tour.
