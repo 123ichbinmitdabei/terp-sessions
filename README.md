@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.21.0)
+# Terp Sessions — Vape Controller (v9.22.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,20 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.22.0 — QA-2 Voice-Doku und UX-Konsistenz (Paket 6 der Fix-Kampagne)
+
+Sechstes Paket der QA-2-Fix-Kampagne. Schwerpunkt: Sprachbefehle, Hilfe-Text, Doku-Genauigkeit und Toast-Verhalten. Frontend-only.
+
+- **QA2.4.1 / QA2.4.2 / QA2.4.4 VOICE-BEFEHLE.md korrigiert:** Mikrofon-Sprachbefehle sind Chrome/Edge (Android/Desktop), NICHT Bluefy/iOS (dort Text-Befehl + URL/Siri); Wake-Word-Wortlaut auf „Hey Sessions"/„Hey Terp Sessions" angeglichen; das nicht existierende Pause-Synonym „warte" entfernt.
+- **QA2.4.3 VOICE_HELP vervollständigt:** Die In-App-Hilfe nennt jetzt auch „Boost", „Verbindung trennen" und das Sorten-Synonym „sorten mit <Wort>" (waren im Parser vorhanden, aber nicht in der Hilfe).
+- **QA2.4.6 Wake-Word entschärft:** Das bloße „sessions" wurde aus der Wake-Word-Liste entfernt (zu hohe Falsch-Trigger-Wahrscheinlichkeit), die Anrede-Präfixe bleiben.
+- **QA2.4.7 Einheitliche Programm-Suche:** Voice und URL-/Siri-Befehle nutzen jetzt dieselbe `findProgramByName` (getAllPrograms + Fuzzy), statt zweier unterschiedlich fähiger Suchpfade.
+- **QA2.10.2 Toast-Dauer:** Die Anzeigedauer von Hinweisen skaliert jetzt mit der Textlänge (2,2 bis 7 Sekunden), längere Meldungen bleiben lesbar.
+
+**Bewusst zurückgestellt (dokumentiert in `docs/QA-2-FIX-LOG.md`):** der vollständige Em-Dash/Benennungs-Sweep (QA2.10.1, = QA-1-Backlog 13, großer redaktioneller Durchlauf) und die breite Umstellung aller Fehler-Toasts auf `showFriendlyError` (Teil QA2.10.2).
+
+**Unberührt:** cscCrypto, Backend, Adapter. **Tests:** `v922qa2voice.mjs` (14), plus Voice-Bestandssuiten grün. Volle Regression grün.
 
 ## v9.21.0 — QA-2 Storage- und Datenrobustheit (Paket 5 der Fix-Kampagne)
 

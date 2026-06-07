@@ -2,7 +2,7 @@
 
 Stand: v9.10.1 (alle hier gelisteten Befehle sind live)
 
-Diese Anleitung listet alle Sprachbefehle der App. Die Befehle funktionieren in allen Browsern mit Mikrofon-Zugriff, inklusive Bluefy auf iOS für blinde Tester.
+Diese Anleitung listet alle Sprachbefehle der App. Mikrofon-Sprachbefehle funktionieren in Chrome und Edge (Android und Desktop). In Bluefy auf iOS ist das Mikrofon nicht verfügbar, dort stehen stattdessen der Text-Befehl-Knopf sowie URL- und Siri-Befehle bereit (siehe SIRI-SHORTCUTS-ANLEITUNG.md).
 
 ---
 
@@ -11,7 +11,7 @@ Diese Anleitung listet alle Sprachbefehle der App. Die Befehle funktionieren in 
 Es gibt zwei Wege einen Befehl zu starten:
 
 1. **Mikrofon-Button** (FAB unten rechts) antippen, kurze Bestätigung abwarten, sprechen.
-2. **Wake-Word** „Hey Terp" sagen (wenn in Settings aktiviert), kurzer Ton, dann sprechen.
+2. **Wake-Word** „Hey Sessions" oder „Hey Terp Sessions" sagen (wenn in Settings aktiviert), kurzer Ton, dann sprechen.
 
 Nach jedem Befehl gibt es eine TTS-Bestätigung. Diese kann in Settings auf „Knappe Ansagen" gestellt werden, dann werden die Bestätigungen kürzer.
 
@@ -69,7 +69,7 @@ Diese Befehle funktionieren während ein Programm läuft:
 
 | Befehl | Synonyme | Wirkung |
 |---|---|---|
-| „pause" | „anhalten", „warte" | Programm pausiert, Gerät bleibt wie es ist |
+| „pause" | „anhalten", „halt das programm" | Programm pausiert, Gerät bleibt wie es ist |
 | „weiter" | „fortsetzen", „weitermachen" | Programm wird fortgesetzt |
 | „nächster schritt" | „weiter zum nächsten" | Aktuellen Step überspringen, Pumpe wird bei Skip eines pump_for-Steps sofort ausgeschaltet |
 | „vorheriger schritt" | „schritt zurück" | Einen Step zurück (Aktionen werden NICHT rückgängig gemacht, nur der Programm-Zeiger wird zurückgesetzt) |
@@ -132,4 +132,4 @@ Wenn ein Befehl nicht funktioniert oder eine Bestätigung komisch klingt: bitte 
 
 - **Bluefy + VoiceOver gleichzeitig:** Die App-TTS und VoiceOver können sich überlagern. Lösung: in Settings „Ich nutze einen Screen-Reader" aktivieren, dann sagt nur VoiceOver, die App schweigt.
 - **Lange Wartezeiten in Programmen:** Bis v9.7.1 reagiert „stoppe das Programm" erst nach Ende des aktuellen Steps. Ab v9.8.0 reagiert es innerhalb von ~200ms.
-- **Wake-Word:** funktioniert nur in Chrome und Bluefy zuverlässig. In Safari ist das Mikrofon eingeschränkt.
+- **Wake-Word:** funktioniert nur in Chrome und Edge (Android und Desktop). In Safari und Bluefy auf iOS ist das Mikrofon nicht für Wake-Word-Daueraufnahme verfügbar.

@@ -6580,7 +6580,9 @@ function toast(msg){
   t.textContent=msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
+  // v9.22.0 QA2.10.2: Anzeigedauer an Textlaenge koppeln, damit laengere Meldungen lesbar bleiben (2,2s bis 7s)
+  const dur = Math.min(7000, Math.max(2200, 1200 + String(msg||'').length*55));
+  toastTimer=setTimeout(()=>t.classList.remove('show'), dur);
 }
 
 /* ═══ v9.11.0 Paket DLG-1: barrierefreie Dialoge statt nativer alert/confirm/prompt ═══
@@ -12195,7 +12197,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.21.0';
+const SW_VERSION_LABEL='v9.22.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -13258,10 +13260,10 @@ function _voiceSpeakConfirm(text){
 }
 const VOICE_HELP = [
   ['Navigation', '„öffne Steuerung", „öffne Programme", „öffne Sorten", „öffne Setup", „schließe" oder „zurück"'],
-  ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Status", „alles stoppen"'],
+  ['Gerät', '„heize an", „heize aus", „auf 185 Grad", „wärmer", „kälter", „pumpe an", „pumpe 20 Sekunden", „Ballon füllen", „Boost", „Status", „Verbindung trennen", „alles stoppen"'],
   ['Programm', '„starte Programm <Name>", „stoppe das Programm" (nur Programm, Gerät bleibt an)'],
   ['Programm-Lauf', '„pause", „weiter", „nächster Schritt", „vorheriger Schritt" (während ein Programm läuft)'],
-  ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>", „bewerte Sorte <Name> mit <1 bis 5> Blättern", „bewerte mit <1 bis 5> Blättern" (geöffnete Sorte; „Sterne" funktioniert weiterhin)'],
+  ['Sorten', '„öffne Sorte <Name>", „suche Sorte <Wort>" (auch „sorten mit <Wort>"), „bewerte Sorte <Name> mit <1 bis 5> Blättern", „bewerte mit <1 bis 5> Blättern" (geöffnete Sorte; „Sterne" funktioniert weiterhin)'],
   ['Sonstiges', '„wiederhole", „Hilfe"'],
 ];
 function _voiceHelpText(){ return VOICE_HELP.map(g=>g[0]+': '+g[1]).join('. '); }
@@ -13601,10 +13603,7 @@ async function executeVoiceCommand(cmd){
         }
         return true;
       case 'runProgram': {
-        const all = getAllPrograms();
-        const needle = String(cmd.value||'').toLowerCase();
-        const found = all.find(p => p.name.toLowerCase().includes(needle)
-          || needle.includes(p.name.toLowerCase().split(' ')[0]));
+        const found = findProgramByName(cmd.value);   // v9.22.0 QA2.4.7: gemeinsame Suche
         if(found){ ok('Starte: '+found.name); runProgram(found); }
         else voiceFeedback('Programm "'+cmd.value+'" nicht gefunden', 3000);
         return true;
@@ -13726,6 +13725,13 @@ function ensurePresetsInStorage(){
 function getAllPrograms(){
   // returns all programs (both presets and user-saved) from storage
   return State.programs;
+}
+// v9.22.0 QA2.4.7: gemeinsame Programm-Suche fuer Voice UND URL-/Siri-Befehle (vorher zwei verschiedene Pfade).
+function findProgramByName(name){
+  const needle = String(name||'').toLowerCase().trim();
+  if(!needle) return null;
+  const all = getAllPrograms();
+  return all.find(p => p.name.toLowerCase().includes(needle) || needle.includes(p.name.toLowerCase().split(' ')[0])) || null;
 }
 async function resetPresetsToDefault(){
   if(!(await uiConfirm('Alle Vorlagen auf Werkseinstellungen zurücksetzen?\nDeine eigenen Programme bleiben erhalten.'))) return;
@@ -15733,7 +15739,8 @@ function setupVoiceReadoutInterval(){
    Default AUS, Toggle im Setup, klares Indicator-Pill wenn aktiv. */
 // v9.0.3 Paket N1.5: zusaetzlich "Hey Terp Sessions" erkennen (laengste Prefixe zuerst,
 // damit _wakeMatchPrefix den korrekten Rest extrahiert). Bestehende Trigger bleiben.
-const WAKE_WORDS = ['hey terp sessions','okay terp sessions','ok terp sessions','terp sessions','hey sessions','okay sessions','ok sessions','sessions'];
+// v9.22.0 QA2.4.6: blosses „sessions" entfernt (zu hohe Falsch-Trigger-Wahrscheinlichkeit), nur Anrede-Praefixe
+const WAKE_WORDS = ['hey terp sessions','okay terp sessions','ok terp sessions','terp sessions','hey sessions','okay sessions','ok sessions'];
 const WAKE_DIALOG_TIMEOUT_MS = 10000;
 let wakeRec = null;
 let wakeWordActive = false;
@@ -18109,9 +18116,9 @@ const URL_COMMANDS = {
   'stop':          {label:'Notaus',            needsBle:false, fn:async()=>{ try{ await emergencyStop(); }catch{} ttsSay('Alles gestoppt'); }},
   'status':        {label:'Status vorlesen',   needsBle:false, fn:async()=>{ speakStatus(); }},
   'program':       {label:'Programm starten',  needsBle:true,  fn:async(params)=>{
-    const name = (params.name || params.n || '').toLowerCase();
+    const name = (params.name || params.n || '');
     if(!name){ ttsSay('Programmname fehlt'); return; }
-    const prog = State.programs.find(p => p.name.toLowerCase().includes(name));
+    const prog = findProgramByName(name);   // v9.22.0 QA2.4.7: gemeinsame Suche (getAllPrograms + Fuzzy)
     if(!prog){ ttsSay('Programm nicht gefunden'); return; }
     ttsSay(`Starte ${prog.name}`); runProgram(prog);
   }},
@@ -18786,7 +18793,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.21.0 bereit.','ok');
+  log('Terp Sessions v9.22.0 bereit.','ok');
 
   setupPwaUpdate();
 
