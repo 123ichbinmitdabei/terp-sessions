@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.25.0)
+# Terp Sessions — Vape Controller (v9.26.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.26.0 — QA-2 Em-Dash-Sweep (Paket 10 der Fix-Kampagne)
+
+Zehntes Paket der QA-2-Fix-Kampagne (QA2.10.1 / QA-1-Backlog 13). Reiner redaktioneller Durchlauf, keine Logik-Änderung.
+
+- **Em-Dashes in deutscher Prosa zu Kommas:** In `index.html` wurden 185 Em-Dashes („ — ", Gedankenstriche in Sätzen und Kommentaren) durch Kommas ersetzt, ebenso in `info.html` (1) und `VOICE-BEFEHLE.md` (6). En-Dashes in Zahlenbereichen („40–230 °C", 51 Stück) und Box-Drawing-Zeichen blieben unangetastet. Die ~12 dekorativen Platzhalter-Em-Dashes in Dropdowns („— keine —", „— Sorte aus Community —") bleiben als bewusste UI-Verzierung erhalten.
+
+**Bewusst NICHT angefasst:** `datenschutz.html` (anwaltlich freigegebenes Dokument, Punktuation nicht eigenmächtig ändern), die README-Versions-Überschriften (Changelog-Trenner-Konvention, kein Fließtext) und die Marken-/Titel-Bezeichnung „Terp Sessions — Vape Controller" (`<title>`, Konsolen-Banner) als bewusstes Branding, konsistent mit `manifest.json`.
+
+**Unberührt:** App-Logik, cscCrypto, Backend. **Tests:** `v926emdash.mjs` (7, Regressions-Guard gegen neue Prosa-Em-Dashes). Volle Regression grün.
 
 ## v9.25.0 — QA-2 Cleanup (Paket 9 der Fix-Kampagne)
 

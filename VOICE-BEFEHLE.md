@@ -1,4 +1,4 @@
-# Voice-Befehle — Terp Sessions
+# Voice-Befehle, Terp Sessions
 
 Stand: v9.10.1 (alle hier gelisteten Befehle sind live)
 
@@ -106,11 +106,11 @@ Diese Befehle funktionieren während ein Programm läuft:
 
 Alle in Settings → Sprache & Ansagen:
 
-- **Knappe Ansagen** — TTS-Bestätigungen werden kürzer
-- **Sprechgeschwindigkeit** — TTS-Tempo (Slider)
-- **Sprech-Lautstärke** — TTS-Volume (Slider)
-- **Ich nutze einen Screen-Reader** — schaltet App-TTS aus, damit es sich nicht mit VoiceOver überlagert
-- **Voice-Verbosity** — wie ausführlich die App spricht
+- **Knappe Ansagen**, TTS-Bestätigungen werden kürzer
+- **Sprechgeschwindigkeit**, TTS-Tempo (Slider)
+- **Sprech-Lautstärke**, TTS-Volume (Slider)
+- **Ich nutze einen Screen-Reader**, schaltet App-TTS aus, damit es sich nicht mit VoiceOver überlagert
+- **Voice-Verbosity**, wie ausführlich die App spricht
 
 ---
 

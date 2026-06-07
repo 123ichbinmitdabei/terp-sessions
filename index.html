@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Terp Sessions">
-<meta name="description" content="Terp Sessions — Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty, Venty, PAX 3, Puffco Peak Pro und Firefly">
+<meta name="description" content="Terp Sessions, Bluetooth-Controller für Storz & Bickel Volcano, Crafty, Mighty, Venty, PAX 3, Puffco Peak Pro und Firefly">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -179,7 +179,7 @@ input,select,textarea{font:inherit;color:inherit}
 /* Stepper-Wrapper nicht überlaufen lassen */
 .stepper{max-width:100%;flex-shrink:0}
 
-/* v4.9.5: Größere Bildschirme — App nutzt mehr Platz */
+/* v4.9.5: Größere Bildschirme, App nutzt mehr Platz */
 @media (min-width:760px){
   .wrap{max-width:720px;padding:24px 20px 30px}
   .card{padding:18px}
@@ -192,7 +192,7 @@ input,select,textarea{font:inherit;color:inherit}
 }
 
 /* v4.9.5: ZOOM-basierte Schriftgrößen-Skalierung
-   (skaliert alles im main, nicht nur Text — funktioniert mit hardcoded px) */
+   (skaliert alles im main, nicht nur Text, funktioniert mit hardcoded px) */
 html{--app-zoom:1}
 main.wrap{zoom:var(--app-zoom)}
 /* Modal-Sheets ebenfalls zoomen damit auch die mitskaliert sind */
@@ -577,7 +577,7 @@ body:has(.run-card.show) .wake-indicator{ bottom:calc(220px + var(--safe-bot-pad
 
 .modal{position:fixed;inset:0;z-index:50;display:none}
 .modal.open{display:block}
-/* v8.7.6 Paket 12e: Body-Scroll-Lock waehrend Modal offen — verhindert Background-Scroll
+/* v8.7.6 Paket 12e: Body-Scroll-Lock waehrend Modal offen, verhindert Background-Scroll
    am Desktop wenn Scroll-Event im .sheet nicht abgefangen wird. */
 body.modal-open{overflow:hidden}
 .modal .back{
@@ -1424,7 +1424,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="swi
 }
 /* Touch-Target-Mindestgrößen (WCAG 2.5.5: 44×44 CSS-Pixel) */
 .btn.sm{ min-height:44px; padding:10px 14px }
-.toggle{ min-width:52px; min-height:32px }   /* runder Schalter — physikalisch klein, aber Tap-Bereich erweitert per Padding-Hit-Area unten */
+.toggle{ min-width:52px; min-height:32px }   /* runder Schalter, physikalisch klein, aber Tap-Bereich erweitert per Padding-Hit-Area unten */
 .toggle{ position:relative }
 .toggle::before{
   content:'';position:absolute;inset:-8px -6px;   /* unsichtbare Hit-Area auf ≥44px */
@@ -1433,7 +1433,7 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="swi
 .help-ico, .user-avatar{ min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center }
 .aroma-temp{ min-height:44px; min-width:44px; padding:10px 12px }
 .sess-effect{ min-height:44px; padding:10px 14px }
-.aroma-pill{ min-height:36px; padding:8px 12px }    /* Filter-Chips — etwas kleiner, AA-Compliance reicht */
+.aroma-pill{ min-height:36px; padding:8px 12px }    /* Filter-Chips, etwas kleiner, AA-Compliance reicht */
 
 /* v8.7.0 A11Y: 4. Schriftgröße-Stufe 200 % (Spec) */
 html{ zoom: var(--app-zoom, 1) }
@@ -2049,7 +2049,7 @@ summary.tab-section-header:hover{color:var(--text)}
 .comm-card-tag{font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text)}
 .comm-card-author{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
 .comm-factory-badge{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,87,34,.15);color:var(--hot);border:1px solid rgba(255,87,34,.3);text-transform:uppercase;letter-spacing:.05em}
-/* v8.9.0 Modul 1: Blätter (zuvor Sterne) — gleiche Klassennamen für Backward-Compat */
+/* v8.9.0 Modul 1: Blätter (zuvor Sterne), gleiche Klassennamen für Backward-Compat */
 .comm-stars{display:inline-flex;gap:3px;align-items:center;font-size:14px;line-height:1;user-select:none}
 .comm-stars svg{display:inline-block}
 .comm-stars-btn{cursor:pointer;background:none;border:0;padding:2px;color:#555;font-size:20px;line-height:1;transition:transform .15s ease, color .2s ease}
@@ -2280,7 +2280,7 @@ button[data-sch-day].active{
 
 <!-- v4.8: Offline indicator -->
 <div class="offline-indicator" id="offlineIndicator" role="status" aria-live="polite">
-  <span aria-hidden="true">📡</span> Offline — alle Funktionen außer Bluetooth-Verbindung verfügbar
+  <span aria-hidden="true">📡</span> Offline, alle Funktionen außer Bluetooth-Verbindung verfügbar
 </div>
 
 <!-- v4.8: Hotel-Mode Overlay -->
@@ -2571,13 +2571,13 @@ button[data-sch-day].active{
 
   <div class="card" id="cardQuickReplay">
     <h3>Schnell</h3>
-    <button class="btn block hot" id="btnReplayLast" data-tip="Wiederholt das zuletzt komplett gelaufene Programm — schneller Re-Start ohne erneut auswählen" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
+    <button class="btn block hot" id="btnReplayLast" data-tip="Wiederholt das zuletzt komplett gelaufene Programm, schneller Re-Start ohne erneut auswählen" aria-label="Letztes Programm nochmal starten">▶ Letztes Programm nochmal</button>
   </div>
 
   <div class="card" id="cardProgSaved">
     <h3>Eigene Programme <button class="help-ico" data-help="workflow">?</button></h3>
     <div class="prog-list" id="progSaved"></div>
-    <button class="btn block primary" id="btnNewProg" data-tip="Erstellt ein neues eigenes Programm mit eigenen Schritten — Temperatur-Rampen, Pumpen, Pausen" style="margin-top:10px">+ Neues Programm</button>
+    <button class="btn block primary" id="btnNewProg" data-tip="Erstellt ein neues eigenes Programm mit eigenen Schritten, Temperatur-Rampen, Pumpen, Pausen" style="margin-top:10px">+ Neues Programm</button>
   </div>
 
   <div class="card" id="cardProgPresets">
@@ -3316,7 +3316,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <h2 id="noBtTitle">📡 Bluetooth nicht verfügbar</h2>
     <p class="wiz-text">Dein Browser kann kein Web-Bluetooth. Damit du Terp Sessions mit deinem Verdampfer verbinden kannst, hast du diese Optionen:</p>
     <ul class="wiz-text" style="margin:8px 0 14px 22px;line-height:1.6">
-      <li><b>iPhone / iPad:</b> Lade die kostenlose App „Bluefy — Web BLE Browser" aus dem App Store und öffne diese Seite dort.</li>
+      <li><b>iPhone / iPad:</b> Lade die kostenlose App „Bluefy, Web BLE Browser" aus dem App Store und öffne diese Seite dort.</li>
       <li><b>Android:</b> Nutze Chrome (Web-Bluetooth ist standardmäßig dabei).</li>
       <li><b>Desktop:</b> Chrome oder Edge.</li>
       <li><b>Firefox / Safari Desktop:</b> Bluetooth wird nicht unterstützt (Browser-Hersteller-Entscheidung).</li>
@@ -3389,7 +3389,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
   <div class="sheet">
     <div class="grab"></div>
     <h2 id="srHintTitle">♿ VoiceOver erkannt?</h2>
-    <p class="wiz-text" style="white-space:pre-line">Falls du VoiceOver nutzt, aktiviere im Setup → Sprachsteuerung den Schalter „Ich nutze einen Screen-Reader" — sonst überlagern sich beide Stimmen.</p>
+    <p class="wiz-text" style="white-space:pre-line">Falls du VoiceOver nutzt, aktiviere im Setup → Sprachsteuerung den Schalter „Ich nutze einen Screen-Reader", sonst überlagern sich beide Stimmen.</p>
     <div class="row" style="gap:8px;margin-top:14px">
       <button class="btn sm ghost" id="srHintLater" style="flex:1">Später</button>
       <button class="btn hot" id="srHintActivate" style="flex:2">Jetzt aktivieren</button>
@@ -3444,9 +3444,9 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
 <!-- ── Bottom nav ───────────────────────────────────────────── -->
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
-  <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" data-tip="Steuerung — Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
-  <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" data-tip="Programme — Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
-  <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" data-tip="Setup — Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
+  <button class="nav-btn active" id="nav-ctl" data-tab="ctl" role="tab" aria-selected="true" aria-controls="tab-ctl" data-tip="Steuerung, Hauptbildschirm mit Temperatur, Heizer und Quick-Actions"><span class="ico" aria-hidden="true">🎛</span><span>Steuerung</span></button>
+  <button class="nav-btn" id="nav-prog" data-tab="prog" role="tab" aria-selected="false" aria-controls="tab-prog" data-tip="Programme, Vorlagen starten oder eigene bauen mit Schritten und Loops"><span class="ico" aria-hidden="true">⚙️</span><span>Programme</span></button>
+  <button class="nav-btn" id="nav-setup" data-tab="setup" role="tab" aria-selected="false" aria-controls="tab-setup" data-tip="Setup, Statistik, Wartung, Werkzeuge, Einstellungen"><span class="ico" aria-hidden="true">🔧</span><span>Setup</span></button>
   <!-- v9.0.0-alpha: Pioneer-Test-Modus-Tab, nur sichtbar wenn PREFS.pioneerTestMode -->
   <button class="nav-btn" id="nav-pioneer" data-tab="pioneer" role="tab" aria-selected="false" aria-controls="tab-pioneer" data-tip="Pioneer-Test-Pfad, gefuehrter Wizard mit 30 Test-Aufgaben" hidden><span class="ico" aria-hidden="true">🌿</span><span>Test-Pfad</span></button>
 </nav>
@@ -3586,7 +3586,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <div class="wiz-page" data-page="3">
       <div class="wiz-art">🌡️</div>
       <h2 class="wiz-title">Welches Gerät?</h2>
-      <p class="wiz-text">Wähle dein S&B-Gerät. Für den Volcano Hybrid sind die Profile fertig kalibriert. Andere Geräte sind in Beta — die Verbindung läuft, einige Werte musst du eventuell selbst anpassen.</p>
+      <p class="wiz-text">Wähle dein S&B-Gerät. Für den Volcano Hybrid sind die Profile fertig kalibriert. Andere Geräte sind in Beta, die Verbindung läuft, einige Werte musst du eventuell selbst anpassen.</p>
       <div class="dev-list" id="wizDevices"></div>
     </div>
 
@@ -3702,7 +3702,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     <h2>Einstellungen</h2>
 
     <!-- Sub-Tabs für Settings (v4.9 Polishing, v4.9.7 deutlicher gemacht) -->
-    <div class="settings-tabs-hint">6 Kategorien — wischen für mehr</div>
+    <div class="settings-tabs-hint">6 Kategorien, wischen für mehr</div>
     <div class="settings-tabs-wrap" id="settingsTabsWrap">
       <div class="settings-tabs" role="tablist" aria-label="Einstellungs-Kategorien" id="settingsTabsScroll">
         <button data-set-tab="stil" class="active" role="tab" aria-selected="true">🎨 Stil</button>
@@ -3897,7 +3897,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="toggle-row">
         <div class="info">
           <b>🔊 Test-Sounds</b>
-          <small>Kurze Toene bei Pass/Fail/Achievement/Combo. Bei Screen-Reader-Nutzung evtl. stoerend — hier mute-bar.</small>
+          <small>Kurze Toene bei Pass/Fail/Achievement/Combo. Bei Screen-Reader-Nutzung evtl. stoerend, hier mute-bar.</small>
         </div>
         <button class="toggle" id="togPioneerSounds" role="switch" aria-checked="true" aria-label="Pioneer-Test-Sounds"></button>
       </div>
@@ -3907,7 +3907,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <div class="toggle-row">
         <div class="info">
           <b>🌿 Community-DB aktivieren</b>
-          <small>Teile Sorten und Programme mit anderen Nutzern. Optional — die App funktioniert auch ohne.</small>
+          <small>Teile Sorten und Programme mit anderen Nutzern. Optional, die App funktioniert auch ohne.</small>
         </div>
         <button class="toggle" id="togCommunity" role="switch" aria-checked="false" aria-label="Community-DB aktivieren"></button>
       </div>
@@ -3930,7 +3930,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
       <!-- v9.0.4 Paket N2: Recall des Kompatibilitäts-Checks -->
       <button class="btn ghost block" id="btnCompatCheck" type="button" style="margin:0 0 12px" aria-label="Browser-Kompatibilität prüfen">🔎 Browser-Kompatibilität prüfen</button>
       <div class="toggle-row" data-sr-affected="voice">
-        <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw. <span id="voiceUnavailableHint" hidden style="color:var(--hot)">Dein Browser unterstützt keine Spracherkennung — du bekommst stattdessen Text-Eingabe.</span></small></div>
+        <div class="info"><b>Sprachsteuerung aktiv</b><small>Mikrofon-FAB, „Heize auf 185 Grad" usw. <span id="voiceUnavailableHint" hidden style="color:var(--hot)">Dein Browser unterstützt keine Spracherkennung, du bekommst stattdessen Text-Eingabe.</span></small></div>
         <button class="toggle" id="togVoice" role="switch" aria-checked="true" aria-label="Sprachsteuerung"></button>
       </div>
       <details id="voiceCmdSub" class="sub-toggles-details">
@@ -3998,7 +3998,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
         <div class="toggle-row"><div class="info"><b>Session-Ende</b></div><button class="toggle" data-tts="sessionEnd" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Fehler / Warnungen</b><small>Default an</small></div><button class="toggle" data-tts="errors" role="switch"></button></div>
         <!-- v8.7.0 A11Y Prio 5: neue Events für blinde Nutzer -->
-        <div class="toggle-row"><div class="info"><b>Verbindung an / aus</b><small>Default an — wichtig für Blinde</small></div><button class="toggle" data-tts="connectChange" role="switch"></button></div>
+        <div class="toggle-row"><div class="info"><b>Verbindung an / aus</b><small>Default an, wichtig für Blinde</small></div><button class="toggle" data-tts="connectChange" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Verbinden-Knopf gedrückt</b></div><button class="toggle" data-tts="connectStart" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Dialog geöffnet</b></div><button class="toggle" data-tts="modalOpen" role="switch"></button></div>
         <div class="toggle-row"><div class="info"><b>Dialog geschlossen</b></div><button class="toggle" data-tts="modalClose" role="switch"></button></div>
@@ -4066,8 +4066,8 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
 
       <h3 class="set-section-h">App zurücksetzen</h3>
       <button class="btn sm ghost block" id="btnReplayWelcome" data-tip="Zeigt den Begrüßungs-Slidesatz für neue Nutzer erneut">👋 Onboarding nochmal zeigen</button>
-      <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px" data-tip="Startet die geführte Tour neu — zeigt dir Schritt für Schritt die wichtigsten Funktionen">🎓 Tour neu starten</button>
-      <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me — alles löschen</button>
+      <button class="btn sm ghost block" id="btnResetOnboarding" style="margin-top:8px" data-tip="Startet die geführte Tour neu, zeigt dir Schritt für Schritt die wichtigsten Funktionen">🎓 Tour neu starten</button>
+      <button class="btn sm danger block" id="btnForgetMe" style="margin-top:8px">⚠️ Forget Me, alles löschen</button>
     </div>
 
     <div class="row" style="margin-top:18px">
@@ -4409,7 +4409,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     </div>
 
     <div class="field" style="margin-top:10px">
-      <label>Länge (cm) — ungefüllte Folie vom Mundstück bis zum Ventil</label>
+      <label>Länge (cm), ungefüllte Folie vom Mundstück bis zum Ventil</label>
       <div class="stepper">
         <button id="bagEdLenMinus" aria-label="Länge verringern">−</button>
         <input class="mono" type="number" min="10" max="200" step="1" id="bagEdLen" inputmode="numeric">
@@ -4418,7 +4418,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     </div>
 
     <div class="field" style="margin-top:10px">
-      <label>Durchmesser (cm) — gefüllter Ballon, ca. 10cm Easy Valve, 12cm Solid</label>
+      <label>Durchmesser (cm), gefüllter Ballon, ca. 10cm Easy Valve, 12cm Solid</label>
       <div class="stepper">
         <button id="bagEdDiaMinus" aria-label="Durchmesser verringern">−</button>
         <input class="mono" type="number" min="4" max="20" step="0.5" id="bagEdDia" inputmode="decimal">
@@ -4442,7 +4442,7 @@ Es werden nur Pseudonym + PIN gespeichert. Keine personenbezogenen Daten.</p>
     </div>
 
     <div class="field" style="margin-top:14px">
-      <label>Pumpzeit (Sekunden) — kann manuell überschrieben werden</label>
+      <label>Pumpzeit (Sekunden), kann manuell überschrieben werden</label>
       <div class="stepper">
         <button id="bagEdSecMinus" aria-label="Sekunden verringern">−</button>
         <input class="mono" type="number" min="5" max="180" step="1" id="bagEdSec" inputmode="numeric">
@@ -5519,7 +5519,7 @@ const PREFS_DEFAULTS = {
   ttsRate:1.05,           // v9.4.1 B2.1: Sprechgeschwindigkeit (0.5 langsam bis 2.0 sehr schnell)
   ttsVolume:1.0,          // v9.4.1 B2.1: Lautstaerke (0.0 bis 1.0)
   dictationHintShown:false,// v9.4.0 B1: iOS-Diktat-Tipp beim Text-FAB einmalig gezeigt
-  wakeWord:false,         // Wake-Word „Hey Sessions" — experimentell, Chrome only, Cloud-basiert
+  wakeWord:false,         // Wake-Word „Hey Sessions", experimentell, Chrome only, Cloud-basiert
   // v8.7.1: Screen-Reader-Modus (Master über allen TTS/Voice-Optionen).
   // Wenn true: ttsEvent() macht nichts, Wake-Word ist gesperrt, Voice-Tts-Master
   // wird visuell als „deaktiviert durch Screen-Reader" markiert. Begründung:
@@ -5533,7 +5533,7 @@ const PREFS_DEFAULTS = {
     pumpOn:false, pumpOff:false, heaterOn:false, heaterOff:false,
     sessionStart:false, sessionEnd:false,
     errors:true,
-    // v8.7.0 A11Y Prio 5 — neue Events, alle Default AUS außer connectChange
+    // v8.7.0 A11Y Prio 5, neue Events, alle Default AUS außer connectChange
     connectChange:true,                  // Verbindung hergestellt / verloren
     connectStart:false,                  // Benutzer hat „Verbinden" gedrückt
     modalOpen:false, modalClose:false,   // jedes Dialog auf/zu
@@ -5552,9 +5552,9 @@ const PREFS_DEFAULTS = {
   // v8.7.4 Paket 12b.2: Default-Memory fuer Pseudonym/Anonym-Toggle beim Create.
   // true = naechster Beitrag default anonym; toggled bei jedem Erfolg auf das Gegenteil.
   communityLastAnonymous:true,
-  // v8.9.0 Modul 3: Just-in-Time-Browser-Hinweise — "Nicht wieder zeigen" pro Hinweis-Typ
+  // v8.9.0 Modul 3: Just-in-Time-Browser-Hinweise, "Nicht wieder zeigen" pro Hinweis-Typ
   browserHintsDismissed:{ noBluetooth:false, noSpeech:false, pwaVoiceWarn:false, bluefyVoiceWarn:false },
-  // v9.0.4 Paket N2: First-Visit-Compatibility-Check — speichert den Capability-Hash des zuletzt gezeigten Browsers
+  // v9.0.4 Paket N2: First-Visit-Compatibility-Check, speichert den Capability-Hash des zuletzt gezeigten Browsers
   compatibilityHintSeen:null,
   // v8.9.0 Modul 5: Datenschutz-Einwilligung (lokal als Beleg; Backend folgt in v9.0)
   dataConsentAcceptedAt:null,
@@ -5613,7 +5613,7 @@ const PREFS_DEFAULTS = {
   mqttConnected:false,     // runtime
   customBleProfiles:[],    // user-defined device profiles
   // v4.9.3: Eigene Ballon-Profile mit Geometrie für Volumen/Sekunden-Berechnung
-  // Defaults sind kalibriert auf pumpLpm 4.5 L/min — User kann anpassen/kalibrieren
+  // Defaults sind kalibriert auf pumpLpm 4.5 L/min, User kann anpassen/kalibrieren
   bagProfilesV2:[
     {id:'easy-small', name:'Easy Valve klein', type:'easy',   length:30, diameter:8,  seconds:20, calibrated:false},
     {id:'easy-large', name:'Easy Valve groß',  type:'easy',   length:60, diameter:8,  seconds:40, calibrated:false},
@@ -6540,7 +6540,7 @@ async function tryReconnect(){
   if(!State.device || State.connected) return;
   if(State.reconnectAttempts >= 3){
     log('Auto-Reconnect: 3 Versuche erschöpft, manuell neu verbinden','warn');
-    renderLastAction('Verbindung verloren — bitte erneut verbinden', 'err');
+    renderLastAction('Verbindung verloren, bitte erneut verbinden', 'err');
     State.reconnectAttempts = 0;
     showConnLostBanner(); // grosser Banner bleibt bis User reagiert
     return;
@@ -7218,7 +7218,7 @@ async function startAllNotifications(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BLE COMMANDS — korrigiert auf echte Volcano-Hybrid Spec
+   BLE COMMANDS, korrigiert auf echte Volcano-Hybrid Spec
    - SetTemp: Uint32 LE, value*10
    - HeaterOn/HeaterOff: SEPARATE chars, Uint8 = 0
    - PumpOn/PumpOff: SEPARATE chars, Uint8 = 0
@@ -7232,7 +7232,7 @@ async function withBusy(label, fn){
     renderLastAction(label, 'ok');
     return result;
   }catch(e){
-    renderLastAction(label+' — FEHLER: '+e.message, 'err');
+    renderLastAction(label+', FEHLER: '+e.message, 'err');
     if(!State._suppressFriendly) showFriendlyError(e, label);   // v8.1.0 Modul 2
     throw e;
   }finally{
@@ -7695,7 +7695,7 @@ const PRESETS = [
     ],
   },
   {
-    name:'Microdose-Reihe (3× Mini)', desc:'Drei kleine Züge bei 165° — Tageseinsatz', tags:['volcano','microdose','medical'],
+    name:'Microdose-Reihe (3× Mini)', desc:'Drei kleine Züge bei 165°, Tageseinsatz', tags:['volcano','microdose','medical'],
     steps:[
       {action:'heat_on'},
       {action:'set_temperature', value:165}, {action:'wait_until', value:165},
@@ -8065,7 +8065,7 @@ async function _commProgramRateClick(p, stars){
     await communityClient.programRate(p.id, stars, null);
     toast(`✓ Bewertung: ${stars} Blätter`);
     try{
-      // Refresh aus Liste — kein dedicated programGet
+      // Refresh aus Liste, kein dedicated programGet
       const fresh = await communityClient.programList(null, null, 200, 0);
       const f = Array.isArray(fresh) ? fresh.find(x=>x && x.id === p.id) : null;
       if(f){ Object.assign(p, f); _commProgramDetailRender(p); }
@@ -8285,7 +8285,7 @@ async function _commProgramEditSubmitImpl(){
       await communityClient.programProposeEdit(_commProgEditOriginal.id, diff, comment);
       toast('✓ Vorschlag eingereicht');
     }
-    // Devices + Strains nur in create/edit (nicht propose — separater RPC waere zu komplex hier)
+    // Devices + Strains nur in create/edit (nicht propose, separater RPC waere zu komplex hier)
     if(programId && _commProgEditMode !== 'propose'){
       try{ await communityClient.programSetDevices(programId, _commProgEditDevices); }catch(_){}
       try{ await communityClient.programLinkStrains(programId, _commProgEditStrainIds); }catch(_){}
@@ -8329,7 +8329,7 @@ function _commProgramModalsWire(){
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8.7.5 Paket 12b.3 A6: Moderations-UI fuer Admins
-   Backend-RPC community_list_open_proposals fehlt heute — wird via Patch
+   Backend-RPC community_list_open_proposals fehlt heute, wird via Patch
    12b.3-proposals nachgereicht. Bis dahin zeigt die UI einen sauberen Hinweis.
 ═══════════════════════════════════════════════════════════════════════════ */
 let _commModFilter = 'all';
@@ -8503,7 +8503,7 @@ function progCard(p, kind){
     </div>
     <div class="prog-steps">${escapeHtml(stepSummary(p.steps))}</div>
     <div class="prog-actions">
-      <button class="btn sm hot" data-act="run" data-tip="Programm jetzt starten — automatischer Ablauf der Schritte" style="flex:1" aria-label="Programm starten">▶ Starten</button>
+      <button class="btn sm hot" data-act="run" data-tip="Programm jetzt starten, automatischer Ablauf der Schritte" style="flex:1" aria-label="Programm starten">▶ Starten</button>
       <button class="btn sm ghost" data-act="edit" data-tip="Schritte und Einstellungen bearbeiten" aria-label="Programm bearbeiten">Bearbeiten</button>
       <button class="btn sm ghost" data-act="share2" data-tip="Teilen: Link / JSON / QR-Code (alles lokal)" aria-label="Programm teilen">📤</button>
       <button class="btn sm ghost" data-act="share" data-tip="QR-Code (klassisch, kurzes Hash-Format)" aria-label="Programm per QR teilen">🔗</button>
@@ -8717,7 +8717,7 @@ function renderTimelineView(){
    Zeigt das Ziel-Temperatur-Profil über die (geschätzte) Zeit. Punkte =
    set_temperature-Schritte; vertikales Ziehen ändert die Temp (Snap 5°C).
    Dauer wird per +/- an wait/pump_for-Schritten geändert. Zeitmodell
-   spiegelt estimateDuration() — konsistent mit Liste/Timeline. */
+   spiegelt estimateDuration(), konsistent mit Liste/Timeline. */
 const CURVE_W=320, CURVE_H=180, CURVE_PADL=30, CURVE_PADR=10, CURVE_PADT=10, CURVE_PADB=26;
 function curveTempRange(){ const tr=(State.adapter&&State.adapter.constructor.tempRange)||{min:40,max:230}; return {min:tr.min,max:tr.max}; }
 function curveModel(){
@@ -9086,7 +9086,7 @@ async function _tplApply(){
     if(!(await uiConfirm('Aktuelle Schritte werden überschrieben. Fortfahren?'))) return;   // Picker bleibt offen bei Abbruch
   }
   editorState.steps = JSON.parse(JSON.stringify(t.steps||[]));   // Deep-Copy
-  // Antwort 2: Sorten-Verknuepfungen mitkopieren — nur im Community-Modus (eigene Programme haben kein Sorten-Feld)
+  // Antwort 2: Sorten-Verknuepfungen mitkopieren, nur im Community-Modus (eigene Programme haben kein Sorten-Feld)
   if(editorState.__source==='community' && Array.isArray(t.strainLinks)){
     _commProgEditStrainIds = t.strainLinks.slice();
     try{ if(typeof _commProgStrainsRender==='function') _commProgStrainsRender(); }catch(_){}
@@ -9099,7 +9099,7 @@ async function _tplApply(){
 /* ── Run engine ─────────────────────────────────────────────── */
 let _runCountdownTimer = null;
 function _stepDurations(steps, startTemp){
-  // v8.5.0 Modul 2: pro Schritt Soll-Dauer (Sekunden) — gleiche Logik wie estimateDuration
+  // v8.5.0 Modul 2: pro Schritt Soll-Dauer (Sekunden), gleiche Logik wie estimateDuration
   const out=[]; let curTemp = (typeof startTemp==='number') ? startTemp : 23; let isHot=false;
   for(const s of (steps||[])){
     let d=0;
@@ -9389,7 +9389,7 @@ async function runProgram(p){
 function updateRunUI(currentStep){
   const r=State.running; if(!r) return;
   const pct = ((r.idx)/r.total)*100;
-  $('#runMeta').textContent = `Schritt ${r.idx+1} / ${r.total} — ${stepLabel(currentStep).replace(/<[^>]+>/g,'')}`;
+  $('#runMeta').textContent = `Schritt ${r.idx+1} / ${r.total}, ${stepLabel(currentStep).replace(/<[^>]+>/g,'')}`;
   $('#runBar').style.width = `${pct}%`;
   const barParent = $('#runBar').parentElement;
   if(barParent){ barParent.setAttribute('aria-valuenow', String(Math.round(pct))); }
@@ -9827,7 +9827,7 @@ function wire(){
     savePrefs();
     if(v) playTone(660, 100, .1);
   });
-  // v8.7.1: Screen-Reader-Master — übersteuert Voice-TTS + Wake-Word
+  // v8.7.1: Screen-Reader-Master, übersteuert Voice-TTS + Wake-Word
   wireToggle('#togScreenReader', ()=>!!PREFS.screenReaderMode, v=>{
     PREFS.screenReaderMode = v; savePrefs();
     if(v){
@@ -9835,11 +9835,11 @@ function wire(){
       try{ stopWakeWord(); }catch{}
       // Eventuell laufende speechSynthesis-Queue leeren
       try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch{}
-      toast('♿ Screen-Reader-Modus aktiv — Sessions-Sprachausgabe pausiert');
+      toast('♿ Screen-Reader-Modus aktiv, Sessions-Sprachausgabe pausiert');
     } else {
       // Wake-Word reaktivieren wenn der User es vorher an hatte
       try{ setupWakeWord(); }catch{}
-      toast('Screen-Reader-Modus aus — Sessions-Sprachausgabe wieder aktiv');
+      toast('Screen-Reader-Modus aus, Sessions-Sprachausgabe wieder aktiv');
     }
     _syncSrOverride();
   });
@@ -9979,7 +9979,7 @@ function wire(){
   // Aroma (modal open from quick-action)
   $('#btnAromaClose').addEventListener('click', ()=>$('#modalAroma').classList.remove('open'));
   $('#btnAromaDetailClose')?.addEventListener('click', ()=>$('#modalAromaDetail').classList.remove('open'));   // v8.3.0 Modul 2
-  // v8.7.4: tab-aware Suche — bei Community-Tab debounced reload, sonst direkt lokal filtern
+  // v8.7.4: tab-aware Suche, bei Community-Tab debounced reload, sonst direkt lokal filtern
   let _aromaSearchDeb=null;
   $('#aromaSearch').addEventListener('input', e=>{
     if(_aromaActiveTab === 'community'){
@@ -9995,7 +9995,7 @@ function wire(){
   $('#btnQrCopy').addEventListener('click', copyQRUrl);
   $('#btnQrShare').addEventListener('click', shareQRUrl);
 
-  // Voice FAB — v8.9.0: tab-aware (Voice ODER Text-Command-Fallback)
+  // Voice FAB, v8.9.0: tab-aware (Voice ODER Text-Command-Fallback)
   $('#voiceFab').addEventListener('click', ()=>{
     const fab = $('#voiceFab');
     if(fab && fab.dataset.mode === 'text'){
@@ -10196,7 +10196,7 @@ function wire(){
     editorState.steps.push({action:'loop_start', repeat});
     editorState.steps.push({action:'loop_end'});
     renderBuilder();
-    toast('Loop eingefügt — Schritte dazwischen werden '+repeat+'x wiederholt');
+    toast('Loop eingefügt, Schritte dazwischen werden '+repeat+'x wiederholt');
   });
 
   // Themes-seen tracking für Achievement
@@ -10602,7 +10602,7 @@ function renderVaporChart(){
     const div = document.createElement('div');
     div.className = 'vapor-point '+p.kind;
     div.style.top = top+'px';
-    div.innerHTML = `<span class="temp">${p.t}°C</span><span class="dot-line"></span><span class="name"><b>${escapeHtml(p.name)}</b> — ${escapeHtml(p.desc)}</span>`;
+    div.innerHTML = `<span class="temp">${p.t}°C</span><span class="dot-line"></span><span class="name"><b>${escapeHtml(p.name)}</b>, ${escapeHtml(p.desc)}</span>`;
     root.appendChild(div);
   });
 }
@@ -11303,7 +11303,7 @@ class PaxAdapter extends DeviceAdapter {
 const PUFFCO_SERVICE = '06caf9c0-74d3-454f-9be9-e30cd999c17a';        // PuffcoPC Characteristics.SERVICE_UUID
 const PUFFCO_CHAR_BASE = 'f9a98c15-c651-4f34-b656-d100bf5800';        // Fr0st3h base + 2-hex Offset
 function puffcoChar(xx){ return PUFFCO_CHAR_BASE + xx; }
-// DEVICE_HANDSHAKE (base64 FUrZc0WilhUBteT2JlCc+A== = 16 Bytes) — PuffcoPC __init__.py / Fr0st3h README Z.49
+// DEVICE_HANDSHAKE (base64 FUrZc0WilhUBteT2JlCc+A== = 16 Bytes), PuffcoPC __init__.py / Fr0st3h README Z.49
 const PUFFCO_HANDSHAKE = new Uint8Array([0x15,0x4a,0xd9,0x73,0x45,0xa2,0x96,0x15,0x01,0xb5,0xe4,0xf6,0x26,0x50,0x9c,0xf8]);
 const PUFFCO_CHARS = { SEED:'e0', CURRENT_TEMP:'25', TARGET_TEMP:'26', BATTERY:'20', OP_STATE:'22',
   MODE_CMD:'40', CHAMBER:'3f', PROFILE_SELECT:'41', PROFILE_POINTER:'61', PROFILE_TEMP:'63', TOTAL_DABS:'2f' };
@@ -11672,7 +11672,7 @@ function renderBrowserCheck(){
     msg.innerHTML=`
       <div class="wiz-ok-banner"><b>Browser ok.</b> Web Bluetooth verfügbar.</div>
       <p class="wiz-text">
-        ${env.isAndroidChrome?'Chrome auf Android erkannt — beste Wahl für mobile Nutzung.':env.isDesktopChrome?'Chrome/Edge Desktop erkannt — voll unterstützt.':'Dein Browser unterstützt Web Bluetooth.'}
+        ${env.isAndroidChrome?'Chrome auf Android erkannt, beste Wahl für mobile Nutzung.':env.isDesktopChrome?'Chrome/Edge Desktop erkannt, voll unterstützt.':'Dein Browser unterstützt Web Bluetooth.'}
       </p>
     `;
   } else {
@@ -11973,10 +11973,10 @@ function wireSlides(){
    bleibt unverändert. */
 const WELCOME_SLIDES = [
   {h:'Willkommen bei Terp Sessions', t:'Terp Sessions ist dein Multi-Gerät-Vape-Controller, heize, steuere und dokumentiere alles in einer PWA. Alle Daten bleiben lokal, kein Tracking, keine Cloud (außer du aktivierst die optionale Community-DB).'},
-  {h:'Welche Geräte?', t:'• Storz & Bickel: Volcano, Crafty, Mighty, Venty, Veazy — voll unterstützt\n• PAX 3, Puffco Peak Pro — Beta (Tester gesucht)\n• Firefly — Probe-Only (Reverse-Engineering-Hilfe willkommen)'},
+  {h:'Welche Geräte?', t:'• Storz & Bickel: Volcano, Crafty, Mighty, Venty, Veazy, voll unterstützt\n• PAX 3, Puffco Peak Pro, Beta (Tester gesucht)\n• Firefly, Probe-Only (Reverse-Engineering-Hilfe willkommen)'},
   {h:'So verbindest du', t:'1. Bluetooth einschalten\n2. Oben rechts auf „Verbinden" tippen\n3. Dein Gerät aus der Liste wählen\n\nHinweis: Es geht nur in Chrome oder Edge (Android/Desktop). iOS Safari unterstützt Web-Bluetooth leider nicht.'},
   {h:'Was Terp Sessions kann', t:'• Temperatur + Heizer steuern\n• Programme und visueller Heizkurven-Editor\n• Aroma-Bibliothek mit Filter und Empfehlungen\n• Session-Tracking (optional, lokal)\n• Sprachsteuerung und Wake-Word (experimentell)'},
-  {h:'Sicherheit zuerst', t:'• Gerät nie unbeaufsichtigt heizen lassen\n• Sicherheits-Timer ist automatisch aktiv (Default 25 Min)\n• Bei Beta-Geräten: du testest mit — Vorsicht und Rückmeldung willkommen\n\nLos geht\'s!'},
+  {h:'Sicherheit zuerst', t:'• Gerät nie unbeaufsichtigt heizen lassen\n• Sicherheits-Timer ist automatisch aktiv (Default 25 Min)\n• Bei Beta-Geräten: du testest mit, Vorsicht und Rückmeldung willkommen\n\nLos geht\'s!'},
 ];
 function isFreshUser(){
   try{
@@ -12055,7 +12055,7 @@ function maybeDeviceTour(){
     const key = 'sessions_tour_'+type+'_seen';
     if(LS.get(key, false)) return;
     const tour = DEVICE_TOURS[type];
-    setTimeout(()=>showSlides(tour.title+' — Tour', tour.slides, ()=>{ try{ LS.set(key, true); }catch(_){} }), 600);
+    setTimeout(()=>showSlides(tour.title+', Tour', tour.slides, ()=>{ try{ LS.set(key, true); }catch(_){} }), 600);
   }catch(_){}
 }
 function resetDeviceTours(){
@@ -12081,7 +12081,7 @@ function maybeMigrationWizard(){
 /* ═══ v5.2.0 PHASE 6a: SESSIONS PIONEERS (Beta-Tester-Framework) ═══
    Reines UI/Status-Framework, KEIN Geraete-Protokoll (nichts geraten).
    Greift automatisch fuer kuenftige unverified-Adapter (PAX/Puffco/Firefly). */
-// v8.8.0: Keine Email mehr im Code — Andre's Kontakt steht ausschliesslich in der README.
+// v8.8.0: Keine Email mehr im Code, Andre's Kontakt steht ausschliesslich in der README.
 // mailto-Funktionen fallen automatisch auf GitHub-Issues zurueck wenn EMAIL leer ist.
 const PIONEERS_EMAIL='';
 const PIONEERS_REPO='123ichbinmitdabei/terp-sessions';
@@ -12197,7 +12197,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.25.0';
+const SW_VERSION_LABEL='v9.26.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12385,7 +12385,7 @@ async function startBagFill(){
       $('#bagCountdown').textContent = Math.ceil(remain);
       $('#bagBar').style.width = (elapsed/total*100).toFixed(1)+'%';
       if(remain <= 3){
-        $('#bagStatus').textContent = 'Achtung — fast voll!';
+        $('#bagStatus').textContent = 'Achtung, fast voll!';
         $('#bagStatus').classList.add('warn');
         haptiPattern('countdown');
       } else {
@@ -12748,7 +12748,7 @@ function _renderCommunityStrainsView(){
     $('#btnCommStrainRetry')?.addEventListener('click', ()=>_commStrainListLoad(true));
   } else if(_commStrainCache.length === 0){
     list.setAttribute('aria-busy','false');
-    list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Sorten — sei der erste!<br><button class="btn sm hot" id="btnCommStrainCreateEmpty">+ Neue Sorte</button></div>`;
+    list.innerHTML = actionsHtml + `<div class="comm-empty">Noch keine Community-Sorten, sei der erste!<br><button class="btn sm hot" id="btnCommStrainCreateEmpty">+ Neue Sorte</button></div>`;
     $('#btnCommStrainCreateEmpty')?.addEventListener('click', _commStrainCreateOpen);
   } else {
     list.setAttribute('aria-busy','false');
@@ -12837,7 +12837,7 @@ async function _commStrainRateClick(s, stars){
   try{
     await communityClient.strainRate(s.id, stars, null);
     toast(`✓ Bewertung: ${stars} Blätter`);
-    // avg_stars + review_count im Hintergrund aktualisieren — neuen Stand holen
+    // avg_stars + review_count im Hintergrund aktualisieren, neuen Stand holen
     try{
       const fresh = await communityClient.strainGet(s.id);
       if(fresh){ Object.assign(s, fresh); _commStrainDetailRender(s); }
@@ -13458,7 +13458,7 @@ function parseVoiceCommand(txt){
     return { action:'stopAll', raw };
   }
 
-  // Wärmer / kälter — feste ±5°C
+  // Wärmer / kälter, feste ±5°C
   if(/(waermer|heisser|hotter|warmer|hoeher|increase|warmer\s*bitte)/.test(t)){
     return { action:'tempUp', value:5, raw };
   }
@@ -13466,7 +13466,7 @@ function parseVoiceCommand(txt){
     return { action:'tempDown', value:5, raw };
   }
 
-  // Pump for X seconds — DIGITS
+  // Pump for X seconds, DIGITS
   const pf = t.match(/pumpe?\s+(?:fuer\s+|for\s+)?(\d+)\s*(?:sek|sekunden|s\b|seconds?|sec)/);
   if(pf) return { action:'pumpFor', value: parseInt(pf[1]), raw };
 
@@ -13475,7 +13475,7 @@ function parseVoiceCommand(txt){
   if(/pumpe?\s*(an|ein|start|on)\b/.test(t)) return { action:'pumpOn', raw };
   if(/pumpe?\s*(aus|stop|off)\b/.test(t)) return { action:'pumpOff', raw };
 
-  // Set temperature — digits
+  // Set temperature, digits
   const td = t.match(/(?:heize?|setze?|stelle?|auf|temp(?:eratur)?|set\s*temperature|temperature|set)\s*(?:auf\s*)?(\d{2,3})\s*(?:grad|degrees?|°c?|°)?/);
   if(td){
     const v = parseInt(td[1]);
@@ -13498,7 +13498,7 @@ function parseVoiceCommand(txt){
     if(v !== null) return { action:'setTemp', value: v, raw };
   }
 
-  // Run program: v9.4.0 B1 strikter — das Schluesselwort "programm" ist jetzt Pflicht,
+  // Run program: v9.4.0 B1 strikter, das Schluesselwort "programm" ist jetzt Pflicht,
   // damit nicht jedes beliebige "starte X" als Programm-Start fehl-interpretiert wird.
   const pr = t.match(/(?:starte?|spiele?|run|play|start)\s+(?:das\s+|the\s+)?programm?\s+([\w\s-]+)/);
   if(pr){
@@ -13517,7 +13517,7 @@ function _voiceCmdAllowed(action){
     fillBag:'fillBag', stopAll:'stopAll', runProgram:'runProgram',
   };
   const key = map[action];
-  if(!key) return true; // status/disconnect/boost — immer erlaubt
+  if(!key) return true; // status/disconnect/boost, immer erlaubt
   try{ return !!PREFS.voiceCmds[key]; }catch{ return true; }
 }
 
@@ -14143,7 +14143,7 @@ function importAllData(){
 
 
 /* ═══════════════════════════════════════════════════════════════
-   v4.5: QUICK ACTIONS — DEVICE BADGE — CAPABILITIES UI
+   v4.5: QUICK ACTIONS, DEVICE BADGE, CAPABILITIES UI
 ═══════════════════════════════════════════════════════════════ */
 // v5.0.2.1 FIX3: Anzeigename kommt vom AKTIVEN Adapter (nicht vom Legacy-Picker)
 function getDisplayDeviceName(){
@@ -14302,7 +14302,7 @@ function toggleQuickActionPin(id){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v8.2.0: SESSION-TRACKING (Minimal) — eigenständiges System,
+   v8.2.0: SESSION-TRACKING (Minimal), eigenständiges System,
    parallel zur v5.1.0-Statistik. Nur localStorage, kein Tracking,
    kein Cloud-Sync. Module 1-6.
 ═══════════════════════════════════════════════════════════════ */
@@ -14457,7 +14457,7 @@ function sessionModalBuild(strengthOverride){
     strength: strengthOverride!==undefined ? strengthOverride : Number($('#sessStrength').value),
     effect: d.effect||'', notes: ($('#sessNotes').value||'').trim(), auto: !!d.auto,
     aroma: ($('#sessAroma') && $('#sessAroma').value) || '',   // v8.3.0 Modul 2.6
-    // v8.5.0 Modul 7: neue Felder — nur wenn aktiviert speichern
+    // v8.5.0 Modul 7: neue Felder, nur wenn aktiviert speichern
     moodBefore: (fields.moodBefore && moodBefore) ? moodBefore : null,
     moodAfter:  (fields.moodAfter  && moodAfter)  ? moodAfter  : null,
     purpose:    (fields.purpose && $('#sessPurpose') && $('#sessPurpose').value) || '',
@@ -14473,7 +14473,7 @@ function sessionModalSave(){
   renderSessions();
   toast('📝 Session gespeichert');
 }
-/* v8.5.0 Modul 7: Schnell-Speichern — Defaults aus PREFS.trackingDefaults */
+/* v8.5.0 Modul 7: Schnell-Speichern, Defaults aus PREFS.trackingDefaults */
 function sessionModalQuick(){
   if(!_sessionDraft) return;
   const dfs = (PREFS && PREFS.trackingDefaults) || {};
@@ -14527,7 +14527,7 @@ function renderSessions(){
   const dayOpts=[[7,'Letzte 7 Tage'],[30,'Letzte 30 Tage'],[90,'Letzte 90 Tage'],[0,'Alle']].map(([v,l])=>`<option value="${v}"${f.days===v?' selected':''}>${l}</option>`).join('');
   let html='';
   html += `<div id="sessHint" class="sess-hint"></div>`;
-  if(open.length) html += `<div class="sess-open-banner">⏳ ${open.length} offene Session${open.length>1?'s':''} — <button class="linklike" id="sessFillFirst">jetzt ausfüllen</button></div>`;
+  if(open.length) html += `<div class="sess-open-banner">⏳ ${open.length} offene Session${open.length>1?'s':''}, <button class="linklike" id="sessFillFirst">jetzt ausfüllen</button></div>`;
   html += `<div class="row" style="gap:8px;margin:10px 0">
       <select class="select" id="sessFilterDev" style="flex:1" aria-label="Sessions nach Gerät filtern">${devOpts}</select>
       <select class="select" id="sessFilterDays" style="flex:1" aria-label="Sessions nach Zeitraum filtern">${dayOpts}</select>
@@ -14593,7 +14593,7 @@ function sessionWeekBuckets(weeks){
 function renderSessionViz(){
   const root=$('#sessViz'); if(!root) return;
   const all=sessionsAll();
-  if(all.length<5){ root.innerHTML=`<p class="set-section-desc">Du hast erst ${all.length} Session${all.length===1?'':'s'} — Visualisierungen erscheinen ab 5.</p>`; return; }
+  if(all.length<5){ root.innerHTML=`<p class="set-section-desc">Du hast erst ${all.length} Session${all.length===1?'':'s'}, Visualisierungen erscheinen ab 5.</p>`; return; }
   root.innerHTML = `<h4 class="sess-h4">Trend (12 Wochen)</h4><div id="sessTrend"></div>`
     + `<h4 class="sess-h4">Aktivität</h4><div id="sessHeat"></div>`
     + `<h4 class="sess-h4">Pausen</h4><div id="sessPauses"></div>`;
@@ -14667,9 +14667,9 @@ function sessionHintText(){
   const last3=sessionsInLastDays(3);
   const streak=sessionCurrentStreak();
   if(last7>15) return {emoji:'🤔', text:'Auffällig hoher Konsum diese Woche. Wenn du das reduzieren willst: schauen wir mal die Statistik?'};
-  if(last3===0) return {emoji:'🌱', text:'Du machst gerade Pause — super! Genieße den klaren Kopf.'};
-  if(last7>5 && streak.type==='today') return {emoji:'💚', text:'Eine Pause von 2-3 Tagen wäre eine gute Gewohnheit — hilft, die Toleranz niedrig zu halten.'};
-  if(last7<=2) return {emoji:'✨', text:'Bewusster Konsum — du nutzt es selten.'};
+  if(last3===0) return {emoji:'🌱', text:'Du machst gerade Pause, super! Genieße den klaren Kopf.'};
+  if(last7>5 && streak.type==='today') return {emoji:'💚', text:'Eine Pause von 2-3 Tagen wäre eine gute Gewohnheit, hilft, die Toleranz niedrig zu halten.'};
+  if(last7<=2) return {emoji:'✨', text:'Bewusster Konsum, du nutzt es selten.'};
   return {emoji:'📊', text:'Du konsumierst regelmäßig. Beobachte gerne, wie du dich dabei fühlst.'};
 }
 function renderSessionHint(){
@@ -14704,7 +14704,7 @@ function renderSessionAchievements(){
   const st=sessionAchState();
   root.innerHTML = `<h4 class="sess-h4">Achievements</h4><div class="ach-grid">`
     + SESSION_ACHIEVEMENTS.map(a=>{ const earned=!!st[a.id]; const when=earned?new Date(st[a.id].earnedAt).toLocaleDateString('de-DE'):'';
-        return `<div class="ach-card${earned?' earned':''}" title="${escapeHtml(a.desc)}${earned?' — erreicht '+when:''}"><div class="ach-ico">${a.icon}</div><div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-meta">${earned?'✓ '+when:'noch nicht'}</div></div>`;
+        return `<div class="ach-card${earned?' earned':''}" title="${escapeHtml(a.desc)}${earned?', erreicht '+when:''}"><div class="ach-ico">${a.icon}</div><div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-meta">${earned?'✓ '+when:'noch nicht'}</div></div>`;
       }).join('')
     + `</div>`;
 }
@@ -14787,7 +14787,7 @@ function startPreheatCountdown(){
 async function executePreheat(){
   cancelPreheat();
   if(!State.connected){
-    toast('Pre-Heat: Nicht verbunden — bitte manuell starten');
+    toast('Pre-Heat: Nicht verbunden, bitte manuell starten');
     playSuccess();
     haptic([100,80,100,80,100]);
     srAnnounce('Pre-Heat Zeit erreicht. Bitte manuell verbinden und starten.', true);
@@ -14808,7 +14808,7 @@ async function executePreheat(){
 function cancelPreheat(){
   if(preheatTimer){ clearInterval(preheatTimer); preheatTimer=null; }
   preheatEndAt = null;
-  // v4.9.6: robuster cleanup — alle UI-Reste entfernen
+  // v4.9.6: robuster cleanup, alle UI-Reste entfernen
   const box = $('#preheatRunning');
   if(box){
     box.hidden = true;
@@ -14841,7 +14841,7 @@ function computeNextRun(sch){
   if(!t) return null;
 
   if(t.type === 'in'){
-    // Relative Zeit ab jetzt — nur sinnvoll bei "once"
+    // Relative Zeit ab jetzt, nur sinnvoll bei "once"
     if(sch.lastRun){
       // Bereits einmal getriggered → nicht nochmal (bei "once")
       return sch.repeat === 'once' ? null : now + (t.mins||10)*60000;
@@ -14906,7 +14906,7 @@ function scheduleTick(){
     if(!sch.nextRun) continue;
     if(sch.nextRun > now) continue;
     if(sch.nextRun < now - 5*60000){
-      // Verpasst (App war zu) — überspringen, recompute
+      // Verpasst (App war zu), überspringen, recompute
       sch.nextRun = computeNextRun(sch);
       changed = true;
       continue;
@@ -14933,7 +14933,7 @@ async function executeSchedule(sch){
   try{ if(navigator.vibrate) navigator.vibrate([80,60,80]); }catch{}
   if(sch.action?.type === 'heat'){
     if(!State.connected){
-      toast('Schedule: Nicht verbunden — manuell starten');
+      toast('Schedule: Nicht verbunden, manuell starten');
       ttsSay('Schedule Zeit erreicht. Bitte verbinden.');
       playSuccess();
       return;
@@ -14953,7 +14953,7 @@ async function executeSchedule(sch){
     const p = State.programs.find(x=>x.id === sch.action.progId);
     if(!p){ toast('Programm nicht gefunden'); return; }
     if(!State.connected){
-      toast('Schedule: Nicht verbunden — Programm '+p.name+' wartet');
+      toast('Schedule: Nicht verbunden, Programm '+p.name+' wartet');
       return;
     }
     ttsSay(`Schedule startet ${p.name}`);
@@ -14993,10 +14993,10 @@ function updateScheduleHero(){
       if(remain < 3600000){
         const min = Math.floor(remain/60000);
         const sec = Math.floor((remain%60000)/1000);
-        info.textContent = `in ${min}m ${String(sec).padStart(2,'0')}s — ${desc}`;
+        info.textContent = `in ${min}m ${String(sec).padStart(2,'0')}s, ${desc}`;
       } else {
         const d = new Date(next.nextRun);
-        info.textContent = `${d.toLocaleString('de-DE', {weekday:'short', hour:'2-digit', minute:'2-digit'})} — ${desc}`;
+        info.textContent = `${d.toLocaleString('de-DE', {weekday:'short', hour:'2-digit', minute:'2-digit'})}, ${desc}`;
       }
     }
   }
@@ -15205,7 +15205,7 @@ function saveScheduleFromEditor(){
   }
   // "in X Min" + repeating macht keinen Sinn → fixen
   if(_schEditing.trigger?.type === 'in' && _schEditing.repeat !== 'once'){
-    toast('„In X Min" geht nur einmalig — Wiederholung auf „Einmalig" gesetzt');
+    toast('„In X Min" geht nur einmalig, Wiederholung auf „Einmalig" gesetzt');
     _schEditing.repeat = 'once';
   }
 
@@ -15433,7 +15433,7 @@ function setupFavLongPress(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v4.5: SMART DEFAULTS — App lernt häufige Lieblings-Temperatur
+   v4.5: SMART DEFAULTS, App lernt häufige Lieblings-Temperatur
 ═══════════════════════════════════════════════════════════════ */
 function noteUsedTemp(t){
   if(!isFinite(t)) return;
@@ -15737,7 +15737,7 @@ function setupVoiceReadoutInterval(){
    - Web Speech API hat KEIN echtes Wake-Word wie Alexa
    - Workaround: continuous=true Recognition, hört auf „Hey Sessions"
    - Audio geht über die Google-Speech-Cloud (Chrome-Implementierung),
-     ist also NICHT vollständig lokal — UI sagt das auch
+     ist also NICHT vollständig lokal, UI sagt das auch
    - Akku: hoch (Mikrofon dauer-aktiv)
    - Reliability: Chrome desktop/Android = ok; iOS Safari/Firefox = nein
    - Recognition stoppt periodisch von alleine → onend startet neu
@@ -15861,7 +15861,7 @@ function stopWakeWord(){
   updateWakeIndicator();
 }
 function setupWakeWord(){
-  // v8.7.1: Screen-Reader-Modus sperrt Wake-Word — Mikrofon-Dauer-Listening
+  // v8.7.1: Screen-Reader-Modus sperrt Wake-Word, Mikrofon-Dauer-Listening
   // + Screen-Reader-TTS überlagern sich sonst, zusätzlich Privacy-/Akku-Last.
   if(PREFS.screenReaderMode === true){ stopWakeWord(); return; }
   if(PREFS.wakeWord && isWakeWordSupported()){
@@ -16055,7 +16055,7 @@ async function requirePin(){
         resolve(true);
       } else {
         haptiPattern('error');
-        inp.value=''; inp.placeholder='PIN falsch — nochmal';
+        inp.value=''; inp.placeholder='PIN falsch, nochmal';
       }
     };
     const enterHandler = (e)=>{ if(e.key==='Enter') handler(); };
@@ -16148,7 +16148,7 @@ async function checkBagsLimit(){
    v4.6: FORGET-ME (alles löschen)
 ═══════════════════════════════════════════════════════════════ */
 async function forgetMe(){
-  if(!(await uiConfirm('Wirklich ALLE Daten dauerhaft löschen?\n\nEinstellungen, Programme, Sessions, Notizen, PIN, History — alles weg.\nDie App wird sich danach neu starten.'))) return;
+  if(!(await uiConfirm('Wirklich ALLE Daten dauerhaft löschen?\n\nEinstellungen, Programme, Sessions, Notizen, PIN, History, alles weg.\nDie App wird sich danach neu starten.'))) return;
   if(!(await uiConfirm('LETZTE BESTÄTIGUNG: Daten weg, kein Zurück. Fortfahren?'))) return;
   // Clear all LS keys
   try{
@@ -16327,7 +16327,7 @@ function renderMaintenance(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v4.6: PROGRAM EDITOR — LOOP + VARIABLES + TIMELINE
+   v4.6: PROGRAM EDITOR, LOOP + VARIABLES + TIMELINE
 ═══════════════════════════════════════════════════════════════ */
 // Loop step: { action:'loop_start', repeat:3 }  ...  { action:'loop_end' }
 // Variable placeholder: value can be a string like '{temp}' or '{seconds}'
@@ -16582,7 +16582,7 @@ function renderVapeBuddy(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v4.7: AUDIO — SOUNDSCAPES + BINAURAL BEATS + BREATHING
+   v4.7: AUDIO, SOUNDSCAPES + BINAURAL BEATS + BREATHING
 ═══════════════════════════════════════════════════════════════ */
 let soundscapeNodes = null;
 let beatsNodes = null;
@@ -16801,9 +16801,9 @@ function stopBreathing(){
    v4.7: GLOSSAR
 ═══════════════════════════════════════════════════════════════ */
 const GLOSSAR = [
-  {term:'THC', desc:'Tetrahydrocannabinol — der bekannteste psychoaktive Wirkstoff der Cannabis-Pflanze. Verdampft ab ca. 157°C, voll aktiv bei 180-200°C.'},
-  {term:'CBD', desc:'Cannabidiol — nicht psychoaktiv, wirkt entzündungshemmend und entspannend. Verdampft ab ca. 160-180°C.'},
-  {term:'CBN', desc:'Cannabinol — entsteht durch Abbau von THC, wirkt sedierend. Verdampft ab ca. 185°C.'},
+  {term:'THC', desc:'Tetrahydrocannabinol, der bekannteste psychoaktive Wirkstoff der Cannabis-Pflanze. Verdampft ab ca. 157°C, voll aktiv bei 180-200°C.'},
+  {term:'CBD', desc:'Cannabidiol, nicht psychoaktiv, wirkt entzündungshemmend und entspannend. Verdampft ab ca. 160-180°C.'},
+  {term:'CBN', desc:'Cannabinol, entsteht durch Abbau von THC, wirkt sedierend. Verdampft ab ca. 185°C.'},
   {term:'Terpene', desc:'Aromastoffe in vielen Pflanzen, auch in Cannabis. Bestimmen Geruch und Wirkung. Verdampfen je nach Terpen zwischen 155-220°C.'},
   {term:'Linalool', desc:'Terpen mit Lavendel-Aroma. Beruhigend, entspannend. Verdampft ab 198°C.'},
   {term:'Limonen', desc:'Terpen mit Zitrus-Aroma. Stimmungsaufhellend, hilft gegen Stress. Verdampft ab 176°C.'},
@@ -16811,7 +16811,7 @@ const GLOSSAR = [
   {term:'Pinen', desc:'Terpen mit Pinien-Aroma. Konzentrationsfördernd. Verdampft ab 156°C.'},
   {term:'Caryophyllen', desc:'Terpen mit pfeffrig-würzigem Aroma. Entzündungshemmend. Verdampft ab 119°C.'},
   {term:'Humulen', desc:'Terpen mit Hopfen-Aroma. Appetithemmend. Verdampft ab 222°C.'},
-  {term:'Decarboxylierung', desc:'Chemischer Prozess bei dem THCA in THC und CBDA in CBD umgewandelt wird — durch Hitze. Beim Verdampfen automatisch.'},
+  {term:'Decarboxylierung', desc:'Chemischer Prozess bei dem THCA in THC und CBDA in CBD umgewandelt wird, durch Hitze. Beim Verdampfen automatisch.'},
   {term:'Entourage-Effekt', desc:'Theorie dass Cannabinoide und Terpene zusammen stärker und differenzierter wirken als isoliert. Daher Vollspektrum-Verdampfung.'},
   {term:'Indica', desc:'Cannabis-Familie mit typisch sedierend-körperlicher Wirkung. Hilfreich gegen Schmerz, Schlafstörung, Spannungen.'},
   {term:'Sativa', desc:'Cannabis-Familie mit typisch energetisch-zerebraler Wirkung. Hilfreich für Stimmungsaufhellung, Kreativität.'},
@@ -16819,7 +16819,7 @@ const GLOSSAR = [
   {term:'Konduktion', desc:'Wärmeübertragung durch direkten Kontakt (Crafty, Mighty). Schneller, aber Risiko der Verbrennung.'},
   {term:'Konvektion', desc:'Wärmeübertragung durch heiße Luft (Volcano). Sanfter, gleichmäßiger.'},
   {term:'Hybrid-Heizung', desc:'Mischung aus Konduktion und Konvektion (Volcano Hybrid, Venty). Schnellere Aufwärmzeit + Effizienz.'},
-  {term:'AVB', desc:'Already Vaped Bud — bereits verdampftes Cannabis. Lässt sich noch zu Edibles weiterverarbeiten.'},
+  {term:'AVB', desc:'Already Vaped Bud, bereits verdampftes Cannabis. Lässt sich noch zu Edibles weiterverarbeiten.'},
   {term:'Mikrodose', desc:'Sehr geringe Konsum-Menge bei niedrigerer Temperatur (155-175°C). Wenig psychoaktive, mehr therapeutische Wirkung.'},
   {term:'Tolerance Break', desc:'Bewusste Konsum-Pause um Toleranz abzubauen. Typisch 7-21 Tage. Nach 30 Tagen größtenteils zurückgesetzt.'},
 ];
@@ -17065,7 +17065,7 @@ async function startTBreak(){
   PREFS.tBreakStartDate = new Date().toISOString();
   PREFS.tBreakGoalDays = clamp(parseInt(days)||14, 1, 90);
   savePrefs();
-  toast('T-Break gestartet — viel Erfolg!');
+  toast('T-Break gestartet, viel Erfolg!');
   renderTBreak();
 }
 async function endTBreak(){
@@ -17538,7 +17538,7 @@ const TOOLTIPS = {
   'devBadge':'Gerätetyp wechseln (Volcano, Crafty, Mighty, Venty)',
   'qaDirectDraw':'Pumpe für eingestellte Sekunden, dann automatisch aus',
   'qaBagFill':'Ballon füllen mit gewähltem Typ und Zeit',
-  'qaTimer':'Session-Planer — Heizen oder Programme zeitgesteuert starten (einmalig, täglich, Wochenplan)',
+  'qaTimer':'Session-Planer, Heizen oder Programme zeitgesteuert starten (einmalig, täglich, Wochenplan)',
   'qaAroma':'Aroma- und Sortendatenbank mit Empfehlungen',
   'btnPreheatCancel':'Aktiven Schedule abbrechen',
   'btnHeat':'Heizer einschalten oder ausschalten (Tastatur: Space)',
@@ -17587,7 +17587,7 @@ function installTooltips(){
   installTooltipBehavior();
 }
 
-// v4.9.6: Universelle Tooltip-Behandlung — auch für dynamisch erzeugte Elemente
+// v4.9.6: Universelle Tooltip-Behandlung, auch für dynamisch erzeugte Elemente
 function installTooltipBehavior(root){
   root = root || document.body;
   // Alle Elemente mit data-tip oder aria-label (wenn sie Buttons/Interactive sind)
@@ -17637,7 +17637,7 @@ function installTooltipBehavior(root){
   });
 }
 
-// v4.9.6: MutationObserver — neu erzeugte Elemente automatisch tooltip-fähig machen
+// v4.9.6: MutationObserver, neu erzeugte Elemente automatisch tooltip-fähig machen
 function setupDynamicTooltips(){
   const observer = new MutationObserver(muts=>{
     for(const m of muts){
@@ -17947,7 +17947,7 @@ function exportProgramAsHaYaml(p){
   const slug = (p.name||'sessions_program').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
   const steps = expandLoops(p.steps);
   const lines = [];
-  lines.push(`# Home Assistant Script — exportiert von Terp Sessions PWA`);
+  lines.push(`# Home Assistant Script, exportiert von Terp Sessions PWA`);
   lines.push(`# Programm: ${p.name}`);
   lines.push(``);
   lines.push(`script:`);
@@ -18185,7 +18185,7 @@ function ttsSay(text){
   // v9.6.0 C1: im Screen-Reader-Modus KEINE App-TTS (VoiceOver kuendigt selbst an), nur die Live-Region oben
   try{ if(typeof PREFS === 'object' && PREFS && PREFS.screenReaderMode === true) return; }catch(_){}
   if(!('speechSynthesis' in window)) return;
-  // v9.0.0 P3.3: Bluefy hat inkonsistent funktionierende SpeechSynthesis — explizit blocken (Live-Region oben greift stattdessen)
+  // v9.0.0 P3.3: Bluefy hat inkonsistent funktionierende SpeechSynthesis, explizit blocken (Live-Region oben greift stattdessen)
   try{
     const ua = navigator.userAgent || '';
     if(ua.indexOf('Bluefy') !== -1) return;
@@ -18253,7 +18253,7 @@ async function handleUrlCommand(){
   // BLE-Status prüfen
   if(handler.needsBle && !State.connected){
     // Auto-Reconnect-Versuch
-    toast('Benötigt Bluetooth-Verbindung — versuche zu verbinden…');
+    toast('Benötigt Bluetooth-Verbindung, versuche zu verbinden…');
     try{
       // Schaue ob bereits gepaired Devices da sind
       if(navigator.bluetooth && navigator.bluetooth.getDevices){
@@ -18331,7 +18331,7 @@ function renderShortcutExamples(){
         await navigator.clipboard.writeText(url);
         toast('URL kopiert');
       }catch{
-        toast('Kopieren fehlgeschlagen — manuell auswählen');
+        toast('Kopieren fehlgeschlagen, manuell auswählen');
       }
     });
     root.appendChild(div);
@@ -18352,7 +18352,7 @@ const TOUR_STEPS = [
   {
     target:'#btnConnect',
     title:'1. Bluetooth verbinden',
-    text:'Tippe hier um deinen Volcano (oder Crafty / Mighty / Venty) zu verbinden. Beim ersten Mal erscheint der BLE-Picker — wähle dein Gerät aus.',
+    text:'Tippe hier um deinen Volcano (oder Crafty / Mighty / Venty) zu verbinden. Beim ersten Mal erscheint der BLE-Picker, wähle dein Gerät aus.',
     placement:'bottom',
   },
   {
@@ -18370,13 +18370,13 @@ const TOUR_STEPS = [
   {
     target:'#qaTimer',
     title:'4. Session-Planer (Timer)',
-    text:'Plane Sessions zeitgesteuert: einmalig in X Minuten, zu einer Uhrzeit oder als Wochenrhythmus. Heizt vor oder startet ein ganzes Programm — auch wiederkehrend.',
+    text:'Plane Sessions zeitgesteuert: einmalig in X Minuten, zu einer Uhrzeit oder als Wochenrhythmus. Heizt vor oder startet ein ganzes Programm, auch wiederkehrend.',
     placement:'bottom',
   },
   {
     target:'#nav-prog',
     title:'5. Programme-Tab',
-    text:'Hier findest du Vorlagen und kannst eigene Programme bauen — mit Schritten, Loops und Variablen. Lange auf eine Programm-Karte tippen zeigt die Beschreibung.',
+    text:'Hier findest du Vorlagen und kannst eigene Programme bauen, mit Schritten, Loops und Variablen. Lange auf eine Programm-Karte tippen zeigt die Beschreibung.',
     placement:'top',
   },
   {
@@ -18539,7 +18539,7 @@ function endOnboardingTour(){
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v4.9.6: MOBILE GESTEN — Tastatur-Shortcuts Equivalent
+   v4.9.6: MOBILE GESTEN, Tastatur-Shortcuts Equivalent
 ═══════════════════════════════════════════════════════════════ */
 function setupMobileGestures(){
   // Swipe nach links/rechts wechselt Tabs (auf body, ignoriert wenn in Modal oder Inputs)
@@ -18671,7 +18671,7 @@ function showPlatformBanner(){
     banner.innerHTML = `
       <div>
         <b>📱 iOS Safari</b><br>
-        <small>Für Bluetooth-Steuerung brauchst du die kostenlose App „Bluefy" aus dem App Store. Damit kannst du den Volcano per BLE steuern. Die App selbst funktioniert auch hier — nur ohne BLE.</small>
+        <small>Für Bluetooth-Steuerung brauchst du die kostenlose App „Bluefy" aus dem App Store. Damit kannst du den Volcano per BLE steuern. Die App selbst funktioniert auch hier, nur ohne BLE.</small>
       </div>
       <button aria-label="Banner schließen">×</button>
     `;
@@ -18778,7 +18778,7 @@ async function init(){
         const now = new Date();
         const days = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
         if(days[now.getDay()] === r.day && Math.abs(now.getHours() - r.hour) <= 1){
-          toast(`📅 Routine erkannt: ${r.day}s gegen ${r.hour}:00 — soll ich Pre-Heat planen?`);
+          toast(`📅 Routine erkannt: ${r.day}s gegen ${r.hour}:00, soll ich Pre-Heat planen?`);
         }
       }
     }
@@ -18801,7 +18801,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.25.0 bereit.','ok');
+  log('Terp Sessions v9.26.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -18820,7 +18820,7 @@ async function init(){
   }
 
   // v9.0.4 Paket N2: First-Visit-Compatibility-Check. Auto-Anzeige NUR bei echtem
-  // Erst-Besuch (nach Onboarding) oder erkanntem Browser-Wechsel — bestehende, bereits
+  // Erst-Besuch (nach Onboarding) oder erkanntem Browser-Wechsel, bestehende, bereits
   // onboardete Nutzer bekommen kein Dauer-Popup (Recall-Button im Setup verfügbar).
   // maybeShowCompatibilityWelcome legt sich nie über ein offenes Modal/Welcome/Tour.
   setTimeout(()=>{ try{ _maybeAutoCompat(); }catch(_){} }, 2600);
@@ -18834,7 +18834,7 @@ async function init(){
 /* ═══════════════════════════════════════════════════════════════════════════
    v8.6.0 MODUL 1: INLINE-QR-ENCODER
 
-   Portion of QR Code generator (Nayuki) — adapted from the MIT-licensed
+   Portion of QR Code generator (Nayuki), adapted from the MIT-licensed
    reference implementation at https://www.nayuki.io/page/qr-code-generator-library
    ── Copyright (c) Project Nayuki. (MIT License) ──
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19455,13 +19455,13 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
 
    STATUS v8.7.0-prep:
      • Krypto-Modul ist VOLLSTÄNDIG implementiert und getestet.
-     • BIP39-Recovery-Wortliste ist NICHT enthalten — siehe seedToWords/
+     • BIP39-Recovery-Wortliste ist NICHT enthalten, siehe seedToWords/
        wordsToSeed-Stubs. Begründung: die offiziellen 2048 EN-Wörter müssen
        byte-genau übereinstimmen, sonst inkompatibel mit anderen BIP39-Tools.
        Eine fehleranfällige Memory-Reproduktion wird hier bewusst NICHT
        gemacht. v8.7.1 wird die offizielle Liste aus dem bitcoin/bips-Repo
        als verifizierte Datei einbinden (SHA-256 gegen kanonischen Hash).
-     • Modul ist nicht ans UI angebunden — KEIN Live-Feature. Anbindung
+     • Modul ist nicht ans UI angebunden, KEIN Live-Feature. Anbindung
        erfolgt in v8.7.1 nach externem Krypto-Review (siehe CSC-CRYPTO.md).
 
    Threat-Model, Schlüssel-Hierarchie und Non-Goals: siehe CSC-CRYPTO.md. */
@@ -19496,7 +19496,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   // ── PBKDF2 mit Spec-Iterations-Anzahl ────────────────────────────────────
   // v8.7.1-prep (Review-Punkt 2): 600 000 → 1 000 000.
   // OWASP-Untergrenze ist 600 000; Reviewer sagt „mehr darf gerne sein".
-  // 1 M dauert auf modernen Handys ~500-1000 ms — akzeptabel für Setup/Login
+  // 1 M dauert auf modernen Handys ~500-1000 ms, akzeptabel für Setup/Login
   // (1× pro Session). Daten-Zugriffe nutzen NUR HKDF (instant), nicht PBKDF2.
   const PBKDF2_ITERATIONS = 1000000;
   const KEY_LENGTH_BITS   = 256;
@@ -19535,7 +19535,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   }
   // v8.7.1-prep (Review-Punkt 1): Per-User-HKDF-Salt zusätzlich zum
   // Per-Purpose-Info-Tag. Erzeugt 16 Bytes via CSPRNG; in csc_users.hkdf_salt
-  // klartext gespeichert (analog zu kdf_salt — Salt ist per Definition öffentlich).
+  // klartext gespeichert (analog zu kdf_salt, Salt ist per Definition öffentlich).
   function generateHkdfSalt(){
     _assertCrypto();
     return _rng(new Uint8Array(16));
@@ -19571,7 +19571,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   //       bekommen,
   //   (b) data-/agg-/master-Keys eines Users garantiert verschieden sind
   //       (auch bei gleichem Salt).
-  // Backward-compat: WIRD NICHT bereitgestellt — Modul ist dormant, kein
+  // Backward-compat: WIRD NICHT bereitgestellt, Modul ist dormant, kein
   // produktiver User existiert. Wer ein altes v8.7.0-prep-Backend ausgeführt
   // hat: csc-backend.sql neu ausführen (drop + create).
   async function deriveKeyFromSeed(seed16, hkdfSaltOrPurpose, maybePurpose){
@@ -19580,15 +19580,15 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
       throw new Error('SEED_LENGTH (need 16 bytes Uint8Array)');
     }
     // Signatur ist (seed, hkdfSalt, purpose). Alte 2-Arg-Aufrufe werden
-    // explizit abgelehnt — Review verlangt Pflicht-Salt.
+    // explizit abgelehnt, Review verlangt Pflicht-Salt.
     if(maybePurpose === undefined){
-      throw new Error('HKDF_SALT_REQUIRED — deriveKeyFromSeed(seed16, hkdfSalt, purpose)');
+      throw new Error('HKDF_SALT_REQUIRED, deriveKeyFromSeed(seed16, hkdfSalt, purpose)');
     }
     const hkdfSalt = (hkdfSaltOrPurpose instanceof Uint8Array)
       ? hkdfSaltOrPurpose
       : (typeof hkdfSaltOrPurpose === 'string' ? _b64decode(hkdfSaltOrPurpose) : null);
     if(!hkdfSalt || hkdfSalt.length !== 16){
-      throw new Error('HKDF_SALT_LENGTH (need 16 bytes — Uint8Array or base64)');
+      throw new Error('HKDF_SALT_LENGTH (need 16 bytes, Uint8Array or base64)');
     }
     const p = String(maybePurpose||'');
     if(!/^(master|data|agg)$/.test(p)) throw new Error('PURPOSE_INVALID');
@@ -19610,7 +19610,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   // ── Symmetrische Verschlüsselung ─────────────────────────────────────────
   async function encrypt(key, plaintext){
     _assertCrypto();
-    const iv = generateIv();                              // NIEMALS reuse — neu pro Aufruf
+    const iv = generateIv();                              // NIEMALS reuse, neu pro Aufruf
     const pt = _enc.encode(typeof plaintext === 'string' ? plaintext : JSON.stringify(plaintext));
     const ct = await subtle.encrypt({ name:'AES-GCM', iv }, key, pt);
     return { iv: _b64encode(iv), ct: _b64encode(new Uint8Array(ct)) };
@@ -19648,7 +19648,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
 
   // ── BIP39 Recovery: STUB für v8.7.1 ──────────────────────────────────────
   // Die offizielle BIP39-EN-Wortliste (2048 Wörter) muss byte-genau aus dem
-  // bitcoin/bips-Repo eingebunden werden — eine Memory-Reproduktion in dieser
+  // bitcoin/bips-Repo eingebunden werden, eine Memory-Reproduktion in dieser
   // Session ist zu fehleranfällig (ein vertauschtes Wort = inkompatibel mit
   // jedem anderen BIP39-Wallet). Recovery-Flow ist deshalb in v8.7.0-prep
   // bewusst NICHT ausgeliefert. v8.7.1 wird:
@@ -19658,10 +19658,10 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   //      SHA-256 der 16 Seed-Bytes, 12 × 11-Bit-Wort-Indizes)
   //   3. die offiziellen BIP39-Test-Vektoren gegen die Implementierung fahren
   function seedToWords(){
-    throw new Error('NOT_IMPLEMENTED_v870prep — BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
+    throw new Error('NOT_IMPLEMENTED_v870prep, BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
   }
   function wordsToSeed(){
-    throw new Error('NOT_IMPLEMENTED_v870prep — BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
+    throw new Error('NOT_IMPLEMENTED_v870prep, BIP39-Wortliste folgt in v8.7.1 (siehe Code-Kommentar + CSC-CRYPTO.md)');
   }
 
   // ── Hilfs-Helper für UI / Speicher (Base64-Konvertierung exponiert) ─────
@@ -19695,7 +19695,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
 
    Konfiguration nutzt das gleiche csc-config.json (URL + Anon-Key) wie der
    cscClient. Felder werden tolerant gelesen: supabaseUrl|url, supabaseAnonKey|
-   anonKey — damit beide Naming-Konventionen funktionieren.
+   anonKey, damit beide Naming-Konventionen funktionieren.
 
    Session-Token wird im MEMORY gehalten, NICHT in localStorage (Spec).
    Beim Reload muss der User sich neu einloggen. */
@@ -19817,7 +19817,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
   async function register(pseudonym, pin){
     if(!validatePseudonym(pseudonym)) throw new Error('INVALID_PSEUDONYM');
     if(typeof pin !== 'string' || !/^[0-9]{4,12}$/.test(pin)) throw new Error('INVALID_PIN');
-    // 1. Verfuegbarkeit pruefen (nicht-bindend, koennte race-conditionn — Server hat unique-Index)
+    // 1. Verfuegbarkeit pruefen (nicht-bindend, koennte race-conditionn, Server hat unique-Index)
     const avail = await rpc('community_pseudonym_available', { p_pseudonym: pseudonym });
     if(avail && avail.available === false) throw new Error('PSEUDONYM_TAKEN');
     // 2. csc_register mit Krypto-Dummies (Phase 1a)
@@ -19870,7 +19870,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     return rpc('community_strain_list', params);
   }
   async function strainGet(strainId){
-    // v8.7.4: Convenience — fetch single by id via list-RPC (kein dedicated get-RPC)
+    // v8.7.4: Convenience, fetch single by id via list-RPC (kein dedicated get-RPC)
     if(!strainId) throw new Error('NO_ID');
     const params = { p_filter: null, p_limit: 200, p_offset: 0 };
     if(_session && _session.code && _session.pin){
@@ -19906,7 +19906,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
     return rpc('community_program_create', { p_code:_session.code, p_pin:_session.pin, p_show_pseudonym: !!showPseudonym, p_data: data });
   }
   async function programList(filter, device, limit, offset){
-    // v8.7.4: analog strainList — Caller wenn eingeloggt
+    // v8.7.4: analog strainList, Caller wenn eingeloggt
     const params = { p_filter: filter || null, p_device: device || null, p_limit: limit || 50, p_offset: offset || 0 };
     if(_session && _session.code && _session.pin){
       params.p_caller_code = _session.code;
@@ -19965,7 +19965,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
 
   // ── v8.7.2-prep Phase 1b.1: Bootstrap-Admin + Promotion ────────────────
   async function bootstrapAvailable(){
-    // Public-RPC, kein PIN — returnt {available: bool, admin_count: int}
+    // Public-RPC, kein PIN, returnt {available: bool, admin_count: int}
     return rpc('community_bootstrap_available', {});
   }
   async function bootstrapFirstAdmin(){
@@ -20009,7 +20009,7 @@ document.addEventListener('DOMContentLoaded', _shareWireUi);
    - Default-OFF: cscEnabled-Toggle existiert in PREFS, UI ist NICHT verdrahtet.
    - Storage: sessions_csc_code (Code), sessions_csc_pin (PIN, lokal nötig für
      Auto-Sync). PIN ist im Server bcrypt-gehashed, lokal nur auf Geräten des
-     Users — Threat-Model: Cloud-Schutz, nicht lokales Tamper.
+     Users, Threat-Model: Cloud-Schutz, nicht lokales Tamper.
 ═══════════════════════════════════════════════════════════════════════════ */
 let _cscConfig = null;
 let _cscConfigLoaded = false;
@@ -20130,7 +20130,7 @@ function cscSharedIds(){
   try{ return LS.get('sessions_csc_shared_v1', []) || []; }catch{ return []; }
 }
 /* Push aller markierten Sessions die noch nicht im Cloud-Status sind. Triggert
-   sich NIE automatisch — explizit aufzurufen, sobald UI vorhanden ist. */
+   sich NIE automatisch, explizit aufzurufen, sobald UI vorhanden ist. */
 async function cscSyncMarked(){
   if(!await cscReady()) return { skipped:true, reason:'csc-not-ready' };
   if(!cscClient.isLoggedIn()) return { skipped:true, reason:'not-logged-in' };
@@ -20149,10 +20149,10 @@ async function cscSyncMarked(){
    v8.7.0 ACCESSIBILITY-INIT
    Läuft am Ende von init(). Macht den existierenden Code accessible ohne
    bestehende ARIA-Attribute zu entfernen. Funktionen sind ausgelegt für
-   Re-Run (idempotent — kann mehrfach laufen ohne Schaden).
+   Re-Run (idempotent, kann mehrfach laufen ohne Schaden).
 ═══════════════════════════════════════════════════════════════════════════ */
 
-// Setzt aria-label aus dem benachbarten <label> oder .info > b — für inputs/
+// Setzt aria-label aus dem benachbarten <label> oder .info > b, für inputs/
 // selects/textareas/toggles, die noch keinen accessible name haben.
 // v9.2.1 Paket A K1: macht ein klickbares Nicht-Button-Element (Karte/Zeile) per
 // Tastatur + VoiceOver bedienbar (role=button + tabindex + Enter/Leertaste).
@@ -20194,7 +20194,7 @@ function _a11yAutoLabel(){
         el.setAttribute('aria-label', lbl.textContent.trim().replace(/[:：]\s*$/,''));
       }
     });
-    // 2. Toggles (button.toggle[role=switch] ohne aria-label) — Text aus .toggle-row .info > b
+    // 2. Toggles (button.toggle[role=switch] ohne aria-label), Text aus .toggle-row .info > b
     document.querySelectorAll('button.toggle[role="switch"]:not([aria-label])').forEach(btn=>{
       const row = btn.closest('.toggle-row');
       const b = row && row.querySelector('.info > b');
@@ -20450,14 +20450,14 @@ function _isIOS(){
   try{
     const ua = navigator.userAgent || '';
     if(/iPad|iPhone|iPod/i.test(ua)) return true;
-    // iPadOS ≥13 meldet sich als MacIntel — Touch-Indikator hinzunehmen
+    // iPadOS ≥13 meldet sich als MacIntel, Touch-Indikator hinzunehmen
     if(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
     return false;
   }catch{ return false; }
 }
 function _srHintInit(){
   try{
-    // Buttons IMMER wireup'en (unabhängig von Plattform — Modal kann auch
+    // Buttons IMMER wireup'en (unabhängig von Plattform, Modal kann auch
     // manuell getriggert werden, z.B. künftig via Setup-Button).
     $('#srHintLater')?.addEventListener('click', ()=>{
       PREFS.screenReaderHintShown = true; savePrefs();
@@ -20489,7 +20489,7 @@ function _srHintInit(){
   }catch{}
 }
 
-/* v8.7.1 Modul 3: 30 s-Heuristik — wenn Tab-Fokus aber kein Pointer/Touch
+/* v8.7.1 Modul 3: 30 s-Heuristik, wenn Tab-Fokus aber kein Pointer/Touch
    → Banner (kein Modal, nicht aufdrängen). Plattform-unabhängig. */
 function _srHeuristicInit(){
   try{
@@ -20601,7 +20601,7 @@ function showShortcutHelp(){
     ).join('');
     // v8.7.1: Screen-Reader-Plattform-Hinweise
     const srSection = `<h3 style="margin:14px 0 6px;font-size:14px">♿ Screen-Reader</h3>
-      <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 8px">Da Web-Browser uns nicht verraten welche Hilfssoftware aktiv ist, musst du das einmal manuell sagen — danach merkt sich Sessions das.</p>
+      <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 8px">Da Web-Browser uns nicht verraten welche Hilfssoftware aktiv ist, musst du das einmal manuell sagen, danach merkt sich Sessions das.</p>
       <ul style="margin:0 0 8px 16px;padding:0;font-size:12px;line-height:1.6">
         <li><b>iPhone/iPad VoiceOver:</b> Setup → Sprachsteuerung → <kbd style="background:var(--bg-3);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px">Ich nutze einen Screen-Reader</kbd></li>
         <li><b>Android TalkBack:</b> gleicher Toggle</li>
@@ -20630,7 +20630,7 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(initA11y, 800); }
    Bootstrap-Hinweis erscheint nur wenn noch kein Admin existiert.
    Promotion-Modal erscheint nur für eingeloggte Admins.
 ═══════════════════════════════════════════════════════════════════════════ */
-/* v9.1.0 Paket N3: DSGVO data_consent_at — Anzeige + Auskunfts-Export.
+/* v9.1.0 Paket N3: DSGVO data_consent_at, Anzeige + Auskunfts-Export.
    Reine, backend-unabhaengige Helfer (testbar mit Mock-Session). Der eigentliche
    Wert kommt aus der Community-Session (Login-RPC, Patch 13b); fehlt er, wird
    "noch nicht erfasst" angezeigt. */
@@ -20703,7 +20703,7 @@ function _commSetupRefresh(){
       buttons.innerHTML = '<button class="btn sm hot" id="btnCommRegisterOpen" style="flex:1">Registrieren</button>'
                        + '<button class="btn sm" id="btnCommLoginOpen" style="flex:1">Anmelden</button>';
       if(adminArea){ adminArea.hidden = true; }
-      // v8.7.4: bei Logout/Disabled — Cache reset damit keine alte Liste sichtbar bleibt
+      // v8.7.4: bei Logout/Disabled, Cache reset damit keine alte Liste sichtbar bleibt
       try{ _commStrainCache = []; _commStrainOffset = 0; _commStrainHasMore = false; }catch(_){}
       // v8.7.5: Programm-Cache analog
       try{ _commProgCache = []; _commProgOffset = 0; _commProgHasMore = false; }catch(_){}
@@ -20759,8 +20759,8 @@ function _commWireSetup(){
     togSr.setAttribute('aria-checked', String(!!PREFS.communityEnabled));
   }
 
-  // v8.7.3: Delegierter Click-Listener auf Container — robust gegen innerHTML-Rebuilds.
-  // Frueher: addEventListener direkt auf dynamische Buttons nach jedem innerHTML — fragil
+  // v8.7.3: Delegierter Click-Listener auf Container, robust gegen innerHTML-Rebuilds.
+  // Frueher: addEventListener direkt auf dynamische Buttons nach jedem innerHTML, fragil
   // wenn _commSetupRefresh in Race-Bedingungen mehrfach laeuft oder Init-Kette wirft.
   const commBtns = document.getElementById('communityButtons');
   if(commBtns && !commBtns.__wired){
@@ -20823,7 +20823,7 @@ function _commWireSetup(){
             nextBtn2.disabled = false;
           } else {
             pseuStatus.style.color = 'var(--err)';
-            pseuStatus.textContent = '✗ schon vergeben — anderen wählen';
+            pseuStatus.textContent = '✗ schon vergeben, anderen wählen';
           }
         }catch(e){
           pseuStatus.style.color = 'var(--err)';
@@ -21169,43 +21169,43 @@ document.addEventListener('DOMContentLoaded', _modalStackInit);
    - Aria-Live + Fokus-Management
 
    Tests werden als PIONEER_TESTS-Array definiert. INHALT ist Plausible-
-   Default — Andre soll spaeter aus Pioneer-Test-Szenarien-v1.docx
+   Default, Andre soll spaeter aus Pioneer-Test-Szenarien-v1.docx
    abgleichen (siehe ANDRE-NOTIZ.md).
 ═══════════════════════════════════════════════════════════════════════════ */
 const PIONEER_TESTS = [
   // ── Pfad A: sehende Tester (15 Tests, A1-A15) ────────────────────────────
   { id:'A1', path:'visual', title:'App-Installation', desc:'Installiere die App auf deinem Geraet (PWA-Install). Auf iOS Safari: Teilen-Symbol → "Zum Home-Bildschirm". Auf Android Chrome: Menue → "App installieren".', hint:'Wenn der Install-Knopf fehlt: ueberpruefe ob du auf der HTTPS-URL bist.' },
-  { id:'A2', path:'visual', title:'Onboarding-Tour', desc:'Folge der Willkommens-Tour bis zum Ende. Skip-Button funktioniert auch — aber bitte einmal komplett durchklicken.', hint:'Tour-Reset in Settings → Wartung → Tour zuruecksetzen.' },
-  { id:'A3', path:'visual', title:'Bluetooth verbinden', desc:'Klick auf "Verbinden" oben rechts. Waehle dein Geraet (Volcano, Mighty, PAX etc.). Verbindung sollte gruen anzeigen.', hint:'iPhone Safari hat KEIN Web-Bluetooth — nutze Bluefy Browser.' },
+  { id:'A2', path:'visual', title:'Onboarding-Tour', desc:'Folge der Willkommens-Tour bis zum Ende. Skip-Button funktioniert auch, aber bitte einmal komplett durchklicken.', hint:'Tour-Reset in Settings → Wartung → Tour zuruecksetzen.' },
+  { id:'A3', path:'visual', title:'Bluetooth verbinden', desc:'Klick auf "Verbinden" oben rechts. Waehle dein Geraet (Volcano, Mighty, PAX etc.). Verbindung sollte gruen anzeigen.', hint:'iPhone Safari hat KEIN Web-Bluetooth, nutze Bluefy Browser.' },
   { id:'A4', path:'visual', title:'Temperatur setzen', desc:'Steuerung-Tab: tippe auf eine Quick-Action (z.B. 185°C) oder gib eine eigene Temperatur ein. Heizer sollte anspringen.', hint:'Ohne Geraet: nutze Mock-Modus (Settings → Mock-Modus) zum Testen.' },
   { id:'A5', path:'visual', title:'Aroma & Sorten oeffnen', desc:'Im Steuerung-Tab den Aroma-Button antippen. Werks-Liste sollte mehr als 50 Sorten zeigen. Suche nach "Northern Lights".', hint:'Tab-Leiste oben: Werk / Meine / Community.' },
   { id:'A6', path:'visual', title:'Programm starten', desc:'Programme-Tab: waehle ein Preset (z.B. "Heizkurve sanft") und starte es. Verfolge die Schritte.', hint:'Bei laufendem Programm erscheint die Split-Screen-Karte unten.' },
   { id:'A7', path:'visual', title:'Community-DB aktivieren + Registrieren', desc:'👤-Button im Header → "Registrieren". Pseudonym + PIN waehlen. Datenschutz-Haekchen setzen. Account anlegen.', hint:'Pseudonym 3-24 Zeichen, alphanumerisch. PIN 4-12 Ziffern.' },
-  { id:'A8', path:'visual', title:'Eigene Sorte anlegen', desc:'Aroma-Modal → Community-Tab → "+ Neue Sorte". Name, Genetik, THC/CBD, Terpene, Effekte eingeben. Speichern.', hint:'Anonym oder mit Pseudonym beitragen — beides moeglich.' },
+  { id:'A8', path:'visual', title:'Eigene Sorte anlegen', desc:'Aroma-Modal → Community-Tab → "+ Neue Sorte". Name, Genetik, THC/CBD, Terpene, Effekte eingeben. Speichern.', hint:'Anonym oder mit Pseudonym beitragen, beides moeglich.' },
   { id:'A9', path:'visual', title:'Sterne-Bewertung abgeben', desc:'Community-Sorte oeffnen → 4 Blaetter klicken. Bewertung wird sofort gespeichert (Optimistic Update).', hint:'Die Blaetter sollten ihre Farbe aendern.' },
-  { id:'A10', path:'visual', title:'Sprachsteuerung testen', desc:'Mikrofon-FAB unten rechts antippen. Sage: "Heize auf 185 Grad". App sollte reagieren.', hint:'Bluefy hat KEINE Speech-API — dort erscheint Text-Eingabe als Alternative.' },
+  { id:'A10', path:'visual', title:'Sprachsteuerung testen', desc:'Mikrofon-FAB unten rechts antippen. Sage: "Heize auf 185 Grad". App sollte reagieren.', hint:'Bluefy hat KEINE Speech-API, dort erscheint Text-Eingabe als Alternative.' },
   { id:'A11', path:'visual', title:'Session-Tracking', desc:'Steuerung-Tab → Session-Notiz hinzufuegen (Staerke + Effekt-Stichwort). Wird lokal gespeichert.', hint:'Setup-Tab → Sessions zeigt die Liste der gespeicherten Sessions.' },
-  { id:'A12', path:'visual', title:'Datenschutz lesen + Account loeschen', desc:'Datenschutz-Link unten im Register-Modal antippen. Liest sich verstaendlich? Danach: Account loeschen via Settings.', hint:'Account-Loeschung ist endgueltig — alle eigenen Beitraege gehen weg (Cascade).' },
+  { id:'A12', path:'visual', title:'Datenschutz lesen + Account loeschen', desc:'Datenschutz-Link unten im Register-Modal antippen. Liest sich verstaendlich? Danach: Account loeschen via Settings.', hint:'Account-Loeschung ist endgueltig, alle eigenen Beitraege gehen weg (Cascade).' },
   // ── Pfad B: blinde Tester mit Screen-Reader (15 Tests, B0-B15) ───────────
   { id:'B0', path:'screenreader', title:'Screen-Reader-Modus aktivieren', desc:'Settings → "♿ Ich nutze einen Screen-Reader" Toggle EIN. App-Sprache verstummt damit sich VoiceOver/TalkBack/NVDA nicht ueberlagern.', hint:'Toggle ist sehr weit oben in den Sprach-Einstellungen.' },
   { id:'B1', path:'screenreader', title:'Onboarding mit Screen-Reader', desc:'Tour-Schritte werden von VoiceOver/TalkBack vorgelesen. Jeden Schritt verstehen koennen.', hint:'Tour-Reset in Settings falls du sie schon weggeklickt hast.' },
   { id:'B2', path:'screenreader', title:'Header-Navigation per Touch-Explorer', desc:'Wische durch den Header: Brand, Connection-Status, Verbinden-Button, Profil-Button, Hilfe, Settings. Alle Elemente klar benannt?', hint:'iOS VoiceOver: 1-Finger-Wisch nach rechts geht zum naechsten Element.' },
-  { id:'B3', path:'screenreader', title:'Bluetooth verbinden mit Voice-Feedback', desc:'Verbinden-Button finden + aktivieren. System-Geraete-Picker oeffnet — ist er screen-reader-tauglich? Verbindungs-Status danach klar?', hint:'Bei Bluefy kommt erst Hinweis-Modal — dort "Verstanden" finden.' },
+  { id:'B3', path:'screenreader', title:'Bluetooth verbinden mit Voice-Feedback', desc:'Verbinden-Button finden + aktivieren. System-Geraete-Picker oeffnet, ist er screen-reader-tauglich? Verbindungs-Status danach klar?', hint:'Bei Bluefy kommt erst Hinweis-Modal, dort "Verstanden" finden.' },
   { id:'B4', path:'screenreader', title:'Temperatur setzen + Status anhören', desc:'Quick-Action-Button "185" finden + aktivieren. Heizer-Status wird angesagt (aktuelle Temp, Ziel-Temp).', hint:'Pro Status-Aenderung gibt es Aria-Live-Announcements.' },
-  { id:'B5', path:'screenreader', title:'Aroma-Liste per Wischen', desc:'Aroma-Modal oeffnen, durch Sorten wischen. Genetik + THC/CBD werden mit Name angesagt.', hint:'127 Werks-Sorten sind da — Suche nutzen waere effizienter.' },
-  { id:'B6', path:'screenreader', title:'Programm starten + Voice-Status', desc:'Programme-Tab. Preset auswaehlen + starten. Aktueller Schritt wird angesagt waehrend Programm laeuft.', hint:'Split-Screen-Karte unten zeigt Status — auch mit Aria-Live.' },
-  { id:'B7', path:'screenreader', title:'Community-Register via Tastatur', desc:'Tab-Taste durchs Register-Modal navigieren. Alle Felder erreichbar + benannt? Datenschutz-Haekchen findbar?', hint:'Submit ist disabled bis Haekchen gesetzt — Hinweis wird vorgelesen.' },
+  { id:'B5', path:'screenreader', title:'Aroma-Liste per Wischen', desc:'Aroma-Modal oeffnen, durch Sorten wischen. Genetik + THC/CBD werden mit Name angesagt.', hint:'127 Werks-Sorten sind da, Suche nutzen waere effizienter.' },
+  { id:'B6', path:'screenreader', title:'Programm starten + Voice-Status', desc:'Programme-Tab. Preset auswaehlen + starten. Aktueller Schritt wird angesagt waehrend Programm laeuft.', hint:'Split-Screen-Karte unten zeigt Status, auch mit Aria-Live.' },
+  { id:'B7', path:'screenreader', title:'Community-Register via Tastatur', desc:'Tab-Taste durchs Register-Modal navigieren. Alle Felder erreichbar + benannt? Datenschutz-Haekchen findbar?', hint:'Submit ist disabled bis Haekchen gesetzt, Hinweis wird vorgelesen.' },
   { id:'B8', path:'screenreader', title:'Sorte anlegen mit Screen-Reader', desc:'Aroma → Community → Neue Sorte. Tag-Inputs (Terpene/Effekte) screen-reader-tauglich? Enter-Taste fuegt Tag hinzu.', hint:'Pro Tag: Eingabe, Enter, Tag erscheint als Chip.' },
   { id:'B9', path:'screenreader', title:'Sterne-Bewertung per Tastatur', desc:'Sorten-Detail oeffnen. Mit Tab + Pfeil-Tasten die 4 Blaetter aktivieren. Aria-Label "X von 5 Blaettern" wird angesagt.', hint:'role=radio + role=radiogroup macht Pfeil-Tasten verfuegbar.' },
   { id:'B10', path:'screenreader', title:'Sprachsteuerung "Pumpe an"', desc:'Bei Screen-Reader-Modus EIN: das Wake-Word ist aus, der Mikrofon-FAB bleibt aber antippbar. Tippe den FAB an und sprich, oder nutze den Text-Befehl.', hint:'Settings → Sprachsteuerung aktiv toggle. Bei Wake-Word: Konflikt mit VoiceOver.' },
-  { id:'B11', path:'screenreader', title:'Datenschutz vorlesen + Account loeschen', desc:'Datenschutz-Link aktivieren — Vorlesen ueber VoiceOver/TalkBack. Lesbar? Danach Account-Loeschung-Pfad.', hint:'datenschutz.html ist semantisch aufgebaut (h1, h2, sections).' },
+  { id:'B11', path:'screenreader', title:'Datenschutz vorlesen + Account loeschen', desc:'Datenschutz-Link aktivieren, Vorlesen ueber VoiceOver/TalkBack. Lesbar? Danach Account-Loeschung-Pfad.', hint:'datenschutz.html ist semantisch aufgebaut (h1, h2, sections).' },
   // v9.0.0 Paket S2 Phase 3 P3.4: S3-Features im Pioneer-Test (6 neue Tests, A13-A15 + B13-B15)
   { id:'A13', path:'visual', title:'URL-Befehl via Siri Shortcuts', desc:'Lege dir einen Siri Shortcut an (oder Android-Tasker-Action) mit der URL https://123ichbinmitdabei.github.io/terp-sessions/?command=set_temp&value=185 und teste ob die App auf 185 heizt.', hint:'Auch direkt im Browser-Adressfeld testbar: ?command=heat_on / ?command=pump_off / ?command=stop_all / ?command=status. Bei BLE-Befehlen muss Geraet verbunden sein.' },
-  { id:'A14', path:'visual', title:'Touch-Macro anlegen + auf Hauptseite nutzen', desc:'Settings → Erweitert → Touch-Befehl-Macros → + Neuer Macro. Name "185-Start", Icon 🔥, Aktion "Temperatur setzen", Wert 185. Speichern. Im Steuerung-Tab unten erscheint der Macro-Chip — tippe ihn an.', hint:'Macros sind 1-Tap und feuern sofort. Bei BLE-Befehlen ohne Verbindung: Toast-Hinweis.' },
+  { id:'A14', path:'visual', title:'Touch-Macro anlegen + auf Hauptseite nutzen', desc:'Settings → Erweitert → Touch-Befehl-Macros → + Neuer Macro. Name "185-Start", Icon 🔥, Aktion "Temperatur setzen", Wert 185. Speichern. Im Steuerung-Tab unten erscheint der Macro-Chip, tippe ihn an.', hint:'Macros sind 1-Tap und feuern sofort. Bei BLE-Befehlen ohne Verbindung: Toast-Hinweis.' },
   { id:'A15', path:'visual', title:'TTS-Stimme wechseln + testen', desc:'Settings → Sprachsteuerung → TTS-Stimme: Dropdown waehlen (z.B. "Microsoft Hedda" oder "Anna"). ▶ Test druecken. Klingt sie anders? Speichern.', hint:'iOS hat "Anna" oder "Markus" eingebaut. Android: Google-Stimmen. Bei Bluefy ist TTS deaktiviert (Plattform-Limit).' },
-  { id:'B13', path:'screenreader', title:'URL-Befehl mit Voice-Feedback', desc:'Oeffne in Bluefy (iOS) oder Chrome (Android) die URL ?command=status. Verbindungs-Status sollte vorgelesen werden (oder via VoiceOver hoerbar). Bei command=set_temp&value=185: Temperatur-Aenderung wird angesagt.', hint:'URL-Scheme triggert TTS — wenn TTS gemuted oder Bluefy: nur Aria-Live-Announcement.' },
+  { id:'B13', path:'screenreader', title:'URL-Befehl mit Voice-Feedback', desc:'Oeffne in Bluefy (iOS) oder Chrome (Android) die URL ?command=status. Verbindungs-Status sollte vorgelesen werden (oder via VoiceOver hoerbar). Bei command=set_temp&value=185: Temperatur-Aenderung wird angesagt.', hint:'URL-Scheme triggert TTS, wenn TTS gemuted oder Bluefy: nur Aria-Live-Announcement.' },
   { id:'B14', path:'screenreader', title:'Touch-Macro mit Screen-Reader anlegen', desc:'Settings → Erweitert → Macros. Mit VoiceOver/TalkBack durch das Formular wischen. Alle Felder findbar + benannt? Dropdown-Aktion auswaehlbar? Macro im Steuerung-Tab als Touch-Target findbar?', hint:'Macro-Chips haben aria-label mit Name. Long-Press fuer Edit.' },
-  { id:'B15', path:'screenreader', title:'TTS-Stimme im Screen-Reader-Modus', desc:'Bei Screen-Reader-Modus EIN: TTS sollte deaktiviert sein (verhindert Doppel-Stimmen). Pruefen: Stimme-Test-Button — gibt es einen Hinweis "Screen-Reader aktiv, TTS gesperrt"?', hint:'Voice-Heuristik blockt im SR-Modus automatisch alle App-TTS-Events.' },
+  { id:'B15', path:'screenreader', title:'TTS-Stimme im Screen-Reader-Modus', desc:'Bei Screen-Reader-Modus EIN: TTS sollte deaktiviert sein (verhindert Doppel-Stimmen). Pruefen: Stimme-Test-Button, gibt es einen Hinweis "Screen-Reader aktiv, TTS gesperrt"?', hint:'Voice-Heuristik blockt im SR-Modus automatisch alle App-TTS-Events.' },
 ];
 
 let _pioneerInited = false;
@@ -21247,7 +21247,7 @@ async function _pioneerToggleClicked(){
     try{ LS.set('sessions_pioneer_tester_id', (nm && nm.trim()) || ('T-'+Math.random().toString(36).slice(2,6))); }catch(_){}
   }
   // v9.0.1 (B4): KEIN browser-prompt() mehr fuer die Pfad-Wahl (unbenutzbar fuer blinde Tester).
-  // Stattdessen direkt in den Test-Pfad-Tab springen — dort stehen die barrierefreien
+  // Stattdessen direkt in den Test-Pfad-Tab springen, dort stehen die barrierefreien
   // Pfad-Wahl-Buttons (_pioneerRenderWizard, !st.path-Zweig). _pioneerShowPathChoice bleibt
   // als Backup definiert, wird aber nicht mehr aufgerufen.
   if(newState && !PREFS.pioneerTestState.path){
@@ -21269,13 +21269,13 @@ function _pioneerApplyTabVisibility(){
   }
 }
 
-// v9.0.1 (B4): DEPRECATED Backup — nicht mehr aufgerufen. Pfad-Wahl laeuft jetzt ueber die
+// v9.0.1 (B4): DEPRECATED Backup, nicht mehr aufgerufen. Pfad-Wahl laeuft jetzt ueber die
 // barrierefreien Buttons in _pioneerRenderWizard (!st.path). Funktion bleibt nur als Fallback drin.
 async function _pioneerShowPathChoice(){
   // v9.10.1 DOC-2: Zahlen dynamisch aus PIONEER_TESTS (sonst veralten sie wie zuvor „12")
   const nVisual = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='visual').length : 0;
   const nSr = (typeof PIONEER_TESTS !== 'undefined') ? PIONEER_TESTS.filter(t=>t.path==='screenreader').length : 0;
-  const path = await uiPrompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend" — fuer Pfad A ('+nVisual+' Tests, normale Sicht)\n  "screenreader" — fuer Pfad B ('+nSr+' Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
+  const path = await uiPrompt('Welcher Test-Pfad?\n\nGib ein:\n  "sehend", fuer Pfad A ('+nVisual+' Tests, normale Sicht)\n  "screenreader", fuer Pfad B ('+nSr+' Tests mit VoiceOver/TalkBack/NVDA)\n\nKann spaeter im Test-Tab gewechselt werden.', 'sehend');
   if(!path) return;
   const p = String(path).toLowerCase().trim();
   let chosen = null;
@@ -21288,7 +21288,7 @@ async function _pioneerShowPathChoice(){
   try{ savePrefs(); }catch(_){}
   if(typeof switchTab === 'function') switchTab('pioneer');
   _pioneerRenderWizard();
-  _pioneerAnnounce('Pfad ' + (chosen === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. ' + (chosen === 'visual' ? nVisual : nSr) + ' Aufgaben.');
+  _pioneerAnnounce('Pfad ' + (chosen === 'visual' ? 'A, sehende Tester' : 'B, Screen-Reader') + ' gestartet. ' + (chosen === 'visual' ? nVisual : nSr) + ' Aufgaben.');
 }
 
 function _pioneerTestsForCurrentPath(){
@@ -21299,7 +21299,7 @@ function _pioneerTestsForCurrentPath(){
 
 function _pioneerAnnounce(text){
   const w = document.getElementById('pioneerWizard'); if(!w) return;
-  // aria-live ist am Container — neuer Content triggert Announcement automatisch
+  // aria-live ist am Container, neuer Content triggert Announcement automatisch
   // Fuer explizite Ansagen einen versteckten Live-Region nutzen
   let live = document.getElementById('pioneerLive');
   if(!live){
@@ -21325,11 +21325,11 @@ function _pioneerRenderWizard(){
     w.innerHTML = `<p style="margin:0 0 4px">Bitte zuerst einen Test-Pfad waehlen:</p>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
         <button class="btn primary" id="btnPioneerPathVisual" style="display:block;width:100%;padding:16px;text-align:left;height:auto" aria-label="Pfad A starten: sehende Tester, ${nVisual} Aufgaben mit normaler Sicht">
-          <span style="font-size:22px;margin-right:10px" aria-hidden="true">👁️</span><b style="font-size:16px">Pfad A — Sehend</b>
+          <span style="font-size:22px;margin-right:10px" aria-hidden="true">👁️</span><b style="font-size:16px">Pfad A, Sehend</b>
           <span style="display:block;font-size:12px;color:rgba(255,255,255,.75);margin:4px 0 0 34px">${nVisual} Tests mit normaler Sicht</span>
         </button>
         <button class="btn primary" id="btnPioneerPathSr" style="display:block;width:100%;padding:16px;text-align:left;height:auto" aria-label="Pfad B starten: Screen-Reader-Tester, ${nSr} Aufgaben mit VoiceOver, TalkBack oder NVDA">
-          <span style="font-size:22px;margin-right:10px" aria-hidden="true">🔊</span><b style="font-size:16px">Pfad B — Screen-Reader</b>
+          <span style="font-size:22px;margin-right:10px" aria-hidden="true">🔊</span><b style="font-size:16px">Pfad B, Screen-Reader</b>
           <span style="display:block;font-size:12px;color:rgba(255,255,255,.75);margin:4px 0 0 34px">${nSr} Tests mit VoiceOver / TalkBack / NVDA</span>
         </button>
       </div>`;
@@ -21356,7 +21356,7 @@ function _pioneerRenderWizard(){
     // v9.0.0-beta: Achievements-Liste + Komplett-Report
     const ach = Array.isArray(st.achievements) ? st.achievements : [];
     const achHtml = ach.length
-      ? '<div style="margin-top:10px;padding:10px;background:rgba(95,184,77,.08);border:1px solid rgba(95,184,77,.3);border-radius:var(--r)"><b style="font-size:12px;color:#7fd968">🏆 ' + ach.length + ' Achievement' + (ach.length===1?'':'s') + ' freigeschaltet</b><div style="font-size:12px;margin-top:6px">' + ach.map(id => { const a = PIONEER_ACHIEVEMENTS.find(x => x.id === id); return a ? '<div>' + escapeHtml(a.title) + ' — <small style="color:var(--muted)">' + escapeHtml(a.desc) + '</small></div>' : ''; }).join('') + '</div></div>'
+      ? '<div style="margin-top:10px;padding:10px;background:rgba(95,184,77,.08);border:1px solid rgba(95,184,77,.3);border-radius:var(--r)"><b style="font-size:12px;color:#7fd968">🏆 ' + ach.length + ' Achievement' + (ach.length===1?'':'s') + ' freigeschaltet</b><div style="font-size:12px;margin-top:6px">' + ach.map(id => { const a = PIONEER_ACHIEVEMENTS.find(x => x.id === id); return a ? '<div>' + escapeHtml(a.title) + ', <small style="color:var(--muted)">' + escapeHtml(a.desc) + '</small></div>' : ''; }).join('') + '</div></div>'
       : '';
     w.innerHTML = `<div style="text-align:center">
       <h3 style="margin:0 0 10px">🎉 Test-Pfad abgeschlossen!</h3>
@@ -21397,7 +21397,7 @@ function _pioneerRenderWizard(){
     </div>
     <div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn sm" id="btnPioneerPass" style="flex:1;background:rgba(95,184,77,.15);border-color:rgba(95,184,77,.4);color:#7fd968" aria-label="Aufgabe geschafft markieren">✓ Geschafft</button>
-      <button class="btn sm danger" id="btnPioneerFail" style="flex:1" aria-label="Aufgabe funktioniert nicht — Bug melden">✗ Funktioniert nicht</button>
+      <button class="btn sm danger" id="btnPioneerFail" style="flex:1" aria-label="Aufgabe funktioniert nicht, Bug melden">✗ Funktioniert nicht</button>
       <button class="btn sm ghost" id="btnPioneerSkip" style="flex:1" aria-label="Aufgabe ueberspringen">⏭ Ueberspringen</button>
     </div>
     <div class="row" style="gap:8px;margin-top:6px">
@@ -21431,7 +21431,7 @@ function _pioneerSetPath(path){
   try{ savePrefs(); }catch(_){}
   _pioneerRenderWizard();
   const _nTasks = _pioneerTestsForCurrentPath().length;
-  _pioneerAnnounce('Pfad ' + (path === 'visual' ? 'A — sehende Tester' : 'B — Screen-Reader') + ' gestartet. ' + _nTasks + ' Aufgaben.');
+  _pioneerAnnounce('Pfad ' + (path === 'visual' ? 'A, sehende Tester' : 'B, Screen-Reader') + ' gestartet. ' + _nTasks + ' Aufgaben.');
 }
 
 function _pioneerSetResult(testId, status, opts){
@@ -21450,7 +21450,7 @@ function _pioneerSetResult(testId, status, opts){
   if(typeof st.points !== 'number') st.points = 0;
   if(typeof st.combo !== 'number') st.combo = 0;
   if(!prev.status){
-    // Neu bewertet — Punkte vergeben (Re-Bewertung gibt nichts)
+    // Neu bewertet, Punkte vergeben (Re-Bewertung gibt nichts)
     if(status === 'pass'){
       st.points += 10;
       st.combo += 1;
@@ -21498,7 +21498,7 @@ function _pioneerNav(delta){
 async function _pioneerSwitchPath(){
   const cur = PREFS.pioneerTestState && PREFS.pioneerTestState.path;
   const next = cur === 'visual' ? 'screenreader' : 'visual';
-  if(!(await uiConfirm('Pfad wechseln zu ' + (next === 'visual' ? 'A (sehend)' : 'B (Screen-Reader)') + '?\nDeine bisherigen Ergebnisse bleiben erhalten — beide Pfade haben unterschiedliche Tests.'))) return;
+  if(!(await uiConfirm('Pfad wechseln zu ' + (next === 'visual' ? 'A (sehend)' : 'B (Screen-Reader)') + '?\nDeine bisherigen Ergebnisse bleiben erhalten, beide Pfade haben unterschiedliche Tests.'))) return;
   _pioneerSetPath(next);
 }
 
@@ -21555,7 +21555,7 @@ function _pioneerPlaySound(type){
       _pioneerAudioCtx = new Ctx();
     }
     // v9.0.1 (B5): AudioContext startet je nach Browser im 'suspended'-Zustand und muss
-    // nach User-Geste reaktiviert werden — sonst bleiben Toene (u.a. Combo) stumm.
+    // nach User-Geste reaktiviert werden, sonst bleiben Toene (u.a. Combo) stumm.
     if(_pioneerAudioCtx.state === 'suspended'){ _pioneerAudioCtx.resume().catch(()=>{}); }
     const ctx = _pioneerAudioCtx;
     const now = ctx.currentTime;
@@ -21735,12 +21735,12 @@ function _pioneerCompleteReportOpen(){
   const ua = navigator.userAgent || 'unknown';
   const ach = (st.achievements || []).map(id => {
     const a = PIONEER_ACHIEVEMENTS.find(x => x.id === id);
-    return a ? '- ' + a.title + ' — ' + a.desc : '- ' + id;
+    return a ? '- ' + a.title + ', ' + a.desc : '- ' + id;
   }).join('\n') || '(keine)';
   const lines = tests.map(t => {
     const r = st.results[t.id];
     const icon = r ? (r.status === 'pass' ? '✓' : r.status === 'fail' ? '✗' : '⏭') : '⏸';
-    const note = r && r.note ? ' — `' + r.note.replace(/`/g,"'").slice(0,80) + '`' : '';
+    const note = r && r.note ? ', `' + r.note.replace(/`/g,"'").slice(0,80) + '`' : '';
     return '- ' + icon + ' **' + t.id + '** ' + t.title + note;
   }).join('\n');
   const title = '[Pioneer-Test Komplett] ' + pathLabel + ' · ' + passed + '/' + tests.length + ' bestanden';
@@ -21812,7 +21812,7 @@ function renderTouchMacrosSettings(){
   const host = document.getElementById('touchMacrosList'); if(!host) return;
   const list = Array.isArray(PREFS.touchMacros) ? PREFS.touchMacros : [];
   if(list.length === 0){
-    host.innerHTML = '<p class="wiz-text" style="color:var(--muted);font-size:12px;margin:6px 0">Noch keine Macros — leg den ersten mit "+ Neuer Macro" an.</p>';
+    host.innerHTML = '<p class="wiz-text" style="color:var(--muted);font-size:12px;margin:6px 0">Noch keine Macros, leg den ersten mit "+ Neuer Macro" an.</p>';
     return;
   }
   host.innerHTML = list.map(m => {
@@ -21931,7 +21931,7 @@ function populateTtsVoiceDropdown(){
   try{
     const voices = speechSynthesis.getVoices();
     if(!voices || !voices.length){
-      // Voices sometimes load async — try again after voiceschanged
+      // Voices sometimes load async, try again after voiceschanged
       try{ speechSynthesis.onvoiceschanged = () => { speechSynthesis.onvoiceschanged = null; populateTtsVoiceDropdown(); }; }catch(_){}
       return;
     }
@@ -21948,7 +21948,7 @@ function populateTtsVoiceDropdown(){
   }catch(_){}
 }
 function _ttsVoiceTest(){
-  ttsSay('Heizung erreicht 185 Grad — das ist eine Test-Ansage.');
+  ttsSay('Heizung erreicht 185 Grad, das ist eine Test-Ansage.');
 }
 
 // ── Wiring (idempotent) ────────────────────────────────────────────────────
