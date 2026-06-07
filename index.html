@@ -2887,6 +2887,16 @@ button[data-sch-day].active{
       <button class="btn sm ghost" type="button" id="btnPioneerNotesToBug" aria-label="Notizen an nächsten Bug-Report anhängen">→ In Bug-Report</button>
     </div>
   </div>
+  <!-- v9.31.0 (autonom): Tester-Wochen-Dashboard + Gesamt-Report -->
+  <div class="card" id="testerWeekCard">
+    <h3>📊 Meine Test-Woche</h3>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 8px">Überblick über deine Test-Aktivität. Am Ende der Woche einen Gesamt-Report erstellen.</p>
+    <div id="testerDashboard" role="status" aria-live="polite"></div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn sm ghost" type="button" id="btnTesterWeekExport" aria-label="Wochen-Report als Markdown exportieren">📦 Wochen-Report (Markdown)</button>
+      <button class="btn sm ghost" type="button" id="btnTesterWeekToAndre" aria-label="Wochen-Report an Andre senden">📤 An Andre senden</button>
+    </div>
+  </div>
 </section>
 
 </main>
@@ -9674,6 +9684,8 @@ function switchTab(name){
   });
   // v4.9.2: scroll to top damit User nicht in der Mitte vom vorigen Tab landet
   window.scrollTo({top:0, behavior:'smooth'});
+  // v9.31.0 (autonom): Tester-Wochen-Dashboard beim Betreten des Pioneer-Tabs aktualisieren
+  if(name==='pioneer'){ try{ _renderTesterDashboard(); }catch(_){} }
 }
 
 // v9.30.0 A11Y-D3: Pfeiltasten-Navigation im Haupt-Tablist (WAI-ARIA Tabs-Muster, Selection-follows-Focus)
@@ -12385,7 +12397,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.30.0';
+const SW_VERSION_LABEL='v9.31.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -19003,7 +19015,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.30.0 bereit.','ok');
+  log('Terp Sessions v9.31.0 bereit.','ok');
 
   setupPwaUpdate();
 
@@ -22188,9 +22200,79 @@ function _pioneerAudioSave(){
   toast('Audio-Memo gespeichert');
 }
 
+// ── v9.31.0 (autonom): Tester-Wochen-Dashboard + Gesamt-Report ───────────────
+function _trackActiveDay(){
+  try{
+    if(!PREFS.pioneerTestMode) return;
+    const d = new Date();
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    let days = LS.get('vol_pioneer_active_days', []) || []; if(!Array.isArray(days)) days = [];
+    if(!days.includes(key)){ days.push(key); if(days.length > 60) days = days.slice(-60); LS.set('vol_pioneer_active_days', days); }
+  }catch(_){}
+}
+function _testerWeekStats(){
+  const st = (typeof PREFS !== 'undefined' && PREFS.pioneerTestState) || {};
+  const results = st.results || {};
+  let pass=0, fail=0, skip=0;
+  Object.keys(results).forEach(k=>{ const s = results[k] && results[k].status; if(s==='pass') pass++; else if(s==='fail') fail++; else if(s==='skip') skip++; });
+  const qfb = _qfbStats();
+  let qGood=0, qProb=0;
+  Object.keys(qfb.by).forEach(k=>{ qGood += qfb.by[k].good; qProb += qfb.by[k].problem; });
+  const notes = (LS.get(NOTES_KEY, '') || '').length;
+  let days = LS.get('vol_pioneer_active_days', []) || []; if(!Array.isArray(days)) days = [];
+  return { pass, fail, skip, points: st.points || 0, qGood, qProb, qCount: qfb.count, notes, days: days.length, path: st.path || null };
+}
+function _renderTesterDashboard(){
+  const root = document.getElementById('testerDashboard'); if(!root) return;
+  const s = _testerWeekStats();
+  root.innerHTML = '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">'
+    + '<div class="stat"><div class="num">' + s.pass + '</div><div class="lbl">Bestanden</div></div>'
+    + '<div class="stat"><div class="num">' + s.fail + '</div><div class="lbl">Bugs</div></div>'
+    + '<div class="stat"><div class="num">' + s.skip + '</div><div class="lbl">Übersprungen</div></div>'
+    + '<div class="stat"><div class="num">' + s.qGood + '</div><div class="lbl">👍 gut</div></div>'
+    + '<div class="stat"><div class="num">' + s.qProb + '</div><div class="lbl">👎 Problem</div></div>'
+    + '<div class="stat"><div class="num">' + s.days + '</div><div class="lbl">Aktive Tage</div></div>'
+    + '</div><p style="font-size:12px;color:var(--muted);margin-top:8px">Punkte: ' + s.points + ' · Notizbuch: ' + s.notes + ' Zeichen</p>';
+}
+function _testerWeekReport(){
+  const s = _testerWeekStats();
+  const qfb = _qfbStats();
+  const probs = qfb.entries.filter(e=>e.kind==='problem' && e.note).map(e=>'- ' + (e.what || e.context) + ': ' + e.note).join('\n') || '(keine)';
+  const notes = (LS.get(NOTES_KEY, '') || '').trim() || '(leer)';
+  const ver = (typeof SW_VERSION_LABEL !== 'undefined' ? SW_VERSION_LABEL : '?');
+  const title = '[Pioneer Wochen-Report] ' + _pioneerTesterId() + ' · ' + s.pass + '✓ ' + s.fail + '🐛 ' + s.qCount + 'FB';
+  const body = '## Test-Wochen-Report\n'
+    + '- Tester: `' + _pioneerTesterId() + '`\n- App: `' + ver + '`\n- Pfad: ' + (s.path || '(keiner)') + '\n- Aktive Tage: ' + s.days + '\n- Punkte: ' + s.points + '\n\n'
+    + '## Tests\n- Bestanden: ' + s.pass + '\n- Bugs gemeldet: ' + s.fail + '\n- Übersprungen: ' + s.skip + '\n\n'
+    + '## Quick-Feedback (' + s.qCount + ')\n- 👍 gut: ' + s.qGood + '\n- 👎 Problem: ' + s.qProb + '\n\n### Problem-Notizen\n' + probs + '\n\n'
+    + '## Notizbuch\n' + notes + '\n\n- Erstellt: `' + new Date().toISOString() + '`\n';
+  return { title, body };
+}
+function _testerWeekExport(){
+  const r = _testerWeekReport();
+  _downloadFile('wochen-report-' + _pioneerTesterId() + '.md', r.body, 'text/markdown');
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(r.title + '\n\n' + r.body); }catch(_){}
+  toast('Wochen-Report erstellt und kopiert');
+}
+function _testerWeekToAndre(){
+  const r = _testerWeekReport();
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(r.title + '\n\n' + r.body); }catch(_){}
+  const url = 'https://github.com/' + PIONEER_GITHUB_REPO + '/issues/new?title=' + encodeURIComponent(r.title)
+    + '&labels=' + encodeURIComponent('pioneers,weekly-report')
+    + '&body=' + encodeURIComponent(r.body.length > 6000 ? r.body.slice(0,6000) : r.body);
+  try{ window.open(url, '_blank', 'noopener'); }catch(_){}
+  uiAlert('Wochen-Report in die Zwischenablage kopiert und GitHub geoeffnet. Falls GitHub nicht aufgeht (z.B. in Bluefy), sende den Inhalt aus der Zwischenablage an Andre.', 'Wochen-Report');
+}
+
 // ── Delegierter Klick-Listener fuer Quick-Feedback-Knoepfe (einmalig) ────────
 function _testToolsWire(){
   _pioneerNotesInit();
+  _trackActiveDay();
+  try{ _renderTesterDashboard(); }catch(_){}
+  const twe = document.getElementById('btnTesterWeekExport');
+  if(twe && !twe.__wired){ twe.__wired = true; twe.addEventListener('click', _testerWeekExport); }
+  const twa = document.getElementById('btnTesterWeekToAndre');
+  if(twa && !twa.__wired){ twa.__wired = true; twa.addEventListener('click', _testerWeekToAndre); }
   const exp = document.getElementById('btnQfbExport');
   if(exp && !exp.__wired){ exp.__wired = true; exp.addEventListener('click', _qfbExport); }
   const toA = document.getElementById('btnQfbToAndre');

@@ -51,7 +51,13 @@ Was war schwer: Im frischen Test-Profil öffnet der v4->v5-Migrations-Wizard (sh
 
 Tests: v930a11yd3.mjs, 14/14.
 
-## Autonome Erweiterungen, v9.31.0+, AUSSTEHEND
+## Autonome Erweiterung 1: Tester-Wochen-Dashboard, v9.31.0, LIVE
+
+Begründung warum dieses Paket: Paket 1 sammelt Bug-Reports, Quick-Feedback und Notizen, aber verstreut. Beim Wiedereinstieg nach der Test-Woche braucht Andre pro Tester EIN konsolidiertes Artefakt statt vieler Einzelteile. Dieses Dashboard + der Gesamt-Report binden die Paket-1-Werkzeuge zusammen und maximieren so den Daten-Nutzen, das Kernziel der ganzen Kampagne. Reine lokale Aggregation, niedriges Risiko.
+
+Inhalt: Dashboard „Meine Test-Woche" (bestanden/Bugs/übersprungen, 👍/👎, aktive Tage, Punkte, Notizbuch-Länge) im Pioneer-Tab; Aktive-Tage-Zähler (vol_pioneer_active_days, dedup); Wochen-Report (Markdown-Download + Clipboard, „An Andre" GitHub-Issue + Fallback). _testerWeekStats/_renderTesterDashboard/_testerWeekReport, Re-Render via switchTab('pioneer') + _testToolsWire.
+
+Tests: v931dashboard.mjs, 12/12. Test-Setup-Notiz: Notizbuch in LS wird via JSON.stringify gespeichert (LS.get parst), nicht als Rohstring.
 
 ---
 

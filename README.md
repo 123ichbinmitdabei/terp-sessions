@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.30.0)
+# Terp Sessions — Vape Controller (v9.31.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,16 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.31.0 — Tester-Wochen-Dashboard (Testwoche-Prep, autonomes Paket)
+
+Konsolidiert die in v9.28.0 gesammelten Tester-Daten zu einem Überblick und einem Gesamt-Report. Nur im Pioneer-Test-Modus, alles lokal.
+
+- **Dashboard „Meine Test-Woche"** im Pioneer-Tab: bestandene Tests, gemeldete Bugs, übersprungene, 👍/👎-Quick-Feedback, aktive Tage, Punkte und Notizbuch-Länge auf einen Blick.
+- **Aktive-Tage-Zähler:** `vol_pioneer_active_days` protokolliert (dedupliziert) die Tage, an denen die App im Test-Modus benutzt wurde.
+- **Wochen-Report:** „Wochen-Report (Markdown)" lädt einen kombinierten Report herunter (Tests + Quick-Feedback-Statistik + Problem-Notizen + Notizbuch + Tester-Kennung) und kopiert ihn in die Zwischenablage. „An Andre senden" öffnet zusätzlich ein vorausgefülltes GitHub-Issue (mit Clipboard-Fallback).
+
+Begründung (autonomes Paket): macht aus den verstreuten Einzeldaten ein konsolidiertes Artefakt pro Tester, genau das, was beim Wiedereinstieg nach der Test-Woche gebraucht wird. Tests: `v931dashboard.mjs` (12 Checks).
 
 ## v9.30.0 — A11Y-D3 (Testwoche-Prep Paket 3)
 
