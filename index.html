@@ -7030,6 +7030,8 @@ async function connectBLE(){
       if(State.running){ State.running.stopFlag = true; log('Laufendes Programm wegen Verbindungsverlust abgebrochen.','warn'); }
       State.reconnectAttempts = 0;
       setConn(false);
+      // v9.18.0 QA2.2.8/QA2.14.1: alte Poll-Intervalle + Notify-Listener abbauen, bevor tryReconnect neu subscribt.
+      try{ State.adapter && State.adapter.disconnect && State.adapter.disconnect(); }catch(_){}
       toast('Verbindung verloren, versuche reconnect...');
       srAnnounce('Verbindung verloren, versuche Reconnect', true);
       setTimeout(tryReconnect, 800);
@@ -7118,6 +7120,9 @@ async function connectBLE(){
 
 async function disconnectBLE(){
   try{ statsHeatStop(); }catch(_){}   // v9.17.0 QA2.17.3: Heizzeit beim manuellen Trennen abschliessen
+  // v9.18.0 QA2.14.1: Adapter sauber herunterfahren (Poll-Intervalle + Notifications + Listener),
+  // sonst laufen die setInterval-Polls nach manuellem Trennen endlos weiter.
+  if(State.adapter && typeof State.adapter.disconnect==='function'){ try{ await State.adapter.disconnect(); }catch(_){} }
   try{
     if(State.device?.gatt?.connected) State.device.gatt.disconnect();
   }catch{}
@@ -10873,24 +10878,39 @@ class CraftyMightyAdapter extends DeviceAdapter {
         const ct=await this.getCurrentTemp(); if(isFinite(ct)) State.cur=ct;
         const bat=await this.getBattery(); if(bat!=null) State.device.battery=bat;
         cb && cb({ currentTemp:State.cur, battery:State.device?.battery, heating:State.heater });
-      }catch(_){}
+        this._pollErr=0;
+      }catch(_){
+        // v9.18.0 QA2.2.11: aufeinanderfolgende Lesefehler zaehlen, statt still auf Altwerten zu verharren
+        this._pollErr=(this._pollErr||0)+1;
+        if(this._pollErr===5){ log('Crafty/Mighty: mehrere Status-Lesefehler in Folge, Verbindung prüfen','warn'); try{ srAnnounce('Statusabfrage gestört, Verbindung prüfen', true); }catch(_){} }
+      }
     };
     if(this.chars.curTemp && this.chars.curTemp.properties && this.chars.curTemp.properties.notify){
       try{
         await this.chars.curTemp.startNotifications();
-        this.chars.curTemp.addEventListener('characteristicvaluechanged', e=>{
+        // v9.18.0 QA2.14.2: benannter Listener, in disconnect() wieder entfernt (kein Doppel-Listener bei Reconnect)
+        this._onNotify = e=>{
           const dv=e.target.value; if(dv.byteLength>=2){ State.cur=dv.getUint16(0,true)/10; cb&&cb({currentTemp:State.cur, battery:State.device?.battery, heating:State.heater}); }
-        });
+        };
+        this._notifyChar = this.chars.curTemp;
+        this._notifyChar.addEventListener('characteristicvaluechanged', this._onNotify);
         log('Crafty/Mighty: Current-Temp Notify aktiv','ok');
         // Battery trotzdem pollen (kein Notify)
-        await poll(); this._poll=setInterval(poll, 2000);
+        await poll(); if(!this._poll) this._poll=setInterval(poll, 2000);   // v9.18.0 QA2.14.3: Guard gegen Timer-Leak
         return;
       }catch(_){ log('Crafty/Mighty: Notify nicht moeglich, nutze Poll','warn'); }
     }
     await poll();
-    this._poll=setInterval(poll, 2000);
+    if(!this._poll) this._poll=setInterval(poll, 2000);   // v9.18.0 QA2.14.3: Guard
   }
-  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } }
+  async disconnect(){
+    if(this._poll){ clearInterval(this._poll); this._poll=null; }
+    if(this._notifyChar){
+      if(this._onNotify){ try{ this._notifyChar.removeEventListener('characteristicvaluechanged', this._onNotify); }catch(_){} }
+      try{ await this._notifyChar.stopNotifications(); }catch(_){}
+      this._notifyChar=null; this._onNotify=null;
+    }
+  }
 }
 
 /* ── v5.0.3: Venty / Veazy ────────────────────────────────────────
@@ -10979,7 +10999,9 @@ class VentyVeazyAdapter extends DeviceAdapter {
     const heaterMode = dv.getUint8(11);                                      // 0 aus,1 normal,2 boost,3 super
     const charging = dv.getUint8(13) > 0;                                    // Byte 13
     const settings = dv.getUint8(14);                                        // Byte 14: Flags
-    if(target>=20 && target<=260) State.target = target;
+    // v9.18.0 QA2.2.5: eingehende Zieltemperatur gegen die Geraete-tempRange pruefen statt fixem 20-260
+    const _tr = VentyVeazyAdapter.tempRange;
+    if(target>=_tr.min && target<=_tr.max) State.target = target;
     if(battery>=0 && battery<=100) State.device.battery = battery;
     State.heater = heaterMode > 0;
     State.device.boost = heaterMode === 2;
@@ -10992,12 +11014,14 @@ class VentyVeazyAdapter extends DeviceAdapter {
   async subscribeStatus(cb){
     if(!this.control) return;
     await this.control.startNotifications();
-    this.control.addEventListener('characteristicvaluechanged', e=>{
+    // v9.18.0 QA2.14.2: benannter Listener, in disconnect() entfernt (kein Doppel-Listener bei Reconnect)
+    this._onNotify = e=>{
       if(this.parseStatus(e.target.value)){
         if(typeof renderStatus==='function') renderStatus();  // v5.0.3: Hero live aktualisieren
         cb && cb({ targetTemp:State.target, battery:State.device.battery, heating:State.heater, boost:State.device.boost, superBoost:State.device.superBoost });
       }
-    });
+    };
+    this.control.addEventListener('characteristicvaluechanged', this._onNotify);
     log('VentyVeazy: Status-Notifications aktiv','ok');
     if(!this._initDone){
       this._initDone = true;
@@ -11018,7 +11042,7 @@ class VentyVeazyAdapter extends DeviceAdapter {
   async getCurrentTemp(){ return NaN; }   // Venty/Veazy liefert KEINEN Ist-Temp-Wert (nur Soll + Heater-Mode)
   async pumpOn(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
   async pumpOff(){ throw new Error('Venty/Veazy hat keine Pumpe.'); }
-  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.control){ try{ await this.control.stopNotifications(); }catch(_){} } }
+  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.control){ if(this._onNotify){ try{ this.control.removeEventListener('characteristicvaluechanged', this._onNotify); }catch(_){} this._onNotify=null; } try{ await this.control.stopNotifications(); }catch(_){} } }
 }
 
 /* ── v6.0.0: PAX 3 (BETA) ─────────────────────────────────────────
@@ -11168,7 +11192,8 @@ class PaxAdapter extends DeviceAdapter {
 
   _applyParsed(p){
     if(p.currentTemp!=null && isFinite(p.currentTemp) && p.currentTemp>0 && p.currentTemp<300) State.cur=p.currentTemp;
-    if(p.targetTemp!=null && isFinite(p.targetTemp) && p.targetTemp>=100 && p.targetTemp<=260) State.target=Math.round(p.targetTemp);
+    // v9.18.0 QA2.2.5: Zieltemperatur gegen PAX-tempRange pruefen (falscher Key/Serial liefert sonst plausiblen Muell)
+    if(p.targetTemp!=null && isFinite(p.targetTemp) && p.targetTemp>=PaxAdapter.tempRange.min && p.targetTemp<=PaxAdapter.tempRange.max) State.target=Math.round(p.targetTemp);
     if(p.battery!=null && p.battery>=0 && p.battery<=100) State.device.battery=p.battery;
     if(p.heatingState!=null){
       State.device.heatingState = p.heatingStateName;
@@ -11190,10 +11215,12 @@ class PaxAdapter extends DeviceAdapter {
     if(this.chars.notify){
       try{
         await this.chars.notify.startNotifications();
-        this.chars.notify.addEventListener('characteristicvaluechanged', e=>{
+        // v9.18.0 QA2.14.2: benannter Listener, in disconnect() entfernt (kein Doppel-Listener bei Reconnect)
+        this._onNotify = e=>{
           const p=this._onPacket(e.target.value);
           if(p){ if(typeof renderStatus==='function') renderStatus(); cb && cb({ currentTemp:State.cur, targetTemp:State.target, battery:State.device.battery, heating:State.heater }); }
-        });
+        };
+        this.chars.notify.addEventListener('characteristicvaluechanged', this._onNotify);
         log('PAX: Notifications aktiv (BETA)','ok');
       }catch(e){ log('PAX: Notify nicht moeglich: '+e.message,'warn'); }
     }
@@ -11203,7 +11230,7 @@ class PaxAdapter extends DeviceAdapter {
     try{ await reqStatus(); }catch(_){}
     if(!this._poll) this._poll=setInterval(()=>{ if(State.connected) reqStatus(); }, 2000);
   }
-  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.chars.notify){ try{ await this.chars.notify.stopNotifications(); }catch(_){} } }
+  async disconnect(){ if(this._poll){ clearInterval(this._poll); this._poll=null; } if(this.chars.notify){ if(this._onNotify){ try{ this.chars.notify.removeEventListener('characteristicvaluechanged', this._onNotify); }catch(_){} this._onNotify=null; } try{ await this.chars.notify.stopNotifications(); }catch(_){} } }
 }
 
 /* ── v7.0.0: Puffco Peak Pro (BETA) ───────────────────────────────
@@ -12115,7 +12142,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.17.0';
+const SW_VERSION_LABEL='v9.18.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -18685,7 +18712,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.17.0 bereit.','ok');
+  log('Terp Sessions v9.18.0 bereit.','ok');
 
   setupPwaUpdate();
 

@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.17.0)
+# Terp Sessions — Vape Controller (v9.18.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.18.0 — QA-2 BLE-Lifecycle-Robustheit (Paket 2 der Fix-Kampagne)
+
+Zweites Paket der QA-2-Fix-Kampagne. Schwerpunkt: sauberes Auf- und Abbauen der Bluetooth-Verbindung über alle Adapter. Frontend-only, keine Protokoll-Änderung.
+
+- **QA2.14.1 + QA2.2.8 Disconnect-Cleanup:** Manuelles Trennen (`disconnectBLE`) und Verbindungsverlust (`gattserverdisconnected`) rufen jetzt `adapter.disconnect()` auf, das Poll-Intervalle und Notifications sauber abbaut. Vorher liefen die `setInterval`-Polls (Venty 500ms, Crafty/PAX/Puffco 2s) nach dem Trennen endlos weiter.
+- **QA2.14.2 + QA2.2.7 Listener-Hygiene:** Die Notify-Listener von Crafty/Mighty, Venty/Veazy und PAX sind jetzt benannte Referenzen, die in `disconnect()` per `removeEventListener` wieder entfernt werden (kein Doppel-Listener bei wiederholtem Reconnect).
+- **QA2.14.3 Poll-Guard:** Der Crafty/Mighty-Poll wird nur noch mit `if(!this._poll)` gesetzt (beide Pfade), analog zu Venty/PAX/Puffco, kein verwaister Timer mehr.
+- **QA2.2.5 Status-Plausibilität:** Eingehende Zieltemperaturen aus Notify-Frames werden gegen die jeweilige Geräte-`tempRange` geprüft statt gegen feste Weitbereiche (Venty 40-210, PAX 175-215). Ein falsch dekodiertes oder durch falschen PAX-Key entstandenes Frame zeigt keine unplausible Zieltemperatur mehr an.
+- **QA2.2.11 Lesefehler sichtbar:** Der Crafty/Mighty-Poll zählt aufeinanderfolgende Lesefehler und warnt nach fünf in Folge, statt still auf alten Werten zu verharren (relevant, da Crafty/Mighty keinen Geräte-Auto-Aus hat).
+
+**Unberührt:** Adapter-Protokolle/Encoding, cscCrypto, Backend. **Tests:** `v918qa2ble.mjs` (15), plus BLE-Bestandssuiten (v500/501/51/60pax/70puffco) grün. Volle Regression grün.
 
 ## v9.17.0 — QA-2 Engine- und Sicherheits-Robustheit (Paket 1 der Fix-Kampagne)
 
