@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.31.0)
+# Terp Sessions — Vape Controller (v9.32.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.32.0 — Tester-Daten ins Backup (Testwoche-Prep, autonomes Paket)
+
+Das bestehende JSON-Backup (Setup, „JSON-Backup"/„Restore") sicherte Einstellungen, Programme und Sessions, aber nicht die in v9.28.0 neu gesammelten Tester-Daten. Damit ein Browser-Clear oder Reinstall während der Test-Woche das Notizbuch und das Quick-Feedback nicht vernichtet, umfasst das Backup jetzt zusätzlich `vol_pioneer_notes`, `vol_quick_feedback` und `vol_pioneer_active_days` (der Test-Fortschritt lag schon immer mit drin, da in PREFS). Restore stellt sie samt Notizbuch-Textfeld und Dashboard wieder her, mit Typ-Guards gegen fehlerhafte Dateien.
+
+Tests: `v932backup.mjs` (9 Checks). Begründung (autonom): Daten-Verlust-Schutz für die Woche, in der die Daten entstehen, minimaler Eingriff in das bereits getestete Export/Import.
 
 ## v9.31.0 — Tester-Wochen-Dashboard (Testwoche-Prep, autonomes Paket)
 

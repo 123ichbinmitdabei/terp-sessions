@@ -59,8 +59,42 @@ Inhalt: Dashboard „Meine Test-Woche" (bestanden/Bugs/übersprungen, 👍/👎,
 
 Tests: v931dashboard.mjs, 12/12. Test-Setup-Notiz: Notizbuch in LS wird via JSON.stringify gespeichert (LS.get parst), nicht als Rohstring.
 
+## Autonome Erweiterung 2: Tester-Daten ins Backup, v9.32.0, LIVE
+
+Begründung warum dieses Paket: Beim Bauen des Dashboards (v9.31.0) ist mir aufgefallen, dass das bestehende JSON-Backup (exportAllData) die in v9.28.0 neu eingeführten Tester-Keys NICHT mitsichert: vol_pioneer_notes, vol_quick_feedback, vol_pioneer_active_days. pioneerTestState liegt in PREFS und war drin, der Rest nicht. Ein Tester, der mitten in der Woche den Browser leert oder Bluefy neu installiert, hätte Notizbuch und Quick-Feedback verloren, also genau die Daten, die die Woche sammeln soll. Daten-Verlust-Schutz mit minimalem Eingriff.
+
+Inhalt: _pioneerBackupBundle (Export) + _applyPioneerBackup (Import, Typ-Guards, stellt Notizbuch-Textfeld + Dashboard wieder her). In exportAllData/importAllData eingehängt, ohne deren bestehende Logik (PIN-Ausschluss etc.) zu verändern.
+
+Tests: v932backup.mjs, 9/9.
+
+---
+
+## Gesamt-Stand
+
+- v9.28.0 Tester-Werkzeuge (W1-W4), v9.29.0 Multi-Brand + Onboarding (A/B/C), v9.30.0 A11Y-D3 (Top-3 + 1 Subsystem-Fix), v9.31.0 Tester-Wochen-Dashboard, v9.32.0 Tester-Daten ins Backup. Alle live + Pages-verifiziert.
+- Test-Suiten: v928tools (27), v929brand (18), v930a11yd3 (14), v931dashboard (12), v932backup (9). Volle Regression nach jedem Paket grün (zuletzt ~1990 Tests).
+- MB.7 (Crafty/Mighty-Hardware-Verifikation) wie vorgegeben vertagt, bis die Hardware da ist.
+
 ---
 
 ## Abschluss-Empfehlung für Andre
 
-(wird am Ende der Kampagne ergänzt)
+**Wenn du zurück bist, in dieser Reihenfolge anschauen:**
+
+1. **Eingegangenes Tester-Feedback sichten, jetzt strukturiert.** Bug-Reports tragen einen maschinenlesbaren JSON-Header (Bereich, Schweregrad, persönliche Schwere, Reproduzierbarkeit), Quick-Feedback und Wochen-Reports kommen als GitHub-Issues mit Labels (`pioneers,bug` / `pioneers,feedback` / `pioneers,weekly-report`). Filtere die Issues nach Label und sortier Bugs nach Schweregrad. Falls GitHub bei einem Tester nicht ging, kam der Report per DM aus der Zwischenablage, gleiches Format.
+2. **Audio-Memos** (blinder Tester): liegen als lokale Dateien beim Tester, im Report steht nur der Vermerk „Audio-Memo, X Sek.". Bei ihm nachfragen, ob er sie per DM schickt.
+3. **MB.7 nachholen**, sobald Crafty/Mighty da ist: echte BLE-Hardware-Verifikation der portablen Adapter. Bewusst nicht gemacht, weil keine Hardware.
+4. **A11Y-D4-Backlog** (in docs/A11Y-D3-AUDIT): Panel-Fokus beim Tabwechsel, Kontrast-Audit, Screen-Reader-Abnahme der dynamischen Listen am echten Gerät. Plus der manuelle VoiceOver-Pass aus A11Y-D2/-D3 am iPhone (Anleitungen in docs/A11Y-D2- und A11Y-D3-IPHONE-VOICEOVER*).
+
+**Was war sinnvoll, was war evtl. Über-Engineering:**
+- Sinnvoll und zentral: v9.28.0 (Werkzeuge), v9.31.0 (Dashboard/Wochen-Report, bündelt die Daten), v9.32.0 (Backup, schützt sie). Diese drei greifen ineinander und bilden die „Daten-Goldgrube"-Pipeline.
+- Solide und gewünscht: v9.30.0 A11Y-D3 (vor allem connChip-Name + größere Blatt-Touch-Ziele, beides aus echtem Tester-Feedback) und v9.29.0 Onboarding (FAQ + Erster-Schritt-Block senken die Einstiegshürde für neue Tester).
+- Grenzfall: v9.29.0 MB.4 Puffco-Temp ist nur nützlich, wenn jemand mit Puffco testet. Korrekt und risikoarm, aber Nutzen hängt am Gerätebestand der Tester. MB.5 war fast ein No-Op (die vermuteten Strings gab es nicht), bewusst klein gehalten.
+
+**Offen als nächste Kampagne:**
+- MB.7 + Hardware-Verifikation der Beta-Adapter (PAX-Serial, Puffco-Auth).
+- A11Y-D4 (siehe oben) inkl. Geräte-Screenreader-Abnahme.
+- Optional: Backend-Empfang der Bug-/Feedback-Reports (statt GitHub-Issues), falls die GitHub-Hürde Tester abhält. Bewusst nicht angefasst (Backend-Grenze der Kampagne).
+- Auswertung: ein kleines Skript, das die `pioneers,*`-Issues einsammelt und nach JSON-Header gruppiert, würde die Auswertung weiter beschleunigen.
+
+**Akutes:** keines. Alle Pakete grün, live, verifiziert.

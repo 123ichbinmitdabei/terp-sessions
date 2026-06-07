@@ -12397,7 +12397,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.31.0';
+const SW_VERSION_LABEL='v9.32.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14289,6 +14289,26 @@ async function deleteBagEditor(){
   $('#modalBagEditor').classList.remove('open');
   toast('Profil gelöscht');
 }
+// v9.32.0 (autonom): Tester-Werkzeug-Daten (Notizbuch, Quick-Feedback, aktive Tage) buendeln,
+// damit ein Browser-Clear / Reinstall waehrend der Test-Woche sie nicht verliert.
+// pioneerTestState liegt in PREFS und ist damit ohnehin im Backup.
+function _pioneerBackupBundle(){
+  return {
+    notes: LS.get('vol_pioneer_notes', ''),
+    quickFeedback: LS.get('vol_quick_feedback', []),
+    activeDays: LS.get('vol_pioneer_active_days', []),
+  };
+}
+function _applyPioneerBackup(data){
+  if(!data || typeof data !== 'object') return;
+  const pt = data.pioneerTools;
+  if(!pt || typeof pt !== 'object') return;
+  if(typeof pt.notes === 'string') LS.set('vol_pioneer_notes', pt.notes);
+  if(Array.isArray(pt.quickFeedback)) LS.set('vol_quick_feedback', pt.quickFeedback);
+  if(Array.isArray(pt.activeDays)) LS.set('vol_pioneer_active_days', pt.activeDays);
+  try{ const ta = document.getElementById('pioneerNotes'); if(ta) ta.value = LS.get('vol_pioneer_notes','') || ''; }catch(_){}
+  try{ if(typeof _renderTesterDashboard === 'function') _renderTesterDashboard(); }catch(_){}
+}
 function exportAllData(){
   // v9.21.0 QA2.6.1: PIN-Geheimnisse NICHT exportieren (4-8-stelliger PIN waere aus Hash+Salt offline brute-forcebar)
   const { pinHash, pinSalt, pinKdf, ...safePrefs } = PREFS;
@@ -14297,6 +14317,7 @@ function exportAllData(){
     programs: State.programs,
     sessions: LS.get('vol_sessions',[]),
     notes: LS.get('vol_current_notes',''),
+    pioneerTools: _pioneerBackupBundle(),   // v9.32.0 (autonom)
     exportedAt: new Date().toISOString(),
     version: 'v4.4',
   }, null, 2)], {type:'application/json'});
@@ -14328,6 +14349,7 @@ function importAllData(){
       if(Array.isArray(data.programs)) State.programs = data.programs;
       if(Array.isArray(data.sessions)) LS.set('vol_sessions', data.sessions);
       if(typeof data.notes==='string') LS.set('vol_current_notes', data.notes);
+      _applyPioneerBackup(data);   // v9.32.0 (autonom): Tester-Werkzeug-Daten wiederherstellen
       savePrefs();
       LS.set('vol_programs', State.programs);
       applyTheme();
@@ -19015,7 +19037,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.31.0 bereit.','ok');
+  log('Terp Sessions v9.32.0 bereit.','ok');
 
   setupPwaUpdate();
 
