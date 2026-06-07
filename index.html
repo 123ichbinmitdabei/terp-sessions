@@ -9740,6 +9740,24 @@ function _wireTablistKeys(){
 }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(_wireTablistKeys, 1200); });
 
+// v9.34.0 (autonom) A11Y: jede Toggle-Erklaerung (sichtbares <small> in der .info) per aria-describedby
+// an ihren Schalter haengen. Vorher hoerte ein Screen-Reader nur das aria-label, der Hilfetext blieb stumm.
+// Rein additive ARIA, keine sichtbare Aenderung. Idempotent (ueberspringt bereits verknuepfte Schalter).
+function _a11yWireToggleDescriptions(){
+  let n = 0, wired = 0;
+  document.querySelectorAll('.toggle-row').forEach(row=>{
+    const ctrl = row.querySelector('[role="switch"]');
+    if(!ctrl || ctrl.getAttribute('aria-describedby')) return;
+    const small = row.querySelector('.info small');
+    if(!small || !(small.textContent||'').trim()) return;
+    if(!small.id) small.id = 'tgl-desc-' + (n++);
+    ctrl.setAttribute('aria-describedby', small.id);
+    wired++;
+  });
+  return wired;
+}
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ _a11yWireToggleDescriptions(); }catch(_){} }, 1250); });
+
 /* ═══════════════════════════════════════════════════════════════
    v4.9: SETTINGS SUB-TABS
 ═══════════════════════════════════════════════════════════════ */
@@ -12426,7 +12444,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.33.0';
+const SW_VERSION_LABEL='v9.34.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -19067,7 +19085,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.33.0 bereit.','ok');
+  log('Terp Sessions v9.34.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

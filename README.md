@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.33.0)
+# Terp Sessions — Vape Controller (v9.34.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.34.0 — Toggle-Beschreibungen für Screen-Reader (autonom)
+
+Alle Einstellungs-Schalter haben sichtbare Kurz-Erklärungen (`<small>`), die ein Screen-Reader bisher nicht mit vorlas (der Schalter trug nur ein `aria-label`). Ein kleiner Start-Pass hängt diese Erklärung per `aria-describedby` an den jeweiligen Schalter (29 Schalter). Damit hört z.B. VoiceOver bei „Auto-Cool-Down" jetzt auch „Heizer auf Standby-Temperatur runter". Rein additive ARIA, keine sichtbare Änderung, idempotent.
+
+Tests: `v934toggledesc.mjs` (10 Checks). Verify-before-fix: die `<small>`-Texte existierten bereits, nur die SR-Verknüpfung fehlte.
 
 ## v9.33.0 — Crash-Recovery (autonom)
 

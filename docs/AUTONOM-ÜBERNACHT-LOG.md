@@ -37,4 +37,15 @@ Bewusst NICHT in der Liste (begründet):
 - **Test:** v933recovery.mjs 12/12 (Quelle + synchroner Marker-Konsum + Dialog erscheint mit Name + Verwerfen/ohne-Verbindung/Programm-fehlt-Guards).
 - **Beifang (echter Bug):** Die volle Regression deckte um ~22 Uhr (zeitabhängiger Coverage-Test QA2.1.4, `H=(getHours()+2)%24` -> 0) einen echten Bug in `computeNextRun` auf: `t.hour||8` behandelte Stunde 0 (Mitternacht) als fehlend und schob den Schedule auf 08:00. Fix: `t.hour!=null`-Prüfung. Verify-before-fix: Ursache im Code lokalisiert (nicht von Crash-Recovery verursacht), Fix minimal, in dieses Paket gefaltet, weil er die grüne Regression blockierte und ein 1-Zeilen-Korrektheitsfix ist. Relevanz für die Test-Woche: nächtliche Schedules (Decarb) feuern jetzt zur richtigen Zeit.
 - **Tester-Update-Baustein:** „Wenn die App mitten in einem Programm neu lädt, fragt sie beim Start, ob sie es neu starten soll, statt es still zu vergessen. Außerdem feuern auf Mitternacht gesetzte Schedules jetzt korrekt (vorher fälschlich um 8 Uhr)."
+- **Test/Regression:** v933recovery 12/12, volle Regression 2011/2011.
+- **Live:** commit 04e7ed0, Tag v9.33.0, Pages verifiziert (index + sw.js v9.33.0).
+
+### Paket 2: Toggle-Beschreibungen für Screen-Reader, v9.34.0, LIVE (Stossrichtung G/A)
+
+- **Was:** `_a11yWireToggleDescriptions` hängt beim Start die sichtbare `<small>`-Erklärung jeder Toggle-Zeile per `aria-describedby` an ihren `[role="switch"]` (29 von 52 Schaltern; die übrigen haben keine `<small>`, z.B. die selbsterklärenden Voice-/TTS-Schalter). Rein additive ARIA, idempotent, keine sichtbare Änderung.
+- **Warum jetzt:** Der blinde Tester ist Schlüssel-Tester. Vorher hörte er bei einem Schalter nur das Label (z.B. „Auto-Cool-Down"), nicht die Erklärung („Heizer auf Standby-Temperatur runter"). Jetzt liest VoiceOver beides.
+- **Risiko:** sehr niedrig. Eine generische Start-Funktion, keine Markup-Umstellung pro Schalter, keine sichtbare Änderung.
+- **Verify-before-fix:** Mandat vermutete „unklare Toggles ohne Erklärung". Tatsächlich haben praktisch alle Schalter bereits ein sichtbares `<small>`; die echte Lücke war die fehlende SR-Verknüpfung. Paket entsprechend umdefiniert (aria-describedby statt neuer Tooltips).
+- **Test:** v934toggledesc.mjs 10/10 (5 Stichproben-Schalter mit aufgelöstem describedby + Text, >=10 verknüpft, idempotent, keine verwaisten Refs).
+- **Tester-Update-Baustein:** „Screen-Reader lesen jetzt bei den Einstellungs-Schaltern auch die Erklärung mit vor, nicht nur den Namen."
 - **Live:** wird nach Regression + Push bestätigt.
