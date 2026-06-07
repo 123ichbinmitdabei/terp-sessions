@@ -5468,8 +5468,8 @@ function syncToggle(id, v){
   if(el) el.setAttribute('aria-checked', String(!!v));
 }
 const LS={
-  get:(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
-  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}},
+  get:(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){ try{ if(typeof log==='function') log('Lesefehler '+k+' (Standardwert genutzt): '+(e&&e.message||e),'warn'); }catch(_){} return d; }},   // v9.21.0 QA2.6.8: Parse-Fehler nicht mehr still
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){ try{ if(typeof log==='function') log('Speichern fehlgeschlagen '+k+' (evtl. Speicher voll): '+(e&&e.message||e),'warn'); }catch(_){} }},   // v9.21.0 QA2.27.4/6.8: Quota/Serialisierungsfehler sichtbar
   del:k=>localStorage.removeItem(k)
 };
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -6310,6 +6310,7 @@ function log(msg, kind=''){
     if(kind) line.className=kind;
     line.textContent=`[${t}] ${msg}`;
     el.appendChild(line);
+    while(el.children.length>200) el.removeChild(el.firstChild);   // v9.21.0 QA2.14.4: Log-DOM begrenzen (kein unbegrenztes Wachstum)
     el.scrollTop=el.scrollHeight;
   }
   // Mini log on Steuerung tab (last 5 lines)
@@ -9475,6 +9476,19 @@ window.addEventListener('beforeunload', (e)=>{
   if(State.heater && !_intentionalUnload && !navigator.webdriver){ e.preventDefault(); e.returnValue=''; return ''; }
 });
 
+// v9.21.0 QA2.6.5: Multi-Tab-Warnung. Ein zweiter Tab haelt eigene In-Memory-Kopien; speichert er,
+// ueberschreibt er die Aenderungen dieses Tabs (last-write-wins). Wir koennen nicht sicher mergen,
+// daher einmalig warnen, dass nur ein Tab offen sein sollte. Das storage-Event feuert nur in ANDEREN Tabs.
+let _multiTabWarned = false;
+window.addEventListener('storage', (e)=>{
+  if(!e || !e.key || _multiTabWarned) return;
+  if(['vol_prefs','vol_sessions','vol_programs','vol_encrypted','vol_schedules'].includes(e.key)){
+    _multiTabWarned = true;
+    try{ toast('In einem anderen Tab geändert. Bitte nur einen Tab geöffnet halten und ggf. neu laden.'); }catch(_){}
+    try{ log('Multi-Tab erkannt ('+e.key+' in anderem Tab geaendert), last-write-wins Gefahr','warn'); }catch(_){}
+  }
+});
+
 /* ═══════════════════════════════════════════════════════════════
    EXPORT / IMPORT
 ═══════════════════════════════════════════════════════════════ */
@@ -12181,7 +12195,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.20.0';
+const SW_VERSION_LABEL='v9.21.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14069,8 +14083,10 @@ async function deleteBagEditor(){
   toast('Profil gelöscht');
 }
 function exportAllData(){
+  // v9.21.0 QA2.6.1: PIN-Geheimnisse NICHT exportieren (4-8-stelliger PIN waere aus Hash+Salt offline brute-forcebar)
+  const { pinHash, pinSalt, pinKdf, ...safePrefs } = PREFS;
   const blob = new Blob([JSON.stringify({
-    prefs: PREFS,
+    prefs: safePrefs,
     programs: State.programs,
     sessions: LS.get('vol_sessions',[]),
     notes: LS.get('vol_current_notes',''),
@@ -14096,7 +14112,12 @@ function importAllData(){
       const txt = await f.text();
       const data = JSON.parse(txt);
       if(!(await uiConfirm('Daten wirklich überschreiben? Aktuelle Einstellungen, Programme und Sessions gehen verloren.'))) return;
-      if(data.prefs) Object.assign(PREFS, data.prefs);
+      // v9.21.0 QA2.6.6: Sicherheits-Keys NIE aus einer Backup-Datei uebernehmen (kein Fremd-PIN-Hash, eigener PIN bleibt)
+      if(data.prefs && typeof data.prefs==='object'){
+        const incoming = { ...data.prefs };
+        delete incoming.pinHash; delete incoming.pinSalt; delete incoming.pinKdf;
+        Object.assign(PREFS, incoming);
+      }
       if(Array.isArray(data.programs)) State.programs = data.programs;
       if(Array.isArray(data.sessions)) LS.set('vol_sessions', data.sessions);
       if(typeof data.notes==='string') LS.set('vol_current_notes', data.notes);
@@ -16000,12 +16021,14 @@ async function removePin(){
   _updatePinRecoveryStatus();
   toast('PIN entfernt');
 }
+let _pinInFlight = null;
 async function requirePin(){
   if(!PREFS.pinEnabled || !PREFS.pinHash) return true;
+  if(_pinInFlight) return _pinInFlight;   // v9.21.0 QA2.14.5: Re-Entry-Guard, kein erneutes Listener-Wiring bei AutoLock-Re-Aufrufen
   // Show overlay
   const overlay = $('#pinOverlay');
   if(overlay){ overlay.style.display='flex'; }
-  return new Promise(resolve=>{
+  _pinInFlight = new Promise(resolve=>{
     const inp = $('#pinInput');
     const btn = $('#pinSubmit');
     if(!inp || !btn){ resolve(true); return; }
@@ -16061,6 +16084,8 @@ async function requirePin(){
     btn.addEventListener('click', handler);
     inp.addEventListener('keydown', enterHandler);
   });
+  _pinInFlight.then(()=>{ _pinInFlight=null; }, ()=>{ _pinInFlight=null; });   // v9.21.0 QA2.14.5: nach Abschluss freigeben
+  return _pinInFlight;
 }
 
 let lockTimer = null;
@@ -16170,6 +16195,10 @@ async function encryptSensitive(){
       ct: Array.from(new Uint8Array(ct)),
     };
     LS.set('vol_encrypted', blob);
+    // v9.21.0 QA2.6.4: Roundtrip-Verify VOR dem Loeschen des Klartexts (kein endgueltiger Datenverlust bei korruptem Blob)
+    let _verified=false;
+    try{ const _dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, new Uint8Array(blob.ct)); _verified = (new TextDecoder().decode(_dec) === payload); }catch(_){ _verified=false; }
+    if(!_verified){ try{ localStorage.removeItem('vol_encrypted'); }catch(_){} toast('Verschlüsselung nicht verifizierbar, Klartext bleibt erhalten'); return; }
     // Remove plaintext
     localStorage.removeItem('vol_sessions');
     localStorage.removeItem('vol_current_notes');
@@ -18757,7 +18786,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.20.0 bereit.','ok');
+  log('Terp Sessions v9.21.0 bereit.','ok');
 
   setupPwaUpdate();
 

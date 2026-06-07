@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.20.0)
+# Terp Sessions — Vape Controller (v9.21.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,20 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.21.0 — QA-2 Storage- und Datenrobustheit (Paket 5 der Fix-Kampagne)
+
+Fünftes Paket der QA-2-Fix-Kampagne. Schwerpunkt: Backup/Import, Persistenz und Datenverlust-Schutz. Frontend-only.
+
+- **QA2.6.1 Backup ohne PIN-Geheimnisse:** Der JSON-Export enthält nicht mehr `pinHash`/`pinSalt`/`pinKdf`. Ein 4- bis 8-stelliger PIN wäre aus Hash und Salt offline in Sekunden brute-forcebar gewesen.
+- **QA2.6.6 Import ignoriert Sicherheits-Keys:** Beim Import werden `pinHash`/`pinSalt`/`pinKdf` aus der Datei entfernt, eine Backup-Datei kann keinen fremden PIN-Hash setzen, der eigene PIN bleibt.
+- **QA2.6.4 Kein stiller Datenverlust beim Verschlüsseln:** `encryptSensitive` entschlüsselt den frisch geschriebenen Blob sofort wieder und vergleicht ihn, bevor der Klartext gelöscht wird. Schlägt die Verifikation fehl, bleibt der Klartext erhalten.
+- **QA2.6.8 / QA2.27.4 Speicher-Fehler sichtbar:** Der LocalStorage-Wrapper loggt jetzt Lese- (Parse-) und Schreibfehler (z.B. voller Speicher), statt sie still zu verschlucken.
+- **QA2.6.5 Multi-Tab-Warnung:** Ein `storage`-Listener warnt einmalig, wenn ein zweiter Tab dieselben Daten ändert (Schutz vor last-write-wins-Datenverlust).
+- **QA2.14.4 Log-Begrenzung:** Das Haupt-Log (`#log`) wird auf 200 Zeilen begrenzt und wächst nicht mehr unbegrenzt über lange Sessions.
+- **QA2.14.5 PIN-Overlay-Re-Entry-Guard:** `requirePin` gibt bei wiederholtem Aufruf (z.B. durch den Auto-Lock-Tick) dasselbe laufende Promise zurück, statt erneut Event-Listener zu registrieren.
+
+**Unberührt:** cscCrypto, Backend, der PIN-Salt selbst (zugleich Backup-Verschlüsselungs-Salt, nie geändert). **Tests:** `v921qa2storage.mjs` (11). Volle Regression grün.
 
 ## v9.20.0 — QA-2 Reconnect- und Queue-Robustheit (Paket 4 der Fix-Kampagne)
 
