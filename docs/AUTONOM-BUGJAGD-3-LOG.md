@@ -59,6 +59,11 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
 
+### Runde ohne Fund (dokumentiert, kein Ship) — XSS-Escaping + Temp-Clamp konsistent
+- XSS-Sweep: alle HTML-Renders von User-Daten (Programm-/Sorten-Namen, Session-Notizen, Pseudonym) nutzen escapeHtml; bare `${...name}`-Interpolationen sitzen ausnahmslos in sicheren Kanälen (uiConfirm/toast/log/srAnnounce/ttsSay = textContent, oder setAttribute, oder App-Konstanten). sessionRowHtml escaped Notizen. Kein Fund.
+- Temp-Clamp-Sweep: alle State.target-Zuweisungen sind entweder geräte-gemeldete Werte oder über cmdSetTemp/Adapter range-geklemmt/-geguardet. Kein unclamped User-Input-Pfad. Kein Fund.
+- Bewusst KEIN Ship: kein marginaler Fix erfunden. Saubere Sweeps sind selbst ein Ergebnis (bestätigen Härtung). Trefferquote sinkt erwartungsgemäß nach QA-1/QA-2 + Kampagnen.
+
 ### BJ3-4 (Low-Medium, Korrektheit, GEFIXT in v9.42.0) — Programm-Dauer ignorierte Schleifen
 - Ort: estimateDuration (12749), Aufrufer progCard (8632) + Import-Bestätigung (14015) ohne Vor-Expansion.
 - Befund: estimateDuration hatte keinen loop_start/loop_end-Switch-Zweig -> Schleifen-Körper wurde nur 1x gezählt. 5 von 7 Aufrufern expandierten schon mit `expandLoops(...)` vorher (jemand kannte die Lücke), aber progCard und die Import-Bestätigung übergaben rohe Schritte -> zu kurze „~X min" bei Loops (z.B. „3× [60s]" als ~1 min statt ~3 min).
