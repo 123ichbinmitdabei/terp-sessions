@@ -58,3 +58,6 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
+
+### Nachtrag: Paket 3, v9.40.0, LIVE — BJ-4 entschieden (Andre)
+Andre-Entscheidung: verpasste EINMALIGE Schedules deaktivieren statt verschieben. Umgesetzt im scheduleTick-Missed-Branch: `repeat==='once'` -> enabled=false/nextRun=null; wiederholende weiterhin auf nächste Zukunft neu berechnen. Hält zugleich den v9.36.0-Anti-Churn (verpasste „in X Min" once). Vorher feuerte ein verpasster Einmal-Uhrzeit-Schedule überraschend am Folgetag. Bewusst silent (kein Startup-Toast), der Schedule bleibt deaktiviert in der Liste sichtbar. Tests v940schedonce.mjs 8/8 (inkl. Beleg, dass computeNextRun einen Zukunfts-Tag GEFUNDEN hätte, wir aber trotzdem deaktivieren). v936bugjagd weiterhin 10/10.

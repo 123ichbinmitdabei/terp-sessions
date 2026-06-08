@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.39.0)
+# Terp Sessions — Vape Controller (v9.40.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.40.0 — Verpasste Einmal-Schedules deaktivieren (Andre-Entscheidung)
+
+Wird ein **einmaliger** Schedule verpasst (App war länger als 5 Min zu, als die geplante Zeit kam), wird er jetzt deaktiviert statt stillschweigend auf den nächsten passenden Tag verschoben. Vorher konnte ein einmaliger Uhrzeit-Schedule überraschend am Folgetag feuern. Wiederholende Schedules (täglich/Mo-Fr/Sa+So/eigene Tage) werden wie bisher auf ihren nächsten Termin neu berechnet. Schließt zugleich die BJ-4-Strategiefrage und behält den v9.36.0-Fix gegen Endlos-Recompute bei.
+
+Tests: `v940schedonce.mjs` (8 Checks).
 
 ## v9.39.0 — Mitternachts-Schedule im Editor (autonom, Bug-Jagd)
 

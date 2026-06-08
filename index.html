@@ -12516,7 +12516,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.39.0';
+const SW_VERSION_LABEL='v9.40.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15272,12 +15272,17 @@ function scheduleTick(){
     if(!sch.nextRun) continue;
     if(sch.nextRun > now) continue;
     if(sch.nextRun < now - 5*60000){
-      // Verpasst (App war zu), recompute. v9.36.0 BJ-1: nur uebernehmen wenn der naechste Lauf
-      // wirklich in der Zukunft liegt, sonst deaktivieren. Verhindert Endlos-Recompute/Save-Churn
-      // bei verpassten einmaligen „in X Min"-Schedules (computeNextRun liefert dort die Vergangenheit).
-      const nr = computeNextRun(sch);
-      if(nr && nr > now){ sch.nextRun = nr; }
-      else { sch.enabled = false; sch.nextRun = null; }
+      // Verpasst (App war zu). v9.40.0 (Andre-Entscheidung BJ-4): EINMALIGE Schedules werden deaktiviert,
+      // nicht stillschweigend auf den naechsten Tag verschoben. Wiederholende auf die naechste Zukunft
+      // neu berechnen (oder deaktivieren, falls kein kuenftiger Lauf existiert). Loest zugleich v9.36.0 BJ-1
+      // (verpasste einmalige „in X Min"-Schedules churnten endlos).
+      if(sch.repeat === 'once'){
+        sch.enabled = false; sch.nextRun = null;
+      } else {
+        const nr = computeNextRun(sch);
+        if(nr && nr > now){ sch.nextRun = nr; }
+        else { sch.enabled = false; sch.nextRun = null; }
+      }
       changed = true;
       continue;
     }
@@ -19202,7 +19207,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.39.0 bereit.','ok');
+  log('Terp Sessions v9.40.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery
