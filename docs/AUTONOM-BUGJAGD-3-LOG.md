@@ -24,3 +24,37 @@ Mandat (2026-06-08, Andre): „weiter, nächster Tag". Auf Rückfrage Fokus gew�
 - Tester-Update-Baustein: „Geteilte Programm-Links werden jetzt streng geprüft (Größe, Name, Schritte), ein kaputter Link legt kein Müll-Programm mehr an."
 - Test/Regression: v938import 16/16, volle Regression 2069/2069 (sauber, kein Flake).
 - Live: commit 996572a, Tag v9.38.0, Pages verifiziert.
+
+### Paket 2: Mitternachts-Schedule im Editor, v9.39.0, LIVE
+- Test: v939mideditor.mjs 7/7 (00:30 bleibt 00:30, 8/12 Uhr unverändert, Quelle).
+- Tester-Update-Baustein: „Auf Mitternacht gesetzte Schedules werden im Editor jetzt korrekt angezeigt (vorher fälschlich 8 Uhr)."
+- Test/Regression: volle Regression 2076/2076 (sauber).
+- Live: commit 42920aa, Tag v9.39.0, Pages verifiziert.
+
+---
+
+## Abschluss-Bericht (Bug-Jagd-Tag)
+
+### Fokus (auf Rückfrage gewählt): Bug-Jagd + kleine sichere Fixes (Test-Woche läuft)
+Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die App, die sie gerade lernen, umzubauen.
+
+### Funde
+- **BJ3-1 (Medium) GEFIXT (v9.38.0)** — #prog=-Deeplink-Import ohne Eingangs-Säuberung (Datei-Import hatte sie längst). Größen-/Längen-Schutz + bestehender Sanitizer + Schritt-Cap. Test-wochen-relevant (Tester teilen Links).
+- **BJ3-2 (Low-Medium) GEFIXT (v9.39.0)** — Mitternachts-Schedule im Editor als 08:xx angezeigt + auf 8 Uhr verschoben. Pendant zum v9.33.0-Fix, vervollständigt die Mitternachts-Korrektheit.
+
+### Bewusst NICHT gemacht / Beobachtungen
+- Kein drittes Paket heute: zwei saubere Fixes sind ein solider, disziplinierter Tag während der Test-Woche; mehr zu shippen erhöht nur die Störung.
+- BJ-4 aus Nacht 2 (verpasster Einmal-„at"-Schedule wird verschoben statt deaktiviert) bleibt eine Strategie-Frage für Andre, nicht eigenmächtig geändert.
+- Engine no-opt unbekannte Schritt-Aktionen (default-Zweig) — daher kein neues Aktions-Whitelisting nötig, der bestehende Sanitizer reicht.
+
+### Code-Stellen, die ich selbst nochmal prüfen würde (kein klarer Bug)
+- `escape()`/`unescape()` im Base64-De/Encode (deprecated, funktioniert aber); langfristig auf TextEncoder/Decoder umstellen.
+- LS.set verschluckt Quota-Fehler still (bekannt, QA2.27.4) — bei sehr großem Notizbuch/vielen Sessions könnte ein Speicher-Voll-Hinweis helfen.
+
+### Empfehlung für Andre
+1. Tester-Feedback sichten (Labels `pioneers,*`).
+2. BJ-4 entscheiden (Einmal-„at"-Schedule: verschieben oder deaktivieren?).
+3. Nach der Test-Woche: Voice-Befehle (L) als nächstes Feature, mit Geräte-Test.
+
+### Bilanz
+2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
