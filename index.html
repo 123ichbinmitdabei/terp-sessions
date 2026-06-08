@@ -12516,7 +12516,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.41.0';
+const SW_VERSION_LABEL='v9.42.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -12748,10 +12748,15 @@ function stopBagFill(){
 ═══════════════════════════════════════════════════════════════ */
 function estimateDuration(steps){
   if(!steps || !steps.length) return 0;
+  // v9.42.0 Bug-Jagd: Schleifen beruecksichtigen. Bisher hatte der Switch keinen loop_start/loop_end-Zweig,
+  // der Schleifen-Koerper wurde also nur 1x gezaehlt. Die meisten Aufrufer expandierten schon vorher,
+  // progCard (8632) + Import-Bestaetigung aber nicht -> zu kurze „~X min"-Schaetzung bei Loops.
+  // Jetzt intern (silent) expandieren -> fuer ALLE Aufrufer korrekt; Doppel-Expansion ist idempotent.
+  const flat = expandLoops(steps, true);
   let total = 0;
   let curTemp = 23;        // Raumtemperatur Default
   let isHot = false;
-  for(const s of steps){
+  for(const s of flat){
     switch(s.action){
       case 'heat_on':  total += 1; isHot=true; break;
       case 'heat_off': total += 1; isHot=false; break;
@@ -16765,7 +16770,7 @@ function resolveVarsInSteps(steps, vars){
 // v9.17.0 QA2.3.4: harte Obergrenze gegen multiplikative Schleifen-Explosion (verschachtelte 20er-Loops
 // aus JSON-/Text-Import koennten sonst 20^n Schritte erzeugen und Speicher/Render belasten).
 const EXPAND_LOOP_CAP = 2000;
-function expandLoops(steps){
+function expandLoops(steps, silent){
   const out = [];
   let capped = false;
   (function walk(list){
@@ -16793,7 +16798,7 @@ function expandLoops(steps){
       }
     }
   })(steps);
-  if(capped){ try{ toast('Programm gekürzt: Schleifen-Expansion über '+EXPAND_LOOP_CAP+' Schritte'); }catch(_){} }
+  if(capped && !silent){ try{ toast('Programm gekürzt: Schleifen-Expansion über '+EXPAND_LOOP_CAP+' Schritte'); }catch(_){} }
   return out;
 }
 
@@ -19207,7 +19212,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.41.0 bereit.','ok');
+  log('Terp Sessions v9.42.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.41.0)
+# Terp Sessions — Vape Controller (v9.42.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.42.0 — Programm-Dauer mit Schleifen korrekt schätzen (Bug-Jagd)
+
+`estimateDuration` zählte den Inhalt einer Schleife nur einmal statt N-mal (es gab keinen `loop_start`/`loop_end`-Zweig). Die meisten Aufrufer expandierten die Schleifen schon vorher, aber die Programm-Karte und die Import-Bestätigung nicht, dort stand für Programme mit Schleifen eine zu kurze „~X min"-Dauer. Jetzt expandiert `estimateDuration` intern (ohne Nebenwirkung), also stimmt die Schätzung für alle Aufrufer. Ein Programm „3× [60 s warten]" zeigt jetzt ~3 min statt ~1 min.
+
+Tests: `v942loopdur.mjs` (12 Checks, inkl. verschachtelte Schleifen + Idempotenz-Beleg). Reine Schätz-Korrektur, keine Lauf-Engine-Änderung.
 
 ## v9.41.0 — A11Y-Bugfix: Sicherheits-Timer-Eingabe falsch beschriftet (Bug-Jagd)
 

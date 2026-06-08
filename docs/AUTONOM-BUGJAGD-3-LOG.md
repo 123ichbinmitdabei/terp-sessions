@@ -59,6 +59,13 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
 
+### BJ3-4 (Low-Medium, Korrektheit, GEFIXT in v9.42.0) — Programm-Dauer ignorierte Schleifen
+- Ort: estimateDuration (12749), Aufrufer progCard (8632) + Import-Bestätigung (14015) ohne Vor-Expansion.
+- Befund: estimateDuration hatte keinen loop_start/loop_end-Switch-Zweig -> Schleifen-Körper wurde nur 1x gezählt. 5 von 7 Aufrufern expandierten schon mit `expandLoops(...)` vorher (jemand kannte die Lücke), aber progCard und die Import-Bestätigung übergaben rohe Schritte -> zu kurze „~X min" bei Loops (z.B. „3× [60s]" als ~1 min statt ~3 min).
+- Verify-before-fix: alle estimateDuration- und expandLoops-Aufrufer gegrept; expandLoops ist rein + idempotent, hatte aber einen Toast-Nebeneffekt beim Loop-Cap.
+- Fix: expandLoops bekommt `silent`-Param (Toast-Guard), estimateDuration expandiert intern `expandLoops(steps, true)` -> korrekt für ALLE Aufrufer, Doppel-Expansion idempotent (vor-expandierende Aufrufer bleiben korrekt). runProgram-Expansion unverändert (toastet weiter beim Cap).
+- Test: v942loopdur.mjs 12/12 (Loop 3x/2x, verschachtelt, ohne-Loop unverändert, Idempotenz).
+
 ### BJ3-3 (Medium, A11Y/Sicherheit, GEFIXT in v9.41.0) — Sicherheits-Timer-Eingabe falsch beschriftet
 - Ort: #sInput (2565), Steuerung-Tab, „Auto-Aus nach (Minuten)".
 - Befund: `aria-label="Wartezeit in Sekunden"` (Copy-Paste-Rest), während der sichtbare Label-Text „Auto-Aus nach (Minuten)" sagt und startSafety (9619) den Wert als Minuten interpretiert (×60000). Der sichtbare `<label>` hat kein `for`, ist also NICHT mit dem Feld verknüpft -> das falsche aria-label war der einzige Screen-Reader-Name. Ein blinder Tester hätte „Sekunden" gehört und den Auto-Aus-Wert falsch eingeschätzt (sicherheitsrelevant: erwartet Abschaltung in 20 Sekunden statt 20 Minuten, oder setzt absichtlich kleine Werte).
