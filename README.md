@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.37.0)
+# Terp Sessions — Vape Controller (v9.38.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.38.0 — Import-Härtung für geteilte Programm-Links (autonom, Bug-Jagd)
+
+Beim Teilen eines Programms per Link (`#prog=…`) wurde der Inhalt bisher nur grob geprüft (Name vorhanden, Schritte sind ein Array). Der Datei-Import säuberte die Schritte längst über `_sanitizeImportedSteps` (Whitelist gültiger Aktionen + Wert-Klemmung), der Link-Import aber nicht. Jetzt nutzt der Link-Import dieselbe Säuberung und zusätzlich: Größen-Schutz gegen überlange/manipulierte Links, Längen-Begrenzung für Name (80) und Beschreibung (300) sowie ein Schritt-Anzahl-Cap (500, schützt auch den Datei-Import). Ein kaputter oder bösartiger Link kann so kein Programm mit ungültigen Schritten, Riesen-Namen oder absurden Werten mehr anlegen.
+
+Tests: `v938import.mjs` (16 Checks). Reine Eingangs-Validierung, keine Engine-/Adapter-Änderung.
 
 ## v9.37.0 — Statistik-Aufschlüsselung (autonom)
 

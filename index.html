@@ -9681,6 +9681,7 @@ const _IMPORT_VALID_ACTIONS = new Set(['heat_on','heat_off','set_temperature','w
 function _sanitizeImportedSteps(steps){
   const out=[];
   for(const s of (Array.isArray(steps)?steps:[])){
+    if(out.length >= 500) break;   // v9.38.0 QA2.20.3: Schritt-Anzahl begrenzen (Render-/DoS-Schutz)
     if(!s || !_IMPORT_VALID_ACTIONS.has(s.action)) continue;
     const o={action:s.action};
     if(s.action==='set_temperature'||s.action==='wait_until'){ const v=Number(s.value); if(!isFinite(v)) continue; o.value=clamp(Math.round(v),40,327); }
@@ -12515,7 +12516,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.37.0';
+const SW_VERSION_LABEL='v9.38.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -13999,21 +14000,30 @@ async function checkImportFromUrl(){
   if(!hash.startsWith('#prog=')) return;
   try{
     const b64 = hash.slice(6);
+    // v9.38.0 QA2.20.1: Groessen-Schutz gegen riesige/manipulierte Links (vorher ungebremstes atob/JSON.parse)
+    if(b64.length > 100000) throw new Error('Link zu gross');
     const json = decodeURIComponent(escape(atob(b64)));
     const data = JSON.parse(json);
     if(!data.n || !Array.isArray(data.s)) throw new Error('Ungültiges Format');
-    if(await uiConfirm(`Programm "${data.n}" importieren?\n\n${data.s.length} Schritte\nDauer: ~${fmtDuration(estimateDuration(data.s))}`)){
+    // v9.38.0 QA2.20.2/20.3: Name/Beschreibung laengenbegrenzen, Schritte gegen die Whitelist saeubern
+    // (dieselbe Saeuberung wie beim Datei-Import; der Deeplink-Pfad hatte sie bisher NICHT).
+    const name = String(data.n).slice(0,80).trim();
+    if(!name) throw new Error('Ungültiges Format');
+    const desc = String(data.d || '').slice(0,300);
+    const steps = _sanitizeImportedSteps(data.s);
+    if(!steps.length) throw new Error('Keine gültigen Schritte');
+    if(await uiConfirm(`Programm "${name}" importieren?\n\n${steps.length} Schritte\nDauer: ~${fmtDuration(estimateDuration(steps))}`)){
       const np = {
         id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
-        name:data.n,
-        desc:data.d || '',
-        steps:data.s,
+        name:name,
+        desc:desc,
+        steps:steps,
         isPreset:false,
       };
       State.programs.push(np);
       LS.set('vol_programs', State.programs);
       renderPrograms();
-      toast('Programm importiert: '+data.n);
+      toast('Programm importiert: '+name);
       switchTab('prog');
     }
   }catch(e){
@@ -19190,7 +19200,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.37.0 bereit.','ok');
+  log('Terp Sessions v9.38.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery
