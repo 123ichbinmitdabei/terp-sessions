@@ -51,4 +51,42 @@ Methode: `||`-Numeric-Defaults (0-überschreibt-Klasse wie gestern t.hour||8), D
 - **Verify-before-fix:** Session-Objektform (startedAt, aroma) + SESSIONS_KEY bestätigt; renderStats/renderSessions als Aktualisierungs-Trigger bestätigt.
 - **Test:** v937stats.mjs 12/12 (Buckets inkl. Grenzen, Leerzustand, Wochentag/Tageszeit/Top-Sorten-Zählung, XSS-Escaping).
 - **Tester-Update-Baustein:** „Neue Aufschlüsselung im Statistik-Bereich zeigt deine Sessions nach Wochentag, Tageszeit und Lieblings-Sorten."
-- **Live:** wird nach Regression + Push bestätigt.
+- **Test/Regression:** v937stats 12/12, volle Regression 2031/2031 (vereinzelte NO_RESULT = Chrome-Contention, in der jeweils anderen Runde grün).
+- **Live:** commit 93e0ee9, Tag v9.37.0, Pages verifiziert.
+
+---
+
+## Abschluss-Bericht (Nacht 2)
+
+### Was wurde gemacht
+- **v9.36.0 Bug-Jagd:** BJ-1 (verpasster „in X Min"-Schedule churnte endlos -> deaktivieren) + BJ-2 (Streak-„gestern" DST-sicher). 10/10 Tests.
+- **v9.37.0 Feature:** Statistik-Aufschlüsselung (Wochentag/Tageszeit/Top-Sorten aus dem Tagebuch, mit aria-labels). 12/12 Tests.
+- Beide live, Pages-verifiziert, volle Regression grün.
+
+### Bug-Jagd-Funde
+- BJ-1 (Medium) GEFIXT — Schedule-Zombie/Churn bei verpasstem „in X Min". Höchster Test-Wochen-Wert (Bluefy-Backgrounding).
+- BJ-2 (Low) GEFIXT — Streak-DST-Drift. Konsistenz/Korrektheit, im Juni nicht akut.
+- BJ-3 (sehr niedrig) DOKUMENTIERT, nicht gefixt — Routine-Nudge ohne Mitternachts-Wrap (kosmetisch).
+- BJ-4 (Beobachtung) DOKUMENTIERT — verpasster Einmal-„at"-Schedule wird auf nächsten Tag verschoben statt deaktiviert. Strategie-Frage für Andre, bewusst nicht eigenmächtig geändert.
+
+### Bewusst NICHT gemacht (mit Begründung)
+- **Voice-Befehl-Erweiterung (L):** der Voice-Parser ist heikel und der blinde Tester ist darauf angewiesen; eine Regression dort wäre teuer. Sauber umzusetzen hätte sorgfältiges Studium gebraucht, das ich vor der Test-Woche nicht überstürzen wollte. Vertagt als sauberes Folgepaket.
+- **Hover-Guard (C):** wie Nacht 1, 31 verstreute Regeln, Churn/Risiko vs. Low-Wert.
+- **Pioneer-Achievements (J):** bräuchte Hooks in die v9.28er Werkzeuge (laut Mandat nicht umbauen).
+- Statistik „Trends über Zeit" (Teil von E): bewusst klein gehalten (3 Aufschlüsselungen statt Zeitreihen), um das Paket solide und risikoarm zu halten.
+- Alle FORBIDDEN-Kategorien.
+
+### Code-Stellen, die ich selbst nochmal prüfen würde (kein klarer Bug)
+- **scheduleTick „at"+once-Verhalten (BJ-4):** Design-Entscheidung, ob ein verpasster Einmal-Uhrzeit-Schedule deaktiviert statt verschoben werden soll.
+- **computeNextRun 'in' mit lastRun bei repeat!=once:** liefert `now+mins`, aber saveScheduleFromEditor zwingt 'in' immer auf 'once' -> der repeat!=once-Zweig ist toter Pfad. Kein Bug, aber verwirrend; ggf. Kommentar.
+- **renderSessionBreakdown bei sehr vielen Sorten:** Top-6-Cap ist gesetzt; bei extrem langen Sorten-Namen greift Ellipsis. Unkritisch.
+- **executeSchedule heat bei nicht-verbunden:** toastet nur; ok, aber prüfen ob der Tester das versteht (kein Auto-Reconnect-Versuch).
+
+### Empfehlung für Andre nach der Test-Woche, zuerst
+1. Tester-Feedback (Labels `pioneers,*` + Schweregrad), wie gehabt.
+2. BJ-4 entscheiden (verpasster Einmal-„at"-Schedule: verschieben oder deaktivieren?).
+3. Statistik-Aufschlüsselung: kam sie an? Falls ja, „Trends über Zeit" als Ausbau.
+4. Voice-Befehle (L) als nächstes Feature, mit Ruhe und Geräte-Test.
+
+### Bilanz
+Genau die vom Auftraggeber empfohlene Mischung: 1 solides Feature + 2 Bug-Fixes (plus 2 dokumentierte Funde). 2 Versionen (v9.36.0, v9.37.0), beide live + verifiziert, Regression grün. Drei Verify-before-fix-Checks in dieser Nacht (computeNextRun-'in'-Pfad, SESSIONS_KEY/Session-Form, scheduleTick-Intervall) hielten die Eingriffe minimal und korrekt. Bewusst bei zwei Paketen gestoppt statt ein heikles Voice-Paket vor der Test-Woche zu überstürzen.
