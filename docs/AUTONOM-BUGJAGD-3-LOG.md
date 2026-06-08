@@ -59,6 +59,13 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
 
+### Deep-Dive Voice-Parser (dokumentiert, kein Ship) — solide
+- Gewählt als tiefste Prüfung (höchster Test-Wochen-Wert: blinder Tester nutzt Voice am meisten).
+- parseGermanNumber (13544) + _GER_NUM_RE-Extraktion (13574) für realistische Vape-Temps durchgespielt: 180 (hundertachtzig), 185 (hundertfuenfundachtzig), 200 (zweihundert), 220 (zweihundertzwanzig), 225, 300, 102, 81 — alle korrekt. Extraktions-Alternation ist richtig geordnet (Compound vor Single, sonst würde „hundertachtzig" zu „hundert" trunkiert). Beide (Parser + Extraktion) konsistent.
+- Befehl-Reihenfolge im Parser geprüft: pumpFor VOR pumpOn/pumpOff (sonst würde „pumpe 20 sekunden" als pumpOn fehlgreifen), abortProgram VOR stopAll, heater VOR stopAll, tempUp/Down VOR Digit-Temp. `\b`-Grenzen verhindern Fehltreffer (z.B. „pumpe einundzwanzig" triggert NICHT pumpOn via „ein"). Digit-Temps werden downstream via cmdSetTemp geklemmt.
+- Bekannte (akzeptierte) Grenze, kein Bug: Pump-Sekunden per Voice nur als Ziffern, nicht als Zahlwort. Misfire-frei.
+- Kein Fund. Voice-Parser ist robust gebaut.
+
 ### Runde ohne Fund (dokumentiert, kein Ship) — XSS-Escaping + Temp-Clamp konsistent
 - XSS-Sweep: alle HTML-Renders von User-Daten (Programm-/Sorten-Namen, Session-Notizen, Pseudonym) nutzen escapeHtml; bare `${...name}`-Interpolationen sitzen ausnahmslos in sicheren Kanälen (uiConfirm/toast/log/srAnnounce/ttsSay = textContent, oder setAttribute, oder App-Konstanten). sessionRowHtml escaped Notizen. Kein Fund.
 - Temp-Clamp-Sweep: alle State.target-Zuweisungen sind entweder geräte-gemeldete Werte oder über cmdSetTemp/Adapter range-geklemmt/-geguardet. Kein unclamped User-Input-Pfad. Kein Fund.
