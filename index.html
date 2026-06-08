@@ -12516,7 +12516,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.38.0';
+const SW_VERSION_LABEL='v9.39.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15528,8 +15528,10 @@ function openScheduleEditor(id){
   $('#schName').value = _schEditing.name || '';
   $('#schTemp').value = _schEditing.action?.temp || 185;
   $('#schMins').value = _schEditing.trigger?.mins || 10;
+  // v9.39.0 BJ3-2: Mitternacht (hour 0) ist gueltig. trigger.hour||8 zeigte 00:xx faelschlich als 08:xx
+  // im Editor und schob den Schedule beim Speichern auf 8 Uhr (Pendant zum v9.33.0-computeNextRun-Fix).
   $('#schTime').value = _schEditing.trigger?.type === 'at'
-    ? `${String(_schEditing.trigger.hour||8).padStart(2,'0')}:${String(_schEditing.trigger.minute||0).padStart(2,'0')}`
+    ? `${String(_schEditing.trigger.hour!=null?_schEditing.trigger.hour:8).padStart(2,'0')}:${String(_schEditing.trigger.minute||0).padStart(2,'0')}`
     : '20:00';
 
   // Programm-Select befüllen
@@ -19200,7 +19202,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.38.0 bereit.','ok');
+  log('Terp Sessions v9.39.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

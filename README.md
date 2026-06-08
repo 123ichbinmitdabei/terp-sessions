@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.38.0)
+# Terp Sessions — Vape Controller (v9.39.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.39.0 — Mitternachts-Schedule im Editor (autonom, Bug-Jagd)
+
+Pendant zum v9.33.0-Fix: Beim Öffnen eines auf Mitternacht (00:xx) gesetzten Schedules zeigte der Editor fälschlich „08:00" an (`trigger.hour||8` behandelte Stunde 0 als „fehlend") und schob den Schedule beim Speichern auf 8 Uhr. Die Schedule-Liste zeigte die Zeit schon korrekt an, der Editor nicht. Jetzt zeigt der Editor 00:xx korrekt. Damit ist die Mitternachts-Schedule-Korrektheit über alle Pfade (Berechnung, Liste, Editor) durchgängig.
+
+Tests: `v939mideditor.mjs` (7 Checks).
 
 ## v9.38.0 — Import-Härtung für geteilte Programm-Links (autonom, Bug-Jagd)
 
