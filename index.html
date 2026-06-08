@@ -12458,7 +12458,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.35.0';
+const SW_VERSION_LABEL='v9.36.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -15204,8 +15204,12 @@ function scheduleTick(){
     if(!sch.nextRun) continue;
     if(sch.nextRun > now) continue;
     if(sch.nextRun < now - 5*60000){
-      // Verpasst (App war zu), überspringen, recompute
-      sch.nextRun = computeNextRun(sch);
+      // Verpasst (App war zu), recompute. v9.36.0 BJ-1: nur uebernehmen wenn der naechste Lauf
+      // wirklich in der Zukunft liegt, sonst deaktivieren. Verhindert Endlos-Recompute/Save-Churn
+      // bei verpassten einmaligen „in X Min"-Schedules (computeNextRun liefert dort die Vergangenheit).
+      const nr = computeNextRun(sch);
+      if(nr && nr > now){ sch.nextRun = nr; }
+      else { sch.enabled = false; sch.nextRun = null; }
       changed = true;
       continue;
     }
@@ -16798,7 +16802,9 @@ function noteSessionDay(){
   // v9.24.0 QA2.17.4: lokaler Tagesschluessel (konsistent mit v8.2-Streak/Heatmap), vorher UTC -> Tagesgrenzen-Drift
   const today = dayKey(Date.now());
   if(PREFS.streakLastDate === today) return; // bereits heute gezählt
-  const yesterday = dayKey(Date.now() - 86400000);
+  // v9.36.0 BJ-2: „gestern" DST-sicher via setDate (fixes 86400000 driftet an DST-Grenzen, vgl. QA2.17.9)
+  const _y = new Date(); _y.setDate(_y.getDate() - 1);
+  const yesterday = dayKey(_y.getTime());
   if(PREFS.streakLastDate === yesterday){
     PREFS.streakDays = (PREFS.streakDays||0) + 1;
   } else {
@@ -19126,7 +19132,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.35.0 bereit.','ok');
+  log('Terp Sessions v9.36.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

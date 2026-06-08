@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.35.0)
+# Terp Sessions — Vape Controller (v9.36.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,15 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.36.0 — Bug-Jagd: Schedule + Streak (autonom)
+
+Zwei latente Bugs aus gezieltem Code-Lesen behoben:
+
+- **Verpasster „in X Minuten"-Schedule (Medium):** Wurde ein einmaliger „in X Min"-Schedule verpasst (App war länger als 5 Min zu, z.B. Bluefy-Tab im Hintergrund/Reload auf iPhone), berechnete `scheduleTick` den nächsten Lauf immer wieder in die Vergangenheit und schrieb dadurch alle 30 Sekunden den Speicher neu, ohne den Schedule je auszuführen oder zu deaktivieren (Zombie). Jetzt wird ein verpasster Schedule, der keinen Zukunfts-Lauf mehr hat, sauber deaktiviert. Wiederholende Zeit-Schedules bleiben unverändert.
+- **Streak-„gestern" DST-sicher (Low):** `noteSessionDay` berechnete „gestern" über einen festen 24-Stunden-Abzug; der Rest des Codes nutzt dafür schon `setDate`. An Sommerzeit-Wechseln hätte das den Streak-Zähler verfälschen können. Jetzt kalendergenau.
+
+Tests: `v936bugjagd.mjs` (10 Checks). Keine Engine-/Adapter-Änderung, nur die zwei Korrekturen.
 
 ## v9.35.0 — Schedule-Vorlagen (autonom)
 
