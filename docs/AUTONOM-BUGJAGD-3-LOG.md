@@ -59,5 +59,12 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
 
+### BJ3-3 (Medium, A11Y/Sicherheit, GEFIXT in v9.41.0) — Sicherheits-Timer-Eingabe falsch beschriftet
+- Ort: #sInput (2565), Steuerung-Tab, „Auto-Aus nach (Minuten)".
+- Befund: `aria-label="Wartezeit in Sekunden"` (Copy-Paste-Rest), während der sichtbare Label-Text „Auto-Aus nach (Minuten)" sagt und startSafety (9619) den Wert als Minuten interpretiert (×60000). Der sichtbare `<label>` hat kein `for`, ist also NICHT mit dem Feld verknüpft -> das falsche aria-label war der einzige Screen-Reader-Name. Ein blinder Tester hätte „Sekunden" gehört und den Auto-Aus-Wert falsch eingeschätzt (sicherheitsrelevant: erwartet Abschaltung in 20 Sekunden statt 20 Minuten, oder setzt absichtlich kleine Werte).
+- Verify-before-fix: alle `aria-label="...Sekunden"` gegrept; nur #sInput ist auf einem Minuten-Feld falsch (#pInput Pumpe-Sekunden und #dirSecInput Direkt-Zug-Sekunden sind echte Sekunden-Felder, bleiben). Funktion via Test belegt: Wert 5 -> 300000ms Restzeit (= 5 Minuten).
+- Fix: aria-label -> „Sicherheits-Timer, Auto-Aus nach Minuten". Reine Label-Korrektur, keine Funktionsänderung.
+- Test: v941ariafix.mjs 7/7.
+
 ### Nachtrag: Paket 3, v9.40.0, LIVE — BJ-4 entschieden (Andre)
 Andre-Entscheidung: verpasste EINMALIGE Schedules deaktivieren statt verschieben. Umgesetzt im scheduleTick-Missed-Branch: `repeat==='once'` -> enabled=false/nextRun=null; wiederholende weiterhin auf nächste Zukunft neu berechnen. Hält zugleich den v9.36.0-Anti-Churn (verpasste „in X Min" once). Vorher feuerte ein verpasster Einmal-Uhrzeit-Schedule überraschend am Folgetag. Bewusst silent (kein Startup-Toast), der Schedule bleibt deaktiviert in der Liste sichtbar. Tests v940schedonce.mjs 8/8 (inkl. Beleg, dass computeNextRun einen Zukunfts-Tag GEFUNDEN hätte, wir aber trotzdem deaktivieren). v936bugjagd weiterhin 10/10.

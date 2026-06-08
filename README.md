@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.40.0)
+# Terp Sessions — Vape Controller (v9.41.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.41.0 — A11Y-Bugfix: Sicherheits-Timer-Eingabe falsch beschriftet (Bug-Jagd)
+
+Das Eingabefeld des Sicherheits-Timers auf der Steuerung (Auto-Aus nach Minuten) trug ein falsches `aria-label` („Wartezeit in Sekunden", offenbar Copy-Paste-Rest). Da der sichtbare Text nicht programmatisch mit dem Feld verknüpft ist, war dieses aria-label der einzige Name, den ein Screen-Reader vorlas. Ein blinder Tester hätte gehört „Wartezeit in Sekunden" und den Auto-Aus-Wert für Sekunden statt Minuten gehalten, sicherheitsrelevant. Jetzt: „Sicherheits-Timer, Auto-Aus nach Minuten". Reine Label-Korrektur, keine Funktionsänderung (das Feld war und ist Minuten).
+
+Tests: `v941ariafix.mjs` (7 Checks, inkl. Funktionsbeleg dass der Wert als Minuten wirkt).
 
 ## v9.40.0 — Verpasste Einmal-Schedules deaktivieren (Andre-Entscheidung)
 
