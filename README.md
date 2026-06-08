@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.36.0)
+# Terp Sessions — Vape Controller (v9.37.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,12 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.37.0 — Statistik-Aufschlüsselung (autonom)
+
+Im Setup → Übersicht gibt es eine neue Karte „📊 Aufschlüsselung", die das Session-Tagebuch auswertet: Sessions **pro Wochentag** (Mo-So), **pro Tageszeit** (Morgens/Mittags/Abends/Nachts) und die **Top-Sorten**, jeweils als kleine Balken. Jeder Balken hat ein `aria-label` (z.B. „Mo: 3 Sessions"), damit Screen-Reader die Werte vorlesen. Aktualisiert sich automatisch mit dem Tagebuch. Tester können so in der Test-Woche ihre eigenen Muster erkunden.
+
+Tests: `v937stats.mjs` (12 Checks, inkl. XSS-Escaping der Sorten-Namen). Reine lokale Auswertung, kein neuer Speicher, keine Engine-Änderung.
 
 ## v9.36.0 — Bug-Jagd: Schedule + Streak (autonom)
 

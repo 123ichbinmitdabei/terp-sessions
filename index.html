@@ -2683,6 +2683,12 @@ button[data-sch-day].active{
     </div>
   </div>
 
+  <!-- v9.37.0 (autonom) Statistik-Aufschlüsselung aus dem Session-Tagebuch -->
+  <div class="card" id="sessionBreakdownCard">
+    <h3>📊 Aufschlüsselung</h3>
+    <div id="sessionBreakdownBody" aria-live="polite"></div>
+  </div>
+
   <!-- v5.1.0 Modul 1: Geraete-Statistik (pro Geraetetyp) -->
   <div class="card" id="deviceStatsCard">
     <h3>Geräte-Statistik <span style="font-size:11px;color:var(--muted);font-weight:400">pro Gerätetyp</span></h3>
@@ -12107,6 +12113,57 @@ function renderStats(){
   const b=$('#statBags'); if(b) b.textContent = PREFS.stats.bagsFilled;
   const h=$('#statHeat'); if(h) h.textContent = fmtHeat(PREFS.stats.totalHeatSec);
   const s=$('#statSess'); if(s) s.textContent = PREFS.stats.sessionsCount;
+  try{ renderSessionBreakdown(); }catch(_){}   // v9.37.0 (autonom)
+}
+
+// v9.37.0 (autonom) Statistik-Aufschluesselung aus dem Session-Tagebuch (sessionsAll):
+// pro Wochentag, pro Tageszeit, Top-Sorten. Reine Anzeige, kein neuer Speicher.
+function _sessTimeBucket(h){
+  if(h < 6) return 'Nachts';
+  if(h < 12) return 'Morgens';
+  if(h < 18) return 'Mittags';
+  return 'Abends';
+}
+function renderSessionBreakdown(){
+  const root = $('#sessionBreakdownBody'); if(!root) return;
+  const all = (typeof sessionsAll === 'function') ? sessionsAll() : [];
+  if(!all.length){
+    root.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:6px 0">Noch keine Sessions erfasst. Sobald du Sessions im Tagebuch festhältst, erscheinen hier Aufschlüsselungen (Wochentag, Tageszeit, Sorte).</div>';
+    return;
+  }
+  const wd = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const byWd = [0,0,0,0,0,0,0];
+  const buckets = { Morgens:0, Mittags:0, Abends:0, Nachts:0 };
+  const byStrain = {};
+  all.forEach(s=>{
+    const ts = s.startedAt; if(!ts) return;
+    const d = new Date(ts);
+    byWd[d.getDay()]++;
+    buckets[_sessTimeBucket(d.getHours())]++;
+    const a = (s.aroma||'').trim();
+    if(a) byStrain[a] = (byStrain[a]||0) + 1;
+  });
+  const mx = (arr)=>Math.max(1, ...arr);
+  // label ist hier immer bereits sicher (Literale bzw. vorab escaped)
+  const bar = (label, n, max)=>'<div role="group" aria-label="' + label + ': ' + n + ' Sessions" style="display:flex;align-items:center;gap:8px;margin:3px 0">'
+    + '<span aria-hidden="true" style="width:74px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + label + '</span>'
+    + '<span aria-hidden="true" style="flex:1;background:var(--bg-2);border-radius:4px;overflow:hidden"><span style="display:block;height:14px;width:' + Math.round(n/max*100) + '%;background:var(--hot,#ff5722)"></span></span>'
+    + '<span aria-hidden="true" style="width:28px;text-align:right;font-size:12px" class="mono">' + n + '</span></div>';
+  const order = [1,2,3,4,5,6,0];   // Mo..So
+  const wdMax = mx(byWd);
+  let html = '<div class="set-section-h" style="margin:4px 0 6px">Pro Wochentag</div>';
+  html += order.map(i=>bar(wd[i], byWd[i], wdMax)).join('');
+  const bOrder = ['Morgens','Mittags','Abends','Nachts'];
+  const bMax = mx(bOrder.map(k=>buckets[k]));
+  html += '<div class="set-section-h" style="margin:10px 0 6px">Pro Tageszeit</div>';
+  html += bOrder.map(k=>bar(k, buckets[k], bMax)).join('');
+  const strainEntries = Object.keys(byStrain).map(k=>[k, byStrain[k]]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(strainEntries.length){
+    const sMax = mx(strainEntries.map(e=>e[1]));
+    html += '<div class="set-section-h" style="margin:10px 0 6px">Top-Sorten</div>';
+    html += strainEntries.map(e=>bar(escapeHtml(String(e[0]).slice(0,14)), e[1], sMax)).join('');
+  }
+  root.innerHTML = html;
 }
 
 /* ═══ v5.1.0 MODUL 1: Geraete-Statistik (pro Geraetetyp) ═══
@@ -12458,7 +12515,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.36.0';
+const SW_VERSION_LABEL='v9.37.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14842,6 +14899,7 @@ function renderSessions(){
   renderSessionHint();
   renderSessionViz();
   renderSessionAchievements();
+  try{ renderSessionBreakdown(); }catch(_){}   // v9.37.0 (autonom): Aufschlüsselung mit aktualisieren
   // Wiring
   $('#sessFilterDev')?.addEventListener('change',e=>{ sessionFilterState().device=e.target.value; renderSessions(); });
   $('#sessFilterDays')?.addEventListener('change',e=>{ sessionFilterState().days=Number(e.target.value); renderSessions(); });
@@ -19132,7 +19190,7 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.36.0 bereit.','ok');
+  log('Terp Sessions v9.37.0 bereit.','ok');
 
   setupPwaUpdate();
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery

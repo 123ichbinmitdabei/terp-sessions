@@ -40,4 +40,15 @@ Methode: `||`-Numeric-Defaults (0-überschreibt-Klasse wie gestern t.hour||8), D
 - **Verify-before-fix:** scheduleTick-Intervall 30s bestätigt; computeNextRun 'in'-Zweig liefert ohne lastRun `createdAt+mins` (Vergangenheit bei verpasst) bestätigt; QA2.17.9-setDate-Muster als Referenz für BJ-2.
 - **Test:** v936bugjagd.mjs 10/10 (Deaktivierung + kein Zombie-Churn + Kontrast wiederholend bleibt aktiv; Streak +1/Reset/kein-Doppel).
 - **Tester-Update-Baustein:** „Verpasste „in X Minuten"-Timer hängen nicht mehr fest, und der Streak-Zähler ist an Zeitumstellungen robust."
+- **Test/Regression:** v936bugjagd 10/10, volle Regression 2039/2041 (die 2 Fails = v874strains-Flake unter Chrome-Contention, solo 53/53 grün).
+- **Live:** commit fcb4804, Tag v9.36.0, Pages verifiziert.
+
+### Paket 2: Statistik-Aufschlüsselung, v9.37.0, LIVE (Richtung 1, E)
+
+- **Was:** neue Karte „📊 Aufschlüsselung" (Setup → Übersicht): Sessions pro Wochentag, pro Tageszeit (Morgens/Mittags/Abends/Nachts), Top-Sorten, als Balken mit aria-label pro Zeile. Liest sessionsAll() (v8.2-Tagebuch), `renderSessionBreakdown` wird aus renderStats + renderSessions aufgerufen.
+- **Warum jetzt:** Hoher Test-Wochen-Wert. Tester werden ihre eigenen Daten anschauen wollen; das gibt ihnen Muster (wann/was) ohne Roh-Tagebuch durchzuscrollen.
+- **Risiko:** niedrig. Reine Anzeige aus vorhandenen Daten, kein neuer Speicher, keine Engine-/Adapter-Änderung. aria-label je Balken (blinder Tester), Sorten-Namen escaped (XSS).
+- **Verify-before-fix:** Session-Objektform (startedAt, aroma) + SESSIONS_KEY bestätigt; renderStats/renderSessions als Aktualisierungs-Trigger bestätigt.
+- **Test:** v937stats.mjs 12/12 (Buckets inkl. Grenzen, Leerzustand, Wochentag/Tageszeit/Top-Sorten-Zählung, XSS-Escaping).
+- **Tester-Update-Baustein:** „Neue Aufschlüsselung im Statistik-Bereich zeigt deine Sessions nach Wochentag, Tageszeit und Lieblings-Sorten."
 - **Live:** wird nach Regression + Push bestätigt.
