@@ -59,6 +59,13 @@ Begründung: Tester sind aktiv; kleine, gezielte Korrekturen helfen, ohne die Ap
 ### Bilanz
 2 Versionen (v9.38.0, v9.39.0), beide reine Bug-Fixes, getestet, live, Regression sauber grün (2069/2069 bzw. 2076/2076). Verify-before-fix in beiden Fällen entscheidend (existierender Sanitizer wiederverwendet; alle .hour||-Stellen gegrept).
 
+### Tester-Generalprobe (End-to-End-Smoke, neuer permanenter Wächter) — sauber
+- Motivation (Andre: „alles perfekt für die Tester"): statt weiter spekulativ Code zu lesen, die echten Tester-Journeys im echten Browser fahren und JEDE JavaScript-Ausnahme + Konsolen-Fehler abfangen. Fängt Integrations-/Laufzeit-Fehler, die Unit-Tests + Code-Lesen verfehlen.
+- Neue Suite `vsmoke.mjs` (in run-all.mjs registriert, lokaler Test-Harness): 21 Journeys — alle Tabs, Pioneer-Modus, Verbindung simulieren (Mock-Adapter), Programm starten/stoppen, Sorten, Quick-Action, Schedule-Vorlage, Notizbuch/Quick-Feedback/Dashboard, Bug-Report-Build, Statistik-Aufschlüsselung, 14 Voice-/Text-Befehle, Deeplink-Import, FAQ/Onboarding, ALLE 53 Schalter app-weit je 2x, Screen-Reader-Modus, FAQ-Details, Schriftgröße 200%, Backup-Roundtrip.
+- Ergebnis: **21/21, null pageerror, null unerwartete Konsolen-Fehler** über alle Journeys (inkl. 106 Schalter-Klicks). Starkes „ist bereit"-Signal.
+- Nebenbefund (kein Bug): nur 1 von 53 `[role=switch]` ist DOM-Kind von #tab-setup; die Einstellungs-Schalter leben in einem separaten Settings-Container (eigene Settings-Ansicht), nicht direkt im #tab-setup-Div. Strukturdetail, korrekt.
+- Wert: permanenter Smoke-Wächter gegen künftige Integrations-Regressionen.
+
 ### Deep-Dive Voice-Parser (dokumentiert, kein Ship) — solide
 - Gewählt als tiefste Prüfung (höchster Test-Wochen-Wert: blinder Tester nutzt Voice am meisten).
 - parseGermanNumber (13544) + _GER_NUM_RE-Extraktion (13574) für realistische Vape-Temps durchgespielt: 180 (hundertachtzig), 185 (hundertfuenfundachtzig), 200 (zweihundert), 220 (zweihundertzwanzig), 225, 300, 102, 81 — alle korrekt. Extraktions-Alternation ist richtig geordnet (Compound vor Single, sonst würde „hundertachtzig" zu „hundert" trunkiert). Beide (Parser + Extraktion) konsistent.
