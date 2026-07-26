@@ -24,7 +24,7 @@ const DEV_ID = 'mock-volcano-1';
 const DEV_NAME = 'VOLCANO 12345';
 
 /** Frische App-Instanz. `pref` landet als vol_prefs im localStorage. */
-function fresh({ pref, devices, getDevices, noBle, requestResult } = {}) {
+function fresh({ pref, devices, getDevices, noBle, requestResult, extraStorage } = {}) {
   const bt = noBle ? null : makeBluetooth({
     devices: devices || [],
     getDevices: getDevices === false ? false : true,
@@ -33,7 +33,7 @@ function fresh({ pref, devices, getDevices, noBle, requestResult } = {}) {
   const app = loadApp({
     noBle: !!noBle,
     bluetooth: bt || undefined,
-    storage: pref ? { vol_prefs: pref } : {},
+    storage: Object.assign({}, pref ? { vol_prefs: pref } : {}, extraStorage || {}),
   });
   app.run('loadUUIDs()');           // macht init() genauso — sonst sind die UUID-Felder leer
   return app;
@@ -689,6 +689,159 @@ export function runSuite(t) {
     a.run('State.autoConnectAbort = false');
     btn.click();
     assertEq(a.get('State').autoConnectAbort, true, 'Klick setzt die Abbruch-Marke');
+  });
+
+  /* ═══ L3: Heizer-Sicherheit ════════════════════════════ */
+
+  /** Aktivitäts-Notify mit gesetztem Heiz-Bit (ACT_BITS.HEAT = 0x0020). */
+  const heizBit = () => { const dv = new DataView(new ArrayBuffer(2)); dv.setUint16(0, 0x0020, true); return dv; };
+  /** Zieltemperatur-Notify (×10 codiert, siehe parseTempU16LE). */
+  const zielTemp = grad => { const dv = new DataView(new ArrayBuffer(2)); dv.setUint16(0, grad * 10, true); return dv; };
+
+  t('Heizer an nach Auto-Connect: rote Warnkarte mit Zieltemperatur', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    assertEq(await a.run('autoConnect()'), 'A');
+    // echter Weg: das Gerät meldet per Notify Heizer an + Ziel 195 Grad
+    dev.chars.setTemp._emit(zielTemp(195));
+    dev.chars.activity._emit(heizBit());
+    assertEq(a.get('State').heater, true, 'Notify-Pfad hat den Heizerstatus gesetzt');
+    assertEq(a.run('acCheckHeaterAfterConnect()'), true);
+    const box = a.document.getElementById('acHeatWarn');
+    assertEq(box.hidden, false, 'Warnkarte sichtbar');
+    assertEq(box.getAttribute('role'), 'alert');
+    const text = a.document.getElementById('acHeatWarnMsg').textContent;
+    assert(text.includes('Heizer ist an'), 'Text: ' + text);
+    assert(text.includes('195 Grad'), 'Zieltemperatur fehlt im Text: ' + text);
+    assertEq(a.document.getElementById('btnAcHeatOff').hidden, false, 'verbunden -> abschaltbar');
+  });
+
+  t('Heizer aus nach Auto-Connect: keine Warnkarte', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    assertEq(a.run('acCheckHeaterAfterConnect()'), false);
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  t('Geraet ohne eigenen Auto-Aus bekommt sofort den Sicherheitstimer', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    a.run('State.adapter.constructor.capabilities.requiresAppSafetyTimer = true; State.heater = true; State.target = 180;');
+    assertEq(a.run('!!State.safetyTimer'), false, 'vorher kein Timer');
+    a.run('acCheckHeaterAfterConnect()');
+    assertEq(a.run('!!State.safetyTimer'), true, 'Sicherheitstimer scharf');
+    assert(a.run('State.safetyEndAt') > Date.now(), 'Ablaufzeitpunkt in der Zukunft');
+  });
+
+  t('Geraet mit eigenem Auto-Aus bekommt keinen erzwungenen Timer', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    assertEq(a.run('State.adapter.constructor.capabilities.requiresAppSafetyTimer'), false, 'Volcano hat BLE-Auto-Aus');
+    a.run('State.heater = true; State.target = 180;');
+    a.run('acCheckHeaterAfterConnect()');
+    assertEq(a.run('!!State.safetyTimer'), false);
+  });
+
+  t('renderStatus schreibt den Heizerstatus mit', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    dev.chars.setTemp._emit(zielTemp(190));
+    dev.chars.activity._emit(heizBit());          // loest renderStatus aus
+    const snap = JSON.parse(a.localStorage.getItem('vol_last_heat_state'));
+    assertEq(snap.heater, true);
+    assertEq(snap.target, 190);
+    assertEq(snap.device, DEV_NAME);
+  });
+
+  t('Der Heizerstatus wird nur bei Aenderung geschrieben, nicht im Sekundentakt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    a.run('State.heater = true; State.target = 200;');
+    assertEq(a.run('acPersistHeatState()'), true, 'erste Aenderung wird geschrieben');
+    assertEq(a.run('acPersistHeatState()'), false, 'unveraenderter Stand nicht nochmal');
+    assertEq(a.run('acPersistHeatState()'), false);
+    a.run('State.target = 210;');
+    assertEq(a.run('acPersistHeatState()'), true, 'echte Aenderung wieder');
+  });
+
+  t('Ohne Verbindung wird kein Heizerstatus geschrieben', () => {
+    const a = use(fresh());
+    a.run('State.heater = true; State.target = 200;');
+    assertEq(a.run('acPersistHeatState()'), false);
+    assertEq(a.localStorage.getItem('vol_last_heat_state'), null);
+  });
+
+  t('Gescheiterter Auto-Connect + zuletzt heiss: Status als unbekannt melden', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({
+      pref: prefKnown(), devices: [dev],
+      extraStorage: { vol_last_heat_state: { heater: true, target: 205, device: DEV_NAME, at: 1 } },
+    }));
+    spyBackoff(a);
+    assertEq(await a.run('autoConnect()'), 'B');
+    const box = a.document.getElementById('acHeatWarn');
+    assertEq(box.hidden, false, 'Warnkarte sichtbar');
+    const text = a.document.getElementById('acHeatWarnMsg').textContent;
+    assert(text.includes('Heizer-Status unbekannt'), 'Text: ' + text);
+    assert(text.includes('205 Grad'), 'letzter bekannter Zielwert fehlt: ' + text);
+    assertEq(a.document.getElementById('btnAcHeatOff').hidden, true,
+      'ohne Verbindung darf kein "Heizer aus" angeboten werden, das waere eine Luege');
+  });
+
+  t('Gescheiterter Auto-Connect + zuletzt kalt: keine Warnkarte', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({
+      pref: prefKnown(), devices: [dev],
+      extraStorage: { vol_last_heat_state: { heater: false, target: 205, device: DEV_NAME, at: 1 } },
+    }));
+    spyBackoff(a);
+    await a.run('autoConnect()');
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  t('Ohne jede Heizhistorie keine Warnkarte', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    spyBackoff(a);
+    await a.run('autoConnect()');
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  t('"Verstanden" blendet die Heizer-Warnung aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('wire()');
+    await a.run('autoConnect()');
+    a.run('State.heater = true; State.target = 180; acCheckHeaterAfterConnect();');
+    assertEq(a.document.getElementById('acHeatWarn').hidden, false);
+    a.document.getElementById('btnAcHeatAck').click();
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  t('"Heizer aus" schickt den Abschaltbefehl und blendet aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('wire()');
+    await a.run('autoConnect()');
+    a.run('State.heater = true; State.target = 180; acCheckHeaterAfterConnect();');
+    assertEq(dev.chars.heaterOff.writes.length, 0, 'vorher kein Schreibbefehl');
+    a.document.getElementById('btnAcHeatOff').click();
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(dev.chars.heaterOff.writes.length, 1, 'genau ein Abschaltbefehl — vom Nutzer ausgelöst');
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  t('Ein neuer Auto-Connect raeumt die alte Warnung weg', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run(`$('#acHeatWarn').hidden = false;`);   // Warnung aus einer früheren Runde
+    await a.run('autoConnect()');
+    assertEq(a.document.getElementById('acHeatWarn').hidden, true);
   });
 
   /* — Voller App-Start — */

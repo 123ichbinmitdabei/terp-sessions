@@ -2424,6 +2424,15 @@ button[data-sch-day].active{
            Wer ein anderes will, kommt hierüber zur vollen Liste. -->
       <button class="btn ghost sm block" id="btnAutoConnectOther" type="button" style="margin-top:6px" aria-label="Ein anderes Gerät verbinden">anderes Gerät</button>
     </div>
+    <!-- v9.43.0 L3: Heizer-Warnung nach automatischer Verbindung bzw. bei unbekanntem Status -->
+    <div id="acHeatWarn" hidden role="alert" aria-live="assertive" style="margin-top:10px;padding:12px;background:#7a1010;color:#fff;border-radius:10px;line-height:1.45">
+      <div style="font-weight:800;font-size:14px;letter-spacing:.03em">⚠ HEIZER</div>
+      <div id="acHeatWarnMsg" style="margin-top:4px;font-size:13px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn sm" id="btnAcHeatOff" type="button" style="background:#fff;color:#7a1010;font-weight:700">Heizer aus</button>
+        <button class="btn sm ghost" id="btnAcHeatAck" type="button" style="color:#fff;border-color:rgba(255,255,255,.5)">Verstanden</button>
+      </div>
+    </div>
     <div class="preheat-running" id="preheatRunning" hidden role="status" aria-live="polite">
       <span class="ico">⏱</span>
       <div class="info">
@@ -6865,6 +6874,7 @@ function setHeatGlow(){
 }
 
 function renderStatus(){
+  try{ acPersistHeatState(); }catch(_){}   // v9.43.0 L3: Heizerstatus mitschreiben (nur bei Aenderung)
   if(typeof sessionTrackerTrackTemp==='function') sessionTrackerTrackTemp();   // v8.2.0 Modul 1: Max-Temp mitschreiben
   if(typeof ttsCheckTempReached==='function') ttsCheckTempReached();           // v8.5.0 Modul 3: Ziel-erreicht-Ansage
   // v8.1.0 Modul 4: Quick-Actions nur bei Heizer-Wechsel neu rendern (nicht bei jedem Status-Poll)
@@ -7331,6 +7341,70 @@ function acHideConnecting(){
   if(btn) btn.hidden = true;
   try{ setConn(State.connected); }catch(_){}   // Chip-Text wieder aus dem echten Status
 }
+/* ── v9.43.0 L3: Heizer-Sicherheit ────────────────────────────────────────
+   Eine Verbindung, die der Nutzer nicht angestossen hat, darf ihn nie im
+   Unklaren lassen, ob das Geraet gerade heiss ist. Zwei Faelle:
+     verbunden   -> heizt es? Dann rote Karte + Sicherheitstimer scharf machen.
+     gescheitert -> war es zuletzt heiss? Dann Status als UNBEKANNT melden.
+   Dafuer wird der Heizerstatus laufend mitgeschrieben. */
+
+// renderStatus laeuft im Sekundentakt — geschrieben wird nur bei echter Aenderung.
+function acPersistHeatState(){
+  try{
+    if(!State.connected) return false;
+    const snap = {
+      heater: !!State.heater,
+      target: isFinite(State.target) ? Math.round(State.target) : null,
+      device: (State.device && State.device.name) || '',
+      at: Date.now(),
+    };
+    const alt = State._acHeatSnap;
+    if(alt && alt.heater === snap.heater && alt.target === snap.target) return false;
+    State._acHeatSnap = snap;
+    LS.set('vol_last_heat_state', snap);
+    return true;
+  }catch(_){ return false; }
+}
+function acLastHeatState(){ try{ return LS.get('vol_last_heat_state', null); }catch(_){ return null; } }
+
+function acHideHeatWarn(){ const b = $('#acHeatWarn'); if(b) b.hidden = true; }
+
+function acCheckHeaterAfterConnect(){
+  try{
+    if(!State.heater) return false;
+    const ziel = isFinite(State.target) ? Math.round(State.target) : null;
+    const msg = $('#acHeatWarnMsg');
+    if(msg) msg.textContent = 'Heizer ist an' + (ziel != null ? ', Ziel ' + ziel + ' Grad' : '')
+      + '. Die Verbindung kam automatisch zustande, das Heizen hast du gerade nicht gestartet.';
+    const off = $('#btnAcHeatOff'); if(off) off.hidden = false;   // verbunden -> abschaltbar
+    const box = $('#acHeatWarn'); if(box) box.hidden = false;
+    srAnnounce('Achtung, Heizer ist an' + (ziel != null ? ', Ziel ' + ziel + ' Grad' : ''), true);
+    log('Auto-Verbindung: Heizer war bereits an' + (ziel != null ? ' (Ziel ' + ziel + '°C)' : '') + '.','warn');
+    // Geraete ohne eigenen BLE-Auto-Aus bekommen sofort den App-Timer.
+    const caps = State.adapter && State.adapter.constructor && State.adapter.constructor.capabilities;
+    if(caps && caps.requiresAppSafetyTimer && !State.safetyTimer){
+      startSafety(PREFS.safetyMinutes || 8);
+      log('Sicherheits-Timer nach Auto-Verbindung gesetzt (Gerät ohne eigenen Auto-Aus).','warn');
+    }
+    return true;
+  }catch(_){ return false; }
+}
+
+function acWarnHeatUnknown(){
+  try{
+    const letzter = acLastHeatState();
+    if(!letzter || !letzter.heater) return false;
+    const msg = $('#acHeatWarnMsg');
+    if(msg) msg.textContent = 'Heizer-Status unbekannt, bitte am Gerät prüfen und ggf. ausschalten.'
+      + (letzter.target ? ' Zuletzt bekannt: Ziel ' + letzter.target + ' Grad.' : '');
+    const off = $('#btnAcHeatOff'); if(off) off.hidden = true;    // ohne Verbindung nichts abschaltbar
+    const box = $('#acHeatWarn'); if(box) box.hidden = false;
+    srAnnounce('Heizer-Status unbekannt, bitte am Gerät prüfen', true);
+    log('Auto-Verbindung gescheitert. Letzter bekannter Zustand: Heizer AN — Status jetzt unbekannt.','err');
+    return true;
+  }catch(_){ return false; }
+}
+
 function acAbortAutoConnect(){
   State.autoConnectAbort = true;
   log('Auto-Verbindung vom Nutzer abgebrochen.','warn');
@@ -7376,6 +7450,7 @@ async function autoConnect(){
     acShowStageB(); return 'B';
   }
 
+  acHideHeatWarn();                   // alte Warnung aus einem frueheren Versuch wegraeumen
   acShowConnecting(target.name);
   for(let n=0; n<3; n++){
     if(State.autoConnectAbort){ acHideConnecting(); return 'abgebrochen'; }
@@ -7390,7 +7465,15 @@ async function autoConnect(){
         acHideConnecting();
         return 'abgebrochen';
       }
-      if(State.connected){ acHideConnecting(); log('Auto-Verbindung hergestellt.','ok'); return 'A'; }
+      if(State.connected){
+        acHideConnecting();
+        log('Auto-Verbindung hergestellt.','ok');
+        // v9.43.0 L3: sofort pruefen, ob das Geraet heiss ist. Der erste Notify kann
+        // kurz brauchen, deshalb nach 1,5 s noch ein zweiter Blick.
+        acCheckHeaterAfterConnect();
+        setTimeout(()=>{ try{ acCheckHeaterAfterConnect(); }catch(_){} }, 1500);
+        return 'A';
+      }
       // Geraet verbunden, aber nicht erkannt -> Wiederholen bringt nichts.
       log('Auto-Verbindung: Geraet nicht erkannt, kein weiterer Versuch.','warn');
       break;
@@ -7402,6 +7485,7 @@ async function autoConnect(){
   }
   acHideConnecting();                 // ruft setConn(State.connected) -> UI wieder konsistent
   log('Auto-Verbindung aufgegeben, Ein-Tipp-Verbindung angeboten.','warn');
+  acWarnHeatUnknown();                // v9.43.0 L3: war das Geraet zuletzt heiss?
   acShowStageB(target.name);
   return 'B';
 }
@@ -10203,6 +10287,12 @@ function wire(){
   });
   $('#btnAutoConnectOther')?.addEventListener('click', ()=>{ acHideStageB(); connectBLE(); });
   $('#btnAutoConnectCancel')?.addEventListener('click', acAbortAutoConnect);
+  // v9.43.0 L3: Heizer-Warnung nach automatischer Verbindung
+  $('#btnAcHeatOff')?.addEventListener('click', async ()=>{
+    try{ await cmdHeater(false); }catch(e){ log('Heizer-Aus fehlgeschlagen: '+(e&&e.message||e),'err'); }
+    acHideHeatWarn();
+  });
+  $('#btnAcHeatAck')?.addEventListener('click', acHideHeatWarn);
   $('#btnDiscover').addEventListener('click', discover);
   $('#btnAutoMap').addEventListener('click', autoMap);
   $('#btnTestUUIDs').addEventListener('click', testUUIDs);
