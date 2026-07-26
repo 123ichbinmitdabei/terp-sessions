@@ -2840,6 +2840,8 @@ button[data-sch-day].active{
     <h4 style="margin:14px 0 6px;font-size:13px;letter-spacing:.04em;color:var(--muted)">Bekannte Geräte</h4>
     <div id="knownDevicesCapHint" hidden style="font-size:12px;line-height:1.5;color:var(--muted);margin-bottom:8px"></div>
     <div id="knownDevicesList"></div>
+    <!-- v9.43.0 L10: Browser-Fähigkeiten sichtbar, damit Tester melden können was ihr Browser kann -->
+    <div id="btCapsInfo" style="margin-top:10px;font-size:11px;line-height:1.6;color:var(--muted);word-break:break-word"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="btnDiscover" style="flex:1">Services scannen</button>
       <button class="btn" id="btnAutoMap" style="flex:1">Auto-Mapping</button>
@@ -5783,6 +5785,7 @@ const PREFS_DEFAULTS = {
   selectedBagId:'easy-large',  // v4.9.3: aktuell ausgewählter Ballon
   // v9.43.0: Auto-Verbindung mit gemerktem Geraet
   autoConnect:false,       // Opt-in. Beim App-Start ohne Tippen mit dem zuletzt genutzten Geraet verbinden.
+  autoConnectAsked:false,  // v9.43.0 L9: einmalige Nachfrage nach dem ersten manuellen Connect — Nein heisst nie wieder
   lastDeviceId:'',         // BLE-device.id des zuletzt verbundenen Geraets = einziges Auto-Connect-Ziel
   knownDevices:[],         // LRU der letzten 5 BLE-Geraete: {id, name, type, lastUsed}
   stats:{
@@ -7061,6 +7064,7 @@ function resetUUIDs(){
 // v5.0.2.1 FIX0: Diagnose-Dump in den sichtbaren App-Log (fuer Screenshot)
 async function dumpDiagnostics(){
   log('═══ DIAGNOSE-DUMP (v5.0.2.1) ═══','warn');
+  log('Browser-Faehigkeiten: '+acCapsText(),'warn');   // v9.43.0 L10
   log('Device-Name: "'+(State.device?.name||'(leer)')+'"','warn');
   log('Device-ID: '+(State.device?.id||'(keine)'),'warn');
   log('Services discovered: '+(State.allServices?.length||0),'warn');
@@ -7470,6 +7474,41 @@ function acWarnHeatUnknown(){
   }catch(_){ return false; }
 }
 
+/* v9.43.0 L9: Nach dem ersten erfolgreichen MANUELLEN Verbinden genau einmal fragen.
+   Das ist der einzige Weg, wie der Schalter von allein an geht — ohne die Frage bleibt
+   die Auto-Verbindung ein Feature, das niemand findet. Ein Nein gilt fuer immer.
+   Nicht gefragt wird, wenn der Browser gar kein getDevices kann: dann waere Stufe A
+   ohnehin unmoeglich und die Frage nur eine Enttaeuschung. */
+async function acMaybeAskAutoConnect(name){
+  try{
+    if(PREFS.autoConnectAsked) return 'schon-gefragt';
+    if(PREFS.autoConnect) return 'schon-an';
+    if(!PREFS.lastDeviceId) return 'kein-ziel';
+    if(!btCaps(navigator).getDevices) return 'browser-kann-nicht';
+    // VOR dem Dialog merken: bricht die Seite mittendrin weg, wird trotzdem nie wieder gefragt.
+    PREFS.autoConnectAsked = true;
+    savePrefs();
+    const ja = await uiConfirm((name || 'Dieses Gerät') + ' künftig automatisch verbinden?',
+      { title:'Auto-Verbindung', okText:'Ja, automatisch', cancelText:'Nein' });
+    PREFS.autoConnect = !!ja;
+    savePrefs();
+    syncToggle('togAutoConnect', PREFS.autoConnect);
+    toast(ja ? 'Auto-Verbindung ist an' : 'Bleibt aus. Der Schalter steht im Setup unter Bluetooth.');
+    log('Auto-Verbindung nach Nachfrage: ' + (ja ? 'eingeschaltet' : 'abgelehnt') + '.','ok');
+    return ja ? 'ja' : 'nein';
+  }catch(_){ return 'fehler'; }
+}
+
+/* v9.43.0 L10: Was kann der Browser des Testers wirklich? Ohne diese Zeile im
+   Diagnose-Material ist jede Fehlermeldung zur Auto-Verbindung Kaffeesatzleserei. */
+function acCapsText(){
+  const c = btCaps(navigator);
+  return 'Web Bluetooth: ' + (c.api ? 'ja' : 'nein')
+    + ' · gemerkte Geräte (getDevices): ' + (c.getDevices ? 'ja' : 'nein')
+    + ' · Werbepakete (watchAdvertisements): ' + (c.watchAds ? 'ja' : 'nein')
+    + ' · Vergessen (forget): ' + (c.forget ? 'ja' : 'nein');
+}
+
 /* ── v9.43.0 L8: Liste der bekannten Geraete in den Einstellungen ─────────
    Name, Typ, letzte Nutzung, "vergessen". Das Auto-Connect-Ziel ist markiert.
    Wichtig ehrlich zu bleiben: "vergessen" entfernt den Eintrag aus der App.
@@ -7493,6 +7532,8 @@ function renderKnownDevices(){
       hint.hidden = false;
     } else { hint.hidden = true; }
   }
+  const capsEl = $('#btCapsInfo');            // v9.43.0 L10
+  if(capsEl) capsEl.textContent = acCapsText();
   const known = acSortKnownDesc(PREFS.knownDevices);
   root.innerHTML = '';
   if(!known.length){
@@ -7629,7 +7670,7 @@ async function autoConnect(){
     if(State.connected){ acHideConnecting(); return 'A'; }
     try{
       renderLastAction('Auto-Verbindung mit '+(target.name||'Gerät')+'…','busy');
-      await _connectWithDevice(target);
+      await _connectWithDevice(target, { auto:true });
       if(State.autoConnectAbort){
         // Der Abbruch kam waehrend des laufenden Versuchs. Nicht verbunden lassen,
         // sonst haetten wir gegen den ausdruecklichen Willen des Nutzers verbunden.
@@ -7720,7 +7761,8 @@ function _bleOptionalServices(){
    Adapter-Erkennung, Char-Binding, Notifications und Geraete-Merken.
    Wirft nach oben; der Aufrufer entscheidet ueber die Reaktion (Dialog-Pfad:
    Fehler-Toast, Auto-Pfad: Backoff + Ein-Tipp-Angebot). */
-async function _connectWithDevice(dev){
+async function _connectWithDevice(dev, opts){
+    const istAuto = !!(opts && opts.auto);   // v9.43.0 L9: nur manuelle Connects duerfen nachfragen
     State.device = dev;
     // v9.43.0: Beim Geraetedialog ist jedes requestDevice() ein frisches Objekt, bei den
     // Auto-Connect-Wiederholungen dagegen IMMER dasselbe. Ohne diese Marke saesse nach drei
@@ -7844,6 +7886,8 @@ async function _connectWithDevice(dev){
     _maybeShowBetaHint(); // v9.13.0 MB-B (MB.3): einmaliger Beta-/Status-Hinweis pro Geraet
     acRememberBleDevice(State.device, State.adapter.constructor.deviceType);  // v9.43.0: Auto-Connect-Ziel merken
     acHideStageB();                                                          // v9.43.0: Ein-Tipp-Knopf wieder weg
+    // v9.43.0 L9: einmalige Nachfrage — bewusst ohne await, der Connect ist fertig.
+    if(!istAuto) acMaybeAskAutoConnect(State.device.name);
 }
 
 async function disconnectBLE(){
@@ -16567,6 +16611,7 @@ function captureDiagnostics(errMsg=''){
     pump: State.pump,
     autoOff: State.autoOff,
     chars: Object.fromEntries(Object.entries(State.chars).map(([k,v])=>[k, !!v])),
+    btCaps: (typeof btCaps === 'function') ? btCaps(navigator) : null,   // v9.43.0 L10
     userAgent: navigator.userAgent,
   };
   const log = LS.get('vol_diag_log', []);

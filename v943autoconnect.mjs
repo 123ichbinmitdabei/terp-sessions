@@ -1175,6 +1175,140 @@ export function runSuite(t) {
     assert(/setTimeout\(tryReconnect,\s*acBackoffMs\(/.test(src), 'Backoff-Tabelle wird benutzt');
   });
 
+  /* ═══ L9: einmalige Nachfrage ══════════════════════════ */
+
+  /** Nimmt den nächsten uiConfirm-Dialog automatisch an oder ab und merkt sich den Text. */
+  function dialogAntwort(a, antwort) {
+    a.run(`globalThis._dlgTexte = [];
+      uiConfirm = function(msg){ _dlgTexte.push(msg); return Promise.resolve(${antwort ? 'true' : 'false'}); };`);
+    return () => a.run('_dlgTexte');
+  }
+
+  t('Nach dem ersten manuellen Connect wird genau einmal gefragt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ requestResult: dev }));
+    const texte = dialogAntwort(a, true);
+    assertEq(a.get('PREFS').autoConnect, false, 'vorher aus');
+    await a.run('connectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(texte(), [DEV_NAME + ' künftig automatisch verbinden?']);
+    assertEq(a.get('PREFS').autoConnect, true, 'Ja schaltet den Schalter an');
+    assertEq(a.get('PREFS').autoConnectAsked, true);
+    assertEq(a.document.getElementById('togAutoConnect').getAttribute('aria-checked'), 'true');
+  });
+
+  t('Ein Nein wird respektiert und nie wieder gefragt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ requestResult: dev }));
+    const texte = dialogAntwort(a, false);
+    await a.run('connectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(a.get('PREFS').autoConnect, false);
+    assertEq(a.get('PREFS').autoConnectAsked, true);
+    // zweiter Connect: keine erneute Frage
+    a.run('State.connected = false;');
+    await a.run('connectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(texte().length, 1, 'genau eine Frage, nie wieder');
+  });
+
+  t('Die Frage kommt nicht nach einem automatischen Connect', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown({ autoConnect: true }), devices: [dev] }));
+    const texte = dialogAntwort(a, true);
+    assertEq(await a.run('autoConnect()'), 'A');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(texte(), [], 'wer die Automatik schon hat, wird nicht danach gefragt');
+  });
+
+  t('Browser ohne getDevices wird gar nicht erst gefragt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ getDevices: false, requestResult: dev }));
+    const texte = dialogAntwort(a, true);
+    await a.run('connectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(texte(), [], 'Stufe A waere unmöglich, die Frage nur eine Enttäuschung');
+    assertEq(a.get('PREFS').autoConnectAsked, false, 'die Frage bleibt fuer spaeter offen');
+  });
+
+  t('Die Merke steht vor dem Dialog, damit ein Abbruch nicht zum Dauerfragen fuehrt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ requestResult: dev }));
+    a.run(`uiConfirm = function(){ return new Promise(()=>{}); };`);   // Dialog antwortet nie
+    await a.run('connectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,20))');
+    assertEq(a.get('PREFS').autoConnectAsked, true, 'schon vor der Antwort gemerkt');
+    assertEq(JSON.parse(a.localStorage.getItem('vol_prefs')).autoConnectAsked, true, 'und persistiert');
+  });
+
+  t('acMaybeAskAutoConnect: alle Verweigerungsgruende sind benannt', async () => {
+    const a = use(fresh({ pref: { autoConnectAsked: true } }));
+    assertEq(await a.run(`acMaybeAskAutoConnect('X')`), 'schon-gefragt');
+    const b = use(fresh({ pref: { autoConnect: true } }));
+    assertEq(await b.run(`acMaybeAskAutoConnect('X')`), 'schon-an');
+    const c = use(fresh());
+    assertEq(await c.run(`acMaybeAskAutoConnect('X')`), 'kein-ziel');
+    const d = use(fresh({ pref: prefKnown({ autoConnect: false }), getDevices: false }));
+    assertEq(await d.run(`acMaybeAskAutoConnect('X')`), 'browser-kann-nicht');
+  });
+
+  t('PREFS.autoConnectAsked steht mit Default in PREFS_DEFAULTS', () => {
+    assertEq(app.get('PREFS').autoConnectAsked, false);
+    const src = fs.readFileSync(INDEX_HTML, 'utf8');
+    assert(/autoConnectAsked:false/.test(src), 'Default fehlt in PREFS_DEFAULTS');
+  });
+
+  /* ═══ L10: btCaps sichtbar machen ══════════════════════ */
+
+  t('acCapsText nennt alle vier Faehigkeiten im Klartext', () => {
+    const text = app.run('acCapsText()');
+    for (const wort of ['Web Bluetooth', 'getDevices', 'watchAdvertisements', 'forget']) {
+      assert(text.includes(wort), wort + ' fehlt: ' + text);
+    }
+    assert(text.includes('ja') || text.includes('nein'), 'keine Antwort im Text: ' + text);
+  });
+
+  t('acCapsText spiegelt einen Browser ohne getDevices', () => {
+    const a = use(fresh({ getDevices: false }));
+    const text = a.run('acCapsText()');
+    assert(/gemerkte Geräte \(getDevices\): nein/.test(text), 'Text: ' + text);
+    assert(/Web Bluetooth: ja/.test(text), 'Text: ' + text);
+  });
+
+  t('acCapsText spiegelt einen Browser ganz ohne Bluetooth', () => {
+    const a = use(fresh({ noBle: true }));
+    const text = a.run('acCapsText()');
+    assert(/Web Bluetooth: nein/.test(text), 'Text: ' + text);
+  });
+
+  t('Die Faehigkeiten stehen sichtbar in den Einstellungen', () => {
+    const a = use(fresh({ pref: dreiGeraete() }));
+    a.run('openSettings()');
+    const el = a.document.getElementById('btCapsInfo');
+    assert(el, '#btCapsInfo fehlt');
+    assert(el.textContent.includes('Web Bluetooth'), 'Text: ' + el.textContent);
+  });
+
+  t('Die Faehigkeiten stehen im Diagnose-Dump', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');                 // ruft dumpDiagnostics
+    const logText = a.document.getElementById('log').textContent;
+    assert(logText.includes('Browser-Faehigkeiten'), 'Log ohne Faehigkeiten-Zeile');
+    assert(logText.includes('getDevices'), 'Log ohne getDevices-Angabe');
+  });
+
+  t('Die Faehigkeiten stecken im Diagnose-Export fuer Tester', () => {
+    const a = use(fresh());
+    const diag = a.run(`captureDiagnostics('testfall')`);
+    assert(diag && diag.btCaps, 'btCaps fehlt im Diagnose-Objekt');
+    assertEq(diag.btCaps.api, true);
+    assertEq(diag.btCaps.getDevices, true);
+    // und im persistierten Diagnose-Log, das Tester exportieren
+    const gespeichert = JSON.parse(a.localStorage.getItem('vol_diag_log'));
+    assertEq(gespeichert[0].btCaps.api, true);
+  });
+
   /* — Voller App-Start — */
   t('Voller App-Start (DOMContentLoaded) laeuft fehlerfrei und verbindet automatisch', async () => {
     const dev = makeVolcanoDevice();
