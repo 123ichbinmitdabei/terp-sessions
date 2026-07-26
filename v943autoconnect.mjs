@@ -1011,6 +1011,170 @@ export function runSuite(t) {
     assertEq(a.document.querySelectorAll('#knownDevicesList .known-device-row').length, 3);
   });
 
+  /* ═══ L5: State.userDisconnected ═══════════════════════ */
+
+  t('Manuelles Trennen setzt userDisconnected', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    assertEq(a.get('State').userDisconnected, false, 'nach dem Verbinden nicht gesetzt');
+    await a.run('disconnectBLE()');
+    assertEq(a.get('State').userDisconnected, true);
+  });
+
+  t('Erfolgreicher Connect hebt die Sperre wieder auf', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), getDevices: false, requestResult: dev }));
+    a.run('State.userDisconnected = true;');
+    await a.run('connectBLE()');
+    assertEq(a.get('State').connected, true);
+    assertEq(a.get('State').userDisconnected, false);
+  });
+
+  t('Abbrechen der Auto-Verbindung setzt userDisconnected ebenfalls', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run(`(function(){ const echt = acBackoffMs; acBackoffMs = function(n){ echt(n); return 60; }; })();`);
+    const lauf = a.run('autoConnect()');
+    await a.run('new Promise(r=>setTimeout(r,10))');
+    a.run('acAbortAutoConnect()');
+    await lauf;
+    assertEq(a.get('State').userDisconnected, true);
+  });
+
+  t('tryReconnect steigt bei manuell getrennter Verbindung sofort aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    a.run('State.connected = false; State.userDisconnected = true;');
+    await a.run('tryReconnect()');
+    assertEq(dev.connectCount, 1, 'kein zweiter Verbindungsversuch');
+    assertEq(a.get('State').reconnectAttempts, 0, 'nicht mal ein Versuch gezaehlt');
+  });
+
+  t('Verbindungsabbruch loest von allein einen Reconnect aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acBackoffMs = () => 10;');
+    await a.run('autoConnect()');
+    assertEq(dev.connectCount, 1);
+    dev.gatt.disconnect();                       // Gerät fliegt raus
+    await a.run('new Promise(r=>setTimeout(r,120))');
+    assertEq(dev.connectCount, 2, 'automatisch wieder verbunden');
+    assertEq(a.get('State').connected, true);
+  });
+
+  t('Nach manuellem Trennen gibt es keinen heimlichen Reconnect', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acBackoffMs = () => 10;');
+    await a.run('autoConnect()');
+    await a.run('disconnectBLE()');
+    await a.run('new Promise(r=>setTimeout(r,120))');
+    assertEq(dev.connectCount, 1, 'kein Reconnect gegen den Willen des Nutzers');
+    assertEq(a.get('State').connected, false);
+  });
+
+  /* ═══ L6: Reconnect auch im Leerlauf ═══════════════════ */
+
+  t('acIdleReconnect verweigert bei ausgeschaltetem Schalter', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    a.run('State.connected = false; PREFS.autoConnect = false;');
+    assertEq(a.run(`acIdleReconnect('test')`), 'schalter-aus');
+    assertEq(dev.connectCount, 1);
+  });
+
+  t('acIdleReconnect verweigert nach manuellem Trennen', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    a.run('State.connected = false; State.userDisconnected = true;');
+    assertEq(a.run(`acIdleReconnect('test')`), 'manuell-getrennt');
+  });
+
+  t('acIdleReconnect tut nichts, wenn schon verbunden oder kein Geraet da ist', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    await a.run('autoConnect()');
+    assertEq(a.run(`acIdleReconnect('test')`), 'verbunden');
+    const b = use(fresh({ pref: prefKnown() }));
+    b.run('PREFS.autoConnect = true;');
+    assertEq(b.run(`acIdleReconnect('test')`), 'kein-geraet');
+  });
+
+  t('acIdleReconnect ist auf einen Versuch je 10 Sekunden gedrosselt', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acBackoffMs = () => 10;');
+    await a.run('autoConnect()');
+    a.run('State.connected = false; State.device.gatt.connected = false;');
+    assertEq(a.run(`acIdleReconnect('erster')`), 'versucht');
+    assertEq(a.run(`acIdleReconnect('zweiter')`), 'gedrosselt');
+    assertEq(a.run(`acIdleReconnect('dritter')`), 'gedrosselt');
+    assertEq(a.run('AC_IDLE_RECONNECT_THROTTLE_MS'), 10000);
+  });
+
+  t('Tab wieder sichtbar stoesst einen Reconnect an', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acBackoffMs = () => 10;');
+    await a.run('autoConnect()');
+    // stille Trennung: die App hat das Ereignis im Hintergrund nie gesehen
+    a.run('State.connected = false; State.device.gatt.connected = false;');
+    a.document.visibilityState = 'visible';
+    a.document.dispatchEvent({ type: 'visibilitychange' });
+    await a.run('new Promise(r=>setTimeout(r,120))');
+    assertEq(dev.connectCount, 2, 'beim Zurueckkehren neu verbunden');
+    assertEq(a.get('State').connected, true);
+  });
+
+  t('Ein in den Hintergrund gehender Tab loest nichts aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acBackoffMs = () => 10;');
+    await a.run('autoConnect()');
+    a.run('State.connected = false; State.device.gatt.connected = false;');
+    a.document.visibilityState = 'hidden';
+    a.document.dispatchEvent({ type: 'visibilitychange' });
+    await a.run('new Promise(r=>setTimeout(r,60))');
+    assertEq(dev.connectCount, 1);
+  });
+
+  t('Waehrend eines Auto-Connects laeuft keine zweite Reconnect-Kette', async () => {
+    // Regression: der Leerlauf-Reconnect startete parallel zu autoConnect eine eigene
+    // Verbindungskette. Zwei Schleifen verbanden um die Wette, beide Backoffs wurden sinnlos.
+    const dev = makeVolcanoDevice({ failNextConnects: 2 });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    const delays = spyBackoff(a);
+    assertEq(await a.run('autoConnect()'), 'A');
+    assertEq(dev.connectCount, 3, 'genau drei Versuche, keine zweite Kette daneben');
+    assertEq(delays(), [1000, 2000], 'nur der Backoff von autoConnect selbst');
+    assertEq(a.get('State').autoConnectRunning, false, 'Sperre danach wieder aufgehoben');
+  });
+
+  t('acIdleReconnect haelt sich zurueck, solange autoConnect laeuft', () => {
+    const a = use(fresh({ pref: prefKnown() }));
+    a.run('State.autoConnectRunning = true; State.device = { name:"x" };');
+    assertEq(a.run(`acIdleReconnect('test')`), 'auto-connect-laeuft');
+  });
+
+  t('Die Sperre faellt auch, wenn der Auto-Connect scheitert', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    spyBackoff(a);
+    await a.run('autoConnect()');
+    assertEq(a.get('State').autoConnectRunning, false);
+  });
+
+  t('Der Reconnect-Backoff nutzt die Tabelle 1s/2s/4s', () => {
+    const src = fs.readFileSync(INDEX_HTML, 'utf8');
+    assert(!/setTimeout\(tryReconnect,\s*800\)/.test(src), 'starre 800 ms sind raus');
+    assert(!/setTimeout\(tryReconnect,\s*2000\)/.test(src), 'starre 2000 ms sind raus');
+    assert(/setTimeout\(tryReconnect,\s*acBackoffMs\(/.test(src), 'Backoff-Tabelle wird benutzt');
+  });
+
   /* — Voller App-Start — */
   t('Voller App-Start (DOMContentLoaded) laeuft fehlerfrei und verbindet automatisch', async () => {
     const dev = makeVolcanoDevice();

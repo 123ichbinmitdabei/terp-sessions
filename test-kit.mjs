@@ -589,10 +589,16 @@ export function makeVolcanoDevice(opts = {}) {
             if (!s) throw new Error('No Service ' + u);
             return s;
           },
-          disconnect() { dev.gatt.connected = false; dev._fire('gattserverdisconnected'); },
+          disconnect() { dev.gatt.disconnect(); },
         };
       },
-      disconnect() { dev.gatt.connected = false; dev._fire('gattserverdisconnected'); },
+      // Echte GATT-Server feuern gattserverdisconnected nur, wenn ueberhaupt eine
+      // Verbindung bestand. Ein disconnect() auf ein nie verbundenes Geraet ist still.
+      disconnect() {
+        if (!dev.gatt.connected) return;
+        dev.gatt.connected = false;
+        dev._fire('gattserverdisconnected');
+      },
     },
     addEventListener(t, fn) { if (!listeners.has(t)) listeners.set(t, []); listeners.get(t).push(fn); },
     removeEventListener(t, fn) { const a = listeners.get(t) || []; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); },

@@ -6453,6 +6453,7 @@ const State={
   reconnectAttempts:0,
   connectionLost:false, lastKnownHeating:false,   // v5.0.1 K3
   autoConnectAbort:false,  // v9.43.0 L7: Nutzer hat die laufende Auto-Verbindung gestoppt
+  userDisconnected:false,  // v9.43.0 L5: bewusst getrennt -> kein Auto-Reconnect bis zum naechsten manuellen Connect
   tempHistory:[],          // [{t:timestamp, c:tempCelsius}]
   reachedAnnounced:false,  // to fire reach-flash exactly once per target change
 };
@@ -6716,6 +6717,13 @@ function hideConnLostBanner(){ const b=$('#connLostBanner'); if(b) b.style.displ
 
 async function tryReconnect(){
   if(!State.device || State.connected) return;
+  // v9.43.0 L5: Wer bewusst getrennt hat, will nicht dass die App hinter seinem
+  // Ruecken wieder verbindet. Gilt bis zum naechsten manuellen Connect.
+  if(State.userDisconnected){ log('Reconnect ausgesetzt: manuell getrennt.','warn'); return; }
+  // v9.43.0 L6: Solange autoConnect() seine eigenen Versuche macht, darf hier keine
+  // zweite Verbindungskette danebenherlaufen — sonst verbinden zwei Schleifen um die
+  // Wette und der Backoff beider wird sinnlos.
+  if(State.autoConnectRunning){ log('Reconnect ausgesetzt: Auto-Verbindung läuft bereits.','warn'); return; }
   if(State.reconnectAttempts >= 3){
     log('Auto-Reconnect: 3 Versuche erschöpft, manuell neu verbinden','warn');
     renderLastAction('Verbindung verloren, bitte erneut verbinden', 'err');
@@ -6748,9 +6756,35 @@ async function tryReconnect(){
     toast('Wieder verbunden');
   }catch(e){
     log('Reconnect fehlgeschlagen: '+e.message,'warn');
-    setTimeout(tryReconnect, 2000);
+    // v9.43.0 L6: wachsender Backoff 1s/2s/4s statt starrer 2 s.
+    setTimeout(tryReconnect, acBackoffMs(State.reconnectAttempts - 1));
   }
 }
+
+/* ── v9.43.0 L6: Reconnect auch im Leerlauf ───────────────────────────────
+   tryReconnect haengt am gattserverdisconnected-Ereignis. Wer die App im
+   Hintergrund hatte, waehrend das Geraet ausser Reichweite war, bekommt dieses
+   Ereignis aber unter Umstaenden gar nicht mehr mit — die App bleibt still
+   getrennt liegen. Deshalb ein zweiter Ausloeser: sobald der Tab wieder
+   sichtbar wird, gedrosselt auf hoechstens einen Versuch alle 10 Sekunden. */
+const AC_IDLE_RECONNECT_THROTTLE_MS = 10000;
+function acIdleReconnect(grund){
+  if(State.connected) return 'verbunden';
+  if(!PREFS.autoConnect) return 'schalter-aus';
+  if(State.userDisconnected) return 'manuell-getrennt';
+  if(State.autoConnectRunning) return 'auto-connect-laeuft';
+  if(!State.device) return 'kein-geraet';
+  const jetzt = Date.now();
+  if(State._acLastIdleTry && (jetzt - State._acLastIdleTry) < AC_IDLE_RECONNECT_THROTTLE_MS) return 'gedrosselt';
+  State._acLastIdleTry = jetzt;
+  State.reconnectAttempts = 0;          // frischer Anlauf, nicht der Rest vom letzten
+  log('Reconnect im Leerlauf angestossen (' + (grund||'unbekannt') + ').','warn');
+  tryReconnect();
+  return 'versucht';
+}
+document.addEventListener('visibilitychange', ()=>{
+  try{ if(document.visibilityState === 'visible') acIdleReconnect('Tab wieder sichtbar'); }catch(_){}
+});
 
 let toastTimer=null;
 function toast(msg){
@@ -7541,6 +7575,8 @@ async function acForgetDevice(id){
 
 function acAbortAutoConnect(){
   State.autoConnectAbort = true;
+  // v9.43.0 L5: Ein Abbruch ist eine Ansage. Danach nicht im Hintergrund weiterprobieren.
+  State.userDisconnected = true;
   log('Auto-Verbindung vom Nutzer abgebrochen.','warn');
   acHideConnecting();
   const known = acSortKnownDesc(acKnownForStage());
@@ -7586,6 +7622,8 @@ async function autoConnect(){
 
   acHideHeatWarn();                   // alte Warnung aus einem frueheren Versuch wegraeumen
   acShowConnecting(target.name);
+  State.autoConnectRunning = true;    // sperrt die parallele Reconnect-Kette, siehe tryReconnect
+  try{
   for(let n=0; n<3; n++){
     if(State.autoConnectAbort){ acHideConnecting(); return 'abgebrochen'; }
     if(State.connected){ acHideConnecting(); return 'A'; }
@@ -7622,6 +7660,9 @@ async function autoConnect(){
   acWarnHeatUnknown();                // v9.43.0 L3: war das Geraet zuletzt heiss?
   acShowStageB(target.name);
   return 'B';
+  }finally{
+    State.autoConnectRunning = false;
+  }
 }
 
 async function connectBLE(){
@@ -7690,7 +7731,15 @@ async function _connectWithDevice(dev){
       State.device.addEventListener('gattserverdisconnected', ()=>{
         log('BLE getrennt.','warn');
         // v5.0.2.1 FIX6: kein Reconnect-Loop wenn Geraet nie korrekt erkannt wurde
-        if(!State.adapter){ log('Reconnect ausgesetzt: Geraet wurde nie korrekt erkannt.','warn'); setConn(false); return; }
+        if(!State.adapter){
+          log('Reconnect ausgesetzt: Geraet wurde nie korrekt erkannt.','warn');
+          setConn(false);
+          // v9.43.0 L6: Bei eingeschalteter Auto-Verbindung trotzdem ein Anlauf. Das Geraet
+          // ist freigegeben, beim letzten Mal kam nur die Erkennung nicht durch. Nicht aber,
+          // wenn der Nutzer selbst getrennt hat.
+          if(PREFS.autoConnect && !State.userDisconnected) setTimeout(tryReconnect, acBackoffMs(0));
+          return;
+        }
         // v5.0.1 K3: Verbindungsverlust robust behandeln
         State.connectionLost = true;
         State.lastKnownHeating = !!State.heater;
@@ -7706,7 +7755,7 @@ async function _connectWithDevice(dev){
         try{ State.adapter && State.adapter.disconnect && State.adapter.disconnect(); }catch(_){}
         toast('Verbindung verloren, versuche reconnect...');
         srAnnounce('Verbindung verloren, versuche Reconnect', true);
-        setTimeout(tryReconnect, 800);
+        setTimeout(tryReconnect, acBackoffMs(0));   // v9.43.0 L6: Backoff-Tabelle statt starrer 800 ms
       });
     }
     renderLastAction('Verbinde mit '+State.device.name+'…','busy');
@@ -7785,6 +7834,7 @@ async function _connectWithDevice(dev){
       await State.adapter.subscribeStatus(()=>renderStatus());
     }
     setConn(true);
+    State.userDisconnected = false;   // v9.43.0 L5: erfolgreiche Verbindung hebt die Sperre auf
     toast('Verbunden mit '+State.device.name);
     // v4.5: remember device + apply capabilities now BLE chars are set
     rememberDevice(State.device.name||'', getCurrentDeviceId(), State.device.name);
@@ -7797,6 +7847,9 @@ async function _connectWithDevice(dev){
 }
 
 async function disconnectBLE(){
+  // v9.43.0 L5: Ab hier gilt "der Nutzer will getrennt sein" — bis er selbst wieder verbindet.
+  State.userDisconnected = true;
+  acHideStageB();
   try{ statsHeatStop(); }catch(_){}   // v9.17.0 QA2.17.3: Heizzeit beim manuellen Trennen abschliessen
   // v9.18.0 QA2.14.1: Adapter sauber herunterfahren (Poll-Intervalle + Notifications + Listener),
   // sonst laufen die setInterval-Polls nach manuellem Trennen endlos weiter.
