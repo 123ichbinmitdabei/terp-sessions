@@ -1,4 +1,4 @@
-# Terp Sessions — Vape Controller (v9.42.0)
+# Terp Sessions — Vape Controller (v9.43.0)
 
 Web-App zur Steuerung von Storz & Bickel Vaporizern, PAX 3 (Beta) und Puffco Peak Pro (Beta). Firefly: Erkennung + Reverse-Engineering-Aufruf (Probe-Only). Single-File HTML PWA.
 
@@ -14,6 +14,18 @@ Dies ist **kein kommerzielles Produkt**, kein Anspruch auf Marken- oder Patentre
 **Live-URL:** https://123ichbinmitdabei.github.io/terp-sessions/
 **Repo:** https://github.com/123ichbinmitdabei/terp-sessions
 **Voice-Befehle (Anleitung):** [VOICE-BEFEHLE.md](./VOICE-BEFEHLE.md)
+
+## v9.43.0 — Auto-Verbindung mit gemerktem Gerät
+
+Die App verbindet sich beim Start ohne Tippen mit dem zuletzt genutzten Gerät, sofern der Schalter im Setup unter Bluetooth an ist und der Browser gemerkte Geräte kennt (Chrome/Edge). Verbunden wird ausschließlich mit dem zuletzt genutzten Gerät, nie still mit einem anderen. Klappt es nicht, erscheint ein Ein-Tipp-Angebot: alle bekannten Geräte als Knöpfe, zuletzt genutztes zuerst, und der Auswahldialog ist dabei auf genau ein Gerät gefiltert. Das ist auch die einzige Verbesserung, die auf iPhone mit Bluefy möglich ist, dort gibt es keine gemerkten Geräte.
+
+Sicherheit: heizt das Gerät nach einer automatischen Verbindung bereits, erscheint eine rote Warnkarte mit Zieltemperatur, und Geräte ohne eigenen Auto-Aus bekommen sofort den App-Sicherheitstimer. Scheitert die Verbindung und war das Gerät zuletzt heiß, meldet die App „Heizer-Status unbekannt, bitte am Gerät prüfen". Während einer automatischen Verbindung geht kein einziger Schreibbefehl ans Gerät.
+
+Weiter: Abbrechen-Knopf am Verbindungs-Chip, 8-Sekunden-Timeout pro Verbindungsversuch, drei Versuche mit Backoff 1/2/4 s, Reconnect auch beim Zurückkehren in den Tab, Liste der bekannten Geräte in den Einstellungen samt „vergessen", einmalige Nachfrage nach dem ersten manuellen Verbinden, Browser-Fähigkeiten sichtbar in Einstellungen und Diagnose.
+
+Außerdem: Die Testinfrastruktur wurde neu aufgebaut (siehe [TESTING-STATUS.md](./TESTING-STATUS.md), Abschnitt 0). Die alte Puppeteer-Suite war nie im Repo und ist verloren. Ersatz ist ein leichtgewichtiger Node-Runner, der das Inline-JS aus `index.html` in einem `node:vm`-Kontext mit gemocktem DOM, Bluetooth und localStorage ausführt.
+
+Tests: `v943autoconnect.mjs` (151 Checks). Der URL-Befehlspfad verbindet jetzt wirklich, statt nur `State.device` zu setzen.
 
 ## v9.42.0 — Programm-Dauer mit Schleifen korrekt schätzen (Bug-Jagd)
 
