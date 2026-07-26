@@ -1,5 +1,86 @@
 # Testing-Status — Stand v8.7.0 + v8.7.1-prep
 
+> ⚠️ **Die in §1 bis §5 beschriebene Puppeteer-Suite existiert nicht mehr. Siehe §0.**
+> Der aktuelle, gültige Stand steht in §0. Alles darunter ist historische Dokumentation.
+
+## 0. Neustart der Testinfrastruktur (v9.43.0, 2026-07-26)
+
+### Was passiert ist
+
+Die 28 Puppeteer-Suiten aus §1/§5 sind **verloren**. Sie lagen ausschließlich in einem
+lokalen Arbeitsordner, der gelöscht wurde. In **keinem** Branch dieses Repos wurde je eine
+`.mjs` committet — die Suite war nie versioniert, nur beschrieben. Die Zahlen 514 / 575
+und die Suiten-Tabelle unten sind damit nicht mehr nachvollziehbar oder reproduzierbar.
+
+**Konsequenz, ab sofort verbindlich: Tests gehören ins Repo.** Jede neue Suite wird
+zusammen mit dem Feature committet, das sie absichert. Eine Testsuite, die nur lokal
+existiert, ist keine Testsuite — sie ist eine Behauptung.
+
+### Was stattdessen da ist
+
+Neuaufbau in v9.43.0, bewusst **ohne Puppeteer und ohne Headless-Chrome**. Der Ansatz:
+das Inline-JS aus `index.html` extrahieren und in einem `node:vm`-Kontext mit gemocktem
+`document`, `navigator.bluetooth` und `localStorage` ausführen. Damit laufen die **echten**
+Funktionen der App — `connectBLE`, `autoConnect`, `log`, `setConn`, `detectDevice` — und
+keine Nachbauten. Das DOM wird aus der echten `index.html` geparst, IDs, Klassen und
+ARIA-Struktur im Test entsprechen exakt dem ausgelieferten Markup.
+
+| Datei | Rolle |
+|---|---|
+| `run-all.mjs` | Runner. Sammelt jede `v*.mjs` mit `runSuite`-Export automatisch ein. |
+| `test-kit.mjs` | DOM-Parser + Selektor-Engine, Mock für BLE/GATT/Storage/Timer, vm-Loader. |
+| `v943autoconnect.mjs` | v9.43.0 Auto-Verbindung (Stufe A/B, LRU, Backoff, Schalter). |
+
+```
+node run-all.mjs                  alle Suiten
+node run-all.mjs v943             nur passende Suiten
+node run-all.mjs --timeout=15000  Watchdog pro Test hochsetzen
+node run-all.mjs --list           auflisten, nichts ausführen
+```
+
+**Stand: 65 / 65 grün in einer Suite, Laufzeit 4,5 s** (vorher: keine lauffähige
+Infrastruktur, die Zahl 2131 aus früheren Notizen ist gegenstandslos).
+
+### Warum kein Puppeteer mehr
+
+Ein voller Chrome-Run dauerte laut §Kopfzeile 3–4 Minuten und brauchte Chrome-Kontention.
+Der vm-Ansatz lädt die komplette App in ~110 ms. Das macht den Unterschied zwischen
+„Tests laufen vor jedem Commit" und „Tests laufen, wenn jemand daran denkt". Der Preis:
+kein echtes Rendering und kein echtes Layout. Reine Layout-Regressionen muss weiterhin
+ein Mensch oder ein späteres Screenshot-Werkzeug finden.
+
+### Eine neue Suite anlegen
+
+Datei `vXXXname.mjs` neben `run-all.mjs`, mit:
+
+```js
+export const meta = { name:'v944xyz', title:'…' };
+export function runSuite(t){
+  t.before(async () => { … });        // einmal pro Suite
+  t.afterEach(() => { … });           // nach jedem Test aufräumen (App-Instanzen schließen!)
+  t('beschreibung', async () => { … });
+}
+```
+
+`runSuite` registriert nur, der Runner führt aus — nur so kann er pro Test einen Watchdog
+setzen. Kein Eintrag in `run-all.mjs` nötig, die Datei wird automatisch gefunden.
+
+### Fallstricke, die schon Zeit gekostet haben
+
+- **`app.dispose()` nach jedem Test.** Jede App-Instanz hält einen DOM-Baum und laufende
+  Intervalle. Zwanzig offene Instanzen rechnen parallel weiter und sprengen den Heap.
+- **`setFastTimers(true)` nie mit `fireReady()` kombinieren.** Der Boot staffelt Dutzende
+  Setups per `setTimeout`; gestaucht fallen sie übereinander her. `fireReady()` wirft
+  deshalb, wenn Fast-Timer an sind.
+- **Ausgabe geht per `fs.writeSync` auf FD 1.** Node puffert stdout blockweise, sobald es
+  kein TTY ist. Ohne das sieht ein hängender Test wie ein hängender Runner aus.
+- **Der Testname wird vor dem Lauf ausgegeben.** Ein synchron hängender Test lässt sich von
+  `Promise.race` nicht abbrechen — aber sein Name steht dann schon auf dem Schirm.
+
+---
+
+# Historisch: Stand v8.7.0 + v8.7.1-prep (Suite verloren, siehe §0)
+
 > Stand 2026-05-31, vor v8.7.2 (BIP39 + UI + CSC-Aktivierung). Erstellt im Rahmen des internen Test-Audits (Paket 10).
 > **Phase-A-Baseline:** 514 / 514 grün über 24 Suiten.
 > **Phase-B-Erweiterung:** +61 neue Tests in 4 neuen Suiten → **575 / 575 grün über 28 Suiten** (siehe §5).

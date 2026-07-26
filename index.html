@@ -2413,6 +2413,12 @@ button[data-sch-day].active{
       <span class="label">Bereit</span>
       <span class="msg" id="lastActionMsg">Tippe „Verbinden" um zu starten</span>
     </div>
+    <!-- v9.43.0: Ein-Tipp-Verbindung (Stufe B). Erscheint nur, wenn ein Gerät bekannt ist
+         und die echte Auto-Verbindung nicht greift (Browser ohne getDevices, Schalter aus,
+         Gerät nicht freigegeben oder 3 Versuche erfolglos). -->
+    <div id="autoConnectBar" hidden style="margin-top:10px">
+      <button class="btn primary block" id="btnAutoConnect" type="button" aria-label="Gerät verbinden">Gerät verbinden</button>
+    </div>
     <div class="preheat-running" id="preheatRunning" hidden role="status" aria-live="polite">
       <span class="ico">⏱</span>
       <div class="info">
@@ -2805,6 +2811,14 @@ button[data-sch-day].active{
     <div class="row">
       <button class="btn primary" id="btnConnect2" style="flex:1">Verbinden</button>
       <button class="btn ghost" id="btnDisconnect" disabled>Trennen</button>
+    </div>
+    <!-- v9.43.0: Auto-Verbindung -->
+    <div class="toggle-row" style="margin-top:10px">
+      <div class="info">
+        <b>🔗 Auto-Verbindung</b>
+        <small>Beim App-Start ohne Tippen mit dem zuletzt genutzten Gerät verbinden. Braucht einen Browser, der freigegebene Geräte merkt (Chrome/Edge). Verbindet ausschließlich mit dem zuletzt genutzten Gerät, nie still mit einem anderen. Klappt es nicht, erscheint oben ein Ein-Tipp-Knopf.</small>
+      </div>
+      <button class="toggle" id="togAutoConnect" role="switch" aria-checked="false" aria-label="Auto-Verbindung"></button>
     </div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="btnDiscover" style="flex:1">Services scannen</button>
@@ -5747,6 +5761,10 @@ const PREFS_DEFAULTS = {
   ],
   pumpLpm:4.5,             // v4.9.3: effektive Pumpleistung in Liter/Min für Auto-Berechnung
   selectedBagId:'easy-large',  // v4.9.3: aktuell ausgewählter Ballon
+  // v9.43.0: Auto-Verbindung mit gemerktem Geraet
+  autoConnect:false,       // Opt-in. Beim App-Start ohne Tippen mit dem zuletzt genutzten Geraet verbinden.
+  lastDeviceId:'',         // BLE-device.id des zuletzt verbundenen Geraets = einziges Auto-Connect-Ziel
+  knownDevices:[],         // LRU der letzten 5 BLE-Geraete: {id, name, type, lastUsed}
   stats:{
     bagsFilled:0,
     totalHeatSec:0,
@@ -5777,6 +5795,9 @@ if(!Array.isArray(PREFS.bagProfilesV2) || !PREFS.bagProfilesV2.length){
     seconds: (PREFS.bagTimes && PREFS.bagTimes[p.id]) || p.seconds,
   }));
 }
+// v9.43.0: knownDevices muss ein Array sein. Ein alter/kaputter localStorage-Wert
+// (z.B. null oder ein Objekt) wuerde sonst erst beim ersten Connect auffallen.
+if(!Array.isArray(PREFS.knownDevices)) PREFS.knownDevices = [];
 function savePrefs(){ LS.set('vol_prefs', PREFS); }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -7134,6 +7155,179 @@ function _maybeAutoCompat(){
     return false;
   }catch(_){ return false; }
 }
+/* ═══════════════════════════════════════════════════════════════
+   v9.43.0: AUTO-VERBINDUNG MIT GEMERKTEM GERAET
+
+   Zwei Stufen, bewusst getrennt:
+     Stufe A  echter Auto-Connect ohne Tippen. Setzt navigator.bluetooth
+              .getDevices() voraus (Chrome/Edge) UND einen eingeschalteten
+              Schalter UND eine gemerkte lastDeviceId.
+     Stufe B  Ein-Tipp-Verbindung. Ein Knopf mit dem Geraetenamen, der den
+              normalen Geraetedialog oeffnet. Immer erreichbar, sobald ueber-
+              haupt ein Geraet bekannt ist.
+
+   Harte Regel (Nachtrag 3): Auto-Connect-Ziel ist AUSSCHLIESSLICH das zuletzt
+   genutzte Geraet. Ist es nicht in der Freigabeliste, wird NIE still auf ein
+   anderes ausgewichen — dann gibt es Stufe B, und der Nutzer entscheidet.
+
+   Der Block zwischen den AC_PURE-Markern ist DOM- und State-frei und damit
+   direkt in Node testbar (siehe v943autoconnect.mjs).
+═══════════════════════════════════════════════════════════════ */
+/* ==AC_PURE_START== */
+
+// Capability-Erkennung zur Laufzeit, alles per typeof in try/catch, keine Browser-Annahmen.
+function btCaps(nav){
+  nav = nav || (typeof navigator !== 'undefined' ? navigator : {});
+  let api=false, getDevices=false, watchAds=false, forget=false;
+  try{
+    const bt = nav && nav.bluetooth;
+    api = !!bt;
+    if(bt){
+      try{ getDevices = (typeof bt.getDevices === 'function'); }catch(_){ getDevices=false; }
+      // watchAdvertisements/forget sitzen auf dem BluetoothDevice-Prototyp
+      let proto = null;
+      try{
+        proto = (nav.BluetoothDevice && nav.BluetoothDevice.prototype)
+             || (typeof BluetoothDevice !== 'undefined' ? BluetoothDevice.prototype : null);
+      }catch(_){ proto = null; }
+      try{ watchAds = proto ? (typeof proto.watchAdvertisements === 'function') : false; }catch(_){ watchAds=false; }
+      try{ forget   = proto ? (typeof proto.forget === 'function') : false; }catch(_){ forget=false; }
+    }
+  }catch(_){ /* Defaults behalten */ }
+  return { api, getDevices, watchAds, forget };
+}
+
+// LRU-Upsert. Rueckgabe: neue Liste, sortiert lastUsed desc, auf max gekuerzt.
+function acUpsertDevice(list, entry, max){
+  max = max || 5;
+  const out = Array.isArray(list) ? list.map(d=>Object.assign({}, d)) : [];
+  const i = out.findIndex(d=>d && d.id === entry.id);
+  if(i >= 0) out[i] = Object.assign({}, out[i], entry);
+  else out.push(Object.assign({}, entry));
+  out.sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0));
+  return out.slice(0, max);
+}
+
+function acSortKnownDesc(list){
+  return (Array.isArray(list)?list.slice():[]).sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0));
+}
+
+// NUR das zuletzt genutzte Geraet (lastDeviceId) ist Auto-Connect-Ziel.
+function acPickAutoTarget(devices, lastDeviceId){
+  if(!lastDeviceId || !Array.isArray(devices)) return null;
+  return devices.find(d=>d && d.id === lastDeviceId) || null;
+}
+
+// Welche Stufe? 'A' echter Auto-Connect, 'B' Ein-Tipp, 'none'
+function acDecideStage(caps, prefs){
+  const known = (prefs && Array.isArray(prefs.knownDevices)) ? prefs.knownDevices : [];
+  if(prefs && prefs.autoConnect && prefs.lastDeviceId && caps && caps.getDevices) return 'A';
+  if(known.length) return 'B';
+  return 'none';
+}
+
+// Backoff-Tabelle 1s, 2s, 4s (Index = bereits verbrauchte Versuche)
+function acBackoffMs(n){
+  const table = [1000, 2000, 4000];
+  return table[n] != null ? table[n] : 4000;
+}
+
+function acStageBLabel(name){
+  return (name || 'Gerät') + ' verbinden';
+}
+
+/* ==AC_PURE_END== */
+
+// Geraet nach erfolgreichem Connect merken (LRU max 5 + lastDeviceId als Auto-Ziel).
+function acRememberBleDevice(dev, type){
+  try{
+    if(!dev || !dev.id) return false;   // ohne stabile BLE-ID kein Auto-Connect-Ziel
+    PREFS.knownDevices = acUpsertDevice(PREFS.knownDevices, {
+      id: dev.id, name: dev.name || '', type: type || '', lastUsed: Date.now(),
+    }, 5);
+    PREFS.lastDeviceId = dev.id;
+    savePrefs();
+    return true;
+  }catch(_){ return false; }
+}
+
+/* Fuer die Stufen-Entscheidung: bekannte Geraete aus v9.43-PREFS, ersatzweise
+   die alte v4.5-Liste (vol_known_devices). Die alte Liste kennt keine BLE-IDs,
+   taugt also nur fuer Stufe B — dank der lastDeviceId-Pruefung in
+   acPickAutoTarget kann daraus nie ein stiller Auto-Connect werden. */
+function acKnownForStage(){
+  const list = Array.isArray(PREFS.knownDevices) ? PREFS.knownDevices : [];
+  if(list.length) return list;
+  try{
+    return (getKnownDevices()||[]).map(d=>({ id:'', name:d.alias||d.bleName||'', type:d.devType||'', lastUsed:d.lastUsed||0 }));
+  }catch(_){ return []; }
+}
+
+function acShowStageB(nameHint){
+  const bar = $('#autoConnectBar'); if(!bar) return false;
+  const known = acSortKnownDesc(acKnownForStage());
+  const label = acStageBLabel(nameHint || (known[0] && known[0].name) || '');
+  const btn = $('#btnAutoConnect');
+  if(btn){ btn.textContent = label; btn.setAttribute('aria-label', label); }
+  bar.hidden = false;
+  return true;
+}
+function acHideStageB(){ const bar = $('#autoConnectBar'); if(bar) bar.hidden = true; }
+
+let _acRan = false;
+/* Laeuft beim App-Start VOR dem Crash-Recovery-Dialog (v9.33) und laesst diesen
+   unangetastet. Gibt die gewaehlte Stufe zurueck, damit es testbar bleibt. */
+async function autoConnect(){
+  if(_acRan) return 'bereits-gelaufen';
+  _acRan = true;
+  if(State.connected) return 'bereits-verbunden';
+
+  const caps = btCaps(navigator);
+  if(!caps.api) return 'kein-ble';
+
+  const stage = acDecideStage(caps, {
+    autoConnect: PREFS.autoConnect,
+    lastDeviceId: PREFS.lastDeviceId,
+    knownDevices: acKnownForStage(),
+  });
+  if(stage === 'none') return 'none';
+  if(stage === 'B'){ acShowStageB(); return 'B'; }
+
+  // ── Stufe A ──────────────────────────────────────────────
+  let devices = [];
+  try{
+    devices = await navigator.bluetooth.getDevices();
+  }catch(e){
+    log('Auto-Verbindung: Geraeteliste nicht lesbar ('+(e&&e.message||e)+').','warn');
+    acShowStageB(); return 'B';
+  }
+  const target = acPickAutoTarget(devices, PREFS.lastDeviceId);
+  if(!target){
+    // Kein stiller Ersatz: lieber ein Knopf als das falsche Geraet.
+    log('Auto-Verbindung: zuletzt genutztes Geraet nicht freigegeben. Kein stiller Ersatz.','warn');
+    acShowStageB(); return 'B';
+  }
+
+  for(let n=0; n<3; n++){
+    if(State.connected) return 'A';
+    try{
+      renderLastAction('Auto-Verbindung mit '+(target.name||'Gerät')+'…','busy');
+      await _connectWithDevice(target);
+      if(State.connected){ log('Auto-Verbindung hergestellt.','ok'); return 'A'; }
+      // Geraet verbunden, aber nicht erkannt -> Wiederholen bringt nichts.
+      log('Auto-Verbindung: Geraet nicht erkannt, kein weiterer Versuch.','warn');
+      break;
+    }catch(e){
+      log('Auto-Verbindung Versuch '+(n+1)+'/3 fehlgeschlagen: '+(e&&e.message||e),'warn');
+      if(n < 2) await sleep(acBackoffMs(n));
+    }
+  }
+  setConn(false);
+  log('Auto-Verbindung aufgegeben, Ein-Tipp-Verbindung angeboten.','warn');
+  acShowStageB(target.name);
+  return 'B';
+}
+
 async function connectBLE(){
   if(!('bluetooth' in navigator)){
     _showNoBluetoothHint();
@@ -7163,31 +7357,55 @@ async function connectBLE(){
     // v5.0.1 A4: acceptAllDevices zeigt alle BLE-Geraete (inkl. kuenftiger Marken).
     // v6.0+ Multi-Brand-Modus koennte stattdessen gezielt filtern:
     //   filters:[{namePrefix:'S&B'},{namePrefix:'PAX'},{namePrefix:'Puffco'},{namePrefix:'Firefly'}]
-    State.device = await navigator.bluetooth.requestDevice({
+    const _picked = await navigator.bluetooth.requestDevice({
       acceptAllDevices:true,
       optionalServices:services,
     });
-    State.device.addEventListener('gattserverdisconnected', ()=>{
-      log('BLE getrennt.','warn');
-      // v5.0.2.1 FIX6: kein Reconnect-Loop wenn Geraet nie korrekt erkannt wurde
-      if(!State.adapter){ log('Reconnect ausgesetzt: Geraet wurde nie korrekt erkannt.','warn'); setConn(false); return; }
-      // v5.0.1 K3: Verbindungsverlust robust behandeln
-      State.connectionLost = true;
-      State.lastKnownHeating = !!State.heater;
-      // v9.17.0 QA2.17.3: Heizzeit-Zaehler bei Verbindungsverlust schliessen (sonst umspannt der
-      // naechste cmdHeaterOff die gesamte Trennungs-/Leerlaufzeit -> totalHeatSec ueberhoeht).
-      try{ statsHeatStop(); }catch(_){}
-      // v9.17.0 QA2.3.3: laufendes Programm bei Verbindungsverlust abbrechen, statt die Wartezeit
-      // blind zu Ende laufen zu lassen, waehrend das Geraet ggf. real weiterheizt.
-      if(State.running){ State.running.stopFlag = true; log('Laufendes Programm wegen Verbindungsverlust abgebrochen.','warn'); }
-      // v9.20.0 QA2.2.3: Zaehler NICHT bei jedem Drop nullen (Oszillations-Schutz, Reset erfolgt nach 10s stabil in setConn)
-      setConn(false);
-      // v9.18.0 QA2.2.8/QA2.14.1: alte Poll-Intervalle + Notify-Listener abbauen, bevor tryReconnect neu subscribt.
-      try{ State.adapter && State.adapter.disconnect && State.adapter.disconnect(); }catch(_){}
-      toast('Verbindung verloren, versuche reconnect...');
-      srAnnounce('Verbindung verloren, versuche Reconnect', true);
-      setTimeout(tryReconnect, 800);
-    });
+    await _connectWithDevice(_picked);
+  }catch(e){
+    log('Verbindungsfehler: '+e.message,'err');
+    renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
+    setConn(false);
+    captureDiagnostics(e.message);
+    showFriendlyError(e, 'connect');   // v8.1.0 Modul 2: benutzerfreundlicher Hinweis
+  }
+}
+
+/* v9.43.0: alles ab "das Geraet steht fest" ist eigenstaendig, damit
+   autoConnect() exakt denselben Pfad nutzt wie der Geraetedialog — samt
+   Adapter-Erkennung, Char-Binding, Notifications und Geraete-Merken.
+   Wirft nach oben; der Aufrufer entscheidet ueber die Reaktion (Dialog-Pfad:
+   Fehler-Toast, Auto-Pfad: Backoff + Ein-Tipp-Angebot). */
+async function _connectWithDevice(dev){
+    State.device = dev;
+    // v9.43.0: Beim Geraetedialog ist jedes requestDevice() ein frisches Objekt, bei den
+    // Auto-Connect-Wiederholungen dagegen IMMER dasselbe. Ohne diese Marke saesse nach drei
+    // Versuchen der Disconnect-Handler dreifach drauf und ein einziger Verbindungsabbruch
+    // startete drei parallele Reconnect-Ketten.
+    if(!State.device._acDisconnectWired){
+      State.device._acDisconnectWired = true;
+      State.device.addEventListener('gattserverdisconnected', ()=>{
+        log('BLE getrennt.','warn');
+        // v5.0.2.1 FIX6: kein Reconnect-Loop wenn Geraet nie korrekt erkannt wurde
+        if(!State.adapter){ log('Reconnect ausgesetzt: Geraet wurde nie korrekt erkannt.','warn'); setConn(false); return; }
+        // v5.0.1 K3: Verbindungsverlust robust behandeln
+        State.connectionLost = true;
+        State.lastKnownHeating = !!State.heater;
+        // v9.17.0 QA2.17.3: Heizzeit-Zaehler bei Verbindungsverlust schliessen (sonst umspannt der
+        // naechste cmdHeaterOff die gesamte Trennungs-/Leerlaufzeit -> totalHeatSec ueberhoeht).
+        try{ statsHeatStop(); }catch(_){}
+        // v9.17.0 QA2.3.3: laufendes Programm bei Verbindungsverlust abbrechen, statt die Wartezeit
+        // blind zu Ende laufen zu lassen, waehrend das Geraet ggf. real weiterheizt.
+        if(State.running){ State.running.stopFlag = true; log('Laufendes Programm wegen Verbindungsverlust abgebrochen.','warn'); }
+        // v9.20.0 QA2.2.3: Zaehler NICHT bei jedem Drop nullen (Oszillations-Schutz, Reset erfolgt nach 10s stabil in setConn)
+        setConn(false);
+        // v9.18.0 QA2.2.8/QA2.14.1: alte Poll-Intervalle + Notify-Listener abbauen, bevor tryReconnect neu subscribt.
+        try{ State.adapter && State.adapter.disconnect && State.adapter.disconnect(); }catch(_){}
+        toast('Verbindung verloren, versuche reconnect...');
+        srAnnounce('Verbindung verloren, versuche Reconnect', true);
+        setTimeout(tryReconnect, 800);
+      });
+    }
     renderLastAction('Verbinde mit '+State.device.name+'…','busy');
     State.server = await State.device.gatt.connect();
     State.allServices = await State.server.getPrimaryServices();
@@ -7261,13 +7479,8 @@ async function connectBLE(){
     devStatSession();   // v5.1.0 Modul 1: Geraete-Session zaehlen
     maybeDeviceTour();  // v5.1.0 Modul 3: geraetespezifische Tour beim ersten Connect
     _maybeShowBetaHint(); // v9.13.0 MB-B (MB.3): einmaliger Beta-/Status-Hinweis pro Geraet
-  }catch(e){
-    log('Verbindungsfehler: '+e.message,'err');
-    renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
-    setConn(false);
-    captureDiagnostics(e.message);
-    showFriendlyError(e, 'connect');   // v8.1.0 Modul 2: benutzerfreundlicher Hinweis
-  }
+    acRememberBleDevice(State.device, State.adapter.constructor.deviceType);  // v9.43.0: Auto-Connect-Ziel merken
+    acHideStageB();                                                          // v9.43.0: Ein-Tipp-Knopf wieder weg
 }
 
 async function disconnectBLE(){
@@ -9888,6 +10101,8 @@ function wire(){
   $('#btnConnect').addEventListener('click', connectBLE);
   $('#btnConnect2').addEventListener('click', connectBLE);
   $('#btnDisconnect').addEventListener('click', disconnectBLE);
+  // v9.43.0: Ein-Tipp-Verbindung (Stufe B) oeffnet den normalen Geraetedialog
+  $('#btnAutoConnect')?.addEventListener('click', ()=>{ acHideStageB(); connectBLE(); });
   $('#btnDiscover').addEventListener('click', discover);
   $('#btnAutoMap').addEventListener('click', autoMap);
   $('#btnTestUUIDs').addEventListener('click', testUUIDs);
@@ -10563,6 +10778,16 @@ function wire(){
   wireToggle('#togPowerSaver', ()=>PREFS.powerSaver, v=>{
     PREFS.powerSaver = v; savePrefs();
     applyPowerSaver();
+  });
+
+  // v9.43.0: Auto-Verbindung. Wirkt ab dem naechsten App-Start, das wird auch so gesagt,
+  // statt den Nutzer raten zu lassen, warum jetzt nichts passiert.
+  wireToggle('#togAutoConnect', ()=>PREFS.autoConnect, v=>{
+    PREFS.autoConnect = v; savePrefs();
+    if(!v){ toast('Auto-Verbindung aus'); return; }
+    toast(PREFS.lastDeviceId
+      ? 'Auto-Verbindung aktiv ab dem nächsten App-Start'
+      : 'Auto-Verbindung aktiv, sobald du einmal manuell verbunden hast');
   });
 
   // Custom BLE Profiles
@@ -12516,7 +12741,7 @@ function _bugDiagBlock(){
     + ' running=' + (st.running ? (st.running.programName || 'ja') : 'nein');
   return { snap, log };
 }
-const SW_VERSION_LABEL='v9.42.0';
+const SW_VERSION_LABEL='v9.43.0';
 
 // Modul E: Tester-Checklist (persistiert)
 const PIONEER_CHECKS=[
@@ -14230,6 +14455,7 @@ function openSettings(){
   $('#togTooltipsVoice')?.setAttribute('aria-checked', String(!!PREFS.tooltipsVoice));
   $('#togHotelMode')?.setAttribute('aria-checked', String(!!PREFS.hotelMode));
   $('#togPowerSaver')?.setAttribute('aria-checked', String(!!PREFS.powerSaver));
+  $('#togAutoConnect')?.setAttribute('aria-checked', String(!!PREFS.autoConnect));   // v9.43.0
   const whIn = $('#webhookUrlInput'); if(whIn) whIn.value = PREFS.webhookUrl||'';
   const evs = PREFS.webhookEvents || {};
   const setCb = (id, v) => { const el = $('#'+id); if(el) el.checked = !!v; };
@@ -19212,9 +19438,12 @@ async function init(){
   // URL-Command nach kurzer Verzögerung (damit alles initialisiert ist)
   setTimeout(handleUrlCommand, 800);
 
-  log('Terp Sessions v9.42.0 bereit.','ok');
+  log('Terp Sessions v9.43.0 bereit.','ok');
 
   setupPwaUpdate();
+  // v9.43.0: Auto-Verbindung startet VOR dem Crash-Recovery-Dialog, blockiert ihn aber nicht
+  // (bewusst ohne await). Der Dialog aus v9.33 bleibt unveraendert.
+  try{ autoConnect(); }catch(_){}
   try{ _maybeRunRecovery(); }catch(_){}   // v9.33.0 (autonom) Crash-Recovery
 
   // v8.4.0: Welcome-Flow für frische Nutzer (vor der interaktiven Tour),
