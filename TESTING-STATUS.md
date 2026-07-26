@@ -29,7 +29,17 @@ ARIA-Struktur im Test entsprechen exakt dem ausgelieferten Markup.
 |---|---|
 | `run-all.mjs` | Runner. Sammelt jede `v*.mjs` mit `runSuite`-Export automatisch ein. |
 | `test-kit.mjs` | DOM-Parser + Selektor-Engine, Mock für BLE/GATT/Storage/Timer, vm-Loader. |
-| `v943autoconnect.mjs` | v9.43.0 Auto-Verbindung (Stufe A/B, LRU, Backoff, Schalter). |
+| `v943autoconnect.mjs` | v9.43.0 Auto-Verbindung, komplett (siehe unten). |
+
+Was `v943autoconnect.mjs` abdeckt: Harness-Sanität, der DOM-freie AC_PURE-Block,
+Stufen-Entscheidung A/B/keine, Namensfilter im Auswahldialog, Connect-Timeout,
+Abbrechen, Heizer-Sicherheit, Geräte-LRU, Einstellungsliste, `userDisconnected`,
+Reconnect im Leerlauf, einmalige Nachfrage, Browser-Fähigkeiten, Adapter-Cache,
+URL-Befehlspfad und ein voller `DOMContentLoaded`-Start gegen Mock-GATT.
+
+**Der wichtigste Test der Suite** ist der, der zählt, dass während einer Verbindung,
+die der Nutzer nicht angestoßen hat, **null Schreibbefehle** ans Gerät gehen. Eine
+Automatik darf das Gerät anfassen, aber niemals bedienen.
 
 ```
 node run-all.mjs                  alle Suiten
@@ -38,7 +48,7 @@ node run-all.mjs --timeout=15000  Watchdog pro Test hochsetzen
 node run-all.mjs --list           auflisten, nichts ausführen
 ```
 
-**Stand: 65 / 65 grün in einer Suite, Laufzeit 4,5 s** (vorher: keine lauffähige
+**Stand: 151 / 151 grün in einer Suite, Laufzeit ~10 s** (vorher: keine lauffähige
 Infrastruktur, die Zahl 2131 aus früheren Notizen ist gegenstandslos).
 
 ### Warum kein Puppeteer mehr

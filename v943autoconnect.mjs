@@ -1309,6 +1309,137 @@ export function runSuite(t) {
     assertEq(gespeichert[0].btCaps.api, true);
   });
 
+  /* ═══ L11: Adaptertyp aus dem Cache ════════════════════ */
+
+  t('detectDevice fragt die Services nicht ein zweites Mal ab', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    // getPrimaryServices mitzaehlen: _connectWithDevice holt sie einmal, detectDevice
+    // holte sie frueher gleich nochmal — genau die 200 bis 500 ms aus L11.
+    a.run(`globalThis._svcAbrufe = 0;`);
+    const server = await dev.gatt.connect();
+    const echt = server.getPrimaryServices.bind(server);
+    dev.gatt.connected = false;
+    const urspruenglich = dev.gatt.connect;
+    dev.gatt.connect = async function () {
+      const s = await urspruenglich.call(dev.gatt);
+      const wrapped = Object.create(s);
+      wrapped.getPrimaryServices = async () => { a.run('_svcAbrufe++'); return echt(); };
+      return wrapped;
+    };
+    assertEq(await a.run('autoConnect()'), 'A');
+    assertEq(a.run('_svcAbrufe'), 1, 'genau ein getPrimaryServices pro Verbindung');
+  });
+
+  t('acAdapterFromCache liefert die Klasse zum gemerkten Typ', () => {
+    const a = use(fresh({
+      pref: prefKnown({
+        knownDevices: [
+          { id: 'v', name: 'V', type: 'volcano', lastUsed: 3 },
+          { id: 'm', name: 'M', type: 'crafty_mighty', lastUsed: 2 },
+          { id: 'p', name: 'P', type: 'pax', lastUsed: 1 },
+        ],
+      }),
+    }));
+    assertEq(a.run(`acAdapterFromCache('v').deviceType`), 'volcano');
+    assertEq(a.run(`acAdapterFromCache('m').deviceType`), 'crafty_mighty');
+    assertEq(a.run(`acAdapterFromCache('p').deviceType`), 'pax');
+  });
+
+  t('acAdapterFromCache bleibt still bei unbekannter ID oder kaputtem Typ', () => {
+    const a = use(fresh({
+      pref: prefKnown({ knownDevices: [{ id: 'x', name: 'X', type: 'quatsch', lastUsed: 1 }] }),
+    }));
+    assertEq(a.run(`acAdapterFromCache('x')`), null, 'unbekannter Typ');
+    assertEq(a.run(`acAdapterFromCache('gibt-es-nicht')`), null);
+    assertEq(a.run(`acAdapterFromCache('')`), null);
+    assertEq(a.run(`acAdapterFromCache(undefined)`), null);
+  });
+
+  t('Alle sechs Adaptertypen sind im Cache-Mapping abgedeckt', () => {
+    const typen = app.run('Object.keys(AC_ADAPTER_BY_TYPE)');
+    assertEq(typen.sort(), ['crafty_mighty', 'firefly', 'pax', 'puffco', 'venty_veazy', 'volcano']);
+    // und jeder Thunk liefert wirklich eine Klasse mit passendem deviceType
+    for (const typ of typen) {
+      assertEq(app.run(`AC_ADAPTER_BY_TYPE[${JSON.stringify(typ)}]().deviceType`), typ);
+    }
+  });
+
+  t('Findet die Erkennung nichts, rettet der gemerkte Typ die Verbindung', async () => {
+    const dev = makeVolcanoDevice({ name: 'RATE MAL' });   // Name hilft nicht weiter
+    dev.services.length = 0;                               // und keine erkennbaren Services
+    const a = use(fresh({
+      pref: prefKnown({ knownDevices: [{ id: DEV_ID, name: 'RATE MAL', type: 'volcano', lastUsed: 5 }] }),
+      devices: [dev],
+    }));
+    assertEq(await a.run('autoConnect()'), 'A');
+    assertEq(a.run('State.adapter.constructor.deviceType'), 'volcano', 'aus dem Cache gerettet');
+    const logText = a.document.getElementById('log').textContent;
+    assert(logText.includes('nutze gemerkten Typ'), 'Log soll das offenlegen');
+  });
+
+  t('Widersprechen sich Cache und Erkennung, gewinnt die Erkennung', async () => {
+    const dev = makeVolcanoDevice();                       // Services sagen eindeutig Volcano
+    const a = use(fresh({
+      pref: prefKnown({ knownDevices: [{ id: DEV_ID, name: DEV_NAME, type: 'pax', lastUsed: 5 }] }),
+      devices: [dev],
+    }));
+    assertEq(await a.run('autoConnect()'), 'A');
+    assertEq(a.run('State.adapter.constructor.deviceType'), 'volcano', 'Erkennung gewinnt');
+    const logText = a.document.getElementById('log').textContent;
+    assert(logText.includes('Gerätetyp weicht ab'), 'Abweichung muss im Log stehen');
+    assertEq(a.get('PREFS').knownDevices[0].type, 'volcano', 'gemerkter Typ wird korrigiert');
+  });
+
+  t('Ohne Cache-Eintrag laeuft alles wie bisher', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown({ knownDevices: [] , lastDeviceId: DEV_ID }), devices: [dev] }));
+    assertEq(await a.run('autoConnect()'), 'A');
+    assertEq(a.run('State.adapter.constructor.deviceType'), 'volcano');
+  });
+
+  /* ═══ URL-Command-Pfad ═════════════════════════════════ */
+
+  t('URL-Befehl verbindet mit dem zuletzt genutzten Geraet und fuehrt dann aus', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run(`location.search = '?cmd=heat-on'; globalThis._ausgefuehrt = [];
+      URL_COMMANDS['heat-on'] = { label:'Heizer an', needsBle:true, fn: async ()=>{ _ausgefuehrt.push('heat-on'); } };`);
+    await a.run('handleUrlCommand()');
+    assertEq(a.get('State').connected, true, 'wirklich verbunden, nicht nur State.device gesetzt');
+    assertEq(dev.connectCount, 1);
+    assertEq(a.run('_ausgefuehrt'), ['heat-on'], 'Befehl danach ausgefuehrt');
+  });
+
+  t('URL-Befehl weicht NICHT still auf ein fremdes Geraet aus', async () => {
+    const fremd = makeVolcanoDevice({ id: 'fremd', name: 'VOLCANO FREMD' });
+    const a = use(fresh({ pref: prefKnown(), devices: [fremd] }));   // lastDeviceId nicht dabei
+    a.run(`location.search = '?cmd=heat-on'; globalThis._ausgefuehrt = [];
+      URL_COMMANDS['heat-on'] = { label:'Heizer an', needsBle:true, fn: async ()=>{ _ausgefuehrt.push('heat-on'); } };`);
+    await a.run('handleUrlCommand()');
+    assertEq(fremd.connectCount, 0, 'fremdes Gerät nicht angefasst');
+    assertEq(a.get('State').connected, false);
+    assertEq(a.run('_ausgefuehrt'), [], 'kein Befehl ans falsche Gerät');
+    assertEq(a.document.getElementById('autoConnectBar').hidden, false, 'stattdessen Ein-Tipp-Angebot');
+  });
+
+  t('URL-Befehl ohne gemerktes Geraet bietet Stufe B an', async () => {
+    const a = use(fresh({ pref: prefKnown({ lastDeviceId: '' }) }));
+    a.run(`location.search = '?cmd=heat-on'; globalThis._ausgefuehrt = [];
+      URL_COMMANDS['heat-on'] = { label:'Heizer an', needsBle:true, fn: async ()=>{ _ausgefuehrt.push('heat-on'); } };`);
+    await a.run('handleUrlCommand()');
+    assertEq(a.run('_ausgefuehrt'), []);
+    assertEq(a.document.getElementById('autoConnectBar').hidden, false);
+  });
+
+  t('Der alte tote getDevices-Pfad ist raus', () => {
+    const src = fs.readFileSync(INDEX_HTML, 'utf8');
+    assert(!/State\.device\s*=\s*devices\[0\]/.test(src),
+      'devices[0] wäre genau das stille Ausweichen, das Nachtrag 3 verbietet');
+    assert(!/Trigger pair → bekannte BLE-Connect-Logik nutzen/.test(src),
+      'der Kommentar beschrieb Code, den es nie gab');
+  });
+
   /* — Voller App-Start — */
   t('Voller App-Start (DOMContentLoaded) laeuft fehlerfrei und verbindet automatisch', async () => {
     const dev = makeVolcanoDevice();

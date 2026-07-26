@@ -7501,6 +7501,26 @@ async function acMaybeAskAutoConnect(name){
 
 /* v9.43.0 L10: Was kann der Browser des Testers wirklich? Ohne diese Zeile im
    Diagnose-Material ist jede Fehlermeldung zur Auto-Verbindung Kaffeesatzleserei. */
+/* v9.43.0 L11: Adapterklasse aus dem gemerkten Geraetetyp. Bewusst als Thunks —
+   die Adapterklassen stehen weiter unten in der Datei und waeren hier oben sonst
+   noch in der temporalen Todeszone. */
+const AC_ADAPTER_BY_TYPE = {
+  volcano:       ()=>VolcanoAdapter,
+  crafty_mighty: ()=>CraftyMightyAdapter,
+  venty_veazy:   ()=>VentyVeazyAdapter,
+  pax:           ()=>PaxAdapter,
+  puffco:        ()=>PuffcoAdapter,
+  firefly:       ()=>FireflyAdapter,
+};
+function acAdapterFromCache(id){
+  try{
+    if(!id) return null;
+    const eintrag = (PREFS.knownDevices||[]).find(d => d && d.id === id);
+    const thunk = eintrag && eintrag.type && AC_ADAPTER_BY_TYPE[eintrag.type];
+    return thunk ? thunk() : null;
+  }catch(_){ return null; }
+}
+
 function acCapsText(){
   const c = btCaps(navigator);
   return 'Web Bluetooth: ' + (c.api ? 'ja' : 'nein')
@@ -7818,7 +7838,19 @@ async function _connectWithDevice(dev, opts){
     await dumpDiagnostics();
     renderLastAction('Suche Characteristics…','busy');
     // v5.0.2.1 FIX2: Service-Probe-basierte Erkennung
-    const AdapterClass = await detectDevice(State.device, State.server);
+    // v9.43.0 L11: Der gemerkte Geraetetyp ist der schnelle Weg, die Erkennung bleibt
+    // trotzdem die Instanz, die entscheidet — sie kostet mit den bereits geholten
+    // Services fast nichts mehr. Der Cache greift, wenn die Erkennung nichts findet,
+    // und wird korrigiert, wenn beide sich widersprechen.
+    const ausCache = acAdapterFromCache(State.device.id);
+    const erkannt = await detectDevice(State.device, State.server, State.allServices);
+    let AdapterClass = erkannt || ausCache;
+    if(!erkannt && ausCache){
+      log('detectDevice ohne Treffer, nutze gemerkten Typ: '+ausCache.displayName,'warn');
+    } else if(ausCache && erkannt && erkannt !== ausCache){
+      log('Gerätetyp weicht ab: gemerkt '+ausCache.displayName+', erkannt '+erkannt.displayName+'. Erkennung gewinnt.','warn');
+      toast('Gerätetyp korrigiert: '+erkannt.displayName);
+    }
     // v5.0.2.1 FIX1: KEIN stiller Volcano-Fallback bei unbekanntem Geraet
     if(!AdapterClass){
       log('FEHLER: Geraet "'+(State.device.name||'?')+'" nicht erkannt.','err');
@@ -12354,14 +12386,19 @@ function fireflyHelpMailto(){
 
 /* v5.0.2.1 FIX2: Service-Probe ZUERST (zuverlaessiger als Namens-Strings,
    die je Geraete-Generation variieren). Danach toleranter Name-Fallback. */
-async function detectDevice(bleDevice, gattServer){
+/* v9.43.0 L11: servicesVorab ist der eigentliche Zeitgewinn. Der Aufrufer hat die
+   Service-Liste in aller Regel schon geholt; ohne diesen Parameter fragte detectDevice
+   sie ein zweites Mal beim Geraet ab — genau die 200 bis 500 ms, um die es geht. */
+async function detectDevice(bleDevice, gattServer, servicesVorab){
   const name = (bleDevice && bleDevice.name) || '';
   log('detectDevice: name="'+name+'"','warn');
 
-  if(gattServer){
-    let services=[];
-    try{ services = await gattServer.getPrimaryServices(); }
-    catch(e){ log('detectDevice: getPrimaryServices fail: '+e.message,'err'); }
+  if(gattServer || (servicesVorab && servicesVorab.length)){
+    let services = Array.isArray(servicesVorab) ? servicesVorab : [];
+    if(!services.length){
+      try{ services = await gattServer.getPrimaryServices(); }
+      catch(e){ log('detectDevice: getPrimaryServices fail: '+e.message,'err'); }
+    }
     const uuids = services.map(s=>s.uuid.toLowerCase());
     log('detectDevice: '+uuids.length+' Services gefunden','warn');
     if(uuids.includes('00000000-5354-4f52-5a26-4249434b454c')){ log('detectDevice: ✓ Venty/Veazy-Service → VentyVeazyAdapter','ok'); return VentyVeazyAdapter; }
@@ -19310,28 +19347,35 @@ async function handleUrlCommand(){
   try{ history.replaceState(null, '', location.pathname); }catch{}
   // BLE-Status prüfen
   if(handler.needsBle && !State.connected){
-    // Auto-Reconnect-Versuch
+    /* v9.43.0: Vorher stand hier ein toter Pfad. Er schrieb blind devices[0] nach
+       State.device, verband aber nie — und waere obendrein still auf ein fremdes
+       Geraet ausgewichen. Jetzt wird gezielt das zuletzt genutzte Geraet gesucht
+       (PREFS.lastDeviceId, wie bei autoConnect) und wirklich verbunden. Findet sich
+       nichts, gibt es das Ein-Tipp-Angebot statt eines Toasts, der ins Leere zeigt. */
     toast('Benötigt Bluetooth-Verbindung, versuche zu verbinden…');
     try{
-      // Schaue ob bereits gepaired Devices da sind
-      if(navigator.bluetooth && navigator.bluetooth.getDevices){
+      const caps = btCaps(navigator);
+      if(caps.getDevices && PREFS.lastDeviceId){
         const devices = await navigator.bluetooth.getDevices();
-        if(devices && devices.length){
-          // Versuche erstes verfügbares Device
-          State.device = devices[0];
-          // Trigger pair → bekannte BLE-Connect-Logik nutzen
+        const ziel = acPickAutoTarget(devices, PREFS.lastDeviceId);
+        if(ziel){
+          await _connectWithDevice(ziel, { auto:true });
+        } else {
+          log('URL-Befehl: zuletzt genutztes Gerät nicht freigegeben. Kein stiller Ersatz.','warn');
         }
       }
-    }catch(e){}
-    // Wenn nach 2s nicht verbunden: nur Toast, kein BLE-Auto
-    setTimeout(()=>{
-      if(!State.connected){
-        toast('„'+handler.label+'" wartet auf Verbindung. Tippe Verbinden.');
-        ttsSay('Erst verbinden');
-      } else {
-        handler.fn(Object.fromEntries(params));
-      }
-    }, 2500);
+    }catch(e){
+      log('URL-Befehl: Verbindung fehlgeschlagen: '+(e&&e.message||e),'warn');
+    }
+    if(State.connected){
+      toast('🎤 '+handler.label);
+      try{ await handler.fn(Object.fromEntries(params)); }
+      catch(e){ toast('Fehler: '+e.message); ttsSay('Fehler'); }
+      return;
+    }
+    acShowStageB();
+    toast('„'+handler.label+'" wartet auf Verbindung. Tippe Verbinden.');
+    ttsSay('Erst verbinden');
     return;
   }
   // Direkter Aufruf
