@@ -2419,8 +2419,10 @@ button[data-sch-day].active{
          und die echte Auto-Verbindung nicht greift (Browser ohne getDevices, Schalter aus,
          Gerät nicht freigegeben oder 3 Versuche erfolglos). -->
     <div id="autoConnectBar" hidden style="margin-top:10px">
-      <button class="btn primary block" id="btnAutoConnect" type="button" aria-label="Gerät verbinden">Gerät verbinden</button>
-      <!-- v9.43.0 L1: Der Hauptknopf filtert den Dialog auf genau dieses Gerät.
+      <!-- v9.43.0 L4: alle bekannten Geräte als Ein-Tipp-Knöpfe, zuletzt genutztes zuerst -->
+      <div id="autoConnectHint" hidden style="font-size:12px;color:var(--muted);margin-bottom:6px">Zuletzt genutztes Gerät zuerst</div>
+      <div id="autoConnectList"></div>
+      <!-- v9.43.0 L1: Die Knöpfe oben filtern den Dialog auf genau ein Gerät.
            Wer ein anderes will, kommt hierüber zur vollen Liste. -->
       <button class="btn ghost sm block" id="btnAutoConnectOther" type="button" style="margin-top:6px" aria-label="Ein anderes Gerät verbinden">anderes Gerät</button>
     </div>
@@ -2834,6 +2836,10 @@ button[data-sch-day].active{
       </div>
       <button class="toggle" id="togAutoConnect" role="switch" aria-checked="false" aria-label="Auto-Verbindung"></button>
     </div>
+    <!-- v9.43.0 L8: gemerkte Geräte sichtbar und löschbar machen -->
+    <h4 style="margin:14px 0 6px;font-size:13px;letter-spacing:.04em;color:var(--muted)">Bekannte Geräte</h4>
+    <div id="knownDevicesCapHint" hidden style="font-size:12px;line-height:1.5;color:var(--muted);margin-bottom:8px"></div>
+    <div id="knownDevicesList"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="btnDiscover" style="flex:1">Services scannen</button>
       <button class="btn" id="btnAutoMap" style="flex:1">Auto-Mapping</button>
@@ -7290,13 +7296,38 @@ function acKnownForStage(){
   }catch(_){ return []; }
 }
 
+/* v9.43.0 L4: Stufe B bietet ALLE bekannten Geraete an, nicht nur eines. Sortiert
+   nach lastUsed absteigend, das zuletzt genutzte zuerst und als einziges als
+   Primaerknopf. Wer zwei Geraete hat, will nicht raten muessen, welches gemeint ist.
+   nameHint zieht ein bestimmtes Geraet nach vorn (z.B. das gerade gescheiterte Ziel). */
+function acRenderKnownButtons(nameHint){
+  const list = $('#autoConnectList'); if(!list) return 0;
+  let known = acSortKnownDesc(acKnownForStage()).filter(d => d && (d.name||'').trim());
+  if(nameHint) known = [{ name:nameHint }].concat(known.filter(d => d.name !== nameHint));
+  if(!known.length) known = [{ name:'' }];        // Fallback: ein Knopf ohne Namen
+  known = known.slice(0, 5);
+  list.innerHTML = '';
+  known.forEach((d, i)=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = i === 0 ? 'btn primary block' : 'btn ghost sm block';
+    if(i === 0) b.id = 'btnAutoConnect';           // stabiler Anker fuer den Hauptknopf
+    else b.style.marginTop = '6px';
+    const label = acStageBLabel(d.name);
+    b.textContent = label;
+    b.setAttribute('aria-label', label);
+    b.dataset.acName = d.name || '';
+    // Direkt verdrahten: die Knoepfe entstehen erst hier, wire() ist laengst gelaufen.
+    b.addEventListener('click', ()=>acConnectKnown(b.dataset.acName || ''));
+    list.appendChild(b);
+  });
+  const hint = $('#autoConnectHint'); if(hint) hint.hidden = known.length < 2;
+  return known.length;
+}
+
 function acShowStageB(nameHint){
   const bar = $('#autoConnectBar'); if(!bar) return false;
-  const known = acSortKnownDesc(acKnownForStage());
-  const name = nameHint || (known[0] && known[0].name) || '';
-  const label = acStageBLabel(name);
-  const btn = $('#btnAutoConnect');
-  if(btn){ btn.textContent = label; btn.setAttribute('aria-label', label); btn.dataset.acName = name; }
+  acRenderKnownButtons(nameHint);
   bar.hidden = false;
   return true;
 }
@@ -7403,6 +7434,109 @@ function acWarnHeatUnknown(){
     log('Auto-Verbindung gescheitert. Letzter bekannter Zustand: Heizer AN — Status jetzt unbekannt.','err');
     return true;
   }catch(_){ return false; }
+}
+
+/* ── v9.43.0 L8: Liste der bekannten Geraete in den Einstellungen ─────────
+   Name, Typ, letzte Nutzung, "vergessen". Das Auto-Connect-Ziel ist markiert.
+   Wichtig ehrlich zu bleiben: "vergessen" entfernt den Eintrag aus der App.
+   Die BLE-Berechtigung des Browsers kann die App nur loeschen, wenn der Browser
+   device.forget() anbietet — sonst muss der Nutzer in die Website-Einstellungen. */
+const AC_TYPE_LABELS = {
+  volcano:'Volcano', crafty_mighty:'Crafty / Mighty', venty_veazy:'Venty / Veazy',
+  pax:'PAX', puffco:'Puffco', firefly:'Firefly',
+};
+
+function renderKnownDevices(){
+  const root = $('#knownDevicesList'); if(!root) return 0;
+  const caps = btCaps(navigator);
+  const hint = $('#knownDevicesCapHint');
+  if(hint){
+    if(!caps.api){
+      hint.textContent = 'Dieser Browser kann kein Bluetooth. Terp Sessions kann sich hier kein Gerät merken.';
+      hint.hidden = false;
+    } else if(!caps.getDevices){
+      hint.textContent = 'Dein Browser unterstützt keine automatische Verbindung. Terp Sessions merkt sich dein Gerät, du verbindest mit einem Tipp.';
+      hint.hidden = false;
+    } else { hint.hidden = true; }
+  }
+  const known = acSortKnownDesc(PREFS.knownDevices);
+  root.innerHTML = '';
+  if(!known.length){
+    const leer = document.createElement('div');
+    leer.style.cssText = 'color:var(--muted);font-size:13px;padding:6px 0;line-height:1.5';
+    leer.textContent = 'Noch kein Gerät gemerkt. Nach der ersten Verbindung steht es hier.';
+    root.appendChild(leer);
+    return 0;
+  }
+  known.forEach(d=>{
+    const row = document.createElement('div');
+    row.className = 'known-device-row';
+    row.dataset.acId = d.id || '';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)';
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    const name = document.createElement('b');
+    name.style.cssText = 'display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    name.textContent = d.name || 'Unbenanntes Gerät';
+    info.appendChild(name);
+
+    const meta = document.createElement('small');
+    meta.style.cssText = 'color:var(--muted);font-size:12px';
+    const teile = [];
+    if(d.type) teile.push(AC_TYPE_LABELS[d.type] || d.type);
+    if(d.lastUsed) teile.push('zuletzt ' + fmtDateShort(d.lastUsed));
+    meta.textContent = teile.join(' · ');
+    info.appendChild(meta);
+
+    if(d.id && d.id === PREFS.lastDeviceId){
+      const marke = document.createElement('small');
+      marke.className = 'ac-auto-marker';
+      marke.style.cssText = 'display:block;color:var(--ok, #6affa0);font-size:12px;margin-top:2px';
+      marke.textContent = PREFS.autoConnect ? '✓ wird automatisch verbunden' : '✓ wird automatisch verbunden (Schalter ist aus)';
+      info.appendChild(marke);
+    }
+    row.appendChild(info);
+
+    const weg = document.createElement('button');
+    weg.className = 'btn sm ghost';
+    weg.type = 'button';
+    weg.dataset.acForget = d.id || '';
+    weg.textContent = 'vergessen';
+    weg.setAttribute('aria-label', 'Gerät ' + (d.name || 'unbenannt') + ' vergessen');
+    weg.addEventListener('click', ()=>acForgetDevice(d.id));
+    row.appendChild(weg);
+
+    root.appendChild(row);
+  });
+  return known.length;
+}
+
+async function acForgetDevice(id){
+  let imBrowser = false;
+  const caps = btCaps(navigator);
+  if(caps.forget && caps.getDevices){
+    try{
+      const devs = await navigator.bluetooth.getDevices();
+      const d = (devs||[]).find(x => x && x.id === id);
+      if(d && typeof d.forget === 'function'){ await d.forget(); imBrowser = true; }
+    }catch(e){ log('Vergessen im Browser fehlgeschlagen: '+(e&&e.message||e),'warn'); }
+  }
+  // Sortiert zurueckschreiben, damit die Liste dieselbe Invariante haelt wie nach
+  // acUpsertDevice: immer lastUsed absteigend, egal wer sie zuletzt angefasst hat.
+  PREFS.knownDevices = acSortKnownDesc(
+    (Array.isArray(PREFS.knownDevices) ? PREFS.knownDevices : []).filter(d => d && d.id !== id));
+  if(PREFS.lastDeviceId === id) PREFS.lastDeviceId = '';
+  savePrefs();
+  renderKnownDevices();
+  if(imBrowser){
+    toast('Gerät vergessen');
+    log('Gerät vergessen (auch die Browser-Berechtigung).','ok');
+  } else {
+    toast('Gerät aus der Liste entfernt');
+    log('Gerät aus der App entfernt. Die Bluetooth-Berechtigung bleibt bestehen, sie liegt in den Website-Einstellungen des Browsers.','warn');
+  }
+  return imBrowser;
 }
 
 function acAbortAutoConnect(){
@@ -10280,11 +10414,8 @@ function wire(){
   $('#btnConnect').addEventListener('click', connectBLE);
   $('#btnConnect2').addEventListener('click', connectBLE);
   $('#btnDisconnect').addEventListener('click', disconnectBLE);
-  // v9.43.0 L1: Ein-Tipp-Verbindung oeffnet den auf EIN Geraet gefilterten Dialog,
-  // "anderes Gerät" den offenen. L7: Abbrechen stoppt eine laufende Auto-Verbindung.
-  $('#btnAutoConnect')?.addEventListener('click', (e)=>{
-    acConnectKnown((e.currentTarget && e.currentTarget.dataset.acName) || '');
-  });
+  // v9.43.0 L1/L4: Die Ein-Tipp-Knoepfe entstehen erst in acRenderKnownButtons() und
+  // bringen ihren Listener selbst mit. Hier nur die statischen Knoepfe.
   $('#btnAutoConnectOther')?.addEventListener('click', ()=>{ acHideStageB(); connectBLE(); });
   $('#btnAutoConnectCancel')?.addEventListener('click', acAbortAutoConnect);
   // v9.43.0 L3: Heizer-Warnung nach automatischer Verbindung
@@ -10978,6 +11109,7 @@ function wire(){
     toast(PREFS.lastDeviceId
       ? 'Auto-Verbindung aktiv ab dem nächsten App-Start'
       : 'Auto-Verbindung aktiv, sobald du einmal manuell verbunden hast');
+    try{ renderKnownDevices(); }catch(_){}   // Markierung "wird automatisch verbunden" nachziehen
   });
 
   // Custom BLE Profiles
@@ -14646,6 +14778,7 @@ function openSettings(){
   $('#togHotelMode')?.setAttribute('aria-checked', String(!!PREFS.hotelMode));
   $('#togPowerSaver')?.setAttribute('aria-checked', String(!!PREFS.powerSaver));
   $('#togAutoConnect')?.setAttribute('aria-checked', String(!!PREFS.autoConnect));   // v9.43.0
+  try{ renderKnownDevices(); }catch(_){}   // v9.43.0 L8: Liste der bekannten Geraete
   const whIn = $('#webhookUrlInput'); if(whIn) whIn.value = PREFS.webhookUrl||'';
   const evs = PREFS.webhookEvents || {};
   const setCb = (id, v) => { const el = $('#'+id); if(el) el.checked = !!v; };

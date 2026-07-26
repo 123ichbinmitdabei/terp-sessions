@@ -310,7 +310,10 @@ export function runSuite(t) {
     const bar = app.document.getElementById('autoConnectBar');
     assert(bar, '#autoConnectBar fehlt');
     assertEq(bar.hidden, true);
-    assert(app.document.getElementById('btnAutoConnect'), '#btnAutoConnect fehlt');
+    assert(app.document.getElementById('autoConnectList'), '#autoConnectList fehlt');
+    assert(app.document.getElementById('btnAutoConnectOther'), '#btnAutoConnectOther fehlt');
+    assertEq(app.document.getElementById('btnAutoConnect'), null,
+      'die Geräte-Knöpfe werden erst bei Bedarf gerendert');
   });
 
   /* — autoConnect: Stufen-Entscheidung — */
@@ -842,6 +845,170 @@ export function runSuite(t) {
     a.run(`$('#acHeatWarn').hidden = false;`);   // Warnung aus einer früheren Runde
     await a.run('autoConnect()');
     assertEq(a.document.getElementById('acHeatWarn').hidden, true);
+  });
+
+  /* ═══ L4: alle bekannten Geraete anbieten ══════════════ */
+
+  // Bewusst unsortiert abgelegt: die Reihenfolge muss aus lastUsed kommen, nicht aus dem Speicher.
+  const dreiGeraete = (extra = {}) => prefKnown(Object.assign({
+    knownDevices: [
+      { id: 'd-alt', name: 'VOLCANO KELLER', type: 'volcano', lastUsed: 100 },
+      { id: DEV_ID, name: DEV_NAME, type: 'volcano', lastUsed: 300 },
+      { id: 'd-mitte', name: 'MIGHTY UNTERWEGS', type: 'crafty_mighty', lastUsed: 200 },
+    ],
+  }, extra));
+
+  t('Stufe B bietet alle bekannten Geraete an, zuletzt genutztes zuerst', async () => {
+    const a = use(fresh({ pref: dreiGeraete(), getDevices: false }));
+    assertEq(await a.run('autoConnect()'), 'B');
+    const knoepfe = a.document.querySelectorAll('#autoConnectList button');
+    assertEq(knoepfe.map(b => b.dataset.acName), [DEV_NAME, 'MIGHTY UNTERWEGS', 'VOLCANO KELLER'],
+      'sortiert nach lastUsed absteigend');
+    assertEq(knoepfe.map(b => b.textContent), [
+      DEV_NAME + ' verbinden', 'MIGHTY UNTERWEGS verbinden', 'VOLCANO KELLER verbinden',
+    ]);
+  });
+
+  t('Nur das zuletzt genutzte Geraet ist hervorgehoben', async () => {
+    const a = use(fresh({ pref: dreiGeraete(), getDevices: false }));
+    await a.run('autoConnect()');
+    const knoepfe = a.document.querySelectorAll('#autoConnectList button');
+    assertEq(knoepfe[0].id, 'btnAutoConnect', 'erster Knopf ist der stabile Hauptanker');
+    assertEq(knoepfe[0].className, 'btn primary block', 'hervorgehoben');
+    assertEq(knoepfe.slice(1).map(b => b.className), ['btn ghost sm block', 'btn ghost sm block']);
+    assertEq(a.document.getElementById('autoConnectHint').hidden, false, 'Sortierhinweis bei mehreren');
+  });
+
+  t('Bei nur einem Geraet gibt es keinen Sortierhinweis', async () => {
+    const a = use(fresh({ pref: prefKnown(), getDevices: false }));
+    await a.run('autoConnect()');
+    assertEq(a.document.querySelectorAll('#autoConnectList button').length, 1);
+    assertEq(a.document.getElementById('autoConnectHint').hidden, true);
+  });
+
+  t('Jeder Geraete-Knopf verbindet mit genau seinem Geraet', async () => {
+    const mighty = makeVolcanoDevice({ id: 'd-mitte', name: 'MIGHTY UNTERWEGS' });
+    const a = use(fresh({ pref: dreiGeraete(), getDevices: false, requestResult: mighty }));
+    await a.run('autoConnect()');
+    const zweiter = a.document.querySelectorAll('#autoConnectList button')[1];
+    zweiter.click();
+    await a.run('new Promise(r=>setTimeout(r,0))');
+    assertEq(a.bluetooth.lastRequestOptions.filters, [{ name: 'MIGHTY UNTERWEGS' }],
+      'der zweite Knopf filtert auf das zweite Gerät, nicht auf das erste');
+  });
+
+  t('Das gescheiterte Auto-Connect-Ziel steht danach an erster Stelle', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({ pref: dreiGeraete(), devices: [dev] }));
+    spyBackoff(a);
+    assertEq(await a.run('autoConnect()'), 'B');
+    const knoepfe = a.document.querySelectorAll('#autoConnectList button');
+    assertEq(knoepfe[0].dataset.acName, DEV_NAME);
+    assertEq(knoepfe.filter(b => b.dataset.acName === DEV_NAME).length, 1, 'nicht doppelt gelistet');
+  });
+
+  t('Hoechstens fuenf Knoepfe, auch bei mehr Eintraegen', async () => {
+    const viele = prefKnown({
+      knownDevices: [1, 2, 3, 4, 5, 6, 7].map(i => ({ id: 'd' + i, name: 'GERAET ' + i, type: 'volcano', lastUsed: i })),
+    });
+    const a = use(fresh({ pref: viele, getDevices: false }));
+    await a.run('autoConnect()');
+    assertEq(a.document.querySelectorAll('#autoConnectList button').length, 5);
+  });
+
+  /* ═══ L8: Einstellungen, Liste "Bekannte Geraete" ══════ */
+
+  t('Die Geraeteliste zeigt Name, Typ und letzte Nutzung', () => {
+    const a = use(fresh({ pref: dreiGeraete() }));
+    assertEq(a.run('renderKnownDevices()'), 3);
+    const zeilen = a.document.querySelectorAll('#knownDevicesList .known-device-row');
+    assertEq(zeilen.length, 3);
+    assertEq(zeilen.map(r => r.dataset.acId), [DEV_ID, 'd-mitte', 'd-alt'], 'lastUsed absteigend');
+    assertEq(zeilen[0].querySelector('b').textContent, DEV_NAME);
+    const meta = zeilen[1].querySelector('small').textContent;
+    assert(meta.includes('Crafty / Mighty'), 'Typ fehlt: ' + meta);
+    assert(meta.includes('zuletzt'), 'letzte Nutzung fehlt: ' + meta);
+  });
+
+  t('Das Auto-Connect-Ziel ist als solches markiert', () => {
+    const a = use(fresh({ pref: dreiGeraete() }));
+    a.run('renderKnownDevices()');
+    const zeilen = a.document.querySelectorAll('#knownDevicesList .known-device-row');
+    assertEq(zeilen[0].querySelector('.ac-auto-marker').textContent, '✓ wird automatisch verbunden');
+    assertEq(zeilen[1].querySelector('.ac-auto-marker'), null, 'nur eines wird automatisch verbunden');
+  });
+
+  t('Bei ausgeschaltetem Schalter sagt die Markierung das dazu', () => {
+    const a = use(fresh({ pref: dreiGeraete({ autoConnect: false }) }));
+    a.run('renderKnownDevices()');
+    const marke = a.document.querySelector('#knownDevicesList .ac-auto-marker').textContent;
+    assert(marke.includes('Schalter ist aus'), 'Text: ' + marke);
+  });
+
+  t('Leere Liste erklaert sich selbst', () => {
+    const a = use(fresh());
+    assertEq(a.run('renderKnownDevices()'), 0);
+    const text = a.document.getElementById('knownDevicesList').textContent;
+    assert(text.includes('Noch kein Gerät gemerkt'), 'Text: ' + text);
+  });
+
+  t('Browser ohne getDevices bekommt den erklaerenden Hinweis', () => {
+    const a = use(fresh({ pref: dreiGeraete(), getDevices: false }));
+    a.run('renderKnownDevices()');
+    const hint = a.document.getElementById('knownDevicesCapHint');
+    assertEq(hint.hidden, false);
+    assert(hint.textContent.includes('keine automatische Verbindung'), 'Text: ' + hint.textContent);
+    assert(hint.textContent.includes('mit einem Tipp'), 'Text: ' + hint.textContent);
+  });
+
+  t('Browser mit getDevices bekommt keinen Hinweis', () => {
+    const a = use(fresh({ pref: dreiGeraete() }));
+    a.run('renderKnownDevices()');
+    assertEq(a.document.getElementById('knownDevicesCapHint').hidden, true);
+  });
+
+  t('"vergessen" entfernt aus PREFS und ruft device.forget()', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: dreiGeraete(), devices: [dev] }));
+    a.run('renderKnownDevices()');
+    assertEq(await a.run(`acForgetDevice(${JSON.stringify(DEV_ID)})`), true, 'im Browser vergessen');
+    assertEq(dev.forgotten, true, 'device.forget() aufgerufen');
+    assertEq(a.get('PREFS').knownDevices.map(d => d.id), ['d-mitte', 'd-alt']);
+    assertEq(a.get('PREFS').lastDeviceId, '', 'Auto-Connect-Ziel mitentfernt');
+    assertEq(a.document.querySelectorAll('#knownDevicesList .known-device-row').length, 2, 'Liste neu gezeichnet');
+  });
+
+  t('"vergessen" ohne forget-Faehigkeit entfernt nur aus der App', async () => {
+    const a = use(fresh({ pref: dreiGeraete(), getDevices: false }));
+    a.run(`delete globalThis.BluetoothDevice;`);   // Browser ohne forget auf dem Prototyp
+    a.run('renderKnownDevices()');
+    assertEq(await a.run(`acForgetDevice('d-mitte')`), false, 'Browser-Berechtigung bleibt');
+    assertEq(a.get('PREFS').knownDevices.map(d => d.id), [DEV_ID, 'd-alt']);
+    const logText = a.document.getElementById('log').textContent;
+    assert(logText.includes('Website-Einstellungen'),
+      'Der Nutzer muss erfahren, wo die Berechtigung wirklich liegt. Log: ' + logText.slice(-200));
+  });
+
+  t('Ein anderes Geraet vergessen laesst das Auto-Ziel in Ruhe', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: dreiGeraete(), devices: [dev] }));
+    await a.run(`acForgetDevice('d-alt')`);
+    assertEq(a.get('PREFS').lastDeviceId, DEV_ID, 'Auto-Ziel unveraendert');
+  });
+
+  t('"vergessen" laesst die Liste sortiert zurueck', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: dreiGeraete(), devices: [dev] }));
+    await a.run(`acForgetDevice('d-mitte')`);
+    assertEq(a.get('PREFS').knownDevices.map(d => d.lastUsed), [300, 100],
+      'gleiche Invariante wie nach acUpsertDevice: lastUsed absteigend');
+  });
+
+  t('openSettings zeichnet die Geraeteliste', () => {
+    const a = use(fresh({ pref: dreiGeraete() }));
+    assertEq(a.document.querySelectorAll('#knownDevicesList .known-device-row').length, 0, 'vorher leer');
+    a.run('openSettings()');
+    assertEq(a.document.querySelectorAll('#knownDevicesList .known-device-row').length, 3);
   });
 
   /* — Voller App-Start — */
