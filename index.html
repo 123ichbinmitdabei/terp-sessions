@@ -2360,6 +2360,8 @@ button[data-sch-day].active{
   </div>
   <div class="row tight">
     <span class="chip" id="connChip" aria-live="polite">Getrennt</span>
+    <!-- v9.43.0 L7: sichtbar nur waehrend eines laufenden Auto-Connects -->
+    <button class="btn sm ghost" id="btnAutoConnectCancel" hidden aria-label="Automatische Verbindung abbrechen">Abbrechen</button>
     <button class="btn sm ghost" id="btnConnect" aria-label="Mit Vaporizer verbinden">Verbinden</button>
     <span class="connect-hint" id="connectHint" hidden aria-hidden="true">👆 hier tippen</span>
     <button class="user-avatar" id="userAvatar" aria-label="Profil wechseln">👤</button>
@@ -2418,6 +2420,9 @@ button[data-sch-day].active{
          Gerät nicht freigegeben oder 3 Versuche erfolglos). -->
     <div id="autoConnectBar" hidden style="margin-top:10px">
       <button class="btn primary block" id="btnAutoConnect" type="button" aria-label="Gerät verbinden">Gerät verbinden</button>
+      <!-- v9.43.0 L1: Der Hauptknopf filtert den Dialog auf genau dieses Gerät.
+           Wer ein anderes will, kommt hierüber zur vollen Liste. -->
+      <button class="btn ghost sm block" id="btnAutoConnectOther" type="button" style="margin-top:6px" aria-label="Ein anderes Gerät verbinden">anderes Gerät</button>
     </div>
     <div class="preheat-running" id="preheatRunning" hidden role="status" aria-live="polite">
       <span class="ico">⏱</span>
@@ -6432,6 +6437,7 @@ const State={
   wakeLock:null,
   reconnectAttempts:0,
   connectionLost:false, lastKnownHeating:false,   // v5.0.1 K3
+  autoConnectAbort:false,  // v9.43.0 L7: Nutzer hat die laufende Auto-Verbindung gestoppt
   tempHistory:[],          // [{t:timestamp, c:tempCelsius}]
   reachedAnnounced:false,  // to fire reach-flash exactly once per target change
 };
@@ -7238,6 +7244,17 @@ function acStageBLabel(name){
 
 /* ==AC_PURE_END== */
 
+/* v9.43.0 L2: Wie lange darf ein einzelner gatt.connect() brauchen, bevor abgebrochen
+   wird? Eigene Funktion statt const, damit Tests sie kurz ziehen koennen — genau wie
+   bei acBackoffMs. */
+function acConnectTimeoutMs(){ return 8000; }
+
+function _acWithTimeout(promise, ms, meldung){
+  let to = null;
+  const wach = new Promise((_, rej)=>{ to = setTimeout(()=>rej(new Error(meldung)), ms); });
+  return Promise.race([Promise.resolve(promise), wach]).finally(()=>{ if(to) clearTimeout(to); });
+}
+
 // Geraet nach erfolgreichem Connect merken (LRU max 5 + lastDeviceId als Auto-Ziel).
 function acRememberBleDevice(dev, type){
   try{
@@ -7266,13 +7283,63 @@ function acKnownForStage(){
 function acShowStageB(nameHint){
   const bar = $('#autoConnectBar'); if(!bar) return false;
   const known = acSortKnownDesc(acKnownForStage());
-  const label = acStageBLabel(nameHint || (known[0] && known[0].name) || '');
+  const name = nameHint || (known[0] && known[0].name) || '';
+  const label = acStageBLabel(name);
   const btn = $('#btnAutoConnect');
-  if(btn){ btn.textContent = label; btn.setAttribute('aria-label', label); }
+  if(btn){ btn.textContent = label; btn.setAttribute('aria-label', label); btn.dataset.acName = name; }
   bar.hidden = false;
   return true;
 }
 function acHideStageB(){ const bar = $('#autoConnectBar'); if(bar) bar.hidden = true; }
+
+/* v9.43.0 L1: Stufe B filtert den Auswahldialog auf genau einen Geraetenamen, statt
+   wieder die ganze BLE-Umgebung aufzublaettern. Auf iOS/Bluefy — kein getDevices, also
+   nie Stufe A — ist das die einzige Verbesserung, die ueberhaupt moeglich ist:
+   ein Tipp, genau ein Eintrag im Dialog, fertig. */
+async function acConnectKnown(name){
+  if(!name) return connectBLE();          // ohne gemerkten Namen ist kein Filter moeglich
+  acHideStageB();
+  try{
+    renderLastAction('Suche '+name+'…','busy');
+    log('Gerätedialog gefiltert auf "'+name+'".');
+    const dev = await navigator.bluetooth.requestDevice({
+      filters:[{ name: name }],
+      optionalServices: _bleOptionalServices(),
+    });
+    await _connectWithDevice(dev);
+  }catch(e){
+    log('Verbindung mit "'+name+'" fehlgeschlagen: '+e.message,'err');
+    renderLastAction('Verbindung fehlgeschlagen: '+e.message, 'err');
+    setConn(false);
+    captureDiagnostics(e.message);
+    showFriendlyError(e, 'connect');
+    acShowStageB(name);                   // Angebot bleibt bestehen, der Nutzer kann es nochmal
+  }
+}
+
+/* v9.43.0 L7: Waehrend eines Auto-Connects zeigt der Verbindungs-Chip, mit WEM gerade
+   verbunden wird, und daneben steht ein Abbrechen-Knopf. Eine Automatik, die man nicht
+   stoppen kann, ist keine Hilfe. */
+function acShowConnecting(name){
+  const chip = $('#connChip');
+  if(chip) chip.textContent = 'Verbinde automatisch mit ' + (name || 'Gerät');
+  const btn = $('#btnAutoConnectCancel');
+  if(btn) btn.hidden = false;
+}
+function acHideConnecting(){
+  const btn = $('#btnAutoConnectCancel');
+  if(btn) btn.hidden = true;
+  try{ setConn(State.connected); }catch(_){}   // Chip-Text wieder aus dem echten Status
+}
+function acAbortAutoConnect(){
+  State.autoConnectAbort = true;
+  log('Auto-Verbindung vom Nutzer abgebrochen.','warn');
+  acHideConnecting();
+  const known = acSortKnownDesc(acKnownForStage());
+  acShowStageB(known[0] && known[0].name);
+  toast('Auto-Verbindung abgebrochen');
+  return true;
+}
 
 let _acRan = false;
 /* Laeuft beim App-Start VOR dem Crash-Recovery-Dialog (v9.33) und laesst diesen
@@ -7280,6 +7347,7 @@ let _acRan = false;
 async function autoConnect(){
   if(_acRan) return 'bereits-gelaufen';
   _acRan = true;
+  State.autoConnectAbort = false;
   if(State.connected) return 'bereits-verbunden';
 
   const caps = btCaps(navigator);
@@ -7308,21 +7376,31 @@ async function autoConnect(){
     acShowStageB(); return 'B';
   }
 
+  acShowConnecting(target.name);
   for(let n=0; n<3; n++){
-    if(State.connected) return 'A';
+    if(State.autoConnectAbort){ acHideConnecting(); return 'abgebrochen'; }
+    if(State.connected){ acHideConnecting(); return 'A'; }
     try{
       renderLastAction('Auto-Verbindung mit '+(target.name||'Gerät')+'…','busy');
       await _connectWithDevice(target);
-      if(State.connected){ log('Auto-Verbindung hergestellt.','ok'); return 'A'; }
+      if(State.autoConnectAbort){
+        // Der Abbruch kam waehrend des laufenden Versuchs. Nicht verbunden lassen,
+        // sonst haetten wir gegen den ausdruecklichen Willen des Nutzers verbunden.
+        try{ await disconnectBLE(); }catch(_){}
+        acHideConnecting();
+        return 'abgebrochen';
+      }
+      if(State.connected){ acHideConnecting(); log('Auto-Verbindung hergestellt.','ok'); return 'A'; }
       // Geraet verbunden, aber nicht erkannt -> Wiederholen bringt nichts.
       log('Auto-Verbindung: Geraet nicht erkannt, kein weiterer Versuch.','warn');
       break;
     }catch(e){
+      if(State.autoConnectAbort){ acHideConnecting(); return 'abgebrochen'; }
       log('Auto-Verbindung Versuch '+(n+1)+'/3 fehlgeschlagen: '+(e&&e.message||e),'warn');
       if(n < 2) await sleep(acBackoffMs(n));
     }
   }
-  setConn(false);
+  acHideConnecting();                 // ruft setConn(State.connected) -> UI wieder konsistent
   log('Auto-Verbindung aufgegeben, Ein-Tipp-Verbindung angeboten.','warn');
   acShowStageB(target.name);
   return 'B';
@@ -7336,23 +7414,7 @@ async function connectBLE(){
   }
   try{
     renderLastAction('Geräteauswahl öffnen…','busy');
-    const u=getUUIDs();
-    const services = [...new Set([u.serviceState, u.serviceControl,
-      '10100000-5354-4f52-5a26-4249434b454c',   // Volcano State
-      '10110000-5354-4f52-5a26-4249434b454c',   // Volcano Control
-      '10130000-5354-4f52-5a26-4249434b454c',   // Volcano Service5
-      '00000001-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Bootloader
-      '01000002-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Service2
-      '00000001-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 1
-      '00000002-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 2 (E3: Firmware/AutoOff)
-      '00000003-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 3
-      '00000000-5354-4f52-5a26-4249434b454c',   // Venty/Veazy
-      '8e320200-64d2-11e6-bdf4-0800200c9a66',   // v6.0.0: PAX 3 (Beta) - Pflicht fuer getPrimaryService
-      '06caf9c0-74d3-454f-9be9-e30cd999c17a',    // v7.0.0: Puffco Peak Pro (Beta) - enthaelt die f9a98c15-Chars
-      // v9.20.0 QA2.2.2: Custom-Profil-Service-UUIDs zulassen, sonst scheitert getPrimaryService am Web-Bluetooth-Permission-Modell
-      ...((PREFS.customBleProfiles||[]).flatMap(p=>[(p.uuids||{}).uuidServiceState, (p.uuids||{}).uuidServiceControl]))
-      // Firefly 2+: TODO v8.0
-      ].filter(Boolean))];
+    const services = _bleOptionalServices();
     log('Gerätedialog öffnen…');
     // v5.0.1 A4: acceptAllDevices zeigt alle BLE-Geraete (inkl. kuenftiger Marken).
     // v6.0+ Multi-Brand-Modus koennte stattdessen gezielt filtern:
@@ -7369,6 +7431,29 @@ async function connectBLE(){
     captureDiagnostics(e.message);
     showFriendlyError(e, 'connect');   // v8.1.0 Modul 2: benutzerfreundlicher Hinweis
   }
+}
+
+/* v9.43.0: Die optionalServices-Liste wird von zwei Wegen gebraucht — vom offenen
+   Geraetedialog und vom namensgefilterten Stufe-B-Dialog. Web Bluetooth gibt ohne
+   diese Liste spaeter kein getPrimaryService frei, egal wie das Geraet gewaehlt wurde. */
+function _bleOptionalServices(){
+    const u=getUUIDs();
+    return [...new Set([u.serviceState, u.serviceControl,
+      '10100000-5354-4f52-5a26-4249434b454c',   // Volcano State
+      '10110000-5354-4f52-5a26-4249434b454c',   // Volcano Control
+      '10130000-5354-4f52-5a26-4249434b454c',   // Volcano Service5
+      '00000001-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Bootloader
+      '01000002-1989-0108-1234-123456789abc',   // v5.0.1 E4: Volcano Service2
+      '00000001-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 1
+      '00000002-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 2 (E3: Firmware/AutoOff)
+      '00000003-4c45-4b43-4942-265a524f5453',   // Crafty/Mighty 3
+      '00000000-5354-4f52-5a26-4249434b454c',   // Venty/Veazy
+      '8e320200-64d2-11e6-bdf4-0800200c9a66',   // v6.0.0: PAX 3 (Beta) - Pflicht fuer getPrimaryService
+      '06caf9c0-74d3-454f-9be9-e30cd999c17a',    // v7.0.0: Puffco Peak Pro (Beta) - enthaelt die f9a98c15-Chars
+      // v9.20.0 QA2.2.2: Custom-Profil-Service-UUIDs zulassen, sonst scheitert getPrimaryService am Web-Bluetooth-Permission-Modell
+      ...((PREFS.customBleProfiles||[]).flatMap(p=>[(p.uuids||{}).uuidServiceState, (p.uuids||{}).uuidServiceControl]))
+      // Firefly 2+: TODO v8.0
+      ].filter(Boolean))];
 }
 
 /* v9.43.0: alles ab "das Geraet steht fest" ist eigenstaendig, damit
@@ -7407,7 +7492,17 @@ async function _connectWithDevice(dev){
       });
     }
     renderLastAction('Verbinde mit '+State.device.name+'…','busy');
-    State.server = await State.device.gatt.connect();
+    // v9.43.0 L2: gatt.connect() hat von sich aus KEIN Timeout. Haengt es (Geraet aus
+    // Reichweite, Bluetooth-Stack verklemmt), bliebe die Anzeige ewig auf "Verbinde…"
+    // stehen und der Auto-Connect faende nie zu Stufe B zurueck.
+    try{
+      State.server = await _acWithTimeout(State.device.gatt.connect(), acConnectTimeoutMs(),
+        'Zeitüberschreitung beim Verbinden nach '+Math.round(acConnectTimeoutMs()/1000)+' s');
+    }catch(e){
+      // Halboffene Verbindung aufraeumen, sonst blockiert sie den naechsten Versuch.
+      try{ State.device.gatt && State.device.gatt.disconnect(); }catch(_){}
+      throw e;
+    }
     State.allServices = await State.server.getPrimaryServices();
     log(`Verbunden mit ${State.device.name||'Gerät'}.`,'ok');
     // v5.0.2.1 FIX0: Diagnose-Dump (sichtbar im App-Log, kein Console-Paste noetig)
@@ -10101,8 +10196,13 @@ function wire(){
   $('#btnConnect').addEventListener('click', connectBLE);
   $('#btnConnect2').addEventListener('click', connectBLE);
   $('#btnDisconnect').addEventListener('click', disconnectBLE);
-  // v9.43.0: Ein-Tipp-Verbindung (Stufe B) oeffnet den normalen Geraetedialog
-  $('#btnAutoConnect')?.addEventListener('click', ()=>{ acHideStageB(); connectBLE(); });
+  // v9.43.0 L1: Ein-Tipp-Verbindung oeffnet den auf EIN Geraet gefilterten Dialog,
+  // "anderes Gerät" den offenen. L7: Abbrechen stoppt eine laufende Auto-Verbindung.
+  $('#btnAutoConnect')?.addEventListener('click', (e)=>{
+    acConnectKnown((e.currentTarget && e.currentTarget.dataset.acName) || '');
+  });
+  $('#btnAutoConnectOther')?.addEventListener('click', ()=>{ acHideStageB(); connectBLE(); });
+  $('#btnAutoConnectCancel')?.addEventListener('click', acAbortAutoConnect);
   $('#btnDiscover').addEventListener('click', discover);
   $('#btnAutoMap').addEventListener('click', autoMap);
   $('#btnTestUUIDs').addEventListener('click', testUUIDs);

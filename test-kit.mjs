@@ -568,12 +568,16 @@ export function makeVolcanoDevice(opts = {}) {
     id, name, chars, services,
     connectCount: 0,
     failNextConnects: opts.failNextConnects || 0,
+    hangConnect: !!opts.hangConnect,
     forgotten: false,
     watchedAds: 0,
     gatt: {
       connected: false,
       async connect() {
         dev.connectCount++;
+        // hangConnect simuliert ein Geraet, das den Verbindungsaufbau nie beantwortet
+        // (ausser Reichweite, verklemmter BLE-Stack). Ohne Timeout haengt der Aufrufer ewig.
+        if (dev.hangConnect) return new Promise(() => { });
         if (dev.failNextConnects > 0) { dev.failNextConnects--; throw new Error('GATT Error: connect failed (mock)'); }
         dev.gatt.connected = true;
         return {
@@ -609,8 +613,12 @@ export function makeBluetooth(opts = {}) {
     _requestResult: opts.requestResult || null,
     requestDeviceCalls: 0,
     getDevicesCalls: 0,
-    async requestDevice() {
+    /** Optionen des letzten requestDevice-Aufrufs — damit Tests pruefen koennen,
+     *  ob gefiltert (Stufe B) oder offen (acceptAllDevices) gefragt wurde. */
+    lastRequestOptions: null,
+    async requestDevice(options) {
       bt.requestDeviceCalls++;
+      bt.lastRequestOptions = options || null;
       if (bt._requestResult) return bt._requestResult;
       throw new Error('User cancelled the requestDevice() chooser.');
     },

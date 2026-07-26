@@ -551,6 +551,146 @@ export function runSuite(t) {
     assertEq(a.get('PREFS').lastDeviceId, DEV_ID, 'altes Ziel bleibt unangetastet');
   });
 
+  /* ═══ L1: Stufe B mit Namensfilter ═════════════════════ */
+
+  t('Ein-Tipp-Knopf filtert den Dialog auf genau ein Geraet', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), getDevices: false, requestResult: dev }));
+    a.run('wire()');
+    await a.run('autoConnect()');
+    a.document.getElementById('btnAutoConnect').click();
+    await a.run('new Promise(r=>setTimeout(r,0))');
+    const opt = a.bluetooth.lastRequestOptions;
+    assertEq(opt.filters, [{ name: DEV_NAME }], 'genau ein Namensfilter');
+    assertEq(opt.acceptAllDevices, undefined, 'kein acceptAllDevices im gefilterten Dialog');
+    assert(Array.isArray(opt.optionalServices) && opt.optionalServices.length > 8,
+      'optionalServices muessen mit, sonst scheitert getPrimaryService spaeter');
+    assert(opt.optionalServices.includes('10100000-5354-4f52-5a26-4249434b454c'), 'Volcano-State-Service dabei');
+  });
+
+  t('Gefilterter Dialog verbindet danach wirklich', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), getDevices: false, requestResult: dev }));
+    await a.run(`acConnectKnown(${JSON.stringify(DEV_NAME)})`);
+    assertEq(a.get('State').connected, true);
+    assertEq(a.document.getElementById('autoConnectBar').hidden, true);
+  });
+
+  t('"anderes Geraet" oeffnet weiterhin den offenen Dialog', async () => {
+    const dev = makeVolcanoDevice({ id: 'anderes', name: 'VOLCANO ANDERS' });
+    const a = use(fresh({ pref: prefKnown(), getDevices: false, requestResult: dev }));
+    a.run('wire()');
+    await a.run('autoConnect()');
+    a.document.getElementById('btnAutoConnectOther').click();
+    await a.run('new Promise(r=>setTimeout(r,0))');
+    assertEq(a.bluetooth.lastRequestOptions.acceptAllDevices, true);
+    assertEq(a.bluetooth.lastRequestOptions.filters, undefined);
+  });
+
+  t('Ohne gemerkten Namen faellt Stufe B auf den offenen Dialog zurueck', async () => {
+    const a = use(fresh({ pref: prefKnown({ knownDevices: [{ id: DEV_ID, name: '', type: 'volcano', lastUsed: 1 }] }) }));
+    await a.run(`acConnectKnown('')`);
+    assertEq(a.bluetooth.lastRequestOptions.acceptAllDevices, true);
+  });
+
+  t('Abgelehnter gefilterter Dialog laesst das Ein-Tipp-Angebot stehen', async () => {
+    const a = use(fresh({ pref: prefKnown(), getDevices: false }));   // requestDevice wirft
+    await a.run(`acConnectKnown(${JSON.stringify(DEV_NAME)})`);
+    assertEq(a.get('State').connected, false);
+    assertEq(a.document.getElementById('autoConnectBar').hidden, false, 'Angebot bleibt');
+    assertEq(a.document.getElementById('btnAutoConnect').textContent, DEV_NAME + ' verbinden');
+  });
+
+  /* ═══ L2: Timeout um gatt.connect ══════════════════════ */
+
+  t('Haengendes gatt.connect laeuft in den Timeout statt ewig zu warten', async () => {
+    const dev = makeVolcanoDevice({ hangConnect: true });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acConnectTimeoutMs = () => 40;');     // echte 8 s waeren im Test sinnlos
+    spyBackoff(a);
+    const t0 = Date.now();
+    assertEq(await a.run('autoConnect()'), 'B', 'faellt auf Stufe B zurueck');
+    assert(Date.now() - t0 < 3000, 'kein Haenger: ' + (Date.now() - t0) + ' ms');
+    assertEq(dev.connectCount, 3, 'drei Versuche, jeder mit eigenem Timeout');
+    assertEq(a.get('State').connected, false);
+  });
+
+  t('Nach dem Timeout ist die App bedienbar: Ein-Tipp-Angebot steht, Chip ist sauber', async () => {
+    const dev = makeVolcanoDevice({ hangConnect: true });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acConnectTimeoutMs = () => 40;');
+    spyBackoff(a);
+    await a.run('autoConnect()');
+    const doc = a.document;
+    assertEq(doc.getElementById('autoConnectBar').hidden, false, 'Ein-Tipp-Angebot sichtbar');
+    assertEq(doc.getElementById('btnAutoConnectCancel').hidden, true, 'Abbrechen wieder weg');
+    assertEq(doc.getElementById('btnConnect').disabled, false, 'Verbinden-Knopf wieder bedienbar');
+    assert(!doc.getElementById('connChip').textContent.includes('Verbinde automatisch'),
+      'Chip haengt nicht in "Verbinde automatisch" fest, war: ' + doc.getElementById('connChip').textContent);
+  });
+
+  t('Der Timeout raeumt die halboffene GATT-Verbindung auf', async () => {
+    const dev = makeVolcanoDevice({ hangConnect: true });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acConnectTimeoutMs = () => 40;');
+    spyBackoff(a);
+    await a.run('autoConnect()');
+    assertEq(dev.gatt.connected, false, 'kein halboffener GATT, der den naechsten Versuch blockiert');
+  });
+
+  t('acConnectTimeoutMs steht im Auslieferungszustand auf 8 Sekunden', () => {
+    assertEq(app.run('acConnectTimeoutMs()'), 8000);
+  });
+
+  /* ═══ L7: Abbrechen am connChip ════════════════════════ */
+
+  t('Waehrend der Auto-Verbindung zeigt der Chip das Zielgeraet + Abbrechen', async () => {
+    const dev = makeVolcanoDevice({ hangConnect: true });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run('acConnectTimeoutMs = () => 400;');
+    const lauf = a.run('autoConnect()');
+    await a.run('new Promise(r=>setTimeout(r,40))');
+    assertEq(a.document.getElementById('connChip').textContent, 'Verbinde automatisch mit ' + DEV_NAME);
+    assertEq(a.document.getElementById('btnAutoConnectCancel').hidden, false, 'Abbrechen sichtbar');
+    a.run('acAbortAutoConnect()');
+    assertEq(await lauf, 'abgebrochen');
+  });
+
+  t('Abbrechen stoppt die Wiederholungen', async () => {
+    const dev = makeVolcanoDevice({ failNextConnects: 99 });
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    a.run(`(function(){ const echt = acBackoffMs; acBackoffMs = function(n){ echt(n); return 60; }; })();`);
+    const lauf = a.run('autoConnect()');
+    await a.run('new Promise(r=>setTimeout(r,10))');
+    a.run('acAbortAutoConnect()');
+    assertEq(await lauf, 'abgebrochen');
+    assert(dev.connectCount < 3, 'nicht alle drei Versuche durchgezogen, waren: ' + dev.connectCount);
+    assertEq(a.document.getElementById('btnAutoConnectCancel').hidden, true);
+    assertEq(a.document.getElementById('autoConnectBar').hidden, false, 'Ein-Tipp-Angebot als Ausweg');
+  });
+
+  t('Abbruch waehrend eines erfolgreichen Versuchs trennt wieder', async () => {
+    const dev = makeVolcanoDevice();
+    const a = use(fresh({ pref: prefKnown(), devices: [dev] }));
+    // Abbruch trifft ein, waehrend _connectWithDevice noch laeuft
+    a.run(`(function(){ const echt = _connectWithDevice;
+      _connectWithDevice = async function(d){ const p = echt(d); acAbortAutoConnect(); return p; }; })();`);
+    assertEq(await a.run('autoConnect()'), 'abgebrochen');
+    assertEq(a.get('State').connected, false, 'nicht gegen den Willen des Nutzers verbunden geblieben');
+  });
+
+  t('Der Abbrechen-Knopf ist im Auslieferungszustand versteckt und verdrahtet', () => {
+    const a = use(fresh());
+    const btn = a.document.getElementById('btnAutoConnectCancel');
+    assert(btn, '#btnAutoConnectCancel fehlt');
+    assertEq(btn.hidden, true);
+    assertEq(btn.getAttribute('aria-label'), 'Automatische Verbindung abbrechen');
+    a.run('wire()');
+    a.run('State.autoConnectAbort = false');
+    btn.click();
+    assertEq(a.get('State').autoConnectAbort, true, 'Klick setzt die Abbruch-Marke');
+  });
+
   /* — Voller App-Start — */
   t('Voller App-Start (DOMContentLoaded) laeuft fehlerfrei und verbindet automatisch', async () => {
     const dev = makeVolcanoDevice();
